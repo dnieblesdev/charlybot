@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  engineType = "client"
+  runtime = "bun"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model tipoClase {
+  rolId        String @id
+  nombre      String
+  clases    classes[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+// the RoleId is ID Role on Discord
+model classes {
+  rolId     String      @id
+  name      String
+  tipo      tipoClase @relation(fields: [tipoId], references: [rolId])
+  tipoId    String
+  subClases subclass[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+model subclass {
+  rolId    String @id
+  name      String
+  clase     classes @relation(fields: [claseId], references: [rolId])
+  claseId   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+model Guild {
+  id                          Int      @id @default(autoincrement())
+  guildId                     String   @unique
+  name                        String?
+  prefix                      String?
+  ownerId                     String?
+  ownerName                   String?
+  MemberCount                 Int?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  guildConfigs                GuildConfig?
+}
+
+model GuildConfig {
+  id                          Int      @id @default(autoincrement())
+  guildId                     String   @unique
+  name                        String?
+  targetChannelId             String?
+  voiceLogChannelId           String?
+  welcomeChannelId            String?
+  welcomeMessage              String?
+  leaveLogChannelId           String?
+  verificationChannelId       String?
+  verificationReviewChannelId String?
+  verifiedRoleId              String?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  guild                       Guild    @relation(fields: [guildId], references: [guildId])
+}

@@ -1,0 +1,44 @@
+{
+  "name": "charlybot",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "rc": "bun run src/app/commands/register/registerCommands.ts",
+    "cc": "bun run src/app/commands/clear/clearCommands.ts",
+    "lc": "bun run src/app/commands/debug/listRegistered.ts",
+    "spotify-token": "bun run scripts/get-spotify-token.ts",
+    "test-spotify": "bun run debug/test-spotify-integration.ts",
+    "test-format-error": "bun run debug/test-format-error.ts",
+    "test-playlist-performance": "bun run debug/test-playlist-performance.ts",
+    "migrate-json": "bun run scripts/migracion-json-prisma.ts",
+    "build": "bun build src/index.ts --outdir dist --target node",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express": "^5.0.5",
+    "prisma": "^7.2.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@discordjs/opus": "^0.10.0",
+    "@discordjs/voice": "0.19.0",
+    "@prisma/adapter-libsql": "^7.2.0",
+    "@prisma/client": "^7.2.0",
+    "@snazzah/davey": "^0.1.7",
+    "discord.js": "14.24.2",
+    "dotenv": "17.2.3",
+    "express": "^5.1.0",
+    "ffmpeg-static": "^5.2.0",
+    "opusscript": "^0.1.1",
+    "play-dl": "1.9.7",
+    "play-opus": "^0.5.7",
+    "sodium-native": "^5.0.10",
+    "winston": "3.18.3",
+    "yt-dlp-wrap": "^2.3.12"
+  }
+}
