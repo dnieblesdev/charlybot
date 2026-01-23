@@ -1,6 +1,6 @@
 import { readFile } from "fs/promises";
 import path from "path";
-import { prisma } from "../src/infrastructure/storage/prismaClient.ts";
+import { prisma } from "../src/infrastructure/storage/prismaClient.js";
 
 interface OldConfigData {
   guilds: Record<
@@ -35,8 +35,26 @@ interface OldClassRolesData {
   >;
 }
 
-async function migrateGuildConfigs() {
-  console.log("\n📋 Migrando configuraciones de guilds...");
+interface OldVerificationsData {
+  requests: Record<
+    string,
+    {
+      id: string;
+      userId: string;
+      guildId: string;
+      inGameName: string;
+      screenshotUrl: string;
+      status: "pending" | "approved" | "rejected";
+      requestedAt: number;
+      messageId?: string;
+      reviewedBy?: string;
+      reviewedAt?: number;
+    }
+  >;
+}
+
+async function migrateGuildsAndConfigs() {
+  console.log("\n📋 Migrando Guilds y configuraciones...");
 
   try {
     const configPath = path.join(process.cwd(), "data", "config.json");
@@ -45,6 +63,23 @@ async function migrateGuildConfigs() {
 
     let migratedCount = 0;
     for (const [guildId, config] of Object.entries(oldConfig.guilds)) {
+      // Primero crear o actualizar el Guild
+      await prisma.guild.upsert({
+        where: { guildId },
+        create: {
+          guildId,
+          name: null,
+          prefix: null,
+          ownerId: null,
+          ownerName: null,
+          MemberCount: null,
+        },
+        update: {},
+      });
+
+      console.log(`  ✅ Guild creado/actualizado: ${guildId}`);
+
+      // Luego crear o actualizar el GuildConfig
       await prisma.guildConfig.upsert({
         where: { guildId },
         create: {
@@ -73,10 +108,10 @@ async function migrateGuildConfigs() {
       });
 
       migratedCount++;
-      console.log(`  ✅ Guild migrada: ${guildId}`);
+      console.log(`  ✅ Guild config migrada: ${guildId}`);
     }
 
-    console.log(`✨ Total guild configs migradas: ${migratedCount}`);
+    console.log(`✨ Total guilds y configs migradas: ${migratedCount}`);
   } catch (error) {
     console.error("❌ Error migrando guild configs:", error);
     throw error;
@@ -98,6 +133,7 @@ async function migrateClassRoles() {
     for (const [className, classData] of Object.entries(
       oldClassRoles.classes,
     )) {
+      // Crear tipo de clase si no existe
       if (!tiposCreados.has(classData.typeRoleId)) {
         await prisma.tipoClase.upsert({
           where: { rolId: classData.typeRoleId },
@@ -113,6 +149,7 @@ async function migrateClassRoles() {
         console.log(`  ✅ Tipo de clase migrado: ${classData.type}`);
       }
 
+      // Crear clase
       const createdClass = await prisma.classes.upsert({
         where: { rolId: classData.roleId },
         create: {
@@ -129,6 +166,7 @@ async function migrateClassRoles() {
       classCount++;
       console.log(`  ✅ Clase migrada: ${className} (${classData.type})`);
 
+      // Crear subclases
       for (const subclass of classData.subclasses) {
         await prisma.subclass.upsert({
           where: { rolId: subclass.roleId },
@@ -157,25 +195,104 @@ async function migrateClassRoles() {
   }
 }
 
+async function migrateVerifications() {
+  console.log("\n✅ Migrando verificaciones...");
+
+  try {
+    const verificationsPath = path.join(
+      process.cwd(),
+      "data",
+      "verifications.json",
+    );
+    const data = await readFile(verificationsPath, "utf-8");
+    const oldVerifications: OldVerificationsData = JSON.parse(data);
+
+    // Nota: No hay modelo VerificationRequest en el schema actual
+    // Si necesitas migrar esto, necesitarás agregar el modelo primero
+    console.log(
+      "⚠️  ADVERTENCIA: No hay modelo de verificaciones en el schema actual.",
+    );
+    console.log(
+      `   Se encontraron ${Object.keys(oldVerifications.requests).length} verificaciones en el JSON.`,
+    );
+    console.log(
+      "   Si necesitas migrar estos datos, agrega primero el modelo VerificationRequest al schema.",
+    );
+
+    // Descomenta esto cuando agregues el modelo al schema:
+    /*
+    let migratedCount = 0;
+    for (const [requestId, request] of Object.entries(oldVerifications.requests)) {
+      await prisma.verificationRequest.upsert({
+        where: { id: requestId },
+        create: {
+          id: request.id,
+          userId: request.userId,
+          guildId: request.guildId,
+          inGameName: request.inGameName,
+          screenshotUrl: request.screenshotUrl,
+          status: request.status,
+          requestedAt: new Date(request.requestedAt),
+          messageId: request.messageId || null,
+          reviewedBy: request.reviewedBy || null,
+          reviewedAt: request.reviewedAt ? new Date(request.reviewedAt) : null,
+        },
+        update: {
+          userId: request.userId,
+          guildId: request.guildId,
+          inGameName: request.inGameName,
+          screenshotUrl: request.screenshotUrl,
+          status: request.status,
+          requestedAt: new Date(request.requestedAt),
+          messageId: request.messageId || null,
+          reviewedBy: request.reviewedBy || null,
+          reviewedAt: request.reviewedAt ? new Date(request.reviewedAt) : null,
+        },
+      });
+
+      migratedCount++;
+      console.log(`  ✅ Verificación migrada: ${request.inGameName} (${request.status})`);
+    }
+
+    console.log(`✨ Total verificaciones migradas: ${migratedCount}`);
+    */
+  } catch (error) {
+    console.error("❌ Error migrando verificaciones:", error);
+    // No lanzamos el error para que continúe la migración
+  }
+}
+
 async function main() {
   console.log("🚀 Iniciando migración de datos JSON a Prisma...\n");
 
   try {
-    await migrateGuildConfigs();
+    // Migrar en orden correcto (Guild antes de GuildConfig)
+    await migrateGuildsAndConfigs();
     await migrateClassRoles();
+    await migrateVerifications();
 
     console.log("\n🎉 ¡Migración completada exitosamente!");
     console.log("\n📊 Resumen final:");
 
-    const guildCount = await prisma.guildConfig.count();
+    const guildCount = await prisma.guild.count();
+    const guildConfigCount = await prisma.guildConfig.count();
     const tipoClaseCount = await prisma.tipoClase.count();
     const classCount = await prisma.classes.count();
     const subclassCount = await prisma.subclass.count();
 
-    console.log(`  • Guild Configs: ${guildCount}`);
+    console.log(`  • Guilds: ${guildCount}`);
+    console.log(`  • Guild Configs: ${guildConfigCount}`);
     console.log(`  • Tipos de Clase: ${tipoClaseCount}`);
     console.log(`  • Clases: ${classCount}`);
     console.log(`  • Subclases: ${subclassCount}`);
+
+    console.log("\n💡 Nota sobre verificaciones:");
+    console.log(
+      "   Las verificaciones NO fueron migradas porque no existe el modelo en el schema.",
+    );
+    console.log(
+      "   Si necesitas migrarlas, agrega el modelo VerificationRequest y vuelve a ejecutar el script.",
+    );
   } catch (error) {
     console.error("\n💥 Error durante la migración:", error);
     process.exit(1);

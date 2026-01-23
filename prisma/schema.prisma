@@ -66,3 +66,84 @@ model GuildConfig {
   updatedAt                   DateTime @updatedAt
   guild                       Guild    @relation(fields: [guildId], references: [guildId])
 }
+
+// Economía y Juegos
+model UserEconomy {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  guildId         String
+  username        String
+  pocket          Float    @default(0)     // Dinero en bolsillo (por servidor)
+  inJail          Boolean  @default(false) // Si está en prisión (por servidor)
+  jailReleaseAt   DateTime?                // Cuando sale de prisión
+  lastWork        DateTime?                // Última vez que trabajó (por servidor)
+  lastCrime       DateTime?                // Último crimen (por servidor)
+  lastRob         DateTime?                // Último robo (por servidor)
+  totalEarned     Float    @default(0)     // Total ganado (por servidor)
+  totalLost       Float    @default(0)     // Total perdido (por servidor)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  bets            RouletteBet[]
+
+  @@unique([userId, guildId])
+}
+
+// Banco global compartido entre todos los servidores
+model GlobalBank {
+  id              Int      @id @default(autoincrement())
+  userId          String   @unique
+  username        String
+  bank            Float    @default(0)     // Dinero en banco (global)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RouletteGame {
+  id              Int      @id @default(autoincrement())
+  guildId         String
+  channelId       String
+  messageId       String?
+  status          String   @default("waiting") // waiting, spinning, finished
+  winningNumber   Int?
+  winningColor    String?
+  startTime       DateTime @default(now())
+  spinTime        DateTime?
+  endTime         DateTime?
+  bets            RouletteBet[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RouletteBet {
+  id              Int      @id @default(autoincrement())
+  gameId          Int
+  userId          String
+  guildId         String
+  amount          Float
+  betType         String   // "color" o "number"
+  betValue        String   // "red", "black", "green" o número "0"-"36"
+  result          String?  // "win" o "lose"
+  winAmount       Float?   // Cantidad ganada (si gana)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  game            RouletteGame @relation(fields: [gameId], references: [id])
+  user            UserEconomy @relation(fields: [userId, guildId], references: [userId, guildId])
+}
+
+// Configuración de economía por servidor
+model EconomyConfig {
+  id                Int      @id @default(autoincrement())
+  guildId           String   @unique
+  workCooldown      Int      @default(300000)      // 5 minutos en milisegundos
+  crimeCooldown     Int      @default(900000)      // 15 minutos
+  robCooldown       Int      @default(1800000)     // 30 minutos
+  workMinAmount     Int      @default(100)         // Ganancia mínima work
+  workMaxAmount     Int      @default(300)         // Ganancia máxima work
+  crimeMultiplier   Int      @default(3)           // Multiplicador de crime
+  startingMoney     Int      @default(1000)        // Dinero inicial
+  jailTimeWork      Int      @default(30)          // Minutos en prisión (crime)
+  jailTimeRob       Int      @default(45)          // Minutos en prisión (rob)
+  rouletteChannelId String?                        // Canal dedicado para ruleta (opcional)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
