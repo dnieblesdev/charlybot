@@ -121,9 +121,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Actualizar cooldown
     await EconomyService.updateCooldown(userId, guildId, "work");
 
-    // Obtener balance actualizado
-    const balance = await EconomyService.getBalance(userId, guildId);
-
     // Seleccionar mensaje aleatorio
     const message =
       workMessages[Math.floor(Math.random() * workMessages.length)];
@@ -135,23 +132,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       .setDescription(
         `${job.emoji} **${interaction.user.username}** ${message} **${job.name}** y ganó **$${earnings.toFixed(2)}**!`,
       )
-      .addFields(
-        {
-          name: "💰 Ganancia",
-          value: `$${earnings.toFixed(2)}`,
-          inline: true,
-        },
-        {
-          name: "👛 Bolsillo",
-          value: `$${balance.pocket.toFixed(2)}`,
-          inline: true,
-        },
-        {
-          name: "🏦 Banco",
-          value: `$${balance.bank.toFixed(2)}`,
-          inline: true,
-        },
-      )
+
       .setFooter({ text: `Podrás trabajar de nuevo más tarde` })
       .setTimestamp();
 
@@ -162,7 +143,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       username,
       job: job.name,
       earnings,
-      newBalance: balance.pocket,
     });
   } catch (error) {
     logger.error("Error executing work command", {

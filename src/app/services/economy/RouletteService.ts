@@ -119,17 +119,36 @@ export class RouletteService {
   // Girar la ruleta
   static async spin(gameId: number) {
     try {
-      // Generar número ganador (0-36)
-      const winningNumber = Math.floor(Math.random() * 37);
-
-      // Determinar color
+      // Generar color basado en probabilidades personalizadas
+      // Verde: 15%, Rojo: 42.5%, Negro: 42.5%
+      const random = Math.random();
       let winningColor: string;
-      if (winningNumber === 0) {
+
+      if (random < 0.15) {
         winningColor = "green";
-      } else if (this.RED_NUMBERS.includes(winningNumber)) {
+      } else if (random < 0.575) {
+        // 0.15 + 0.425 = 0.575
         winningColor = "red";
       } else {
         winningColor = "black";
+      }
+
+      // Generar número ganador según el color
+      let winningNumber: number = 0;
+      if (winningColor === "green") {
+        winningNumber = 0;
+      } else if (winningColor === "red") {
+        // Seleccionar un número rojo aleatorio
+        winningNumber =
+          this.RED_NUMBERS[
+            Math.floor(Math.random() * this.RED_NUMBERS.length)
+          ] ?? 1;
+      } else {
+        // Seleccionar un número negro aleatorio
+        winningNumber =
+          this.BLACK_NUMBERS[
+            Math.floor(Math.random() * this.BLACK_NUMBERS.length)
+          ] ?? 2;
       }
 
       // Actualizar el juego
@@ -166,7 +185,7 @@ export class RouletteService {
         },
       });
 
-      if (!game || !game.winningNumber === undefined || !game.winningColor) {
+      if (!game || game.winningNumber === undefined || !game.winningColor) {
         throw new Error("Game not found or not spun yet");
       }
 
