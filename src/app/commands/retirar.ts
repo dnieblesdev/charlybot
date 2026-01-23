@@ -99,7 +99,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           inline: true,
         },
         {
-          name: "👛 Bolsillo (Este servidor)",
+          name: "👛 Bolsillo",
           value: `$${balance.pocket.toFixed(2)}`,
           inline: true,
         },
@@ -110,7 +110,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         },
       )
       .setFooter({
-        text: "⚠️ El dinero en tu bolsillo es por servidor y puede ser robado.",
+        text: "⚠️ Usa /deposit y /retirar para manejar tu dinero",
       })
       .setTimestamp();
 

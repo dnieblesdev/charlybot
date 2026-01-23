@@ -202,7 +202,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       const jailTime = config.jailTimeRob;
 
       // Verificar si tiene suficiente dinero en el bolsillo para pagar la multa
-      if (robber.pocket < penalty) {
+      if (robberBalance.pocket < penalty) {
         // No tiene suficiente en el bolsillo, va a prisión
         const releaseTime = await EconomyService.sendToJail(
           userId,
@@ -230,7 +230,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             },
             {
               name: "👛 Tu Bolsillo",
-              value: `$${robber.pocket.toFixed(2)}`,
+              value: `$${robberBalance.pocket.toFixed(2)}`,
               inline: true,
             },
             {
@@ -263,7 +263,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           victimName: targetUser.username,
           reason: "Insufficient pocket money to pay penalty",
           penalty,
-          pocket: robber.pocket,
+          pocket: robberBalance.pocket,
         });
       } else {
         // Tiene suficiente en el bolsillo, paga la penalización
