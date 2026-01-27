@@ -13,14 +13,13 @@ export default {
       const guildId = message.guild?.id;
       if (!guildId) return;
 
-      // condicion o estructura para evitar hacer el get cada vez que alguien envía un mensaje (aunque sea la cache)
-      let config = await getGuildConfig(guildId);
-
-      if (!config || message.channel.id !== config.targetChannelId) return;
-
       const attachments = Array.from(message.attachments.values());
 
       if (attachments.length === 0) return;
+
+      let config = await getGuildConfig(guildId);
+
+      if (!config || message.channel.id !== config.targetChannelId) return;
 
       // Type guard específico para canales que soportan send
       if (
