@@ -80,7 +80,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     // Realizar el retiro
-    await EconomyService.withdraw(userId, guildId, username, amount);
+    await EconomyService.withdraw(
+      userId,
+      guildId,
+      username,
+      amount,
+      interaction.guild!,
+    );
 
     // Obtener balance actualizado
     const balance = await EconomyService.getBalance(userId, guildId);

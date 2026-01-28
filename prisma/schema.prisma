@@ -147,3 +147,18 @@ model EconomyConfig {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
+
+// Tabla cache del leaderboard por servidor
+model Leaderboard {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  guildId         String
+  username        String
+  totalMoney      Float    @default(0)     // netProfit = totalEarned - totalLost (por servidor)
+  joinedServerAt  DateTime                 // Fecha de ingreso al servidor (de Discord API)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, guildId])
+  @@index([guildId, totalMoney, joinedServerAt])  // Índice para queries rápidas del ranking
+}

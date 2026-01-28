@@ -123,7 +123,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       const earnings = baseEarnings * multiplier;
 
       // Agregar dinero al bolsillo
-      await EconomyService.addPocket(userId, guildId, earnings);
+      await EconomyService.addPocket(
+        userId,
+        guildId,
+        earnings,
+        username,
+        interaction.guild!,
+      );
 
       // Obtener balance actualizado
       const balance = await EconomyService.getBalance(userId, guildId);
@@ -225,7 +231,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         });
       } else {
         // Tiene dinero en el bolsillo, paga la multa
-        await EconomyService.subtractPocket(userId, guildId, fine);
+        await EconomyService.subtractPocket(
+          userId,
+          guildId,
+          fine,
+          username,
+          interaction.guild!,
+        );
 
         // Obtener balance actualizado
         const balance = await EconomyService.getBalance(userId, guildId);

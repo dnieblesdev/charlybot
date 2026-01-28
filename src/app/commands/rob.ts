@@ -141,6 +141,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         userId,
         guildId,
         stolenAmount,
+        targetUser.username,
+        username,
+        interaction.guild!,
       );
 
       // Obtener balances actualizados
@@ -267,7 +270,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         });
       } else {
         // Tiene suficiente en el bolsillo, paga la penalización
-        await EconomyService.transfer(userId, targetUser.id, guildId, penalty);
+        await EconomyService.transfer(
+          userId,
+          targetUser.id,
+          guildId,
+          penalty,
+          username,
+          targetUser.username,
+          interaction.guild!,
+        );
 
         // Obtener balances actualizados
         const robberBalanceAfter = await EconomyService.getBalance(

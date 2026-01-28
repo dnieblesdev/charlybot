@@ -6,6 +6,7 @@ import {
 import type { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../utils/logger.js";
 import { EconomyService } from "../services/economy/EconomyService.js";
+import LeaderboardService from "../services/economy/LeaderboardService.js";
 
 export const data = new SlashCommandBuilder()
   .setName("balance")
@@ -76,6 +77,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Obtener estadísticas del servidor
     const stats = await EconomyService.getStats(userId, interaction.guildId);
 
+    // Obtener posición en el leaderboard
+    const leaderboardPosition = await LeaderboardService.getUserPosition(
+      userId,
+      interaction.guildId,
+    );
+
     // Verificar si está en prisión
     const inJail = await EconomyService.isInJail(userId, interaction.guildId);
     let jailInfo = "";
@@ -110,7 +117,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           value:
             `📈 Total Ganado: $${stats.totalEarned.toFixed(2)}\n` +
             `📉 Total Perdido: $${stats.totalLost.toFixed(2)}\n` +
-            `💹 Ganancia Neta: $${stats.netProfit.toFixed(2)}`,
+            `💹 Ganancia Neta: $${stats.netProfit.toFixed(2)}\n` +
+            `🏆 Posición: ${leaderboardPosition ? `#${leaderboardPosition}` : "Sin ranking"}`,
           inline: false,
         },
       )

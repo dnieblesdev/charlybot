@@ -74,7 +74,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     // Realizar el depósito
-    await EconomyService.deposit(userId, guildId, username, amount);
+    await EconomyService.deposit(
+      userId,
+      guildId,
+      username,
+      amount,
+      interaction.guild!,
+    );
 
     // Obtener balance actualizado
     const balance = await EconomyService.getBalance(userId, guildId);

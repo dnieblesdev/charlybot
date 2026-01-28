@@ -158,6 +158,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       amount,
       betType,
       betValue,
+      username,
+      interaction.guild!,
     );
 
     // Crear embed con información del juego
@@ -264,7 +266,7 @@ async function spinRoulette(gameId: number, interaction: CommandInteraction) {
         content:
           "❌ No hay apuestas en este juego. El juego ha sido cancelado.",
       });
-      await RouletteService.cancelGame(gameId);
+      await RouletteService.cancelGame(gameId, interaction.guild!);
       return;
     }
 
@@ -283,7 +285,10 @@ async function spinRoulette(gameId: number, interaction: CommandInteraction) {
     const game = await RouletteService.spin(gameId);
 
     // Procesar resultados
-    const results = await RouletteService.processResults(gameId);
+    const results = await RouletteService.processResults(
+      gameId,
+      interaction.guild!,
+    );
 
     // Crear embed con resultados
     const colorEmoji =

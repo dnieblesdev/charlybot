@@ -1,6 +1,8 @@
 import { prisma } from "../../../infrastructure/storage/prismaClient.js";
 import logger from "../../../utils/logger.js";
 import { EconomyConfigService } from "./EconomyConfigService.js";
+import LeaderboardService from "./LeaderboardService.js";
+import { Guild } from "discord.js";
 
 export class EconomyService {
   // Obtener o crear usuario en la economía (por servidor)
@@ -144,7 +146,13 @@ export class EconomyService {
   }
 
   // Agregar dinero al bolsillo (por servidor)
-  static async addPocket(userId: string, guildId: string, amount: number) {
+  static async addPocket(
+    userId: string,
+    guildId: string,
+    amount: number,
+    username: string,
+    guild: Guild,
+  ) {
     try {
       const user = await prisma.userEconomy.update({
         where: {
@@ -158,6 +166,15 @@ export class EconomyService {
           totalEarned: { increment: amount },
         },
       });
+
+      // Actualizar leaderboard
+      await LeaderboardService.updateLeaderboard(
+        userId,
+        guildId,
+        username,
+        guild,
+      );
+
       return user;
     } catch (error) {
       logger.error("Error adding to pocket:", error);
@@ -166,7 +183,13 @@ export class EconomyService {
   }
 
   // Restar dinero del bolsillo (por servidor)
-  static async subtractPocket(userId: string, guildId: string, amount: number) {
+  static async subtractPocket(
+    userId: string,
+    guildId: string,
+    amount: number,
+    username: string,
+    guild: Guild,
+  ) {
     try {
       const user = await prisma.userEconomy.update({
         where: {
@@ -180,6 +203,15 @@ export class EconomyService {
           totalLost: { increment: amount },
         },
       });
+
+      // Actualizar leaderboard
+      await LeaderboardService.updateLeaderboard(
+        userId,
+        guildId,
+        username,
+        guild,
+      );
+
       return user;
     } catch (error) {
       logger.error("Error subtracting from pocket:", error);
@@ -193,6 +225,9 @@ export class EconomyService {
     toUserId: string,
     guildId: string,
     amount: number,
+    fromUsername: string,
+    toUsername: string,
+    guild: Guild,
   ) {
     try {
       await prisma.$transaction([
@@ -221,6 +256,23 @@ export class EconomyService {
           },
         }),
       ]);
+
+      // Actualizar leaderboard para ambos usuarios
+      await Promise.all([
+        LeaderboardService.updateLeaderboard(
+          fromUserId,
+          guildId,
+          fromUsername,
+          guild,
+        ),
+        LeaderboardService.updateLeaderboard(
+          toUserId,
+          guildId,
+          toUsername,
+          guild,
+        ),
+      ]);
+
       logger.info(
         `Transferred ${amount} from ${fromUserId} to ${toUserId} in guild ${guildId}`,
       );
@@ -340,6 +392,7 @@ export class EconomyService {
     guildId: string,
     username: string,
     amount: number,
+    guild: Guild,
   ) {
     try {
       const user = await prisma.userEconomy.findUnique({
@@ -379,6 +432,14 @@ export class EconomyService {
         }),
       ]);
 
+      // Actualizar leaderboard (el dinero total no cambia, pero mantener sincronizado)
+      await LeaderboardService.updateLeaderboard(
+        userId,
+        guildId,
+        username,
+        guild,
+      );
+
       logger.info(
         `User ${userId} deposited ${amount} to global bank from guild ${guildId}`,
       );
@@ -394,6 +455,7 @@ export class EconomyService {
     guildId: string,
     username: string,
     amount: number,
+    guild: Guild,
   ) {
     try {
       const globalBank = await prisma.globalBank.findUnique({
@@ -427,6 +489,14 @@ export class EconomyService {
           },
         }),
       ]);
+
+      // Actualizar leaderboard (el dinero total no cambia, pero mantener sincronizado)
+      await LeaderboardService.updateLeaderboard(
+        userId,
+        guildId,
+        username,
+        guild,
+      );
 
       logger.info(
         `User ${userId} withdrew ${amount} from global bank to guild ${guildId}`,

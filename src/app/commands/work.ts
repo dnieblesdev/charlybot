@@ -116,7 +116,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     );
 
     // Agregar dinero al bolsillo
-    await EconomyService.addPocket(userId, guildId, earnings);
+    await EconomyService.addPocket(
+      userId,
+      guildId,
+      earnings,
+      username,
+      interaction.guild!,
+    );
 
     // Actualizar cooldown
     await EconomyService.updateCooldown(userId, guildId, "work");

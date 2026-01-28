@@ -1,5 +1,7 @@
 import { prisma } from "../../../infrastructure/storage/prismaClient.js";
 import logger from "../../../utils/logger.js";
+import LeaderboardService from "./LeaderboardService.js";
+import { Guild } from "discord.js";
 
 export class RouletteService {
   // Números rojos y negros de la ruleta
@@ -65,6 +67,8 @@ export class RouletteService {
     amount: number,
     betType: "color" | "number",
     betValue: string,
+    username: string,
+    guild: Guild,
   ) {
     try {
       // Validar que el usuario tenga suficiente dinero en el bolsillo
@@ -93,6 +97,14 @@ export class RouletteService {
           pocket: { decrement: amount },
         },
       });
+
+      // Actualizar leaderboard
+      await LeaderboardService.updateLeaderboard(
+        userId,
+        guildId,
+        username,
+        guild,
+      );
 
       // Crear la apuesta
       const bet = await prisma.rouletteBet.create({
@@ -176,7 +188,7 @@ export class RouletteService {
   }
 
   // Procesar resultados y pagar ganancias
-  static async processResults(gameId: number) {
+  static async processResults(gameId: number, guild: Guild) {
     try {
       const game = await prisma.rouletteGame.findUnique({
         where: { id: gameId },
@@ -221,7 +233,7 @@ export class RouletteService {
 
         // Si ganó, agregar el dinero al bolsillo
         if (won) {
-          await prisma.userEconomy.update({
+          const userEconomy = await prisma.userEconomy.update({
             where: {
               userId_guildId: {
                 userId: bet.userId,
@@ -233,8 +245,16 @@ export class RouletteService {
               totalEarned: { increment: winAmount },
             },
           });
+
+          // Actualizar leaderboard
+          await LeaderboardService.updateLeaderboard(
+            bet.userId,
+            bet.guildId,
+            userEconomy.username,
+            guild,
+          );
         } else {
-          await prisma.userEconomy.update({
+          const userEconomy = await prisma.userEconomy.update({
             where: {
               userId_guildId: {
                 userId: bet.userId,
@@ -245,6 +265,14 @@ export class RouletteService {
               totalLost: { increment: bet.amount },
             },
           });
+
+          // Actualizar leaderboard (perdió pero el total puede haber cambiado)
+          await LeaderboardService.updateLeaderboard(
+            bet.userId,
+            bet.guildId,
+            userEconomy.username,
+            guild,
+          );
         }
 
         results.push({
@@ -296,7 +324,7 @@ export class RouletteService {
   }
 
   // Cancelar un juego y devolver las apuestas
-  static async cancelGame(gameId: number) {
+  static async cancelGame(gameId: number, guild: Guild) {
     try {
       const game = await prisma.rouletteGame.findUnique({
         where: { id: gameId },
@@ -311,7 +339,7 @@ export class RouletteService {
 
       // Devolver el dinero a los jugadores
       for (const bet of game.bets) {
-        await prisma.userEconomy.update({
+        const userEconomy = await prisma.userEconomy.update({
           where: {
             userId_guildId: {
               userId: bet.userId,
@@ -322,6 +350,14 @@ export class RouletteService {
             pocket: { increment: bet.amount },
           },
         });
+
+        // Actualizar leaderboard
+        await LeaderboardService.updateLeaderboard(
+          bet.userId,
+          bet.guildId,
+          userEconomy.username,
+          guild,
+        );
       }
 
       // Eliminar las apuestas
