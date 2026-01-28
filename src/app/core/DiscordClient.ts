@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits } from "discord.js";
+import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { loadCommands, loadEvents } from "../loader.ts";
 import logger, { logError } from "../../utils/logger.ts";
 
@@ -14,6 +14,7 @@ export class DiscordClient {
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildMembers,
       ],
+      partials: [Partials.GuildMember, Partials.User],
     });
   }
 

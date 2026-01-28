@@ -47,6 +47,8 @@ export async function loadEvents(client: Client) {
       (file) => file.endsWith(".ts") || file.endsWith(".js"),
     );
 
+    console.log(`📋 Encontrados ${eventFiles.length} archivos de eventos`);
+
     for (const file of eventFiles) {
       const filePath = path.join(eventsPath, file);
       const event = await import(filePath);
@@ -57,10 +59,17 @@ export async function loadEvents(client: Client) {
       }
 
       const evt = event.default;
-      if (evt.once) client.once(evt.name, (...args) => evt.execute(...args));
-      else client.on(evt.name, (...args) => evt.execute(...args));
+      if (evt.once) {
+        client.once(evt.name, (...args) => evt.execute(...args));
+        console.log(`✅ Evento cargado (once): ${evt.name} - ${file}`);
+      } else {
+        client.on(evt.name, (...args) => evt.execute(...args));
+        console.log(`✅ Evento cargado (on): ${evt.name} - ${file}`);
+      }
     }
+
+    console.log(`🎯 ${eventFiles.length} eventos cargados correctamente`);
   } catch (error) {
-    console.error("Error cargando eventos:", error);
+    console.error("❌ Error cargando eventos:", error);
   }
 }
