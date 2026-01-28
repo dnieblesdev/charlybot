@@ -29,7 +29,7 @@ export default {
               // La conexión ya está destruida, usar método específico para esta situación
               musicService.cleanQueueAfterDisconnect(guildId);
               logger.debug(
-                "Connection already destroyed, cleaned queue memory only",
+                "Conexión ya destruida, limpieza de memoria de cola únicamente",
                 {
                   guildId,
                   channelId: oldState.channel.id,
@@ -40,7 +40,7 @@ export default {
               // Conexión válida, usar clearQueue normal
               musicService.clearQueue(guildId);
               logger.info(
-                "Bot was disconnected from voice channel, cleared music queue",
+                "Bot desconectado del canal de voz, cola de música limpiada",
                 {
                   guildId,
                   channelId: oldState.channel.id,
@@ -66,7 +66,7 @@ export default {
       ) as TextChannel;
 
       if (!logChannel) {
-        logger.warn("Voice log channel not found", {
+        logger.warn("Canal de logs de voz no encontrado", {
           guildId: newState.guild.id,
           channelId: config.voiceLogChannelId,
         });
@@ -88,11 +88,11 @@ export default {
         const embed = new EmbedBuilder()
           .setColor(0x00ff00) // Verde
           .setAuthor({
-            name: member.user.tag,
+            name: member.user.globalName || member.user.displayName,
             iconURL: member.user.displayAvatarURL(),
           })
           .setDescription(
-            `🟢 **${member.user.tag}** se unió a ${newState.channel}`,
+            `🟢 **${member.user.displayName}** se unió a ${newState.channel}`,
           )
           .addFields({
             name: "Canal de voz",
@@ -103,8 +103,9 @@ export default {
 
         await logChannel.send({ embeds: [embed] });
 
-        logger.debug("Voice join logged successfully", {
+        logger.debug("Entrada a canal de voz registrada exitosamente", {
           userId: member.user.id,
+          displayName: member.user.displayName,
           guildId: newState.guild.id,
           channelId: newState.channel.id,
           channelName: newState.channel.name,
@@ -122,11 +123,11 @@ export default {
         const embed = new EmbedBuilder()
           .setColor(0xff0000) // Rojo
           .setAuthor({
-            name: member.user.tag,
+            name: member.user.globalName || member.user.displayName,
             iconURL: member.user.displayAvatarURL(),
           })
           .setDescription(
-            `🔴 **${member.user.tag}** salió de ${oldState.channel}`,
+            `🔴 **${member.user.displayName}** salió de ${oldState.channel}`,
           )
           .addFields({
             name: "Canal de voz",
@@ -137,8 +138,9 @@ export default {
 
         await logChannel.send({ embeds: [embed] });
 
-        logger.debug("Voice leave logged successfully", {
+        logger.debug("Salida de canal de voz registrada exitosamente", {
           userId: member.user.id,
+          displayName: member.user.displayName,
           guildId: newState.guild.id,
           channelId: oldState.channel.id,
           channelName: oldState.channel.name,
@@ -160,10 +162,12 @@ export default {
         const embed = new EmbedBuilder()
           .setColor(0xffa500) // Naranja
           .setAuthor({
-            name: member.user.tag,
+            name: member.user.globalName || member.user.displayName,
             iconURL: member.user.displayAvatarURL(),
           })
-          .setDescription(`🟠 **${member.user.tag}** cambió de canal de voz`)
+          .setDescription(
+            `🟠 **${member.user.displayName}** cambió de canal de voz`,
+          )
           .addFields(
             {
               name: "Desde",
@@ -180,7 +184,7 @@ export default {
 
         await logChannel.send({ embeds: [embed] });
 
-        logger.debug("Voice switch logged successfully", {
+        logger.debug("Cambio de canal de voz registrado exitosamente", {
           userId: member.user.id,
           guildId: newState.guild.id,
           fromChannelId: oldState.channel.id,
@@ -190,7 +194,7 @@ export default {
         });
       }
     } catch (error) {
-      logger.error("Error in voiceStateUpdate event", {
+      logger.error("Error en evento voiceStateUpdate", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         guildId: newState.guild?.id,
