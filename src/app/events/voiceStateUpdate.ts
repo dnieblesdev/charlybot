@@ -92,7 +92,7 @@ export default {
             iconURL: member.user.displayAvatarURL(),
           })
           .setDescription(
-            `🟢 **${member.user.displayName}** se unió a ${newState.channel}`,
+            `🟢 **${member.nickname || member.user.displayName}** se unió a ${newState.channel}`,
           )
           .addFields({
             name: "Canal de voz",
@@ -105,7 +105,7 @@ export default {
 
         logger.debug("Entrada a canal de voz registrada exitosamente", {
           userId: member.user.id,
-          displayName: member.user.displayName,
+          nameMember: member.nickname || member.user.displayName,
           guildId: newState.guild.id,
           channelId: newState.channel.id,
           channelName: newState.channel.name,
@@ -127,7 +127,7 @@ export default {
             iconURL: member.user.displayAvatarURL(),
           })
           .setDescription(
-            `🔴 **${member.user.displayName}** salió de ${oldState.channel}`,
+            `🔴 **${member.nickname || member.user.displayName}** salió de ${oldState.channel}`,
           )
           .addFields({
             name: "Canal de voz",
@@ -140,7 +140,7 @@ export default {
 
         logger.debug("Salida de canal de voz registrada exitosamente", {
           userId: member.user.id,
-          displayName: member.user.displayName,
+          displayName: member.nickname || member.user.displayName,
           guildId: newState.guild.id,
           channelId: oldState.channel.id,
           channelName: oldState.channel.name,
@@ -166,7 +166,7 @@ export default {
             iconURL: member.user.displayAvatarURL(),
           })
           .setDescription(
-            `🟠 **${member.user.displayName}** cambió de canal de voz`,
+            `🟠 **${member.nickname || member.user.displayName}** cambió de canal de voz`,
           )
           .addFields(
             {
