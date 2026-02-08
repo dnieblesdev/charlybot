@@ -10,17 +10,6 @@ import {
 import logger, { logCommand } from "../../../utils/logger.js";
 import * as AutoRoleRepo from "../../../config/repositories/AutoRoleRepo.js";
 
-export const data = new SlashCommandBuilder()
-  .setName("autorole-remove")
-  .setDescription("Elimina una configuración de auto-roles")
-  .addStringOption((option) =>
-    option
-      .setName("message_id")
-      .setDescription("ID del mensaje configurado")
-      .setRequired(true),
-  )
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
     logCommand(
@@ -63,7 +52,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Obtener información del canal y roles
     let channelInfo = `<#${autoRole.channelId}>`;
     try {
-      const channel = await interaction.guild.channels.fetch(autoRole.channelId);
+      const channel = await interaction.guild.channels.fetch(
+        autoRole.channelId,
+      );
       if (!channel) {
         channelInfo = `Canal desconocido (${autoRole.channelId})`;
       }
@@ -145,7 +136,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         });
       } else {
         await confirmation.update({
-          content: "❌ Eliminación cancelada. La configuración se mantiene activa.",
+          content:
+            "❌ Eliminación cancelada. La configuración se mantiene activa.",
           components: [],
         });
       }

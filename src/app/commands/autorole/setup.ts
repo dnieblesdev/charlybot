@@ -1,5 +1,4 @@
 import {
-  SlashCommandBuilder,
   PermissionFlagsBits,
   ChatInputCommandInteraction,
   ModalBuilder,
@@ -11,7 +10,6 @@ import {
   ButtonStyle,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
-  ComponentType,
   type ModalActionRowComponentBuilder,
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
@@ -20,17 +18,6 @@ import * as AutoRoleService from "../../services/AutoRoleService.js";
 
 // Map para almacenar collectors activos por usuario
 const activeCollectors = new Map<string, any>();
-
-export const data = new SlashCommandBuilder()
-  .setName("autorole-setup")
-  .setDescription("Configura roles automáticos con reacciones o botones")
-  .addStringOption((option) =>
-    option
-      .setName("message_id")
-      .setDescription("ID del mensaje existente (opcional)")
-      .setRequired(false),
-  )
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 interface SetupSession {
   guildId: string;

@@ -1,16 +1,6 @@
-import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-  ChatInputCommandInteraction,
-  EmbedBuilder,
-} from "discord.js";
+import { ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import * as AutoRoleRepo from "../../../config/repositories/AutoRoleRepo.js";
-
-export const data = new SlashCommandBuilder()
-  .setName("autorole-list")
-  .setDescription("Lista todas las configuraciones de auto-roles del servidor")
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {

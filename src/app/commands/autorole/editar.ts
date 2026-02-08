@@ -1,21 +1,6 @@
-import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-  ChatInputCommandInteraction,
-} from "discord.js";
+import { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import * as AutoRoleRepo from "../../../config/repositories/AutoRoleRepo.js";
-
-export const data = new SlashCommandBuilder()
-  .setName("autorole-edit")
-  .setDescription("Edita una configuración de auto-roles existente")
-  .addStringOption((option) =>
-    option
-      .setName("message_id")
-      .setDescription("ID del mensaje configurado")
-      .setRequired(true),
-  )
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -58,7 +43,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // Verificar que el mensaje todavía existe
     try {
-      const channel = await interaction.guild.channels.fetch(autoRole.channelId);
+      const channel = await interaction.guild.channels.fetch(
+        autoRole.channelId,
+      );
       if (!channel || !channel.isTextBased()) {
         await interaction.editReply({
           content:
