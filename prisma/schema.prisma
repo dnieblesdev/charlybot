@@ -162,3 +162,42 @@ model Leaderboard {
   @@unique([userId, guildId])
   @@index([guildId, totalMoney, joinedServerAt])  // Índice para queries rápidas del ranking
 }
+
+// Sistema de Auto-Roles con Reacciones y Botones
+model AutoRole {
+  id            Int           @id @default(autoincrement())
+  guildId       String
+  channelId     String
+  messageId     String
+  mode          String        // "multiple" o "unique"
+  embedTitle    String?       // Si el bot creó el mensaje
+  embedDesc     String?       // Descripción del embed
+  embedColor    String?       // Color del embed (hex)
+  embedFooter   String?       // Texto del footer
+  embedThumb    String?       // URL de la thumbnail
+  embedImage    String?       // URL de la imagen
+  embedTimestamp Boolean?     // Mostrar timestamp
+  embedAuthor   String?       // Texto del autor
+  createdBy     String        // userId del admin que lo creó
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  mappings      RoleMapping[]
+
+  @@unique([guildId, messageId])
+  @@index([guildId])
+}
+
+model RoleMapping {
+  id            Int       @id @default(autoincrement())
+  autoRoleId    Int
+  roleId        String    // Discord role ID
+  type          String    // "reaction" o "button"
+  emoji         String?   // Para reacciones (Unicode o custom emoji ID)
+  buttonLabel   String?   // Para botones
+  buttonStyle   String?   // PRIMARY, SECONDARY, SUCCESS, DANGER
+  order         Int       // Orden de aparición
+  createdAt     DateTime  @default(now())
+  autoRole      AutoRole  @relation(fields: [autoRoleId], references: [id], onDelete: Cascade)
+
+  @@index([autoRoleId])
+}

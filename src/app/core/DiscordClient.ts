@@ -13,8 +13,14 @@ export class DiscordClient {
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessageReactions,
       ],
-      partials: [Partials.GuildMember, Partials.User],
+      partials: [
+        Partials.GuildMember,
+        Partials.User,
+        Partials.Message,
+        Partials.Reaction,
+      ],
     });
   }
 

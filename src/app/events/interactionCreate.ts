@@ -13,6 +13,12 @@ import {
   handleClassSelect,
   handleSubclassSelect,
 } from "../services/VerificationHandler.ts";
+import * as AutoRoleRepo from "../../config/repositories/AutoRoleRepo.ts";
+import * as AutoRoleService from "../services/AutoRoleService.ts";
+import {
+  handleModalSubmit as handleAutoRoleModalSubmit,
+  handleSelectMenu as handleAutoRoleSelectMenu,
+} from "../commands/autorole/setup.ts";
 
 export default {
   name: Events.InteractionCreate,
@@ -33,6 +39,120 @@ export default {
 
         if (interaction.customId.startsWith("verification_reject_")) {
           await handleVerificationReject(interaction);
+          return;
+        }
+
+        // Manejar botones de auto-roles (solo botones de asignación en mensajes públicos)
+        if (interaction.customId.startsWith("autorole_")) {
+          // Los botones de configuración (add_mapping, edit_mapping, etc.) se manejan
+          // automáticamente por el collector en setup.ts, así que solo procesamos
+          // los botones de asignación de roles
+
+          // Si es un botón de configuración, ignorarlo aquí
+          if (
+            interaction.customId === "autorole_add_mapping" ||
+            interaction.customId === "autorole_edit_mapping" ||
+            interaction.customId === "autorole_remove_mapping" ||
+            interaction.customId === "autorole_toggle_mode" ||
+            interaction.customId === "autorole_customize_embed" ||
+            interaction.customId === "autorole_finish" ||
+            interaction.customId === "autorole_cancel" ||
+            interaction.customId === "autorole_confirm_remove" ||
+            interaction.customId === "autorole_cancel_remove"
+          ) {
+            // Estos ya están siendo manejados por el collector
+            return;
+          }
+
+          // Botones de asignación de roles en mensajes públicos (autorole_ROLEID)
+          try {
+            if (!interaction.guild) return;
+
+            const roleId = interaction.customId.replace("autorole_", "");
+
+            // Verificar si este mensaje tiene configuración de auto-roles
+            const autoRole = await AutoRoleRepo.getAutoRoleByMessageId(
+              interaction.message.id,
+            );
+
+            if (!autoRole) {
+              await interaction.reply({
+                content: "❌ Esta configuración de auto-roles ya no existe.",
+                ephemeral: true,
+              });
+              return;
+            }
+
+            // Verificar si el mapping existe
+            const mapping = autoRole.mappings.find(
+              (m) => m.roleId === roleId && m.type === "button",
+            );
+
+            if (!mapping) {
+              await interaction.reply({
+                content: "❌ Este botón ya no está configurado.",
+                ephemeral: true,
+              });
+              return;
+            }
+
+            const member = await interaction.guild.members.fetch(
+              interaction.user.id,
+            );
+
+            // Verificar si el usuario ya tiene el rol
+            const hasRole = member.roles.cache.has(roleId);
+
+            if (hasRole) {
+              // Quitar el rol
+              const result = await AutoRoleService.removeRole(member, roleId);
+              if (result.success) {
+                await interaction.reply({
+                  content: `✅ Rol removido exitosamente.`,
+                  ephemeral: true,
+                });
+              } else {
+                await interaction.reply({
+                  content: `❌ ${result.error || "Error al remover el rol."}`,
+                  ephemeral: true,
+                });
+              }
+            } else {
+              // Asignar el rol
+              const result = await AutoRoleService.assignRole(
+                member,
+                roleId,
+                autoRole,
+              );
+              if (result.success) {
+                await interaction.reply({
+                  content: `✅ Rol asignado exitosamente.`,
+                  ephemeral: true,
+                });
+              } else {
+                await interaction.reply({
+                  content: `❌ ${result.error || "Error al asignar el rol."}`,
+                  ephemeral: true,
+                });
+              }
+            }
+          } catch (autoRoleErr) {
+            logger.error("Error procesando botón de auto-role", {
+              error:
+                autoRoleErr instanceof Error
+                  ? autoRoleErr.message
+                  : String(autoRoleErr),
+              customId: interaction.customId,
+              userId: interaction.user.id,
+              guildId: interaction.guildId,
+            });
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: "❌ Error al procesar el rol.",
+                ephemeral: true,
+              });
+            }
+          }
           return;
         }
       } catch (buttonErr) {
@@ -56,6 +176,15 @@ export default {
 
         if (interaction.customId.startsWith("subclass_select_")) {
           await handleSubclassSelect(interaction);
+          return;
+        }
+
+        // Manejar select menus de auto-roles
+        if (
+          interaction.customId === "autorole_select_edit" ||
+          interaction.customId === "autorole_select_remove"
+        ) {
+          await handleAutoRoleSelectMenu(interaction);
           return;
         }
       } catch (selectErr) {
@@ -98,6 +227,16 @@ export default {
         // Modal de verificación
         if (interaction.customId.startsWith("verification_modal_")) {
           await handleVerificationModalSubmit(interaction);
+          return;
+        }
+
+        // Modales de auto-roles
+        if (
+          interaction.customId === "autorole_initial_modal" ||
+          interaction.customId === "autorole_add_mapping_modal" ||
+          interaction.customId.startsWith("autorole_customize_modal_")
+        ) {
+          await handleAutoRoleModalSubmit(interaction);
           return;
         }
 
