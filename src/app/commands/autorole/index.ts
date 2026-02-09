@@ -23,7 +23,7 @@ export const data = new SlashCommandBuilder()
       .setDescription("Configura roles automáticos con reacciones o botones")
       .addStringOption((option) =>
         option
-          .setName("messageID")
+          .setName("message_id")
           .setDescription("ID del mensaje")
           .setRequired(false),
       ),
@@ -45,7 +45,7 @@ export const data = new SlashCommandBuilder()
       )
       .addStringOption((option) =>
         option
-          .setName("messageID")
+          .setName("message_id")
           .setDescription("ID del mensaje")
           .setRequired(true),
       ),
@@ -58,7 +58,7 @@ export const data = new SlashCommandBuilder()
       .setDescription("Elimina un mensaje configurado")
       .addStringOption((option) =>
         option
-          .setName("messageID")
+          .setName("message_id")
           .setDescription("ID del mensaje")
           .setRequired(true),
       ),
