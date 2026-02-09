@@ -13,26 +13,62 @@ export async function loadCommands(
   const commandsPath = path.join(__dirname, "commands");
 
   try {
-    const files = await readdir(commandsPath);
-    const commandFiles = files.filter(
-      (file) => file.endsWith(".ts") || file.endsWith(".js"),
-    );
+    const entries = await readdir(commandsPath, { withFileTypes: true });
+    const commandFiles: string[] = [];
+
+    // Buscar archivos .ts/.js directamente en commands/
+    for (const entry of entries) {
+      if (
+        entry.isFile() &&
+        (entry.name.endsWith(".ts") || entry.name.endsWith(".js"))
+      ) {
+        commandFiles.push(entry.name);
+      }
+      // Buscar carpetas con index.ts/index.js (como autorole/index.ts)
+      else if (
+        entry.isDirectory() &&
+        entry.name !== "register" &&
+        entry.name !== "clear" &&
+        entry.name !== "debug"
+      ) {
+        const subfolderPath = path.join(commandsPath, entry.name);
+        const subfolderEntries = await readdir(subfolderPath);
+        if (
+          subfolderEntries.includes("index.ts") ||
+          subfolderEntries.includes("index.js")
+        ) {
+          const indexFile = subfolderEntries.includes("index.ts")
+            ? "index.ts"
+            : "index.js";
+          commandFiles.push(`${entry.name}/${indexFile}`);
+        }
+      }
+    }
+
+    console.log(`📋 Encontrados ${commandFiles.length} archivos de comandos`);
 
     for (const file of commandFiles) {
       const filePath = path.join(commandsPath, file);
-      const command = await import(filePath);
+      try {
+        const command = await import(filePath);
 
-      if (command.data && command.execute) {
-        commands.set(command.data.name, command);
-        if (client && command.init) {
-          await command.init(client);
+        if (command.data && command.execute) {
+          commands.set(command.data.name, command);
+          if (client && command.init) {
+            await command.init(client);
+          }
+          console.log(`✅ Comando cargado: ${command.data.name} - ${file}`);
+        } else {
+          console.warn(`⚠️ Comando inválido en ${file}`);
         }
-      } else {
-        console.warn(`⚠️ Comando inválido en ${file}`);
+      } catch (error) {
+        console.error(`❌ Error cargando comando ${file}:`, error);
       }
     }
+
+    console.log(`🎯 ${commands.size} comandos cargados correctamente`);
   } catch (error) {
-    console.error("Error cargando comandos:", error);
+    console.error("❌ Error cargando comandos:", error);
   }
 
   return commands;

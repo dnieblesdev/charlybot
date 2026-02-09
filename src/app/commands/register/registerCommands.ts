@@ -21,9 +21,33 @@ async function registerCommands() {
 
   // Ir a la carpeta correcta: desde register/ subir a commands/
   const commandsPath = path.join(__dirname, "..");
-  const commandFiles = (await readdir(commandsPath)).filter(
-    (file) => file.endsWith(".ts") && !file.includes("register"),
-  );
+  const entries = await readdir(commandsPath, { withFileTypes: true });
+
+  const commandFiles: string[] = [];
+
+  // Buscar archivos .ts directamente en commands/ (excluyendo register)
+  for (const entry of entries) {
+    if (
+      entry.isFile() &&
+      entry.name.endsWith(".ts") &&
+      !entry.name.includes("register")
+    ) {
+      commandFiles.push(entry.name);
+    }
+    // Buscar carpetas con index.ts (como autorole/index.ts)
+    else if (
+      entry.isDirectory() &&
+      entry.name !== "register" &&
+      entry.name !== "clear" &&
+      entry.name !== "debug"
+    ) {
+      const subfolderPath = path.join(commandsPath, entry.name);
+      const subfolderEntries = await readdir(subfolderPath);
+      if (subfolderEntries.includes("index.ts")) {
+        commandFiles.push(`${entry.name}/index.ts`);
+      }
+    }
+  }
 
   logger.info(`Found ${commandFiles.length} command files`, {
     context: "registerCommands",

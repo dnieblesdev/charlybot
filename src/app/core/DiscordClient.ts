@@ -31,6 +31,9 @@ export class DiscordClient {
       // Iniciar comandos y eventos
       logger.info("📦 Cargando comandos...");
       this.client.commands = await loadCommands(this.client);
+      logger.info(
+        `✅ ${this.client.commands.size} comandos cargados exitosamente`,
+      );
 
       logger.info("🎯 Cargando eventos...");
       await loadEvents(this.client);
