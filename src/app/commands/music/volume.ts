@@ -1,15 +1,10 @@
-import { SlashCommandBuilder } from "@discordjs/builders";
-import type { CommandInteraction } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.ts";
-import musicService from "../services/MusicService.ts";
+import type { ChatInputCommandInteraction } from "discord.js";
+import logger, { logCommand } from "../../../utils/logger.ts";
+import musicService from "../../services/MusicService.ts";
 
-export const data = new SlashCommandBuilder()
-  .setName("stop")
-  .setDescription("Detiene la reproducción y limpia la cola");
-
-export async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
   try {
-    logCommand(interaction.user.id, interaction.guildId || "DM", "stop");
+    logCommand(interaction.user.id, interaction.guildId || "DM", "volume");
 
     if (!interaction.guildId || !interaction.guild) {
       await interaction.reply({
@@ -29,32 +24,38 @@ export async function execute(interaction: CommandInteraction) {
       return;
     }
 
-    const stopped = musicService.stop(interaction.guildId);
+    const volume = interaction.options.getInteger("level", true);
 
-    if (stopped) {
+    const success = musicService.setVolume(interaction.guildId, volume);
+
+    if (success) {
+      const volumeIcon =
+        volume === 0 ? "🔇" : volume < 50 ? "🔈" : volume < 100 ? "🔉" : "🔊";
+
       await interaction.reply({
-        content: "⏹️ Música detenida y cola limpiada.",
+        content: `${volumeIcon} Volumen ajustado a **${volume}%**`,
       });
 
-      logger.info("Stop command executed successfully", {
+      logger.info("Volume command executed successfully", {
         userId: interaction.user.id,
         guildId: interaction.guildId,
+        volume,
       });
     } else {
       await interaction.reply({
-        content: "❌ No se pudo detener la música.",
+        content: "❌ No se pudo ajustar el volumen.",
         ephemeral: true,
       });
     }
   } catch (error) {
-    logger.error("Error executing stop command", {
+    logger.error("Error executing volume command", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
 
-    const errorMessage = "❌ Error al detener la música.";
+    const errorMessage = "❌ Error al ajustar el volumen.";
     if (interaction.replied) {
       return;
     } else {

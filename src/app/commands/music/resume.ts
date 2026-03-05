@@ -1,13 +1,8 @@
-import { SlashCommandBuilder } from "@discordjs/builders";
-import type { CommandInteraction } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.ts";
-import musicService from "../services/MusicService.ts";
+import type { ChatInputCommandInteraction } from "discord.js";
+import logger, { logCommand } from "../../../utils/logger.ts";
+import musicService from "../../services/MusicService.ts";
 
-export const data = new SlashCommandBuilder()
-  .setName("resume")
-  .setDescription("Reanuda la reproducción pausada");
-
-export async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
   try {
     logCommand(interaction.user.id, interaction.guildId || "DM", "resume");
 

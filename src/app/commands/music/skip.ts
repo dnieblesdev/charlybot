@@ -1,23 +1,10 @@
-import { SlashCommandBuilder } from "@discordjs/builders";
 import type { ChatInputCommandInteraction } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.ts";
-import musicService from "../services/MusicService.ts";
-
-export const data = new SlashCommandBuilder()
-  .setName("volume")
-  .setDescription("Ajusta el volumen de la reproducción")
-  .addIntegerOption((option) =>
-    option
-      .setName("level")
-      .setDescription("Nivel de volumen (0-200)")
-      .setRequired(true)
-      .setMinValue(0)
-      .setMaxValue(200),
-  );
+import logger, { logCommand } from "../../../utils/logger.ts";
+import musicService from "../../services/MusicService.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
-    logCommand(interaction.user.id, interaction.guildId || "DM", "volume");
+    logCommand(interaction.user.id, interaction.guildId || "DM", "skip");
 
     if (!interaction.guildId || !interaction.guild) {
       await interaction.reply({
@@ -37,38 +24,40 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    const volume = interaction.options.getInteger("level", true);
-
-    const success = musicService.setVolume(interaction.guildId, volume);
-
-    if (success) {
-      const volumeIcon =
-        volume === 0 ? "🔇" : volume < 50 ? "🔈" : volume < 100 ? "🔉" : "🔊";
-
+    if (!queue.isPlaying) {
       await interaction.reply({
-        content: `${volumeIcon} Volumen ajustado a **${volume}%**`,
+        content: "❌ No hay música reproduciéndose actualmente.",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    const skipped = await musicService.skip(interaction.guildId);
+
+    if (skipped) {
+      await interaction.reply({
+        content: "⏭️ Canción saltada.",
       });
 
-      logger.info("Volume command executed successfully", {
+      logger.info("Skip command executed successfully", {
         userId: interaction.user.id,
         guildId: interaction.guildId,
-        volume,
       });
     } else {
       await interaction.reply({
-        content: "❌ No se pudo ajustar el volumen.",
+        content: "❌ No se pudo saltar la canción.",
         ephemeral: true,
       });
     }
   } catch (error) {
-    logger.error("Error executing volume command", {
+    logger.error("Error executing skip command", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
 
-    const errorMessage = "❌ Error al ajustar el volumen.";
+    const errorMessage = "❌ Error al saltar la canción.";
     if (interaction.replied) {
       return;
     } else {

@@ -1,15 +1,10 @@
-import { SlashCommandBuilder } from "@discordjs/builders";
-import type { CommandInteraction } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.ts";
-import musicService from "../services/MusicService.ts";
+import type { ChatInputCommandInteraction } from "discord.js";
+import logger, { logCommand } from "../../../utils/logger.ts";
+import musicService from "../../services/MusicService.ts";
 
-export const data = new SlashCommandBuilder()
-  .setName("skip")
-  .setDescription("Salta a la siguiente canción");
-
-export async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
   try {
-    logCommand(interaction.user.id, interaction.guildId || "DM", "skip");
+    logCommand(interaction.user.id, interaction.guildId || "DM", "shuffle");
 
     if (!interaction.guildId || !interaction.guild) {
       await interaction.reply({
@@ -23,46 +18,47 @@ export async function execute(interaction: CommandInteraction) {
 
     if (!queue || !queue.connection) {
       await interaction.reply({
-        content: "❌ No hay música reproduciéndose.",
+        content: "❌ No hay música en la cola.",
         ephemeral: true,
       });
       return;
     }
 
-    if (!queue.isPlaying) {
+    if (queue.songs.length < 2) {
       await interaction.reply({
-        content: "❌ No hay música reproduciéndose actualmente.",
+        content: "❌ No hay suficientes canciones en la cola para mezclar.",
         ephemeral: true,
       });
       return;
     }
 
-    const skipped = await musicService.skip(interaction.guildId);
+    const shuffled = musicService.shuffle(interaction.guildId);
 
-    if (skipped) {
+    if (shuffled) {
       await interaction.reply({
-        content: "⏭️ Canción saltada.",
+        content: `🔀 Se mezclaron **${queue.songs.length}** canciones en la cola.`,
       });
 
-      logger.info("Skip command executed successfully", {
+      logger.info("Shuffle command executed successfully", {
         userId: interaction.user.id,
         guildId: interaction.guildId,
+        songCount: queue.songs.length,
       });
     } else {
       await interaction.reply({
-        content: "❌ No se pudo saltar la canción.",
+        content: "❌ No se pudo mezclar la cola.",
         ephemeral: true,
       });
     }
   } catch (error) {
-    logger.error("Error executing skip command", {
+    logger.error("Error executing shuffle command", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
 
-    const errorMessage = "❌ Error al saltar la canción.";
+    const errorMessage = "❌ Error al mezclar la cola.";
     if (interaction.replied) {
       return;
     } else {

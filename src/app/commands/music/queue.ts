@@ -1,19 +1,7 @@
-import { SlashCommandBuilder } from "@discordjs/builders";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { EmbedBuilder } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.ts";
-import musicService from "../services/MusicService.ts";
-
-export const data = new SlashCommandBuilder()
-  .setName("queue")
-  .setDescription("Muestra la cola de reproducción actual")
-  .addIntegerOption((option) =>
-    option
-      .setName("page")
-      .setDescription("Número de página a mostrar")
-      .setRequired(false)
-      .setMinValue(1),
-  );
+import logger, { logCommand } from "../../../utils/logger.ts";
+import musicService from "../../services/MusicService.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
