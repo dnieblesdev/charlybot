@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { addClass, classExists } from "../../../config/repositories/ClassRolesRepo.ts";
 import logger, { logCommand } from "../../../utils/logger.ts";
@@ -9,7 +10,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede ser usado en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -31,7 +32,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (exists) {
       await interaction.reply({
         content: `❌ La clase **${className}** ya existe. Usa \`/remove-class\` primero si quieres reemplazarla.`,
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -72,7 +73,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         `   • ${subclass1Name} (${subclass1Role})\n` +
         `   • ${subclass2Name} (${subclass2Role})\n\n` +
         `Los usuarios ahora podrán seleccionar esta clase al verificarse.`,
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error ejecutando add-class", {
@@ -86,7 +87,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

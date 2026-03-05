@@ -2,6 +2,7 @@ import {
   ChatInputCommandInteraction,
   PermissionFlagsBits,
   SlashCommandBuilder,
+  MessageFlags,
 } from "discord.js";
 
 import { execute as balance } from "./balance";
@@ -330,7 +331,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     default:
       await interaction.reply({
         content: "Comando no reconocido",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       break;
   }

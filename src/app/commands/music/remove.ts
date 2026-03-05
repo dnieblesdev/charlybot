@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { EmbedBuilder } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.ts";
@@ -10,7 +11,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guildId || !interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede usarse en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -20,7 +21,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!queue || !queue.connection) {
       await interaction.reply({
         content: "❌ No hay música en la cola.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -28,7 +29,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (queue.songs.length === 0) {
       await interaction.reply({
         content: "❌ La cola está vacía.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -38,7 +39,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (position > queue.songs.length) {
       await interaction.reply({
         content: `❌ Posición inválida. La cola tiene ${queue.songs.length} canción(es).`,
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -74,7 +75,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     } else {
       await interaction.reply({
         content: "❌ No se pudo eliminar la canción.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
     }
   } catch (error) {
@@ -89,7 +90,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.replied) {
       return;
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

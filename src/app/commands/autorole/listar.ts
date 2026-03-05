@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, EmbedBuilder, MessageFlags } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import * as AutoRoleRepo from "../../../config/repositories/AutoRoleRepo.js";
 
@@ -13,12 +13,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede usarse en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
     const autoRoles = await AutoRoleRepo.getAutoRolesByGuild(
       interaction.guild.id,
@@ -121,7 +121,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

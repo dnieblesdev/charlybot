@@ -1,5 +1,5 @@
 import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
-import { ChannelType } from "discord.js";
+import { ChannelType, MessageFlags } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.ts";
 import musicService from "../../services/MusicService.ts";
 
@@ -11,7 +11,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guildId || !interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede usarse en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -23,7 +23,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!voiceChannel) {
       await interaction.reply({
         content: "❌ Debes estar en un canal de voz para usar este comando.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -35,7 +35,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     ) {
       await interaction.reply({
         content: "❌ Debes estar en un canal de voz válido.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -46,7 +46,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await interaction.reply({
         content:
           "❌ No tengo permisos para conectarme o hablar en ese canal de voz.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -91,7 +91,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

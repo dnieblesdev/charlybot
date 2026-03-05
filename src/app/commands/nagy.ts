@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
+import { MessageFlags } from "discord.js";
 import type { CommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../utils/logger.ts";
 
@@ -30,7 +31,7 @@ export async function execute(interaction: CommandInteraction) {
       // Si ya se respondió, no hacer nada
       return;
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

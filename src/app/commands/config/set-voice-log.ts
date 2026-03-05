@@ -47,7 +47,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.replied) {
       return;
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

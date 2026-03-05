@@ -8,6 +8,7 @@ import {
   ButtonStyle,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
+  MessageFlags,
 } from "discord.js";
 import type {
   ButtonInteraction,
@@ -46,7 +47,7 @@ export async function handleVerificationStart(
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este botón solo funciona en servidores.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -57,7 +58,7 @@ export async function handleVerificationStart(
       await interaction.reply({
         content:
           "❌ El sistema de verificación no está configurado correctamente.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -66,7 +67,7 @@ export async function handleVerificationStart(
     if (member.roles.cache.has(config.verifiedRoleId)) {
       await interaction.reply({
         content: "✅ Ya estás verificado en este servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -107,7 +108,7 @@ export async function handleVerificationStart(
     if (!interaction.replied) {
       await interaction.reply({
         content: "❌ Hubo un error mostrando el formulario de verificación.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
     }
   }
@@ -123,7 +124,7 @@ export async function handleVerificationModalSubmit(
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este formulario solo funciona en servidores.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -139,7 +140,7 @@ export async function handleVerificationModalSubmit(
       await interaction.reply({
         content:
           "❌ No hay clases configuradas en el sistema. Contacta a un administrador.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -167,7 +168,7 @@ export async function handleVerificationModalSubmit(
     await interaction.reply({
       content: `**Paso 1/2:** Selecciona tu clase, ${inGameName}`,
       components: [row],
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
 
     logger.info(
@@ -191,7 +192,7 @@ export async function handleVerificationModalSubmit(
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }
@@ -206,7 +207,7 @@ export async function handleClassSelect(
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este menú solo funciona en servidores.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -215,7 +216,7 @@ export async function handleClassSelect(
     if (!selectedClass) {
       await interaction.reply({
         content: "❌ No se seleccionó ninguna clase.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -225,7 +226,7 @@ export async function handleClassSelect(
     if (!classConfig) {
       await interaction.reply({
         content: "❌ No se pudo encontrar la configuración de esta clase.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -266,9 +267,9 @@ export async function handleClassSelect(
 
     const errorMessage = "❌ Hubo un error procesando tu selección.";
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: errorMessage, ephemeral: true });
+      await interaction.followUp({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }
@@ -283,7 +284,7 @@ export async function handleSubclassSelect(
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este menú solo funciona en servidores.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -459,7 +460,7 @@ export async function handleSubclassSelect(
     if (interaction.replied || interaction.deferred) {
       await interaction.editReply({ content: errorMessage, components: [] });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }
@@ -473,7 +474,7 @@ export async function handleVerificationApprove(
   await interaction.reply({
     content:
       "ℹ️ El sistema de verificación ahora es automático. Esta función ya no es necesaria.",
-    ephemeral: true,
+    flags: [MessageFlags.Ephemeral],
   });
 }
 
@@ -486,6 +487,6 @@ export async function handleVerificationReject(
   await interaction.reply({
     content:
       "ℹ️ El sistema de verificación ahora es automático. Esta función ya no es necesaria.",
-    ephemeral: true,
+    flags: [MessageFlags.Ephemeral],
   });
 }

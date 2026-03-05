@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { removeClass, classExists } from "../../../config/repositories/ClassRolesRepo.ts";
 import logger, { logCommand } from "../../../utils/logger.ts";
@@ -13,7 +14,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede ser usado en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -25,7 +26,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!exists) {
       await interaction.reply({
         content: `❌ La clase **${className}** no existe.\n\nUsa \`/list-classes\` para ver las clases configuradas.`,
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -40,7 +41,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await interaction.reply({
       content: `✅ La clase **${className}** ha sido eliminada del sistema.`,
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error ejecutando remove-class", {
@@ -54,7 +55,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

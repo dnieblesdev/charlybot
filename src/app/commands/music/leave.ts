@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.ts";
 import musicService from "../../services/MusicService.ts";
@@ -10,7 +11,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guildId || !interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede usarse en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -21,7 +22,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!queue || !queue.connection) {
       await interaction.reply({
         content: "❌ No estoy en ningún canal de voz.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -54,7 +55,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

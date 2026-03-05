@@ -1,4 +1,4 @@
-import { EmbedBuilder } from "discord.js";
+import { EmbedBuilder, MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { getAllGuildConfigs } from "../../../config/repositories/GuildConfigRepo.ts";
 import { isOwnerInteraction } from "../../../utils/permissions.ts";
@@ -20,7 +20,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
       await interaction.reply({
         content: "❌ Solo el propietario del bot puede usar este comando.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -33,7 +33,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
       await interaction.reply({
         content: "📋 No hay configuraciones guardadas.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -60,7 +60,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await interaction.reply({
       embeds: [embed],
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error executing list-configs command", {
@@ -73,7 +73,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.replied) {
       return;
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

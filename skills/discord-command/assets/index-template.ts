@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
@@ -28,6 +29,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     //   await subcomando2(interaction);
     //   break;
     default:
-      await interaction.reply({ content: "Comando no reconocido.", ephemeral: true });
+      await interaction.reply({ content: "Comando no reconocido.", flags: [MessageFlags.Ephemeral] });
   }
 }

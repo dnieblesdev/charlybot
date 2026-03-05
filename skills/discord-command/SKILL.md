@@ -35,6 +35,7 @@ Eso es el patrón legacy. Siempre usar carpeta.
 ```typescript
 import {
   ChatInputCommandInteraction,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
@@ -63,7 +64,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await subcomando2(interaction);
       break;
     default:
-      await interaction.reply({ content: "Comando no reconocido.", ephemeral: true });
+      await interaction.reply({ content: "Comando no reconocido.", flags: [MessageFlags.Ephemeral] });
   }
 }
 ```
@@ -71,14 +72,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 ### Subcomando — estructura fija
 
 ```typescript
-import { ChatInputCommandInteraction } from "discord.js";
+import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import logger from "../../../utils/logger";
 // importar repository si necesita DB:
 // import * as MiRepo from "../../../config/repositories/MiRepo";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   // Siempre defer antes de operaciones async largas
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
   try {
     // lógica aquí
@@ -97,12 +98,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 ## Reglas de respuestas privadas (efímeras)
 
-| Contexto | Sintaxis correcta |
-|---|---|
-| Slash command reply directo | `interaction.reply({ ..., ephemeral: true })` |
-| Event handler / followUp / editReply tras defer efímero | `flags: [MessageFlags.Ephemeral]` |
+**Siempre** usar `flags: [MessageFlags.Ephemeral]`. Importar `MessageFlags` desde `discord.js`.
+**NUNCA** usar `ephemeral: true` — está deprecado en Discord.js v14 moderno.
 
-> El LSP puede marcar `flags: [MessageFlags.Ephemeral]` como error — ignorarlo, funciona en runtime.
+```typescript
+// ✅ Correcto — reply directo
+await interaction.reply({ content: "Solo vos lo ves.", flags: [MessageFlags.Ephemeral] });
+
+// ✅ Correcto — defer efímero
+await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
+// ❌ Incorrecto — deprecado
+await interaction.reply({ content: "...", ephemeral: true });
+await interaction.deferReply({ ephemeral: true });
+```
 
 ## Reglas de DB
 

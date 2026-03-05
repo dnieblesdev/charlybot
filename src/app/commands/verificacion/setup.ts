@@ -1,6 +1,7 @@
 import {
   PermissionFlagsBits,
   ChannelType,
+  MessageFlags,
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import {
@@ -21,7 +22,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede ser usado en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -38,7 +39,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!botMember) {
       await interaction.reply({
         content: "❌ No puedo encontrar mi propio miembro en el servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -64,7 +65,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         `✅ Rol de verificado: ${verifiedRole}\n\n` +
         `**Nota:** La verificación es automática. Los usuarios recibirán el rol inmediatamente al registrarse.\n\n` +
         `Usa el comando \`/verificacion panel\` para enviar el panel de verificación al canal configurado.`,
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error ejecutando setup-verification", {
@@ -79,7 +80,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

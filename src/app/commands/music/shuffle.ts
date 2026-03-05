@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.ts";
 import musicService from "../../services/MusicService.ts";
@@ -9,7 +10,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guildId || !interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede usarse en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -19,7 +20,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!queue || !queue.connection) {
       await interaction.reply({
         content: "❌ No hay música en la cola.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -27,7 +28,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (queue.songs.length < 2) {
       await interaction.reply({
         content: "❌ No hay suficientes canciones en la cola para mezclar.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -47,7 +48,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     } else {
       await interaction.reply({
         content: "❌ No se pudo mezclar la cola.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
     }
   } catch (error) {
@@ -62,7 +63,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.replied) {
       return;
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

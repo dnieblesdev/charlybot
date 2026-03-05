@@ -6,6 +6,7 @@ import {
   ButtonStyle,
   ActionRowBuilder,
   ComponentType,
+  MessageFlags,
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import * as AutoRoleRepo from "../../../config/repositories/AutoRoleRepo.js";
@@ -21,14 +22,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede usarse en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
 
     const messageId = interaction.options.getString("message_id", true);
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
     // Buscar la configuración
     const autoRole = await AutoRoleRepo.getAutoRoleByMessageId(messageId);
@@ -160,7 +161,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage, components: [] });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, components: [], flags: [MessageFlags.Ephemeral] });
     }
   }
 }

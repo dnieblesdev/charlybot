@@ -4,6 +4,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
+  MessageFlags,
 } from "discord.js";
 
 import type { ChatInputCommandInteraction } from "discord.js";
@@ -16,7 +17,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede ser utilizado en servidores.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -58,7 +59,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.replied) {
       await interaction.reply({
         content: "❌ Error abriendo la interfaz de bienvenida.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
     }
   }

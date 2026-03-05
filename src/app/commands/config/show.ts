@@ -1,5 +1,6 @@
 import {
   EmbedBuilder,
+  MessageFlags,
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
@@ -12,7 +13,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo funciona en servidores.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -23,7 +24,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await interaction.reply({
         content:
           "❌ No hay configuración establecida. Usa `/set-image-channel` o `/set-voice-log` para configurar.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -83,7 +84,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.replied) {
       return;
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

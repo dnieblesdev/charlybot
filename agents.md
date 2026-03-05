@@ -134,9 +134,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 - `data` y `execute` son exports nombrados obligatorios — el loader los detecta así
 - Si el comando tiene `init(client)`, se llama al arrancar (útil para recuperar estado)
-- Para respuestas privadas en **slash commands**: `interaction.reply({ ..., ephemeral: true })`
-- Para respuestas privadas en **event handlers / followUp**: `flags: [MessageFlags.Ephemeral]`
-- El LSP puede marcar `flags: [MessageFlags.Ephemeral]` como error en algunos contextos — ignorarlo, es correcto en Discord.js v14
+- Para respuestas privadas: siempre usar `flags: [MessageFlags.Ephemeral]` — importar `MessageFlags` desde `discord.js`
+- **NUNCA** usar `ephemeral: true` — está deprecado en Discord.js v14 moderno
 - Siempre hacer `defer` antes de operaciones async largas: `await interaction.deferReply()`
 - Los permisos se definen en `SlashCommandBuilder` con `setDefaultMemberPermissions()`
 

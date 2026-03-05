@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction, TextChannel } from "discord.js";
 import { getGuildConfig } from "../../config/repositories/GuildConfigRepo.ts";
 import logger, { logCommand } from "../../utils/logger.ts";
@@ -46,7 +46,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     logCommand(interaction.user.id, interaction.guildId || "DM", "upload");
 
     // ⭐ Diferir la respuesta inmediatamente para ganar tiempo
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
     if (!interaction.guild) {
       logger.warn("Upload command used outside guild", {
@@ -171,7 +171,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ content: errorMessage });
       } else {
-        await interaction.reply({ content: errorMessage, ephemeral: true });
+        await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
       }
     } catch (replyError) {
       logger.error("Failed to reply to user after upload error", {

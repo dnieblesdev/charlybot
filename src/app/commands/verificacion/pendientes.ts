@@ -1,5 +1,6 @@
 import {
   EmbedBuilder,
+  MessageFlags,
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { getPendingRequests } from "../../../config/repositories/VerificationRepo.ts";
@@ -16,12 +17,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede ser usado en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
     const pendingRequests = await getPendingRequests(interaction.guild.id);
 
@@ -89,7 +90,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

@@ -16,7 +16,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Solo en servidores.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -33,7 +33,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await interaction.reply({
       content: `✅ Canal de logs de salida configurado: <#${channel.id}>.`,
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error executing set-leave-log-channel command", {
@@ -44,7 +44,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.replied) {
       await interaction.reply({
         content: "❌ Error configurando canal de logs de salida.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
     }
   }

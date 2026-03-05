@@ -25,7 +25,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Solo en servidores.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -34,7 +34,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!config || !config.welcomeChannelId || !config.welcomeMessage) {
       await interaction.reply({
         content: "❌ No hay configuración de bienvenida en este servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -45,7 +45,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!channel) {
       await interaction.reply({
         content: "❌ No pude encontrar el canal configurado.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -61,7 +61,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await interaction.reply({
       content: `✅ Mensaje de bienvenida enviado de prueba a <#${config.welcomeChannelId}>.`,
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error executing test-welcome command", {
@@ -72,7 +72,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.replied) {
       await interaction.reply({
         content: "❌ Error ejecutando test-welcome.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
     }
   }

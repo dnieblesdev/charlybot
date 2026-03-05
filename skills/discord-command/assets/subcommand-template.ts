@@ -1,12 +1,12 @@
-import { ChatInputCommandInteraction } from "discord.js";
+import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import logger from "../../../utils/logger";
 // Descomentar si necesita DB:
 // import * as MiRepo from "../../../config/repositories/MiRepo";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   // Siempre defer antes de cualquier operación async.
-  // Usar ephemeral: true si la respuesta es solo para el usuario:
-  await interaction.deferReply({ ephemeral: true });
+  // Para respuesta privada (solo visible al usuario):
+  await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
   if (!interaction.guild) {
     await interaction.editReply({ content: "❌ Este comando solo funciona en servidores." });

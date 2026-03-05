@@ -3,6 +3,7 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  MessageFlags,
 } from "discord.js";
 import type { ChatInputCommandInteraction, TextChannel } from "discord.js";
 import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
@@ -19,7 +20,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede ser usado en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -36,7 +37,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await interaction.reply({
         content:
           "❌ El sistema de verificación no está configurado.\nUsa `/verificacion setup` primero.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -49,7 +50,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!verificationChannel) {
       await interaction.reply({
         content: "❌ No puedo encontrar el canal de verificación configurado.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -92,7 +93,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await interaction.reply({
       content: `✅ Panel de verificación enviado a ${verificationChannel}`,
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error enviando panel de verificación", {
@@ -106,7 +107,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

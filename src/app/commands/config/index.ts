@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
   ChannelType,
@@ -134,7 +135,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     default:
       await interaction.reply({
         content: "Comando no reconocido",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       break;
   }

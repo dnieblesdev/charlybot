@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import {
   removeGuildConfig,
@@ -22,7 +23,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
       await interaction.reply({
         content: "❌ Solo el propietario del bot puede usar este comando.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -30,7 +31,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo funciona en servidores.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -44,7 +45,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
       await interaction.reply({
         content: "❌ No hay configuración para eliminar.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -58,7 +59,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await interaction.reply({
       content: `✅ Configuración eliminada exitosamente.\n🔒 Acción realizada por ${interaction.user.username}`,
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error executing remove-config command", {
@@ -71,7 +72,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.replied) {
       return;
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

@@ -10,6 +10,7 @@ import {
   ButtonStyle,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
+  MessageFlags,
   type ModalActionRowComponentBuilder,
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
@@ -57,7 +58,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
       await interaction.reply({
         content: "❌ Este comando solo puede usarse en un servidor.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -70,7 +71,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await interaction.reply({
         content:
           "❌ No tengo permisos para gestionar roles. Por favor, otórgame el permiso `MANAGE_ROLES`.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -82,7 +83,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         if (!channel || !channel.isTextBased()) {
           await interaction.reply({
             content: "❌ Este comando debe ejecutarse en un canal de texto.",
-            ephemeral: true,
+            flags: [MessageFlags.Ephemeral],
           });
           return;
         }
@@ -91,7 +92,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         if (!message) {
           await interaction.reply({
             content: "❌ No pude encontrar ese mensaje en este canal.",
-            ephemeral: true,
+            flags: [MessageFlags.Ephemeral],
           });
           return;
         }
@@ -134,9 +135,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           });
 
           await interaction.reply({
-            content:
-              "✅ Configuración existente cargada. Puedes editarla ahora.",
-            ephemeral: true,
+            content: "✅ Configuración existente cargada. Puedes editarla ahora.",
+            flags: [MessageFlags.Ephemeral],
           });
         } else {
           // Crear sesión nueva con mensaje existente
@@ -164,7 +164,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         });
         await interaction.reply({
           content: "❌ No pude encontrar ese mensaje. Verifica el ID.",
-          ephemeral: true,
+          flags: [MessageFlags.Ephemeral],
         });
       }
     } else {
@@ -183,7 +183,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }
@@ -246,7 +246,7 @@ async function showConfigurationInterface(
   if (!session) {
     await interaction.reply({
       content: "❌ Sesión no encontrada. Inicia de nuevo.",
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
     return;
   }
@@ -355,7 +355,7 @@ async function showConfigurationInterface(
     const reply = await interaction.reply({
       embeds: [embed],
       components: [row1, row2, row3],
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
       fetchReply: true,
     });
     // Guardar el ID del mensaje de configuración
@@ -482,7 +482,7 @@ function startCollector(interaction: any, sessionId: string) {
           if (!i.replied && !i.deferred) {
             await i.reply({
               content: "❌ Error al cancelar la configuración.",
-              ephemeral: true,
+              flags: [MessageFlags.Ephemeral],
             });
           }
         }
@@ -509,7 +509,7 @@ async function handleEditMapping(interaction: any, sessionId: string) {
   if (!session || session.mappings.length === 0) {
     await interaction.reply({
       content: "❌ No hay roles para editar.",
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
     return;
   }
@@ -537,7 +537,7 @@ async function handleEditMapping(interaction: any, sessionId: string) {
   await interaction.reply({
     content: "Selecciona el rol que deseas editar:",
     components: [row],
-    ephemeral: true,
+    flags: [MessageFlags.Ephemeral],
   });
 }
 
@@ -549,7 +549,7 @@ async function handleRemoveMapping(interaction: any, sessionId: string) {
   if (!session || session.mappings.length === 0) {
     await interaction.reply({
       content: "❌ No hay roles para eliminar.",
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
     return;
   }
@@ -577,7 +577,7 @@ async function handleRemoveMapping(interaction: any, sessionId: string) {
   await interaction.reply({
     content: "Selecciona el rol que deseas eliminar:",
     components: [row],
-    ephemeral: true,
+    flags: [MessageFlags.Ephemeral],
   });
 }
 
@@ -597,7 +597,7 @@ async function handleCustomizeEmbed(interaction: any, sessionId: string) {
       logger.warn("Session not found in handleCustomizeEmbed", { sessionId });
       await interaction.reply({
         content: "❌ Sesión no encontrada. Inicia de nuevo.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -694,7 +694,7 @@ async function handleCustomizeEmbed(interaction: any, sessionId: string) {
     if (!interaction.replied && !interaction.deferred) {
       await interaction.reply({
         content: "❌ Error al mostrar el formulario de personalización.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
     }
   }
@@ -708,7 +708,7 @@ async function handleToggleMode(interaction: any, sessionId: string) {
   if (!session) {
     await interaction.reply({
       content: "❌ Sesión no encontrada.",
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
     return;
   }
@@ -814,7 +814,7 @@ async function handleFinish(interaction: any, sessionId: string) {
   if (!session) {
     await interaction.reply({
       content: "❌ Sesión no encontrada.",
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
     return;
   }
@@ -1011,7 +1011,7 @@ export async function handleModalSubmit(interaction: any) {
     if (modeInput !== "multiple" && modeInput !== "unique") {
       await interaction.reply({
         content: '❌ Modo inválido. Usa "multiple" o "unique".',
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -1041,7 +1041,7 @@ export async function handleModalSubmit(interaction: any) {
 
     await interaction.reply({
       content: "✅ Configuración inicial guardada. Ahora agrega roles.",
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
 
     await showConfigurationInterface(interaction, sessionId);
@@ -1054,7 +1054,7 @@ export async function handleModalSubmit(interaction: any) {
     if (!session) {
       await interaction.reply({
         content: "❌ Sesión no encontrada.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -1070,7 +1070,7 @@ export async function handleModalSubmit(interaction: any) {
     if (type !== "reaction" && type !== "button") {
       await interaction.reply({
         content: '❌ Tipo inválido. Usa "reaction" o "button".',
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -1080,7 +1080,7 @@ export async function handleModalSubmit(interaction: any) {
     if (!role) {
       await interaction.reply({
         content: "❌ Rol no encontrado. Verifica el ID.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -1099,7 +1099,7 @@ export async function handleModalSubmit(interaction: any) {
 
     await interaction.reply({
       content: `✅ Rol agregado: ${role.name}`,
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
   } else if (interaction.customId.startsWith("autorole_customize_modal_")) {
     try {
@@ -1131,7 +1131,7 @@ export async function handleModalSubmit(interaction: any) {
         });
         await interaction.reply({
           content: "❌ Sesión no encontrada.",
-          ephemeral: true,
+          flags: [MessageFlags.Ephemeral],
         });
         return;
       }
@@ -1158,7 +1158,7 @@ export async function handleModalSubmit(interaction: any) {
         logger.warn("Invalid color format", { embedColor });
         await interaction.reply({
           content: "❌ Color inválido. Usa formato hexadecimal (ej: #5865F2).",
-          ephemeral: true,
+          flags: [MessageFlags.Ephemeral],
         });
         return;
       }
@@ -1170,7 +1170,7 @@ export async function handleModalSubmit(interaction: any) {
         await interaction.reply({
           content:
             "❌ URL de thumbnail inválida. Debe empezar con http:// o https://",
-          ephemeral: true,
+          flags: [MessageFlags.Ephemeral],
         });
         return;
       }
@@ -1179,7 +1179,7 @@ export async function handleModalSubmit(interaction: any) {
         await interaction.reply({
           content:
             "❌ URL de imagen inválida. Debe empezar con http:// o https://",
-          ephemeral: true,
+          flags: [MessageFlags.Ephemeral],
         });
         return;
       }
@@ -1206,7 +1206,7 @@ export async function handleModalSubmit(interaction: any) {
 
       await interaction.reply({
         content: "✅ Personalización del embed guardada.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
 
       logger.info("Updating configuration interface");
@@ -1344,7 +1344,7 @@ export async function handleModalSubmit(interaction: any) {
         await interaction.reply({
           content:
             "❌ Error al procesar la personalización. Revisa la consola para más detalles.",
-          ephemeral: true,
+          flags: [MessageFlags.Ephemeral],
         });
       }
     }
@@ -1374,7 +1374,7 @@ export async function handleSelectMenu(interaction: any) {
     await interaction.reply({
       content:
         "⚠️ La edición de roles individuales se implementará en una futura actualización. Por ahora, elimina el rol y agrégalo de nuevo.",
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
   }
 }

@@ -1,6 +1,7 @@
 import {
   EmbedBuilder,
   ChatInputCommandInteraction,
+  MessageFlags,
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import LeaderboardService from "../../services/economy/LeaderboardService.js";
@@ -106,7 +107,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }
