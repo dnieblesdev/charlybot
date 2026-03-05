@@ -25,12 +25,7 @@ export async function loadCommands(
         commandFiles.push(entry.name);
       }
       // Buscar carpetas con index.ts/index.js (como autorole/index.ts)
-      else if (
-        entry.isDirectory() &&
-        entry.name !== "register" &&
-        entry.name !== "clear" &&
-        entry.name !== "debug"
-      ) {
+      else if (entry.isDirectory()) {
         const subfolderPath = path.join(commandsPath, entry.name);
         const subfolderEntries = await readdir(subfolderPath);
         if (
