@@ -1,4 +1,4 @@
-import { Events } from "discord.js";
+import { Events, MessageFlags } from "discord.js";
 import type { Interaction } from "discord.js";
 import logger, { logError } from "../../utils/logger.ts";
 import {
@@ -78,7 +78,7 @@ export default {
             if (!autoRole) {
               await interaction.reply({
                 content: "❌ Esta configuración de auto-roles ya no existe.",
-                ephemeral: true,
+                flags: [MessageFlags.Ephemeral],
               });
               return;
             }
@@ -91,7 +91,7 @@ export default {
             if (!mapping) {
               await interaction.reply({
                 content: "❌ Este botón ya no está configurado.",
-                ephemeral: true,
+                flags: [MessageFlags.Ephemeral],
               });
               return;
             }
@@ -109,12 +109,12 @@ export default {
               if (result.success) {
                 await interaction.reply({
                   content: `✅ Rol removido exitosamente.`,
-                  ephemeral: true,
+                  flags: [MessageFlags.Ephemeral],
                 });
               } else {
                 await interaction.reply({
                   content: `❌ ${result.error || "Error al remover el rol."}`,
-                  ephemeral: true,
+                  flags: [MessageFlags.Ephemeral],
                 });
               }
             } else {
@@ -127,12 +127,12 @@ export default {
               if (result.success) {
                 await interaction.reply({
                   content: `✅ Rol asignado exitosamente.`,
-                  ephemeral: true,
+                  flags: [MessageFlags.Ephemeral],
                 });
               } else {
                 await interaction.reply({
                   content: `❌ ${result.error || "Error al asignar el rol."}`,
-                  ephemeral: true,
+                  flags: [MessageFlags.Ephemeral],
                 });
               }
             }
@@ -149,7 +149,7 @@ export default {
             if (!interaction.replied) {
               await interaction.reply({
                 content: "❌ Error al procesar el rol.",
-                ephemeral: true,
+                flags: [MessageFlags.Ephemeral],
               });
             }
           }
@@ -251,7 +251,7 @@ export default {
           if (!interaction.guild) {
             await interaction.reply({
               content: "❌ Este modal solo puede ser procesado en servidores.",
-              ephemeral: true,
+              flags: [MessageFlags.Ephemeral],
             });
             return;
           }
@@ -271,7 +271,7 @@ export default {
 
             await interaction.reply({
               content: `✅ Mensaje de bienvenida configurado para <#${channelId}>.\nMensaje: ${mensaje}`,
-              ephemeral: true,
+              flags: [MessageFlags.Ephemeral],
             });
           } catch (err) {
             logger.error("Error procesando modal set-welcome", {
@@ -282,7 +282,7 @@ export default {
             if (!interaction.replied) {
               await interaction.reply({
                 content: "❌ Error guardando la configuración de bienvenida.",
-                ephemeral: true,
+                flags: [MessageFlags.Ephemeral],
               });
             }
           }
@@ -338,7 +338,7 @@ export default {
 
       const replyOptions = {
         content: "❌ Hubo un error ejecutando este comando.",
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       };
 
       try {
