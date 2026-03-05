@@ -1,14 +1,8 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.js";
-import { EconomyService } from "../services/economy/EconomyService.js";
-import { EconomyConfigService } from "../services/economy/EconomyConfigService.js";
-
-export const data = new SlashCommandBuilder()
-  .setName("crime")
-  .setDescription(
-    "Comete un crimen para ganar dinero (x3 que work, pero puedes ser atrapado)",
-  );
+import logger, { logCommand } from "../../../utils/logger.js";
+import { EconomyService } from "../../services/economy/EconomyService.js";
+import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
 
 // Lista de crímenes posibles
 const crimes = [

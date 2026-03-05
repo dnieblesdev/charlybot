@@ -1,22 +1,11 @@
 import {
-  SlashCommandBuilder,
   EmbedBuilder,
   PermissionFlagsBits,
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.js";
-import { EconomyService } from "../services/economy/EconomyService.js";
-import LeaderboardService from "../services/economy/LeaderboardService.js";
-
-export const data = new SlashCommandBuilder()
-  .setName("balance")
-  .setDescription("Muestra tu balance de dinero o el de otro usuario")
-  .addUserOption((option) =>
-    option
-      .setName("usuario")
-      .setDescription("Usuario del que quieres ver el balance (opcional)")
-      .setRequired(false),
-  );
+import logger, { logCommand } from "../../../utils/logger.js";
+import { EconomyService } from "../../services/economy/EconomyService.js";
+import LeaderboardService from "../../services/economy/LeaderboardService.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {

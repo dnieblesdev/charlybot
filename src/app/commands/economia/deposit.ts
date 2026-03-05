@@ -1,18 +1,7 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.js";
-import { EconomyService } from "../services/economy/EconomyService.js";
+import { EmbedBuilder } from "discord.js";
+import logger, { logCommand } from "../../../utils/logger.js";
+import { EconomyService } from "../../services/economy/EconomyService.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-
-export const data = new SlashCommandBuilder()
-  .setName("deposit")
-  .setDescription("Deposita dinero de tu bolsillo al banco")
-  .addIntegerOption((option) =>
-    option
-      .setName("cantidad")
-      .setDescription("Cantidad a depositar (usa 'all' para depositar todo)")
-      .setRequired(true)
-      .setMinValue(1),
-  );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {

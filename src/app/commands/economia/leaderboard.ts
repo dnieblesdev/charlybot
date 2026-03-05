@@ -1,22 +1,9 @@
 import {
-  SlashCommandBuilder,
   EmbedBuilder,
   ChatInputCommandInteraction,
 } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.js";
-import LeaderboardService from "../services/economy/LeaderboardService.js";
-
-export const data = new SlashCommandBuilder()
-  .setName("leaderboard")
-  .setDescription("Muestra el ranking de los usuarios más ricos del servidor")
-  .addIntegerOption((option) =>
-    option
-      .setName("cantidad")
-      .setDescription("Cantidad de usuarios a mostrar (por defecto 10)")
-      .setRequired(false)
-      .setMinValue(5)
-      .setMaxValue(25),
-  );
+import logger, { logCommand } from "../../../utils/logger.js";
+import LeaderboardService from "../../services/economy/LeaderboardService.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {

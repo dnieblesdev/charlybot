@@ -1,5 +1,4 @@
 import {
-  SlashCommandBuilder,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
@@ -10,37 +9,10 @@ import type {
   ButtonInteraction,
   ChatInputCommandInteraction,
 } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.js";
-import { EconomyService } from "../services/economy/EconomyService.js";
-import { RouletteService } from "../services/economy/RouletteService.js";
-import { EconomyConfigService } from "../services/economy/EconomyConfigService.js";
-
-export const data = new SlashCommandBuilder()
-  .setName("ruleta")
-  .setDescription("Juega a la ruleta y apuesta tu dinero")
-  .addStringOption((option) =>
-    option
-      .setName("tipo")
-      .setDescription("Tipo de apuesta: color o número")
-      .setRequired(true)
-      .addChoices(
-        { name: "Color (x2)", value: "color" },
-        { name: "Número (x36)", value: "number" },
-      ),
-  )
-  .addStringOption((option) =>
-    option
-      .setName("apuesta")
-      .setDescription("Tu apuesta: red/black/green o número (0-36)")
-      .setRequired(true),
-  )
-  .addIntegerOption((option) =>
-    option
-      .setName("cantidad")
-      .setDescription("Cantidad de dinero a apostar")
-      .setRequired(true)
-      .setMinValue(1),
-  );
+import logger, { logCommand } from "../../../utils/logger.js";
+import { EconomyService } from "../../services/economy/EconomyService.js";
+import { RouletteService } from "../../services/economy/RouletteService.js";
+import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
 
 // Mapa para almacenar los juegos activos por canal
 const activeGames = new Map<

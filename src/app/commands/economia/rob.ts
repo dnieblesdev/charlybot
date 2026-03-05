@@ -1,18 +1,8 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.js";
-import { EconomyService } from "../services/economy/EconomyService.js";
-import { EconomyConfigService } from "../services/economy/EconomyConfigService.js";
-
-export const data = new SlashCommandBuilder()
-  .setName("rob")
-  .setDescription("Intenta robar dinero del bolsillo de otro usuario")
-  .addUserOption((option) =>
-    option
-      .setName("usuario")
-      .setDescription("Usuario al que quieres robar")
-      .setRequired(true),
-  );
+import logger, { logCommand } from "../../../utils/logger.js";
+import { EconomyService } from "../../services/economy/EconomyService.js";
+import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
 
 const successMessages = [
   "lograste robarle a",

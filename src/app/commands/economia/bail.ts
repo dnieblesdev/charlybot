@@ -1,12 +1,8 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.js";
-import { EconomyService } from "../services/economy/EconomyService.js";
-import { prisma } from "../../infrastructure/storage/prismaClient.js";
-
-export const data = new SlashCommandBuilder()
-  .setName("bail")
-  .setDescription("Paga tu fianza con dinero del banco para salir de prisión");
+import logger, { logCommand } from "../../../utils/logger.js";
+import { EconomyService } from "../../services/economy/EconomyService.js";
+import { prisma } from "../../../infrastructure/storage/prismaClient.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {

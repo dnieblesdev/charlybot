@@ -1,12 +1,8 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.js";
-import { EconomyService } from "../services/economy/EconomyService.js";
-import { EconomyConfigService } from "../services/economy/EconomyConfigService.js";
-
-export const data = new SlashCommandBuilder()
-  .setName("work")
-  .setDescription("Trabaja para ganar dinero");
+import logger, { logCommand } from "../../../utils/logger.js";
+import { EconomyService } from "../../services/economy/EconomyService.js";
+import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
 
 // Lista de trabajos posibles con sus descripciones
 const jobs = [
