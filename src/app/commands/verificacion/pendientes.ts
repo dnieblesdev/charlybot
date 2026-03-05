@@ -1,18 +1,9 @@
 import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
   EmbedBuilder,
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import { getPendingRequests } from "../../config/repositories/VerificationRepo.ts";
-import logger, { logCommand } from "../../utils/logger.ts";
-
-export const data = new SlashCommandBuilder()
-  .setName("list-pending-verifications")
-  .setDescription(
-    "Lista todas las solicitudes de verificación pendientes (solo moderadores)",
-  )
-  .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers);
+import { getPendingRequests } from "../../../config/repositories/VerificationRepo.ts";
+import logger, { logCommand } from "../../../utils/logger.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
