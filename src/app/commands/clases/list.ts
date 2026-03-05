@@ -1,18 +1,9 @@
 import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
   EmbedBuilder,
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import { getAllClasses } from "../../config/repositories/ClassRolesRepo.ts";
-import logger, { logCommand } from "../../utils/logger.ts";
-
-export const data = new SlashCommandBuilder()
-  .setName("list-classes")
-  .setDescription(
-    "Lista todas las clases configuradas (solo administradores)",
-  )
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+import { getAllClasses } from "../../../config/repositories/ClassRolesRepo.ts";
+import logger, { logCommand } from "../../../utils/logger.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
