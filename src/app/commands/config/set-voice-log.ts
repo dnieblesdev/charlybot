@@ -1,26 +1,10 @@
 import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
   MessageFlags,
   ChannelType,
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import { setVoiceLogChannel } from "../../config/repositories/GuildConfigRepo.ts";
-import logger, { logCommand } from "../../utils/logger.ts";
-
-export const data = new SlashCommandBuilder()
-  .setName("set-voice-log")
-  .setDescription(
-    "Configura el canal para registrar entrada/salida de canales de voz",
-  )
-  .addChannelOption((option) =>
-    option
-      .setName("canal")
-      .setDescription("El canal donde se registrarán los logs de voz")
-      .addChannelTypes(ChannelType.GuildText)
-      .setRequired(true),
-  )
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+import { setVoiceLogChannel } from "../../../config/repositories/GuildConfigRepo.ts";
+import logger, { logCommand } from "../../../utils/logger.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {

@@ -1,14 +1,8 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import { getAllGuildConfigs } from "../../config/repositories/GuildConfigRepo.ts";
-import { isOwnerInteraction } from "../../utils/permissions.ts";
-import logger, { logCommand } from "../../utils/logger.ts";
-
-export const data = new SlashCommandBuilder()
-  .setName("list-configs")
-  .setDescription(
-    "Lista todas las configuraciones de servidores (solo propietario)",
-  );
+import { getAllGuildConfigs } from "../../../config/repositories/GuildConfigRepo.ts";
+import { isOwnerInteraction } from "../../../utils/permissions.ts";
+import logger, { logCommand } from "../../../utils/logger.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {

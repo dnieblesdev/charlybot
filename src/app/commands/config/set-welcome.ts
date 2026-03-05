@@ -1,5 +1,4 @@
 import {
-  SlashCommandBuilder,
   PermissionsBitField,
   ModalBuilder,
   TextInputBuilder,
@@ -8,18 +7,7 @@ import {
 } from "discord.js";
 
 import type { ChatInputCommandInteraction } from "discord.js";
-import logger, { logCommand } from "../../utils/logger.ts";
-
-export const data = new SlashCommandBuilder()
-  .setName("set-welcome")
-  .setDescription("Configurar el mensaje de bienvenida del servidor")
-  .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
-  .addChannelOption((option) =>
-    option
-      .setName("canal")
-      .setDescription("El canal donde se enviará el mensaje de bienvenida")
-      .setRequired(true),
-  );
+import logger, { logCommand } from "../../../utils/logger.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {

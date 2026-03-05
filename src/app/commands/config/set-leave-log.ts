@@ -1,24 +1,9 @@
 import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
   MessageFlags,
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import { setLeaveLogChannel } from "../../config/repositories/GuildConfigRepo.ts";
-import logger, { logCommand } from "../../utils/logger.ts";
-
-export const data = new SlashCommandBuilder()
-  .setName("set-leave-log-channel")
-  .setDescription(
-    "Configura el canal donde se enviarán logs cuando alguien salga del servidor",
-  )
-  .addChannelOption((option) =>
-    option
-      .setName("canal")
-      .setDescription("Canal de logs de salida")
-      .setRequired(true),
-  )
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+import { setLeaveLogChannel } from "../../../config/repositories/GuildConfigRepo.ts";
+import logger, { logCommand } from "../../../utils/logger.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {

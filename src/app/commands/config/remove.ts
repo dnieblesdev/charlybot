@@ -1,15 +1,10 @@
-import { SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import {
   removeGuildConfig,
   getGuildConfig,
-} from "../../config/repositories/GuildConfigRepo.ts";
-import { isOwnerInteraction } from "../../utils/permissions.ts";
-import logger, { logCommand } from "../../utils/logger.ts";
-
-export const data = new SlashCommandBuilder()
-  .setName("remove-config")
-  .setDescription("Elimina la configuración del servidor");
+} from "../../../config/repositories/GuildConfigRepo.ts";
+import { isOwnerInteraction } from "../../../utils/permissions.ts";
+import logger, { logCommand } from "../../../utils/logger.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {

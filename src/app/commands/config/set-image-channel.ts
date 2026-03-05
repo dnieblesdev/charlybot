@@ -1,22 +1,9 @@
 import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
   MessageFlags,
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import { setImagenChannel } from "../../config/repositories/GuildConfigRepo.ts";
-import logger, { logCommand } from "../../utils/logger.ts";
-
-export const data = new SlashCommandBuilder()
-  .setName("set-image-channel")
-  .setDescription("Configura el canal para reenviar imágenes")
-  .addChannelOption((option) =>
-    option
-      .setName("canal")
-      .setDescription("El canal donde se reenviarán las imágenes")
-      .setRequired(true),
-  )
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+import { setImagenChannel } from "../../../config/repositories/GuildConfigRepo.ts";
+import logger, { logCommand } from "../../../utils/logger.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
