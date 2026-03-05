@@ -57,6 +57,12 @@ src/
 │   │   ├── messageReactionAdd.ts
 │   │   ├── messageReactionRemove.ts
 │   │   └── guildCreate.ts
+│   ├── interactions/            ← Registro de customIds y handlers de interacciones
+│   │   ├── customIds.ts         ← CUSTOM_IDS, FEATURES, parseCustomId()
+│   │   └── handlers/
+│   │       ├── verification.handler.ts
+│   │       ├── autorole.handler.ts
+│   │       └── welcome.handler.ts
 │   ├── services/                ← Lógica de negocio (sin imports de discord.js cuando sea posible)
 │   │   ├── MusicService.ts      ← Singleton, maneja colas por guildId
 │   │   ├── AutoRoleService.ts   ← Funciones puras para asignar/quitar roles
@@ -208,14 +214,29 @@ Si el nuevo comando genera botones, modales o select menus con `customId` propio
 
 ### Convención de `customId`
 
-```
-<feature>_<accion>_<id_opcional>
+**Formato:** `feature:action[:payload]`
 
-Ejemplos:
-  "autorole_setup"
-  "verification_approve_userId123"
-  "economia_confirmar_apuesta"
+- `feature` — identifica el subsistema (`verification`, `autorole`, `welcome`, ...)
+- `action` — operación dentro del subsistema (`start`, `approve`, `assign`, ...)
+- `payload` — dato de runtime opcional (userId, roleId, channelId, ...). Puede contener `_`.
+- `:` es el **único separador estructural**. `_` puede aparecer dentro del payload pero NUNCA como separador de segmentos.
+
+**NUNCA** escribir strings de customId hardcodeados. Siempre usar `CUSTOM_IDS.*` de `src/app/interactions/customIds.ts`:
+
+```typescript
+import { CUSTOM_IDS, parseCustomId, FEATURES } from "../../interactions/customIds";
+
+// Crear un botón
+new ButtonBuilder().setCustomId(CUSTOM_IDS.verification.APPROVE(userId))
+
+// Parsear en un handler
+const { feature, action, payload } = parseCustomId(interaction.customId);
 ```
+
+Para agregar una feature nueva con botones/modales/selects:
+1. Agregar las constantes en `src/app/interactions/customIds.ts`
+2. Crear `src/app/interactions/handlers/<feature>.handler.ts`
+3. Registrar el handler en `src/app/events/interactionCreate.ts` (agregar el `case` al switch)
 
 ---
 
@@ -289,7 +310,7 @@ bunx prisma studio        # GUI para inspeccionar la base de datos
 1. **¿Necesita persistencia?** → Agregar modelo en `prisma/schema.prisma` + migrar + crear repository en `src/config/repositories/`
 2. **¿Tiene lógica de negocio compleja?** → Crear service en `src/app/services/`
 3. **¿Es un comando slash?** → Crear carpeta en `src/app/commands/<nombre>/` con `index.ts` + archivos por subcomando
-4. **¿Genera botones/modales/selects?** → Registrar el handler en `src/app/events/interactionCreate.ts` con `customId` prefijado por la feature
+4. **¿Genera botones/modales/selects?** → Agregar constantes en `src/app/interactions/customIds.ts`, crear `src/app/interactions/handlers/<feature>.handler.ts`, y registrar el `case` en `src/app/events/interactionCreate.ts`
 5. **¿Necesita escuchar eventos de Discord?** → Agregar o modificar el event handler correspondiente en `src/app/events/`
 6. **Logs:** Siempre usar `logger` de Winston, nunca `console.log`
 7. **Tipos:** Definir interfaces/tipos en `src/types/` si son compartidos entre múltiples archivos

@@ -113,6 +113,31 @@ await interaction.reply({ content: "...", ephemeral: true });
 await interaction.deferReply({ ephemeral: true });
 ```
 
+## Reglas de customId
+
+**NUNCA** hardcodear strings de customId. Siempre usar `CUSTOM_IDS.*` de `src/app/interactions/customIds.ts`.
+
+**Formato:** `feature:action[:payload]` con `:` como separador estructural.
+
+```typescript
+import { CUSTOM_IDS, parseCustomId } from "../../interactions/customIds";
+
+// ✅ Correcto — crear botón
+new ButtonBuilder()
+  .setCustomId(CUSTOM_IDS.verification.APPROVE(userId))
+
+// ✅ Correcto — parsear en handler
+const { action, payload } = parseCustomId(interaction.customId);
+
+// ❌ Incorrecto — string hardcodeado
+new ButtonBuilder().setCustomId(`verification_approve_${userId}`)
+```
+
+Si el comando nuevo genera botones/modales/selects:
+1. Agregar constantes en `src/app/interactions/customIds.ts`
+2. Crear `src/app/interactions/handlers/<feature>.handler.ts`
+3. Agregar `case FEATURES.<FEATURE>:` al switch en `interactionCreate.ts`
+
 ## Reglas de DB
 
 - **NUNCA** importar `prisma` directamente en commands o services
@@ -131,15 +156,15 @@ import { prisma } from "../../../infrastructure/storage";
 
 Si el comando genera botones, modales o select menus:
 
-1. Usar convención de `customId`: `<feature>_<accion>_<id_opcional>`
-2. Registrar el handler en `src/app/events/interactionCreate.ts`
+1. Agregar constantes en `src/app/interactions/customIds.ts`
+2. Crear `src/app/interactions/handlers/<feature>.handler.ts`
+3. Agregar `case FEATURES.<FEATURE>:` al switch en `interactionCreate.ts`
 
 ```typescript
-// En interactionCreate.ts, dentro del bloque interaction.isButton():
-if (interaction.customId.startsWith("mifeature_")) {
-  await handleMiFeature(interaction);
-  return;
-}
+// En interactionCreate.ts, dentro del switch de features:
+case FEATURES.MI_FEATURE:
+  await miFeatureHandler.handleButton(interaction);
+  break;
 ```
 
 ## Reglas de logger
