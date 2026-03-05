@@ -44,7 +44,7 @@ export function isValidImageAttachment(attachment: Attachment): boolean {
  */
 export async function downloadAndValidateAttachment(
   attachment: Attachment,
-  context?: { userId?: string; guildId?: string }
+  context?: { userId?: string; guildId?: string },
 ): Promise<ValidationResult> {
   try {
     // Validación básica
@@ -139,7 +139,6 @@ export async function downloadAndValidateAttachment(
       success: true,
       attachment: new AttachmentBuilder(bufferData, { name: attachment.name }),
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -162,7 +161,7 @@ export async function downloadAndValidateAttachment(
  */
 export async function processAttachments(
   attachments: Attachment[],
-  context?: { userId?: string; guildId?: string }
+  context?: { userId?: string; guildId?: string },
 ): Promise<{
   validAttachments: AttachmentBuilder[];
   stats: ValidationStats;
@@ -220,20 +219,59 @@ function isValidImageBuffer(buffer: Buffer): boolean {
   const firstBytes = buffer.slice(0, 4);
 
   // PNG: 89 50 4E 47
-  if (firstBytes[0] === 0x89 && firstBytes[1] === 0x50 &&
-      firstBytes[2] === 0x4E && firstBytes[3] === 0x47) {
+  if (
+    firstBytes[0] === 0x89 &&
+    firstBytes[1] === 0x50 &&
+    firstBytes[2] === 0x4e &&
+    firstBytes[3] === 0x47
+  ) {
     return true;
   }
 
   // JPEG: FF D8 FF
-  if (firstBytes[0] === 0xFF && firstBytes[1] === 0xD8 && firstBytes[2] === 0xFF) {
+  if (
+    firstBytes[0] === 0xff &&
+    firstBytes[1] === 0xd8 &&
+    firstBytes[2] === 0xff
+  ) {
     return true;
   }
 
   // GIF: 47 49 46 38
-  if (firstBytes[0] === 0x47 && firstBytes[1] === 0x49 &&
-      firstBytes[2] === 0x46 && firstBytes[3] === 0x38) {
+  if (
+    firstBytes[0] === 0x47 &&
+    firstBytes[1] === 0x49 &&
+    firstBytes[2] === 0x46 &&
+    firstBytes[3] === 0x38
+  ) {
     return true;
+  }
+
+  // AVIF: verificar caja "ftyp" en offset 4 y marcas en major/compatible brands
+  if (buffer.length >= 12) {
+    const boxType = buffer.slice(4, 8);
+    if (boxType.toString() === "ftyp") {
+      const majorBrand = buffer.slice(8, 12).toString();
+      if (
+        majorBrand === "avif" ||
+        majorBrand === "avis" ||
+        majorBrand === "mif1"
+      ) {
+        return true;
+      }
+
+      let boxSize = buffer.readUInt32BE(0);
+      if (boxSize === 0 || boxSize > buffer.length) {
+        boxSize = buffer.length;
+      }
+
+      for (let i = 16; i + 4 <= boxSize; i += 4) {
+        const brand = buffer.slice(i, i + 4).toString();
+        if (brand === "avif" || brand === "avis" || brand === "mif1") {
+          return true;
+        }
+      }
+    }
   }
 
   // WebP: verificar "RIFF" al inicio y "WEBP" en posición 8-11
@@ -252,7 +290,7 @@ function isValidImageBuffer(buffer: Buffer): boolean {
  * Convierte bytes a formato legible
  */
 export function formatFileSize(bytes: number): string {
-  const units = ['B', 'KB', 'MB', 'GB'];
+  const units = ["B", "KB", "MB", "GB"];
   let size = bytes;
   let unitIndex = 0;
 
