@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { execute as playExecute } from "./play.ts";
 import { execute as skipExecute } from "./skip.ts";
-import { execute as queueExecute } from "./queue.ts";
+import { execute as playlistExecute } from "./playlist.ts";
 import { execute as nowplayingExecute } from "./nowplaying.ts";
 import { execute as pauseExecute } from "./pause.ts";
 import { execute as resumeExecute } from "./resume.ts";
@@ -34,7 +34,7 @@ export const data = new SlashCommandBuilder()
   )
   .addSubcommand((sub) =>
     sub
-      .setName("queue")
+      .setName("playlist")
       .setDescription("Muestra la cola de reproducción actual")
       .addIntegerOption((option) =>
         option
@@ -132,8 +132,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     case "skip":
       await skipExecute(interaction);
       break;
-    case "queue":
-      await queueExecute(interaction);
+    case "playlist":
+      await playlistExecute(interaction);
       break;
     case "nowplaying":
       await nowplayingExecute(interaction);
