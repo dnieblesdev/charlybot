@@ -12,6 +12,7 @@ import {
 import logger from "../../utils/logger.js";
 import * as AutoRoleRepo from "../../config/repositories/AutoRoleRepo.js";
 import type { AutoRole, RoleMapping } from "../../generated/prisma/client.js";
+import { CUSTOM_IDS } from "../interactions/customIds.ts";
 
 /**
  * Valida que el bot pueda asignar un rol (jerarquía)
@@ -298,7 +299,7 @@ export async function createMessageWithRoles(
           styleMap[mapping.buttonStyle || "PRIMARY"] || ButtonStyle.Primary;
 
         return new ButtonBuilder()
-          .setCustomId(`autorole_${mapping.roleId}`)
+          .setCustomId(CUSTOM_IDS.autorole.ASSIGN(mapping.roleId))
           .setLabel(mapping.buttonLabel || `Rol ${index + 1}`)
           .setStyle(style);
       });
@@ -440,7 +441,7 @@ export async function updateMessageWithRoles(
           styleMap[mapping.buttonStyle || "PRIMARY"] || ButtonStyle.Primary;
 
         return new ButtonBuilder()
-          .setCustomId(`autorole_${mapping.roleId}`)
+          .setCustomId(CUSTOM_IDS.autorole.ASSIGN(mapping.roleId))
           .setLabel(mapping.buttonLabel || `Rol ${index + 1}`)
           .setStyle(style);
       });

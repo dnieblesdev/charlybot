@@ -9,6 +9,7 @@ import {
 
 import type { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.ts";
+import { CUSTOM_IDS } from "../../interactions/customIds.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -26,7 +27,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const canal = interaction.options.getChannel("canal", true);
 
     const modal = new ModalBuilder()
-      .setCustomId(`setWelcomeModal:${canal.id}`)
+      .setCustomId(CUSTOM_IDS.welcome.MODAL(canal.id))
       .setTitle("Configurar mensaje de bienvenida");
 
     const mensajeInput = new TextInputBuilder()

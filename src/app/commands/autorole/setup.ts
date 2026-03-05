@@ -16,6 +16,7 @@ import {
 import logger, { logCommand } from "../../../utils/logger.js";
 import * as AutoRoleRepo from "../../../config/repositories/AutoRoleRepo.js";
 import * as AutoRoleService from "../../services/AutoRoleService.js";
+import { CUSTOM_IDS } from "../../interactions/customIds.ts";
 
 // Map para almacenar collectors activos por usuario
 const activeCollectors = new Map<string, any>();
@@ -193,7 +194,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
  */
 async function showInitialModal(interaction: ChatInputCommandInteraction) {
   const modal = new ModalBuilder()
-    .setCustomId("autorole_initial_modal")
+    .setCustomId(CUSTOM_IDS.autorole.modal.INITIAL)
     .setTitle("Configurar Auto-Roles");
 
   const titleInput = new TextInputBuilder()
@@ -302,17 +303,17 @@ async function showConfigurationInterface(
   // Botones de acción
   const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
-      .setCustomId("autorole_add_mapping")
+      .setCustomId(CUSTOM_IDS.autorole.config.ADD_MAPPING)
       .setLabel("➕ Agregar Rol")
       .setStyle(ButtonStyle.Success)
       .setDisabled(session.mappings.length >= 10),
     new ButtonBuilder()
-      .setCustomId("autorole_edit_mapping")
+      .setCustomId(CUSTOM_IDS.autorole.config.EDIT_MAPPING)
       .setLabel("✏️ Editar")
       .setStyle(ButtonStyle.Primary)
       .setDisabled(session.mappings.length === 0),
     new ButtonBuilder()
-      .setCustomId("autorole_remove_mapping")
+      .setCustomId(CUSTOM_IDS.autorole.config.REMOVE_MAPPING)
       .setLabel("🗑️ Eliminar")
       .setStyle(ButtonStyle.Danger)
       .setDisabled(session.mappings.length === 0),
@@ -320,15 +321,15 @@ async function showConfigurationInterface(
 
   const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
-      .setCustomId("autorole_toggle_mode")
+      .setCustomId(CUSTOM_IDS.autorole.config.TOGGLE_MODE)
       .setLabel("🔄 Cambiar Modo")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
-      .setCustomId("autorole_customize_embed")
+      .setCustomId(CUSTOM_IDS.autorole.config.CUSTOMIZE_EMBED)
       .setLabel("⚙️ Personalizar Embed")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
-      .setCustomId("autorole_finish")
+      .setCustomId(CUSTOM_IDS.autorole.config.FINISH)
       .setLabel("✅ Finalizar")
       .setStyle(ButtonStyle.Success)
       .setDisabled(session.mappings.length === 0),
@@ -336,7 +337,7 @@ async function showConfigurationInterface(
 
   const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
-      .setCustomId("autorole_cancel")
+      .setCustomId(CUSTOM_IDS.autorole.config.CANCEL)
       .setLabel("❌ Cancelar")
       .setStyle(ButtonStyle.Danger),
   );
@@ -371,7 +372,7 @@ async function showConfigurationInterface(
  */
 async function handleAddMapping(interaction: any, sessionId: string) {
   const modal = new ModalBuilder()
-    .setCustomId("autorole_add_mapping_modal")
+    .setCustomId(CUSTOM_IDS.autorole.modal.ADD_MAPPING)
     .setTitle("Agregar Rol");
 
   const typeInput = new TextInputBuilder()
@@ -432,7 +433,7 @@ function startCollector(interaction: any, sessionId: string) {
   // Crear collector en el canal
   const collector = interaction.channel?.createMessageComponentCollector({
     filter: (i: any) =>
-      i.user.id === interaction.user.id && i.customId.startsWith("autorole_"),
+      i.user.id === interaction.user.id && i.customId.startsWith("autorole:"),
     time: 600000, // 10 minutos
   });
 
@@ -442,20 +443,20 @@ function startCollector(interaction: any, sessionId: string) {
 
   collector.on("collect", async (i: any) => {
     try {
-      if (i.customId === "autorole_add_mapping") {
+      if (i.customId === CUSTOM_IDS.autorole.config.ADD_MAPPING) {
         await handleAddMapping(i, sessionId);
-      } else if (i.customId === "autorole_edit_mapping") {
+      } else if (i.customId === CUSTOM_IDS.autorole.config.EDIT_MAPPING) {
         await handleEditMapping(i, sessionId);
-      } else if (i.customId === "autorole_remove_mapping") {
+      } else if (i.customId === CUSTOM_IDS.autorole.config.REMOVE_MAPPING) {
         await handleRemoveMapping(i, sessionId);
-      } else if (i.customId === "autorole_toggle_mode") {
+      } else if (i.customId === CUSTOM_IDS.autorole.config.TOGGLE_MODE) {
         await handleToggleMode(i, sessionId);
-      } else if (i.customId === "autorole_customize_embed") {
+      } else if (i.customId === CUSTOM_IDS.autorole.config.CUSTOMIZE_EMBED) {
         await handleCustomizeEmbed(i, sessionId);
-      } else if (i.customId === "autorole_finish") {
+      } else if (i.customId === CUSTOM_IDS.autorole.config.FINISH) {
         await handleFinish(i, sessionId);
         collector.stop();
-      } else if (i.customId === "autorole_cancel") {
+      } else if (i.customId === CUSTOM_IDS.autorole.config.CANCEL) {
         try {
           logger.info("Cancelling autorole setup", {
             sessionId,
@@ -526,7 +527,7 @@ async function handleEditMapping(interaction: any, sessionId: string) {
   });
 
   const selectMenu = new StringSelectMenuBuilder()
-    .setCustomId("autorole_select_edit")
+    .setCustomId(CUSTOM_IDS.autorole.select.EDIT)
     .setPlaceholder("Selecciona un rol para editar")
     .addOptions(options);
 
@@ -566,7 +567,7 @@ async function handleRemoveMapping(interaction: any, sessionId: string) {
   });
 
   const selectMenu = new StringSelectMenuBuilder()
-    .setCustomId("autorole_select_remove")
+    .setCustomId(CUSTOM_IDS.autorole.select.REMOVE)
     .setPlaceholder("Selecciona un rol para eliminar")
     .addOptions(options);
 
@@ -613,7 +614,7 @@ async function handleCustomizeEmbed(interaction: any, sessionId: string) {
       },
     });
 
-    const modalCustomId = `autorole_customize_modal_${sessionId}`;
+    const modalCustomId = CUSTOM_IDS.autorole.modal.CUSTOMIZE(sessionId);
     logger.info("Creating modal with customId", { modalCustomId, sessionId });
 
     const modal = new ModalBuilder()
@@ -768,17 +769,17 @@ async function handleToggleMode(interaction: any, sessionId: string) {
   // Botones de acción
   const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
-      .setCustomId("autorole_add_mapping")
+      .setCustomId(CUSTOM_IDS.autorole.config.ADD_MAPPING)
       .setLabel("➕ Agregar Rol")
       .setStyle(ButtonStyle.Success)
       .setDisabled(session.mappings.length >= 10),
     new ButtonBuilder()
-      .setCustomId("autorole_edit_mapping")
+      .setCustomId(CUSTOM_IDS.autorole.config.EDIT_MAPPING)
       .setLabel("✏️ Editar")
       .setStyle(ButtonStyle.Primary)
       .setDisabled(session.mappings.length === 0),
     new ButtonBuilder()
-      .setCustomId("autorole_remove_mapping")
+      .setCustomId(CUSTOM_IDS.autorole.config.REMOVE_MAPPING)
       .setLabel("🗑️ Eliminar")
       .setStyle(ButtonStyle.Danger)
       .setDisabled(session.mappings.length === 0),
@@ -786,16 +787,16 @@ async function handleToggleMode(interaction: any, sessionId: string) {
 
   const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
-      .setCustomId("autorole_toggle_mode")
+      .setCustomId(CUSTOM_IDS.autorole.config.TOGGLE_MODE)
       .setLabel("🔄 Cambiar Modo")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
-      .setCustomId("autorole_finish")
+      .setCustomId(CUSTOM_IDS.autorole.config.FINISH)
       .setLabel("✅ Finalizar")
       .setStyle(ButtonStyle.Success)
       .setDisabled(session.mappings.length === 0),
     new ButtonBuilder()
-      .setCustomId("autorole_cancel")
+      .setCustomId(CUSTOM_IDS.autorole.config.CANCEL)
       .setLabel("❌ Cancelar")
       .setStyle(ButtonStyle.Danger),
   );
@@ -1001,7 +1002,7 @@ async function handleFinish(interaction: any, sessionId: string) {
 
 // Event listener para modales
 export async function handleModalSubmit(interaction: any) {
-  if (interaction.customId === "autorole_initial_modal") {
+  if (interaction.customId === CUSTOM_IDS.autorole.modal.INITIAL) {
     const embedTitle = interaction.fields.getTextInputValue("embed_title");
     const embedDesc = interaction.fields.getTextInputValue("embed_desc");
     const modeInput = interaction.fields
@@ -1048,7 +1049,7 @@ export async function handleModalSubmit(interaction: any) {
 
     // Iniciar collector global para esta sesión
     startCollector(interaction, sessionId);
-  } else if (interaction.customId === "autorole_add_mapping_modal") {
+  } else if (interaction.customId === CUSTOM_IDS.autorole.modal.ADD_MAPPING) {
     const sessionId = interaction.user.id;
     const session = setupSessions.get(sessionId);
     if (!session) {
@@ -1101,7 +1102,7 @@ export async function handleModalSubmit(interaction: any) {
       content: `✅ Rol agregado: ${role.name}`,
       flags: [MessageFlags.Ephemeral],
     });
-  } else if (interaction.customId.startsWith("autorole_customize_modal_")) {
+  } else if (interaction.customId.startsWith("autorole:modal:customize:")) {
     try {
       logger.info("Processing customize modal", {
         customId: interaction.customId,
@@ -1109,7 +1110,7 @@ export async function handleModalSubmit(interaction: any) {
       });
 
       const sessionId = interaction.customId.replace(
-        "autorole_customize_modal_",
+        "autorole:modal:customize:",
         "",
       );
 
@@ -1274,17 +1275,17 @@ export async function handleModalSubmit(interaction: any) {
 
             const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
               new ButtonBuilder()
-                .setCustomId("autorole_add_mapping")
+                .setCustomId(CUSTOM_IDS.autorole.config.ADD_MAPPING)
                 .setLabel("➕ Agregar Rol")
                 .setStyle(ButtonStyle.Success)
                 .setDisabled(session.mappings.length >= 10),
               new ButtonBuilder()
-                .setCustomId("autorole_edit_mapping")
+                .setCustomId(CUSTOM_IDS.autorole.config.EDIT_MAPPING)
                 .setLabel("✏️ Editar")
                 .setStyle(ButtonStyle.Primary)
                 .setDisabled(session.mappings.length === 0),
               new ButtonBuilder()
-                .setCustomId("autorole_remove_mapping")
+                .setCustomId(CUSTOM_IDS.autorole.config.REMOVE_MAPPING)
                 .setLabel("🗑️ Eliminar")
                 .setStyle(ButtonStyle.Danger)
                 .setDisabled(session.mappings.length === 0),
@@ -1292,15 +1293,15 @@ export async function handleModalSubmit(interaction: any) {
 
             const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
               new ButtonBuilder()
-                .setCustomId("autorole_toggle_mode")
+                .setCustomId(CUSTOM_IDS.autorole.config.TOGGLE_MODE)
                 .setLabel("🔄 Cambiar Modo")
                 .setStyle(ButtonStyle.Secondary),
               new ButtonBuilder()
-                .setCustomId("autorole_customize_embed")
+                .setCustomId(CUSTOM_IDS.autorole.config.CUSTOMIZE_EMBED)
                 .setLabel("⚙️ Personalizar Embed")
                 .setStyle(ButtonStyle.Secondary),
               new ButtonBuilder()
-                .setCustomId("autorole_finish")
+                .setCustomId(CUSTOM_IDS.autorole.config.FINISH)
                 .setLabel("✅ Finalizar")
                 .setStyle(ButtonStyle.Success)
                 .setDisabled(session.mappings.length === 0),
@@ -1308,7 +1309,7 @@ export async function handleModalSubmit(interaction: any) {
 
             const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(
               new ButtonBuilder()
-                .setCustomId("autorole_cancel")
+                .setCustomId(CUSTOM_IDS.autorole.config.CANCEL)
                 .setLabel("❌ Cancelar")
                 .setStyle(ButtonStyle.Danger),
             );
@@ -1353,7 +1354,7 @@ export async function handleModalSubmit(interaction: any) {
 
 // Event listener para select menus
 export async function handleSelectMenu(interaction: any) {
-  if (interaction.customId === "autorole_select_remove") {
+  if (interaction.customId === CUSTOM_IDS.autorole.select.REMOVE) {
     const sessionId = interaction.user.id;
     const session = setupSessions.get(sessionId);
     if (!session) return;
@@ -1370,7 +1371,7 @@ export async function handleSelectMenu(interaction: any) {
       content: "✅ Rol eliminado.",
       components: [],
     });
-  } else if (interaction.customId === "autorole_select_edit") {
+  } else if (interaction.customId === CUSTOM_IDS.autorole.select.EDIT) {
     await interaction.reply({
       content:
         "⚠️ La edición de roles individuales se implementará en una futura actualización. Por ahora, elimina el rol y agrégalo de nuevo.",

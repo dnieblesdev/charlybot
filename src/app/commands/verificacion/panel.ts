@@ -8,6 +8,7 @@ import {
 import type { ChatInputCommandInteraction, TextChannel } from "discord.js";
 import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
 import logger, { logCommand } from "../../../utils/logger.ts";
+import { CUSTOM_IDS } from "../../interactions/customIds.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -72,7 +73,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // Crear el botón
     const button = new ButtonBuilder()
-      .setCustomId("verification_start")
+      .setCustomId(CUSTOM_IDS.verification.START)
       .setLabel("Verificarme")
       .setEmoji("✅")
       .setStyle(ButtonStyle.Primary);

@@ -10,6 +10,7 @@ import {
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import * as AutoRoleRepo from "../../../config/repositories/AutoRoleRepo.js";
+import { CUSTOM_IDS } from "../../interactions/customIds.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -93,12 +94,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // Botones de confirmación
     const confirmButton = new ButtonBuilder()
-      .setCustomId("autorole_confirm_remove")
+      .setCustomId(CUSTOM_IDS.autorole.config.CONFIRM_REMOVE)
       .setLabel("✅ Sí, eliminar")
       .setStyle(ButtonStyle.Danger);
 
     const cancelButton = new ButtonBuilder()
-      .setCustomId("autorole_cancel_remove")
+      .setCustomId(CUSTOM_IDS.autorole.config.CANCEL_REMOVE)
       .setLabel("❌ Cancelar")
       .setStyle(ButtonStyle.Secondary);
 
@@ -120,7 +121,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         time: 60000, // 1 minuto
       });
 
-      if (confirmation.customId === "autorole_confirm_remove") {
+      if (confirmation.customId === CUSTOM_IDS.autorole.config.CONFIRM_REMOVE) {
         // Eliminar la configuración
         await AutoRoleRepo.deleteAutoRoleByMessageId(messageId);
 

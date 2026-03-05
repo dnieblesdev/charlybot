@@ -29,6 +29,7 @@ import {
 } from "../../config/repositories/ClassRolesRepo.ts";
 import { tempStorage } from "../../utils/temporaryStorage.ts";
 import logger from "../../utils/logger.ts";
+import { CUSTOM_IDS, parseCustomId } from "../interactions/customIds.ts";
 
 /**
  * Genera un ID único simple
@@ -74,7 +75,7 @@ export async function handleVerificationStart(
 
     // Crear y mostrar el modal
     const modal = new ModalBuilder()
-      .setCustomId(`verification_modal_${interaction.user.id}`)
+      .setCustomId(CUSTOM_IDS.verification.MODAL(interaction.user.id))
       .setTitle("Verificación de Usuario");
 
     const inGameNameInput = new TextInputBuilder()
@@ -147,7 +148,7 @@ export async function handleVerificationModalSubmit(
 
     // Crear el select menu de clases
     const classSelect = new StringSelectMenuBuilder()
-      .setCustomId(`class_select_${interaction.user.id}`)
+      .setCustomId(CUSTOM_IDS.verification.CLASS_SELECT(interaction.user.id))
       .setPlaceholder("Selecciona tu clase")
       .addOptions(
         classes.map((c) =>
@@ -233,7 +234,7 @@ export async function handleClassSelect(
 
     // Crear el select menu de subclases
     const subclassSelect = new StringSelectMenuBuilder()
-      .setCustomId(`subclass_select_${interaction.user.id}_${selectedClass}`)
+      .setCustomId(CUSTOM_IDS.verification.SUBCLASS_SELECT(interaction.user.id, selectedClass))
       .setPlaceholder("Selecciona tu subclase")
       .addOptions(
         classConfig.subclasses.map((sc) =>
@@ -291,9 +292,10 @@ export async function handleSubclassSelect(
 
     await interaction.deferUpdate();
 
-    // Extraer el nombre de la clase del customId
-    const customIdParts = interaction.customId.split("_");
-    const className = customIdParts.slice(3).join("_");
+    // Extraer el nombre de la clase del customId usando parseCustomId
+    // Format: verification:subclass-select:{userId}:{className}
+    const parsed = parseCustomId(interaction.customId);
+    const className = parsed.payloadParts[1] ?? "";
     const selectedSubclass = interaction.values[0];
 
     const classConfig = await getClass(className);
