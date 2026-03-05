@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "bun run src/index.ts",
-    "rc": "bun run src/app/commands/register/registerCommands.ts",
-    "cc": "bun run src/app/commands/clear/clearCommands.ts",
-    "lc": "bun run src/app/commands/debug/listRegistered.ts",
+    "rc": "bun run scripts/registerCommands.ts",
+    "cc": "bun run scripts/clearCommands.ts",
+    "lc": "bun run scripts/listRegistered.ts",
     "spotify-token": "bun run scripts/get-spotify-token.ts",
     "test-spotify": "bun run debug/test-spotify-integration.ts",
     "test-format-error": "bun run debug/test-format-error.ts",
