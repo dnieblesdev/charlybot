@@ -3,7 +3,7 @@ import { Events, TextChannel } from "discord.js";
 import type { Message } from "discord.js";
 import { getGuildConfig } from "../../config/repositories/GuildConfigRepo.ts";
 import logger from "../../utils/logger.ts";
-import { processAttachments } from "../../utils/attachmentValidator.ts";
+import { isValidImageAttachment } from "../../utils/attachmentValidator.ts";
 
 export default {
   name: Events.MessageCreate,
@@ -17,7 +17,7 @@ export default {
 
       if (attachments.length === 0) return;
 
-      let config = await getGuildConfig(guildId);
+      const config = await getGuildConfig(guildId);
 
       if (!config || message.channel.id !== config.targetChannelId) return;
 
@@ -29,23 +29,17 @@ export default {
         return;
       }
 
-      // Procesar y validar attachments usando la utilidad
-      const {
-        validAttachments: downloadedAttachments,
-        stats,
-        errors,
-      } = await processAttachments(attachments, {
-        userId: message.author.id,
-        guildId: guildId,
-      });
+      // Filtrar attachments de imagen válidos
+      const validImageUrls = attachments
+        .filter(isValidImageAttachment)
+        .map((a) => a.url);
 
       // Si no hay imágenes válidas, no hacer nada
-      if (downloadedAttachments.length === 0) {
+      if (validImageUrls.length === 0) {
         logger.debug("No valid image attachments found for repost", {
           userId: message.author.id,
           guildId: guildId,
           totalAttachments: attachments.length,
-          errors: errors.slice(0, 3), // Solo primeros 3 errores en log
         });
         return;
       }
@@ -54,21 +48,20 @@ export default {
         userId: message.author.id,
         guildId: guildId,
         channelId: message.channel.id,
-        stats,
+        imageCount: validImageUrls.length,
       });
 
-      await message.delete();
       // Reenviar solo las imágenes válidas, SIN mencionar al usuario
       await message.channel.send({
-        files: downloadedAttachments,
+        files: validImageUrls,
       });
+      await message.delete();
 
       logger.info("Images reposted successfully", {
         userId: message.author.id,
         guildId: guildId,
         channelId: message.channel.id,
-        imageCount: downloadedAttachments.length,
-        stats,
+        imageCount: validImageUrls.length,
       });
     } catch (err) {
       logger.error("Error reposting images", {

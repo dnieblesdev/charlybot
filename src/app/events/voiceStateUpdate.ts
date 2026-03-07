@@ -54,6 +54,9 @@ export default {
         return;
       }
 
+      // Si el canal no cambió (mute/deafen/camera/etc.), no hay nada que loguear
+      if (oldState.channel?.id === newState.channel?.id) return;
+
       // Obtener la configuración del servidor
       if (!newState.guild) return;
 
