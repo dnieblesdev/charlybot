@@ -17,6 +17,7 @@
     "start": "node dist/index.js"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.30.0",
     "@types/bun": "latest",
     "@types/express": "^5.0.5",
     "prisma": "^7.2.0"
@@ -30,6 +31,7 @@
     "@prisma/adapter-libsql": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "@snazzah/davey": "^0.1.7",
+    "charlybot": ".",
     "discord.js": "14.24.2",
     "dotenv": "17.2.3",
     "express": "^5.1.0",
