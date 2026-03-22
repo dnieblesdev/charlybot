@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun run dev:api & bun run dev:bot",
+    "dev": "concurrently \"bun run dev:api\" \"bun run dev:bot\"",
     "dev:bot": "bun run --cwd apps/bot dev",
     "dev:api": "bun run --cwd apps/api dev",
     "rc": "bun --cwd apps/bot run rc",
@@ -14,8 +14,9 @@
     "lc": "bun --cwd apps/bot run lc"
   },
   "devDependencies": {
-    "typescript": "^5",
-    "prisma": "latest"
+    "concurrently": "^9.2.1",
+    "prisma": "latest",
+    "typescript": "^5"
   },
   "dependencies": {
     "@prisma/client": "^7.5.0"
