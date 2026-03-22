@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { startAuthServer } from '../src/utils/spotify-auth';
+import { startAuthServer } from '../apps/bot/src/utils/spotify-auth';
 
 // Cargar variables de entorno
 dotenv.config();

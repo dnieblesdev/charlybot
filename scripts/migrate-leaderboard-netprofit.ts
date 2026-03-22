@@ -1,4 +1,4 @@
-import { prisma } from "../src/infrastructure/storage/prismaClient.js";
+import { prisma } from "../apps/bot/src/infrastructure/storage/prismaClient.js";
 
 /**
  * Script de migración para actualizar el leaderboard

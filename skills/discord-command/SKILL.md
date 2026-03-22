@@ -20,14 +20,14 @@ metadata:
 ### Estructura OBLIGATORIA de carpetas
 
 ```
-src/app/commands/<nombre>/
+apps/bot/src/app/commands/<nombre>/
 ├── index.ts          ← SlashCommandBuilder + router switch
 ├── <subcomando1>.ts  ← lógica del subcomando
 ├── <subcomando2>.ts
 └── ...
 ```
 
-**NUNCA** crear un comando como archivo plano (`src/app/commands/micomando.ts`).
+**NUNCA** crear un comando como archivo plano (`apps/bot/src/app/commands/micomando.ts`).
 Eso es el patrón legacy. Siempre usar carpeta.
 
 ### index.ts — estructura fija
@@ -115,7 +115,7 @@ await interaction.deferReply({ ephemeral: true });
 
 ## Reglas de customId
 
-**NUNCA** hardcodear strings de customId. Siempre usar `CUSTOM_IDS.*` de `src/app/interactions/customIds.ts`.
+**NUNCA** hardcodear strings de customId. Siempre usar `CUSTOM_IDS.*` de `apps/bot/src/app/interactions/customIds.ts`.
 
 **Formato:** `feature:action[:payload]` con `:` como separador estructural.
 
@@ -141,7 +141,7 @@ Si el comando nuevo genera botones/modales/selects:
 ## Reglas de DB
 
 - **NUNCA** importar `prisma` directamente en commands o services
-- Siempre ir a través de un repository en `src/config/repositories/`
+- Siempre ir a través de un repository en `apps/bot/src/config/repositories/`
 - Si la feature necesita un modelo nuevo: schema → migrate → repository → usar en el subcomando
 
 ```typescript
@@ -179,18 +179,18 @@ logger.error("Error", { error: error instanceof Error ? error.message : String(e
 
 ## Checklist antes de terminar
 
-- [ ] Carpeta `src/app/commands/<nombre>/` creada con `index.ts`
+- [ ] Carpeta `apps/bot/src/app/commands/<nombre>/` creada con `index.ts`
 - [ ] Exports nombrados `data` y `execute` en `index.ts`
 - [ ] Un archivo por subcomando
 - [ ] `deferReply` antes de cualquier operación async
 - [ ] Usar logger, nunca `console.log`
-- [ ] Si tiene DB: repository creado en `src/config/repositories/`
+- [ ] Si tiene DB: repository creado en `apps/bot/src/config/repositories/`
 - [ ] Si tiene botones/modales: handler registrado en `interactionCreate.ts`
 - [ ] Permisos definidos en `SlashCommandBuilder` si aplica
 
 ## Resources
 
-- **Referencia de proyecto**: [agents.md](../../agents.md)
-- **Ejemplo real**: [src/app/commands/autorole/](../../src/app/commands/autorole/)
+- **Referencia de proyecto**: [agents.md](../../apps/bot/agents.md)
+- **Ejemplo real**: [apps/bot/src/app/commands/autorole/](../../apps/bot/src/app/commands/autorole/)
 - **Template index.ts**: [assets/index-template.ts](assets/index-template.ts)
 - **Template subcomando**: [assets/subcommand-template.ts](assets/subcommand-template.ts)

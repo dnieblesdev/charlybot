@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits } from "discord.js";
-import { prisma } from "../src/infrastructure/storage/prismaClient.js";
-import logger from "../src/utils/logger.js";
+import { prisma } from "../apps/bot/src/infrastructure/storage/prismaClient.js";
+import logger from "../apps/bot/src/utils/logger.js";
 
 interface MigrationResult {
   guildId: string;

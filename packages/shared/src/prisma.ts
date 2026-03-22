@@ -1,0 +1,15 @@
+import { PrismaClient } from './generated/prisma';
+import { PrismaLibSql } from '@prisma/adapter-libsql';
+
+const url = process.env.DATABASE_URL || 'file:./dev.db';
+
+const adapter = new PrismaLibSql({
+  url: url.startsWith('file:') ? url : `file:${url}`,
+});
+
+export const prisma = new PrismaClient({
+  adapter,
+  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+});
+
+export * from './generated/prisma';

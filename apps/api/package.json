@@ -1,0 +1,17 @@
+{
+  "name": "@charlybot/api",
+  "version": "1.0.0",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --hot src/index.ts"
+  },
+  "dependencies": {
+    "hono": "latest",
+    "@hono/zod-validator": "latest",
+    "zod": "latest",
+    "winston": "latest",
+    "@charlybot/shared": "workspace:*"
+  }
+}

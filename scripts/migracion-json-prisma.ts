@@ -1,6 +1,6 @@
 import { readFile } from "fs/promises";
 import path from "path";
-import { prisma } from "../src/infrastructure/storage/prismaClient.js";
+import { prisma } from "../apps/bot/src/infrastructure/storage/prismaClient.js";
 
 interface OldConfigData {
   guilds: Record<
@@ -57,7 +57,7 @@ async function migrateGuildsAndConfigs() {
   console.log("\n📋 Migrando Guilds y configuraciones...");
 
   try {
-    const configPath = path.join(process.cwd(), "data", "config.json");
+    const configPath = path.join(process.cwd(), "apps/bot/data", "config.json");
     const data = await readFile(configPath, "utf-8");
     const oldConfig: OldConfigData = JSON.parse(data);
 
@@ -122,7 +122,7 @@ async function migrateClassRoles() {
   console.log("\n⚔️  Migrando clases y subclases...");
 
   try {
-    const classRolesPath = path.join(process.cwd(), "data", "class-roles.json");
+    const classRolesPath = path.join(process.cwd(), "apps/bot/data", "class-roles.json");
     const data = await readFile(classRolesPath, "utf-8");
     const oldClassRoles: OldClassRolesData = JSON.parse(data);
 

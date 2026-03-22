@@ -2,7 +2,7 @@ import { REST, Routes } from "discord.js";
 import { readdir } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import logger from "../src/utils/logger.ts";
+import logger from "../apps/bot/src/utils/logger.ts";
 
 // Obtener __dirname en módulos ES
 const __filename = fileURLToPath(import.meta.url);
@@ -19,7 +19,7 @@ const MODE = "DEVELOPMENT"; // Opciones: "DEVELOPMENT" o "PRODUCTION"
 async function registerCommands() {
   const commands: unknown[] = [];
 
-  const commandsPath = path.join(__dirname, "../src/app/commands");
+  const commandsPath = path.join(__dirname, "../apps/bot/src/app/commands");
   const entries = await readdir(commandsPath, { withFileTypes: true });
 
   const commandFiles: string[] = [];
@@ -56,7 +56,7 @@ async function registerCommands() {
 
   for (const file of commandFiles) {
     try {
-      const command = await import(`../src/app/commands/${file}`);
+      const command = await import(`../apps/bot/src/app/commands/${file}`);
       if (command.data) {
         commands.push(command.data.toJSON());
         logger.debug(`Command loaded: ${file}`, {

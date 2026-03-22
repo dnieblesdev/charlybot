@@ -1,0 +1,267 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model tipoClase {
+  rolId        String
+  guildId      String
+  nombre      String
+  clases    classes[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@id([guildId, rolId])
+}
+// the RoleId is ID Role on Discord
+model classes {
+  rolId     String
+  guildId   String
+  name      String
+  tipo      tipoClase @relation(fields: [guildId, tipoId], references: [guildId, rolId])
+  tipoId    String
+  subClases subclass[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@id([guildId, rolId])
+}
+model subclass {
+  rolId    String
+  guildId  String
+  name      String
+  clase     classes @relation(fields: [guildId, claseId], references: [guildId, rolId])
+  claseId   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@id([guildId, rolId])
+}
+model Guild {
+  id                          Int      @id @default(autoincrement())
+  guildId                     String   @unique
+  name                        String?
+  prefix                      String?
+  ownerId                     String?
+  ownerName                   String?
+  MemberCount                 Int?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  guildConfigs                GuildConfig?
+}
+
+model GuildConfig {
+  id                          Int      @id @default(autoincrement())
+  guildId                     String   @unique
+  name                        String?
+  targetChannelId             String?
+  voiceLogChannelId           String?
+  welcomeChannelId            String?
+  welcomeMessage              String?
+  leaveLogChannelId           String?
+  verificationChannelId       String?
+  verificationReviewChannelId String?
+  verifiedRoleId              String?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  guild                       Guild    @relation(fields: [guildId], references: [guildId])
+}
+
+// Economía y Juegos
+model UserEconomy {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  guildId         String
+  username        String
+  pocket          Float    @default(0)     // Dinero en bolsillo (por servidor)
+  inJail          Boolean  @default(false) // Si está en prisión (por servidor)
+  jailReleaseAt   DateTime?                // Cuando sale de prisión
+  lastWork        DateTime?                // Última vez que trabajó (por servidor)
+  lastCrime       DateTime?                // Último crimen (por servidor)
+  lastRob         DateTime?                // Último robo (por servidor)
+  totalEarned     Float    @default(0)     // Total ganado (por servidor)
+  totalLost       Float    @default(0)     // Total perdido (por servidor)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  bets            RouletteBet[]
+
+  @@unique([userId, guildId])
+}
+
+// Banco global compartido entre todos los servidores
+model GlobalBank {
+  id              Int      @id @default(autoincrement())
+  userId          String   @unique
+  username        String
+  bank            Float    @default(0)     // Dinero en banco (global)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RouletteGame {
+  id              Int      @id @default(autoincrement())
+  guildId         String
+  channelId       String
+  messageId       String?
+  status          String   @default("waiting") // waiting, spinning, finished
+  winningNumber   Int?
+  winningColor    String?
+  startTime       DateTime @default(now())
+  spinTime        DateTime?
+  endTime         DateTime?
+  bets            RouletteBet[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RouletteBet {
+  id              Int      @id @default(autoincrement())
+  gameId          Int
+  userId          String
+  guildId         String
+  amount          Float
+  betType         String   // "color" o "number"
+  betValue        String   // "red", "black", "green" o número "0"-"36"
+  result          String?  // "win" o "lose"
+  winAmount       Float?   // Cantidad ganada (si gana)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  game            RouletteGame @relation(fields: [gameId], references: [id])
+  user            UserEconomy @relation(fields: [userId, guildId], references: [userId, guildId])
+}
+
+// Configuración de economía por servidor
+model EconomyConfig {
+  id                Int      @id @default(autoincrement())
+  guildId           String   @unique
+  workCooldown      Int      @default(300000)      // 5 minutos en milisegundos
+  crimeCooldown     Int      @default(900000)      // 15 minutos
+  robCooldown       Int      @default(1800000)     // 30 minutos
+  workMinAmount     Int      @default(100)         // Ganancia mínima work
+  workMaxAmount     Int      @default(300)         // Ganancia máxima work
+  crimeMultiplier   Int      @default(3)           // Multiplicador de crime
+  startingMoney     Int      @default(1000)        // Dinero inicial
+  jailTimeWork      Int      @default(30)          // Minutos en prisión (crime)
+  jailTimeRob       Int      @default(45)          // Minutos en prisión (rob)
+  rouletteChannelId String?                        // Canal dedicado para ruleta (opcional)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// Tabla cache del leaderboard por servidor
+model Leaderboard {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  guildId         String
+  username        String
+  totalMoney      Float    @default(0)     // netProfit = totalEarned - totalLost (por servidor)
+  joinedServerAt  DateTime                 // Fecha de ingreso al servidor (de Discord API)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, guildId])
+  @@index([guildId, totalMoney, joinedServerAt])  // Índice para queries rápidas del ranking
+}
+
+// Sistema de Auto-Roles con Reacciones y Botones
+model AutoRole {
+  id            Int           @id @default(autoincrement())
+  guildId       String
+  channelId     String
+  messageId     String
+  mode          String        // "multiple" o "unique"
+  embedTitle    String?       // Si el bot creó el mensaje
+  embedDesc     String?       // Descripción del embed
+  embedColor    String?       // Color del embed (hex)
+  embedFooter   String?       // Texto del footer
+  embedThumb    String?       // URL de la thumbnail
+  embedImage    String?       // URL de la imagen
+  embedTimestamp Boolean?     // Mostrar timestamp
+  embedAuthor   String?       // Texto del autor
+  createdBy     String        // userId del admin que lo creó
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  mappings      RoleMapping[]
+
+  @@unique([guildId, messageId])
+  @@index([guildId])
+}
+
+model RoleMapping {
+  id            Int       @id @default(autoincrement())
+  autoRoleId    Int
+  roleId        String    // Discord role ID
+  type          String    // "reaction" o "button"
+  emoji         String?   // Para reacciones (Unicode o custom emoji ID)
+  buttonLabel   String?   // Para botones
+  buttonStyle   String?   // PRIMARY, SECONDARY, SUCCESS, DANGER
+  order         Int       // Orden de aparición
+  createdAt     DateTime  @default(now())
+  autoRole      AutoRole  @relation(fields: [autoRoleId], references: [id], onDelete: Cascade)
+
+  @@index([autoRoleId])
+}
+
+model VerificationRequest {
+  id            String    @id
+  userId        String
+  guildId       String
+  inGameName    String
+  screenshotUrl String
+  status        String    @default("pending") // pending, approved, rejected
+  messageId     String?
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  requestedAt   DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([guildId, status])
+}
+
+// Music System Persistence
+model MusicQueue {
+  id            String           @id @default(cuid())
+  guildId       String           @unique
+  currentSongId String?
+  isPlaying     Boolean          @default(false)
+  isPaused      Boolean          @default(false)
+  volume        Int              @default(100)
+  loopMode      String           @default("none") // none | song | queue
+  lastSeek      Int              @default(0)      // seconds
+  updatedAt     DateTime         @updatedAt
+  createdAt     DateTime         @default(now())
+  items         MusicQueueItem[]
+}
+
+model MusicQueueItem {
+  id            String     @id @default(cuid())
+  queueId       String
+  title         String
+  url           String
+  duration      Int        // seconds
+  thumbnail     String?
+  position      Int        // 0-indexed position in queue
+  requesterId   String
+  requesterName String
+  createdAt     DateTime   @default(now())
+  queue         MusicQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+
+  @@index([queueId])
+}
+
+model GuildMusicConfig {
+  id            String   @id @default(cuid())
+  guildId       String   @unique
+  defaultVolume Int      @default(100)
+  autoCleanup   Boolean  @default(true)
+  maxQueueSize  Int      @default(500)
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+}

@@ -1,46 +1,23 @@
 {
   "name": "charlybot",
-  "module": "src/index.ts",
-  "type": "module",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "bun run src/index.ts",
-    "rc": "bun run scripts/registerCommands.ts",
-    "cc": "bun run scripts/clearCommands.ts",
-    "lc": "bun run scripts/listRegistered.ts",
-    "spotify-token": "bun run scripts/get-spotify-token.ts",
-    "test-spotify": "bun run debug/test-spotify-integration.ts",
-    "test-format-error": "bun run debug/test-format-error.ts",
-    "test-playlist-performance": "bun run debug/test-playlist-performance.ts",
-    "migrate-json": "bun run scripts/migracion-json-prisma.ts",
-    "build": "bun build src/index.ts --outdir dist --target node",
-    "start": "node dist/index.js"
+    "dev": "bun run dev:api & bun run dev:bot",
+    "dev:bot": "bun run --cwd apps/bot dev",
+    "dev:api": "bun run --cwd apps/api dev",
+    "rc": "bun --cwd apps/bot run rc",
+    "cc": "bun --cwd apps/bot run cc",
+    "lc": "bun --cwd apps/bot run lc"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.30.0",
-    "@types/bun": "latest",
-    "@types/express": "^5.0.5",
-    "prisma": "^7.2.0"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "^5",
+    "prisma": "latest"
   },
   "dependencies": {
-    "@discordjs/opus": "^0.10.0",
-    "@discordjs/voice": "0.19.0",
-    "@prisma/adapter-libsql": "^7.2.0",
-    "@prisma/client": "^7.2.0",
-    "@snazzah/davey": "^0.1.7",
-    "charlybot": ".",
-    "discord.js": "14.24.2",
-    "dotenv": "17.2.3",
-    "express": "^5.1.0",
-    "ffmpeg-static": "^5.3.0",
-    "opusscript": "^0.1.1",
-    "play-dl": "1.9.7",
-    "play-opus": "^0.5.7",
-    "sodium-native": "^5.0.10",
-    "winston": "3.18.3",
-    "yt-dlp-wrap": "^2.3.12"
+    "@prisma/client": "^7.5.0"
   }
 }
