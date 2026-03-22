@@ -1,5 +1,11 @@
 # @charlybot/api
 
+## 2.0.1
+
+### Patch Changes
+
+- 04cc4c0: Fix 404 error when bot starts: add missing PATCH /api/v1/guilds/:id endpoint to handle Guild metadata updates from ready.ts
+
 ## 2.0.0
 
 ### Major Changes
