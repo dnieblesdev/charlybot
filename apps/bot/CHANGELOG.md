@@ -1,5 +1,18 @@
 # @charlybot/bot
 
+## 2.1.0
+
+### Minor Changes
+
+- Agregar Docker para desarrollo local
+
+  - Agregar docker-compose.dev.yml para levantar API y bot en contenedores
+  - Agregar Dockerfiles para api y bot con Bun + FFmpeg + yt-dlp
+  - Montar dev.db como volumen bidireccional desde host
+  - Configurar red interna Docker para comunicación api-bot
+  - Agregar .env.docker para variables de entorno Docker
+  - Agregar .dockerignore
+
 ## 2.0.0
 
 ### Major Changes

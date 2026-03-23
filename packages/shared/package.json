@@ -1,6 +1,6 @@
 {
   "name": "@charlybot/shared",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "type": "module",

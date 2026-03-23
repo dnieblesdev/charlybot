@@ -1,0 +1,39 @@
+services:
+  bot:
+    build:
+      context: ..
+      dockerfile: docker/docker/bot.Dockerfile
+    volumes:
+      - ../apps/bot:/app/apps/bot
+      - ../packages/shared:/app/packages/shared
+      - ../packages/shared/dev.db:/app/packages/shared/dev.db
+    env_file:
+      - .env.docker
+    environment:
+      - DATABASE_URL=file:/app/packages/shared/dev.db
+      - API_URL=http://api:3000
+    restart: unless-stopped
+    networks:
+      - charlybot-net
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/docker/api.Dockerfile
+    volumes:
+      - ../apps/api:/app/apps/api
+      - ../packages/shared:/app/packages/shared
+      - ../packages/shared/dev.db:/app/packages/shared/dev.db
+    env_file:
+      - .env.docker
+    environment:
+      - DATABASE_URL=file:/app/packages/shared/dev.db
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - charlybot-net
+
+networks:
+  charlybot-net:
+    driver: bridge
