@@ -742,29 +742,13 @@ class MusicService {
             );
           });
 
-          let searchResult: YouTubeVideo[] = [];
-          try {
-            searchResult = await Promise.race([
-              playdl.search(searchQuery, {
-                limit: 1,
-                source: { youtube: "video" },
-              }),
-              searchTimeoutPromise,
-            ]) as YouTubeVideo[];
-          } catch (searchError) {
-            // Capturar error específico de parseo malformed en play-dl
-            if (
-              searchError instanceof TypeError &&
-              searchError.message.includes("navigationEndpoint")
-            ) {
-              logger.warn("YouTube search returned malformed results", {
-                query: searchQuery,
-              });
-              searchResult = [];
-            } else {
-              throw searchError; // Re-lanzar otros errores
-            }
-          }
+          const searchResult = await Promise.race([
+            playdl.search(searchQuery, {
+              limit: 1,
+              source: { youtube: "video" },
+            }),
+            searchTimeoutPromise,
+          ]) as YouTubeVideo[];
 
           logger.debug("Resultado de búsqueda en YouTube", {
             resultsFound: searchResult.length,
@@ -897,26 +881,10 @@ class MusicService {
 
       // Buscar en YouTube
       logger.debug("Searching YouTube", { query: cleanQuery });
-      let searchResult: YouTubeVideo[] = [];
-      try {
-        searchResult = await playdl.search(cleanQuery, {
-          limit: 3,
-          source: { youtube: "video" },
-        });
-      } catch (searchError) {
-        // Capturar error específico de parseo malformed en play-dl
-        if (
-          searchError instanceof TypeError &&
-          searchError.message.includes("navigationEndpoint")
-        ) {
-          logger.warn("YouTube search returned malformed results", {
-            query: cleanQuery,
-          });
-          searchResult = [];
-        } else {
-          throw searchError; // Re-lanzar otros errores
-        }
-      }
+      const searchResult = await playdl.search(cleanQuery, {
+        limit: 3,
+        source: { youtube: "video" },
+      });
 
       if (searchResult.length === 0) {
         logger.warn("No search results found", { query: cleanQuery });
@@ -1568,26 +1536,10 @@ class MusicService {
     });
     try {
       const cleanTitle = this.cleanSearchQuery(song.title);
-      let searchResult: YouTubeVideo[] = [];
-      try {
-        searchResult = await playdl.search(cleanTitle, {
-          limit: 5,
-          source: { youtube: "video" },
-        });
-      } catch (searchError) {
-        // Capturar error específico de parseo malformed en play-dl
-        if (
-          searchError instanceof TypeError &&
-          searchError.message.includes("navigationEndpoint")
-        ) {
-          logger.warn("YouTube search returned malformed results", {
-            query: cleanTitle,
-          });
-          searchResult = [];
-        } else {
-          throw searchError; // Re-lanzar otros errores
-        }
-      }
+      const searchResult = await playdl.search(cleanTitle, {
+        limit: 5,
+        source: { youtube: "video" },
+      });
 
       if (searchResult.length === 0) {
         throw new Error("No search results found");
@@ -2438,26 +2390,10 @@ class MusicService {
           );
         });
 
-        let searchResult: YouTubeVideo[] = [];
-        try {
-          searchResult = await Promise.race([
-            searchPromise,
-            timeoutPromise,
-          ]) as YouTubeVideo[];
-        } catch (searchError) {
-          // Capturar error específico de parseo malformed en play-dl
-          if (
-            searchError instanceof TypeError &&
-            searchError.message.includes("navigationEndpoint")
-          ) {
-            logger.warn("YouTube search returned malformed results", {
-              query: searchQuery,
-            });
-            searchResult = [];
-          } else {
-            throw searchError; // Re-lanzar otros errores (incluye timeout)
-          }
-        }
+        const searchResult = await Promise.race([
+          searchPromise,
+          timeoutPromise,
+        ]) as YouTubeVideo[];
 
         // Defensive check: validate search result has required properties
         if (searchResult.length > 0) {
