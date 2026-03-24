@@ -1,5 +1,11 @@
 # @charlybot/bot
 
+## 2.1.3
+
+### Patch Changes
+
+- Fix: Use symlink for yt-dlp in Docker instead of broken shell wrapper
+
 ## 2.1.2
 
 ### Patch Changes
