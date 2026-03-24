@@ -32,7 +32,16 @@ import { createReadStream } from "fs";
 import { unlink } from "fs/promises";
 import path from "path";
 import { spawn } from "child_process";
+import { which } from "bun";
 import type { IMusicQueueItem } from "@charlybot/shared";
+
+// Helper function to find yt-dlp: buscar en PATH primero, luego fallback local
+const getYtDlpPath = (): string => {
+  const systemYtDlp = which("yt-dlp");
+  if (systemYtDlp) return systemYtDlp;
+  // Fallback: buscar en bin/ del proyecto
+  return path.join(process.cwd(), "bin", "yt-dlp.exe");
+};
 
 interface PlaylistBufferState {
   allTracks: Array<{
@@ -81,7 +90,7 @@ class MusicService {
     // Initialize configuration
     this.config = DEFAULT_MUSIC_CONFIG;
     // Initialize yt-dlp wrapper with path to executable
-    const ytDlpPath = path.join(process.cwd(), "bin", "yt-dlp.exe");
+    const ytDlpPath = getYtDlpPath();
     this.ytDlp = new YTDlpWrap(ytDlpPath);
   }
 
@@ -1099,7 +1108,7 @@ class MusicService {
       logger.debug("Getting audio stream with yt-dlp + ffmpeg", { url });
 
       return new Promise((resolve, reject) => {
-        const ytDlpPath = path.join(process.cwd(), "bin", "yt-dlp.exe");
+        const ytDlpPath = getYtDlpPath();
         const ffmpegPath = process.env.FFMPEG_PATH;
 
         if (!ffmpegPath) {

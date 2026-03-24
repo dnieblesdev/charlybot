@@ -1,5 +1,11 @@
 # @charlybot/bot
 
+## 2.1.4
+
+### Patch Changes
+
+- Fix: Use which() to find yt-dlp in PATH first, fallback to local bin
+
 ## 2.1.3
 
 ### Patch Changes
