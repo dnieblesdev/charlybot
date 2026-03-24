@@ -1,5 +1,11 @@
 # @charlybot/shared
 
+## 2.1.1
+
+### Patch Changes
+
+- Fix: Use absolute path for SQLite database fallback to avoid multiple dev.db files
+
 ## 2.1.0
 
 ### Minor Changes

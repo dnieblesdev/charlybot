@@ -1,7 +1,10 @@
 import { PrismaClient } from './generated/prisma';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
+import path from 'path';
 
-const url = process.env.DATABASE_URL || 'file:./dev.db';
+// Default to absolute path relative to this file's directory
+const defaultDbPath = path.resolve(__dirname, '../dev.db');
+const url = process.env.DATABASE_URL || `file:${defaultDbPath}`;
 
 const adapter = new PrismaLibSql({
   url: url.startsWith('file:') ? url : `file:${url}`,
