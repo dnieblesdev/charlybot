@@ -1,5 +1,15 @@
 # @charlybot/bot
 
+## 2.1.1
+
+### Patch Changes
+
+- fix(music): add defensive checks for malformed YouTube search results
+
+  - Wrap playdl.search() in try/catch to handle internal parse errors from play-dl 1.9.7
+  - Prevents crash when YouTube returns malformed search results
+  - Fixes: undefined is not an object (evaluating navigationEndpoint.browseEndpoint.browseId)
+
 ## 2.1.0
 
 ### Minor Changes
