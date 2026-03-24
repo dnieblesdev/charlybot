@@ -1,5 +1,11 @@
 # @charlybot/bot
 
+## 2.1.6
+
+### Patch Changes
+
+- Fix: add python3 to Docker production image (required by yt-dlp)
+
 ## 2.1.5
 
 ### Patch Changes

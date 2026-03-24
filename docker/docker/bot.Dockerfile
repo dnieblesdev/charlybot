@@ -24,13 +24,14 @@ RUN cd packages/shared && bunx prisma generate
 # Production slim image
 FROM oven/bun:1-slim
 
-# Install ffmpeg + libsodio para Discord.js voice + yt-dlp
+# Install ffmpeg + libsodio para Discord.js voice + yt-dlp + python3 (para yt-dlp)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libopus0 \
     libsodium23 \
     ca-certificates \
     wget \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Download yt-dlp latest
