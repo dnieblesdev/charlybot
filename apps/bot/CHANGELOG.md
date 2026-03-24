@@ -1,5 +1,11 @@
 # @charlybot/bot
 
+## 2.1.5
+
+### Patch Changes
+
+- Chore: remove yt-dlp symlink from Dockerfile (now uses which() in PATH)
+
 ## 2.1.4
 
 ### Patch Changes

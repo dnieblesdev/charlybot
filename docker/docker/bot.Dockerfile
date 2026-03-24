@@ -48,10 +48,5 @@ COPY --from=builder /app/bun.lock ./
 
 WORKDIR /app
 
-# Crear directorio bin y symlink para yt-dlp
-# El código busca bin/yt-dlp.exe, usamos symlink al binary real
-RUN mkdir -p /app/bin && \
-    ln -sf /usr/local/bin/yt-dlp /app/bin/yt-dlp.exe
-
 # El bot no necesita expose porque no expose puertos - corre como servicio
 CMD ["bun", "run", "--cwd", "/app/apps/bot", "dev"]
