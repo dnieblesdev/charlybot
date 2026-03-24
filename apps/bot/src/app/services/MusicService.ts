@@ -894,7 +894,15 @@ class MusicService {
       // Buscar el mejor resultado que no sea una playlist o stream en vivo
       let bestVideo = null;
       for (const video of searchResult) {
-        if (!video || !video.url) continue;
+        // Defensive check: ensure video has required properties before accessing
+        if (!video || !video.url || typeof video.title !== 'string') {
+          logger.debug("Skipping malformed video result", {
+            hasVideo: !!video,
+            hasUrl: !!video?.url,
+            hasTitle: video?.title,
+          });
+          continue;
+        }
 
         // Evitar playlists largas y streams en vivo
         if (video.durationInSec === 0 || video.durationInSec > 7200) {
@@ -2387,9 +2395,10 @@ class MusicService {
           timeoutPromise,
         ]) as YouTubeVideo[];
 
+        // Defensive check: validate search result has required properties
         if (searchResult.length > 0) {
           const video = searchResult[0];
-          if (video && video.url) {
+          if (video && video.url && typeof video.title === 'string') {
             logger.debug(`✅ Encontrado: ${video.title}`);
             return {
               title: video.title || "Título desconocido",
@@ -2398,6 +2407,12 @@ class MusicService {
               thumbnail: video.thumbnails?.[0]?.url,
               requester,
             };
+          } else {
+            logger.debug(`⚠️ Resultado malformed para: ${track.name}`, {
+              hasVideo: !!video,
+              hasUrl: !!video?.url,
+              hasTitle: typeof video?.title,
+            });
           }
         }
 
