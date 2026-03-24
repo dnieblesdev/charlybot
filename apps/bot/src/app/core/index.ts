@@ -13,13 +13,42 @@ import ffmpeg from "ffmpeg-static";
 import { createReadStream } from "fs";
 import { pipeline } from "stream";
 import { spawn } from "child_process";
+import { existsSync } from "fs";
+import { resolve } from "path";
 
-// Configurar ffmpeg para @discordjs/voice
-if (ffmpeg) {
-  process.env.FFMPEG_PATH = ffmpeg;
-  logger.info("✅ ffmpeg-static configurado para @discordjs/voice");
+// Configurar ffmpeg con fallback chain: ffmpeg-static → sistema → error
+let ffmpegPath: string | undefined;
+
+if (ffmpeg && existsSync(ffmpeg)) {
+  ffmpegPath = ffmpeg;
+  logger.info("✅ ffmpeg-static configurado para @discordjs/voice", { path: ffmpegPath });
+} else if (process.platform === "win32") {
+  // Windows: buscar en PATH
+  ffmpegPath = "ffmpeg";
+  logger.info("✅ ffmpeg del sistema (Windows PATH) configurado", { path: ffmpegPath });
 } else {
-  logger.warn("⚠️ ffmpeg-static no encontrado");
+  // Linux/Docker: rutas típicas del sistema
+  const systemPaths = [
+    "/usr/bin/ffmpeg",
+    "/usr/local/bin/ffmpeg",
+    "/opt/homebrew/bin/ffmpeg", // macOS ARM
+  ];
+  for (const p of systemPaths) {
+    if (existsSync(p)) {
+      ffmpegPath = p;
+      break;
+    }
+  }
+  if (ffmpegPath) {
+    logger.info("✅ ffmpeg del sistema configurado", { path: ffmpegPath });
+  }
+}
+
+if (ffmpegPath) {
+  process.env.FFMPEG_PATH = ffmpegPath;
+} else {
+  logger.error("❌ ffmpeg no encontrado en ninguna ubicación");
+  process.exit(1);
 }
 
 dotenv.config();

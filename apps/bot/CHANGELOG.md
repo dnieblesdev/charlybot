@@ -1,5 +1,11 @@
 # @charlybot/bot
 
+## 2.1.2
+
+### Patch Changes
+
+- Fix: Add ffmpeg fallback chain for Docker production environment
+
 ## 2.1.1
 
 ### Patch Changes
