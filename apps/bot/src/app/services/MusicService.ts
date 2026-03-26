@@ -405,8 +405,14 @@ class MusicService {
         this.queues.set(guildId, queue);
         this.setupPlayerEvents(guildId, player);
 
-        // Try to recover persisted state for this guild
+        // Only recover persisted state if there was an active playback
+        // This prevents restoring old songs when joining a fresh channel
         await this.tryRecoverQueue(guildId);
+        if (!queue.isPlaying && queue.songs.length > 0) {
+          // Clear recovered songs if nothing was playing - user started fresh
+          queue.songs = [];
+          logger.debug("Cleared recovered queue - fresh start", { guildId });
+        }
 
         connection.on(VoiceConnectionStatus.Disconnected, async () => {
           try {
@@ -1651,8 +1657,9 @@ class MusicService {
     const queue = this.queues.get(guildId);
     if (!queue || !queue.player || !queue.connection) return;
 
-    // Try to recover queue from persistence if not yet done
-    if (!queue.songs.length) {
+    // Only try to recover queue from persistence if there's a current song playing
+    // This prevents infinite loops when queue is empty after natural playback
+    if (!queue.songs.length && queue.currentSong) {
       await this.tryRecoverQueue(guildId);
     }
 
@@ -1876,6 +1883,10 @@ class MusicService {
       } else if (queue.loopMode === "queue" && queue.currentSong) {
         logger.debug("Adding song to end of queue", { guildId });
         queue.songs.push(queue.currentSong);
+      } else {
+        // Clear currentSong when song ends naturally (without loop)
+        // This prevents tryRecoverQueue from restoring old queue and causing infinite loop
+        queue.currentSong = null;
       }
 
       await this.playNext(guildId);

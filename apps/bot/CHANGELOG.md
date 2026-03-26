@@ -1,5 +1,13 @@
 # @charlybot/bot
 
+## 2.1.7
+
+### Patch Changes
+
+- Fix infinite loop in music playback when songs end naturally
+
+  When a song finished playing, the system would incorrectly recover the persisted queue and restart playback, causing an infinite loop. Fixed by clearing `queue.currentSong` in the Idle event handler when no loop mode is active.
+
 ## 2.1.6
 
 ### Patch Changes
