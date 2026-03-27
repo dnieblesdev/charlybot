@@ -47,9 +47,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const removed = musicService.removeSong(interaction.guildId, position);
 
     if (removed) {
+      // Obtener el nickname del usuario en el servidor (display name)
+      let requesterDisplayName = removed.requester.username;
+      if (interaction.guild && removed.requester.id) {
+        try {
+          const member = await interaction.guild.members.fetch(removed.requester.id);
+          requesterDisplayName = member?.displayName || removed.requester.username;
+        } catch {
+          // Si no se puede obtener el miembro, usar el username
+        }
+      }
+
       const embed = new EmbedBuilder()
         .setColor(0xff0000)
-        .setTitle("🗑️ Canción Eliminada")
+        .setTitle("🗑️ Canción eliminada")
         .setDescription(`**${removed.title}**`)
         .addFields(
           {
@@ -59,7 +70,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           },
           {
             name: "Solicitado por",
-            value: removed.requester.username,
+            value: requesterDisplayName,
             inline: true,
           },
         );

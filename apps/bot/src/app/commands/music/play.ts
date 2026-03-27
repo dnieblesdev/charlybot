@@ -87,6 +87,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (result.added.length === 1) {
       const song = result.added[0];
       if (song) {
+        // Obtener el nickname del usuario en el servidor (display name)
+        let requesterDisplayName = song.requester.username;
+        if (interaction.guild && interaction.member) {
+          try {
+            const member = await interaction.guild.members.fetch(interaction.user.id);
+            requesterDisplayName = member?.displayName || song.requester.username;
+          } catch {
+            // Si no se puede obtener el miembro, usar el username
+          }
+        }
+
         const embed = new EmbedBuilder()
           .setColor(result.playing ? 0x00ff00 : 0x0099ff)
           .setTitle(
@@ -101,7 +112,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             },
             {
               name: "Solicitado por",
-              value: song.requester.username,
+              value: requesterDisplayName,
               inline: true,
             },
           )
@@ -114,6 +125,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         await interaction.editReply({ embeds: [embed] });
       }
     } else {
+      // Obtener el nickname del usuario en el servidor (display name)
+      let requesterDisplayName = interaction.user.username;
+      if (interaction.guild && interaction.member) {
+        try {
+          const member = await interaction.guild.members.fetch(interaction.user.id);
+          requesterDisplayName = member?.displayName || interaction.user.username;
+        } catch {
+          // Si no se puede obtener el miembro, usar el username
+        }
+      }
+
       const embed = new EmbedBuilder()
         .setColor(0x0099ff)
         .setTitle("📋 Playlist agregada")
@@ -122,7 +144,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         )
         .addFields({
           name: "Solicitado por",
-          value: interaction.user.username,
+          value: requesterDisplayName,
           inline: true,
         });
 

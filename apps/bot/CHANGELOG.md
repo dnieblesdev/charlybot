@@ -1,5 +1,27 @@
 # @charlybot/bot
 
+## 2.1.8
+
+### Patch Changes
+
+- refactor: MusicService monolith into 4 services + fixes
+
+  \- Split MusicService into VoiceConnectionService, AudioStreamService,
+
+  &nbsp; QueueManagementService, PlayerService
+
+  \- Fix audio playback (StreamType, connection.subscribe, PassThrough)
+
+  \- Fix queue management (isPlaying check, currentSong tracking)
+
+  \- Fix /music skip to return nowPlaying song
+
+  \- Add skip notification with current song title
+
+  \- Add silent auto-play (no spam during playlists)
+
+  \- Use display name instead of username in music embeds
+
 ## 2.1.7
 
 ### Patch Changes

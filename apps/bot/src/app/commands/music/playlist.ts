@@ -58,9 +58,21 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Canción actual
     if (queue.currentSong) {
       const statusIcon = queue.isPaused ? "⏸️" : "▶️";
+      
+      // Obtener el nickname del usuario en el servidor (display name)
+      let requesterDisplayName = queue.currentSong.requester.username;
+      if (interaction.guild && queue.currentSong.requester.id) {
+        try {
+          const member = await interaction.guild.members.fetch(queue.currentSong.requester.id);
+          requesterDisplayName = member?.displayName || queue.currentSong.requester.username;
+        } catch {
+          // Si no se puede obtener el miembro, usar el username
+        }
+      }
+      
       embed.addFields({
         name: `${statusIcon} Reproduciendo Ahora`,
-        value: `**${queue.currentSong.title}**\n\`${formatDuration(queue.currentSong.duration)}\` | Solicitado por ${queue.currentSong.requester.username}`,
+        value: `**${queue.currentSong.title}**\n\`${formatDuration(queue.currentSong.duration)}\` | Solicitado por ${requesterDisplayName}`,
         inline: false,
       });
     }

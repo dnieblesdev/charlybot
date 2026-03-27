@@ -37,6 +37,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const statusIcon = queue.isPaused ? "⏸️" : "▶️";
     const statusText = queue.isPaused ? "Pausado" : "Reproduciendo";
 
+    // Obtener el nickname del usuario en el servidor (display name)
+    let requesterDisplayName = song.requester.username;
+    if (interaction.guild && song.requester.id) {
+      try {
+        const member = await interaction.guild.members.fetch(song.requester.id);
+        requesterDisplayName = member?.displayName || song.requester.username;
+      } catch {
+        // Si no se puede obtener el miembro, usar el username
+      }
+    }
+
     const embed = new EmbedBuilder()
       .setColor(queue.isPaused ? 0xffa500 : 0x00ff00)
       .setTitle(`${statusIcon} ${statusText}`)
@@ -49,7 +60,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         },
         {
           name: "Solicitado por",
-          value: song.requester.username,
+          value: requesterDisplayName,
           inline: true,
         },
         {

@@ -33,16 +33,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    const skipped = await musicService.skip(interaction.guildId);
+    const nowPlaying = await musicService.skip(interaction.guildId);
 
-    if (skipped) {
+    if (nowPlaying) {
       await interaction.reply({
-        content: "⏭️ Canción saltada.",
+        content: `⏭️ Canción saltada.\n🎵 **Reproduciendo ahora:** ${nowPlaying.title}`,
       });
 
       logger.info("Skip command executed successfully", {
         userId: interaction.user.id,
         guildId: interaction.guildId,
+        nowPlaying: nowPlaying.title,
       });
     } else {
       await interaction.reply({

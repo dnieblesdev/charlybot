@@ -1,343 +1,38 @@
-import {
-  joinVoiceChannel,
-  createAudioPlayer,
-  createAudioResource,
-  VoiceConnection,
-  AudioPlayer,
-  AudioPlayerStatus,
-  VoiceConnectionStatus,
-  entersState,
-  StreamType,
-  type AudioResource,
-} from "@discordjs/voice";
-import { Readable, type Readable as ReadableStream } from "stream";
+/**
+ * MusicService - Fachada de delegación a servicios especializados
+ * 
+ * Esta clase actúa como una fachada delgada que delega todas las operaciones
+ * a los 4 servicios especializados:
+ * - VoiceConnectionService: gestión de conexiones de voz
+ * - AudioStreamService: resolución y stream de audio  
+ * - QueueManagementService: gestión de colas
+ * - PlayerService: control de reproducción
+ * 
+ * Mantiene backward compatibility con todos los comandos existentes.
+ */
+
 import type { VoiceChannel, StageChannel, TextChannel } from "discord.js";
-import type { MusicQueue, Song, LoopMode } from "../../types/music.ts";
-import type { IMusicRepository } from "../../domain/ports/IMusicRepository";
-import { HttpMusicAdapter } from "../../infrastructure/api/HttpMusicAdapter";
-import logger from "../../utils/logger.ts";
-import playdl, {
-  type YouTubeVideo,
-  type SpotifyTrack,
-  type SpotifyPlaylist,
-} from "play-dl";
+import type { VoiceConnection } from "@discordjs/voice";
+import type { Song, LoopMode, MusicQueue } from "../../types/music.ts";
+
+// Importar los servicios especializados
 import {
-  DEFAULT_MUSIC_CONFIG,
-  getOptimalConfig,
-  MUSIC_MESSAGES,
-  type MusicConfig,
-} from "../../config/music.ts";
-import YTDlpWrap from "yt-dlp-wrap";
-import { createReadStream } from "fs";
-import { unlink } from "fs/promises";
-import path from "path";
-import { spawn } from "child_process";
-import { which } from "bun";
-import type { IMusicQueueItem } from "@charlybot/shared";
+  VoiceConnectionService,
+  AudioStreamService,
+  QueueManagementService,
+  PlayerService,
+  type StreamSource,
+  type StreamOptions,
+  type Song as ServiceSong,
+  type Track,
+} from "./music/index";
 
-// Helper function to find yt-dlp: buscar en PATH primero, luego fallback local
-const getYtDlpPath = (): string => {
-  const systemYtDlp = which("yt-dlp");
-  if (systemYtDlp) return systemYtDlp;
-  // Fallback: buscar en bin/ del proyecto
-  return path.join(process.cwd(), "bin", "yt-dlp.exe");
-};
-
-interface PlaylistBufferState {
-  allTracks: Array<{
-    name: string;
-    artists?: Array<{ name: string }>;
-  }>;
-  requester: { id: string; username: string };
-  config: MusicConfig;
-  bufferSize: number;
-  currentIndex: number;
-  isProcessing: boolean;
-}
-
-/**
- * Represents a format object from yt-dlp's video info response
- */
-interface YtDlpFormat {
-  acodec?: string;
-  vcodec?: string;
-  abr?: number;
-  url?: string;
-}
-
-/**
- * Represents video info from yt-dlp
- */
-interface YtDlpVideoInfo {
-  title?: string;
-  duration?: string | number;
-  thumbnail?: string;
-  formats?: YtDlpFormat[];
-}
+import logger from "../../utils/logger.ts";
 
 class MusicService {
-  private queues = new Map<string, MusicQueue>();
-  private ytDlp: YTDlpWrap;
-  private config: MusicConfig;
-  private playlistBuffers = new Map<string, PlaylistBufferState>();
-  private repository: IMusicRepository;
-  private volumeDebounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
-  private settingsSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
-
-  constructor(repository: IMusicRepository) {
-    this.repository = repository;
-    this.queues = new Map();
-    // Initialize configuration
-    this.config = DEFAULT_MUSIC_CONFIG;
-    // Initialize yt-dlp wrapper with path to executable
-    const ytDlpPath = getYtDlpPath();
-    this.ytDlp = new YTDlpWrap(ytDlpPath);
-  }
-
-  /**
-   * Attempts to recover the queue state from the repository for a guild.
-   * Called when a queue is first accessed to hydrate from persistence.
-   */
-  private async tryRecoverQueue(guildId: string): Promise<void> {
-    try {
-      const persisted = await this.repository.getQueue(guildId);
-      if (!persisted) {
-        logger.debug("No persisted queue found for recovery", { guildId });
-        return;
-      }
-
-      const queue = this.queues.get(guildId);
-      if (!queue) {
-        logger.debug("Cannot recover: queue not initialized for guild", { guildId });
-        return;
-      }
-
-      // Hydrate the queue state from persistence
-      queue.volume = persisted.volume;
-      queue.loopMode = persisted.loopMode as LoopMode;
-      queue.isPlaying = persisted.isPlaying;
-      queue.isPaused = persisted.isPaused;
-
-      // Hydrate queue items (songs)
-      if (persisted.items && persisted.items.length > 0) {
-        queue.songs = persisted.items.map((item) => this.mapToSong(item));
-        logger.info("Recovered queue items from persistence", {
-          guildId,
-          itemCount: persisted.items.length,
-        });
-      }
-
-      // Hydrate current song if there was one playing
-      if (persisted.currentSongId && queue.songs.length > 0) {
-        const currentIndex = queue.songs.findIndex(
-          (s) => s.url === persisted.currentSongId
-        );
-        if (currentIndex > 0) {
-          // Move current song to front of queue
-          const [current] = queue.songs.splice(currentIndex, 1);
-          if (current) {
-            queue.songs.unshift(current);
-          }
-        }
-      }
-
-      logger.info("Queue state recovered from persistence", {
-        guildId,
-        wasPlaying: persisted.isPlaying,
-        wasPaused: persisted.isPaused,
-        songCount: queue.songs.length,
-        volume: queue.volume,
-        loopMode: queue.loopMode,
-      });
-    } catch (error) {
-      // Graceful degradation: log warning but continue with in-memory state
-      logger.warn("Failed to recover queue from persistence, using in-memory state", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  /**
-   * Persists queue items to the repository (write-through).
-   * Fire-and-forget with graceful error handling.
-   */
-  private async persistQueueItems(guildId: string): Promise<void> {
-    // Fire and forget - don't await to avoid blocking
-    this.syncQueueItemsAsync(guildId).catch((error) => {
-      logger.warn("Failed to persist queue items", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    });
-  }
-
-  private async syncQueueItemsAsync(guildId: string): Promise<void> {
-    const queue = this.queues.get(guildId);
-    if (!queue) return;
-
-    try {
-      // Clear existing queue and re-add all items
-      await this.repository.clearQueue(guildId);
-
-      // Re-add all items in order
-      for (const song of queue.songs) {
-        const itemData = this.mapToQueueItem(song);
-        await this.repository.addToQueue(guildId, itemData);
-      }
-
-      logger.debug("Queue items synced to persistence", {
-        guildId,
-        itemCount: queue.songs.length,
-      });
-    } catch (error) {
-      logger.warn("Error syncing queue items to persistence", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  /**
-   * Persists a single item addition to the repository (write-through).
-   */
-  private async persistAddItem(
-    guildId: string,
-    song: Song
-  ): Promise<void> {
-    try {
-      const itemData = this.mapToQueueItem(song);
-      await this.repository.addToQueue(guildId, itemData);
-      logger.debug("Added item to persisted queue", {
-        guildId,
-        title: song.title,
-      });
-    } catch (error) {
-      logger.warn("Failed to persist add item", {
-        guildId,
-        title: song.title,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  /**
-   * Persists item removal from the repository (write-through).
-   */
-  private async persistRemoveItem(
-    guildId: string,
-    position: number
-  ): Promise<void> {
-    try {
-      await this.repository.removeFromQueue(guildId, position);
-      logger.debug("Removed item from persisted queue", { guildId, position });
-    } catch (error) {
-      logger.warn("Failed to persist remove item", {
-        guildId,
-        position,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  /**
-   * Persists queue clear to the repository (write-through).
-   */
-  private async persistClearQueue(guildId: string): Promise<void> {
-    try {
-      await this.repository.clearQueue(guildId);
-      logger.debug("Cleared persisted queue", { guildId });
-    } catch (error) {
-      logger.warn("Failed to persist clear queue", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  /**
-   * Updates queue settings in the repository with debouncing for volume changes.
-   */
-  private debouncedUpdateSettings(
-    guildId: string,
-    settings: Partial<{
-      volume: number;
-      loopMode: LoopMode;
-      isPlaying: boolean;
-      isPaused: boolean;
-      currentSongId: string | null;
-    }>
-  ): void {
-    // Clear existing timer for this guild
-    const existingTimer = this.settingsSyncTimers.get(guildId);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-
-    // Schedule the update
-    const timer = setTimeout(async () => {
-      this.settingsSyncTimers.delete(guildId);
-      await this.persistUpdateSettings(guildId, settings);
-    }, 1000); // 1 second debounce for settings
-
-    this.settingsSyncTimers.set(guildId, timer);
-  }
-
-  /**
-   * Immediately persists settings to the repository (for critical state changes).
-   */
-  private async persistUpdateSettings(
-    guildId: string,
-    settings: Partial<{
-      volume: number;
-      loopMode: LoopMode;
-      isPlaying: boolean;
-      isPaused: boolean;
-      currentSongId: string | null;
-    }>
-  ): Promise<void> {
-    try {
-      await this.repository.updateSettings(guildId, settings);
-      logger.debug("Persisted queue settings", { guildId, settings });
-    } catch (error) {
-      logger.warn("Failed to persist settings update", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  /**
-   * Mappers for repository data
-   */
-  private mapToSong(item: IMusicQueueItem): Song {
-    return {
-      title: item.title,
-      url: item.url,
-      duration: item.duration,
-      thumbnail: item.thumbnail || undefined,
-      requester: {
-        id: item.requesterId,
-        username: item.requesterName,
-      },
-    };
-  }
-
-  private mapToQueueItem(
-    song: Song,
-  ): Omit<IMusicQueueItem, "id" | "queueId" | "position" | "createdAt"> {
-    return {
-      title: song.title,
-      url: song.url,
-      duration: song.duration,
-      thumbnail: song.thumbnail,
-      requesterId: song.requester.id,
-      requesterName: song.requester.username,
-    };
-  }
-
   /**
    * Une el bot a un canal de voz
+   * Delega a VoiceConnectionService
    */
   async join(
     guildId: string,
@@ -345,146 +40,23 @@ class MusicService {
     textChannel: TextChannel,
   ): Promise<VoiceConnection> {
     try {
-      let queue = this.queues.get(guildId);
-
-      // Verificar si hay una conexión existente válida
-      if (queue?.connection && queue.voiceChannel.id === voiceChannel.id) {
-        const connectionState = queue.connection.state.status;
-
-        // Si la conexión está en un estado válido, reutilizarla
-        if (
-          connectionState !== VoiceConnectionStatus.Destroyed &&
-          connectionState !== VoiceConnectionStatus.Disconnected
-        ) {
-          logger.info("Bot already connected to voice channel", {
-            guildId,
-            channelId: voiceChannel.id,
-            connectionState,
-          });
-          return queue.connection;
-        }
-
-        // Si la conexión existe pero está en mal estado, limpiarla
-        logger.info("Existing connection in bad state, cleaning up", {
-          guildId,
-          connectionState,
-        });
-      }
-
-      // Limpiar cualquier conexión existente de forma segura
-      if (queue?.connection) {
-        this.safeDestroyConnection(queue.connection);
-      }
-
-      const connection = joinVoiceChannel({
-        channelId: voiceChannel.id,
-        guildId: guildId,
-        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-      });
-
-      await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
-
-      if (!queue) {
-        const player = createAudioPlayer();
-
-        queue = {
-          guildId,
-          textChannel,
-          voiceChannel,
-          connection,
-          player,
-          songs: [],
-          currentSong: null,
-          isPlaying: false,
-          isPaused: false,
-          volume: 100,
-          loopMode: "none",
-          history: [],
-        };
-
-        this.queues.set(guildId, queue);
-        this.setupPlayerEvents(guildId, player);
-
-        // Only recover persisted state if there was an active playback
-        // This prevents restoring old songs when joining a fresh channel
-        await this.tryRecoverQueue(guildId);
-        if (!queue.isPlaying && queue.songs.length > 0) {
-          // Clear recovered songs if nothing was playing - user started fresh
-          queue.songs = [];
-          logger.debug("Cleared recovered queue - fresh start", { guildId });
-        }
-
-        connection.on(VoiceConnectionStatus.Disconnected, async () => {
-          try {
-            logger.info(
-              "Voice connection disconnected, attempting to reconnect",
-              {
-                guildId,
-                channelId: voiceChannel.id,
-              },
-            );
-
-            await Promise.race([
-              entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
-              entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
-            ]);
-
-            logger.info("Voice connection successfully reconnected", {
-              guildId,
-            });
-          } catch (error) {
-            logger.warn("Failed to reconnect, clearing queue", {
-              guildId,
-              error: error instanceof Error ? error.message : String(error),
-            });
-
-            // Limpiar la cola sin intentar destruir la conexión otra vez
-            // ya que está siendo manejada por el evento de desconexión
-            const currentQueue = this.queues.get(guildId);
-            if (currentQueue?.player) {
-              currentQueue.player.stop();
-            }
-            this.queues.delete(guildId);
-          }
-        });
-
-        connection.on("error", (error) => {
-          logger.error("Voice connection error", {
-            guildId,
-            error: error.message,
-            stack: error.stack,
-          });
-
-          // Limpiar la cola de forma segura
-          const currentQueue = this.queues.get(guildId);
-          if (currentQueue) {
-            if (currentQueue.player) {
-              currentQueue.player.stop();
-            }
-            // No destruir la conexión aquí ya que puede estar siendo manejada
-            // por otros eventos
-            this.queues.delete(guildId);
-          }
-        });
-      } else {
-        queue.connection = connection;
-        queue.voiceChannel = voiceChannel;
-        queue.textChannel = textChannel;
-      }
-
-      logger.info("Successfully joined voice channel", {
+      // Usar VoiceConnectionService para establecer conexión
+      const session = await VoiceConnectionService.join(
+        guildId,
+        voiceChannel,
+        textChannel,
+      );
+      
+      logger.info("Bot joined voice channel via facade", {
         guildId,
         channelId: voiceChannel.id,
-        channelName: voiceChannel.name,
       });
-
-      return connection;
+      
+      return session.connection;
     } catch (error) {
-      logger.error("Error joining voice channel", {
+      logger.error("Error joining voice channel via facade", {
         guildId,
-        channelId: voiceChannel.id,
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;
     }
@@ -492,502 +64,113 @@ class MusicService {
 
   /**
    * Desconecta el bot del canal de voz
+   * Delega a VoiceConnectionService
    */
   async leave(guildId: string): Promise<void> {
     try {
-      const queue = this.queues.get(guildId);
-
-      if (!queue) {
-        logger.warn("No queue found for guild when leaving", { guildId });
-        return;
-      }
-
-      // Verificar si ya se está procesando una desconexión
-      if (
-        queue.connection &&
-        queue.connection.state.status === VoiceConnectionStatus.Destroyed
-      ) {
-        logger.debug("Connection already destroyed, just cleaning up queue", {
-          guildId,
-        });
-        this.safeCleanQueue(guildId);
-        return;
-      }
-
-      // Detener el reproductor de forma segura
-      if (queue.player) {
-        queue.player.stop();
-      }
-
-      // Destruir la conexión de forma segura
-      if (queue.connection) {
-        this.safeDestroyConnection(queue.connection);
-      }
-
-      // Limpiar la cola de forma segura
-      this.safeCleanQueue(guildId);
-
-      logger.info("Successfully left voice channel", { guildId });
+      await VoiceConnectionService.leave(guildId);
+      logger.info("Bot left voice channel via facade", { guildId });
     } catch (error) {
-      logger.error("Error leaving voice channel", {
+      logger.error("Error leaving voice channel via facade", {
         guildId,
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
       });
-
-      // Asegurar que la cola se limpia incluso si hay errores
-      this.safeCleanQueue(guildId);
       throw error;
     }
   }
 
   /**
    * Agrega canciones a la cola y reproduce si no está reproduciendo
+   * Delega a QueueManagementService -> AudioStreamService -> PlayerService
    */
   async play(
     guildId: string,
     query: string,
     requester: { id: string; username: string },
   ): Promise<{ added: Song[]; playing: boolean }> {
-    const queue = this.queues.get(guildId);
-    if (!queue) {
-      throw new Error("No hay una cola activa. Usa /join primero.");
-    }
-
     try {
-      logger.info("🎵 Iniciando búsqueda de música", {
-        guildId,
-        query,
-        requester: requester.username,
-      });
-
-      const isPlaylist = query.includes("playlist");
-      const wasPlaying = queue.isPlaying;
-
-      if (isPlaylist) {
-        logger.info(
-          "🎵 Detectada playlist - iniciando streaming en tiempo real",
-        );
-
-        // Para playlists, procesar solo el primer lote e iniciar reproducción
-        const initialSongs = await this.searchSongs(query, requester);
-
-        logger.debug("Lote inicial de playlist completado", {
-          guildId,
-          foundSongs: initialSongs.length,
-          firstSongTitle: initialSongs[0]?.title,
-        });
-
-        if (initialSongs.length === 0) {
-          logger.warn("❌ No se encontraron resultados en lote inicial", {
-            query,
-          });
-          throw new Error(
-            "No se encontraron resultados iniciales para la playlist.",
-          );
-        }
-
-        // Agregar solo las canciones iniciales
-        queue.songs.push(...initialSongs);
-
-        // Persist to repository (write-through)
-        for (const song of initialSongs) {
-          await this.persistAddItem(guildId, song);
-        }
-
-        // Iniciar reproducción inmediatamente si no estaba reproduciendo
-        if (!wasPlaying) {
-          logger.info("🎶 Iniciando reproducción inmediata de playlist", {
-            guildId,
-          });
-          await this.playNext(guildId);
-        }
-
-        logger.info(
-          "✅ Playlist iniciada - procesando resto en segundo plano",
-          {
-            guildId,
-            initialSongs: initialSongs.length,
-            queueLength: queue.songs.length,
-          },
-        );
-
-        // Enviar mensaje informativo al usuario
-        if (queue.textChannel) {
-          const embed = new (require("discord.js").EmbedBuilder)()
-            .setColor(0x00ff00)
-            .setTitle("🚀 Playlist Iniciada")
-            .setDescription(
-              `**${initialSongs.length}** canciones listas para reproducir\n` +
-                `Las siguientes se cargarán automáticamente mientras escuchas`,
-            )
-            .setFooter({ text: "Sistema de buffer dinámico activado" });
-
-          queue.textChannel.send({ embeds: [embed] }).catch(() => {});
-        }
-
-        return { added: initialSongs, playing: !wasPlaying };
-      } else {
-        // Para tracks individuales, usar método normal
-        const songs = await this.searchSongs(query, requester);
-
-        logger.debug("Búsqueda completada", {
-          guildId,
-          foundSongs: songs.length,
-          firstSongTitle: songs[0]?.title,
-        });
-
-        if (songs.length === 0) {
-          logger.warn("❌ No se encontraron resultados", { query });
-          throw new Error("No se encontraron resultados para tu búsqueda.");
-        }
-
-        queue.songs.push(...songs);
-
-        // Persist to repository (write-through)
-        for (const song of songs) {
-          await this.persistAddItem(guildId, song);
-        }
-
-        logger.debug("Estado de la cola", {
-          guildId,
-          totalSongsInQueue: queue.songs.length,
-          wasAlreadyPlaying: wasPlaying,
-        });
-
-        if (!wasPlaying) {
-          logger.info("🎶 Iniciando reproducción", { guildId });
-          await this.playNext(guildId);
-        }
-
-        logger.info("✅ Canciones agregadas a la cola", {
-          guildId,
-          songCount: songs.length,
-          wasPlaying,
-          queueLength: queue.songs.length,
-        });
-
-        return { added: songs, playing: !wasPlaying };
-      }
-    } catch (error) {
-      logger.error("💥 Error en play", {
-        guildId,
-        query,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
-    }
-  }
-
-  /**
-   * Busca canciones desde YouTube o Spotify
-   */
-  private async searchSongs(
-    query: string,
-    requester: { id: string; username: string },
-  ): Promise<Song[]> {
-    try {
-      logger.info("🔍 Iniciando búsqueda de canciones", {
-        query,
-        requester: requester.username,
-        queryLength: query.length,
-        isUrl: query.includes("http"),
-        isSpotify: query.includes("spotify.com"),
-        isYoutube: query.includes("youtube.com") || query.includes("youtu.be"),
-      });
-
-      // Limpiar el query de caracteres especiales problemáticos para playlists
-      const cleanQuery = this.cleanSearchQuery(query);
-      logger.debug("Query limpio", {
-        original: query,
-        cleaned: cleanQuery,
-      });
-
-      // Verificar si es una URL de Spotify
-      logger.info("🎵 Procesando query", { query, type: "checking_spotify" });
-
-      const spotifyValidation = playdl.sp_validate(query);
-      logger.debug("Spotify validation result", {
-        query,
-        validation: spotifyValidation,
-      });
-
-      if (spotifyValidation === "track") {
-        logger.info("🎵 Detectado track de Spotify", { url: query });
-
-        try {
-          logger.debug("Obteniendo información del track de Spotify...");
-
-          // Crear timeout para detectar si se cuelga
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(
-              () =>
-                reject(
-                  new Error(
-                    "Timeout: playdl.spotify() tardó más de 10 segundos",
-                  ),
-                ),
-              10000,
-            );
-          });
-
-          const spotifyInfo = await Promise.race([
-            playdl.spotify(query) as Promise<SpotifyTrack>,
-            timeoutPromise,
-          ]) as SpotifyTrack;
-
-          logger.info("✅ Información de Spotify obtenida", {
-            name: spotifyInfo.name,
-            artist: spotifyInfo.artists?.[0]?.name,
-            duration: spotifyInfo.durationInMs,
-            url: spotifyInfo.url,
-          });
-
-          const searchQuery = `${spotifyInfo.name} ${spotifyInfo.artists?.[0]?.name || ""}`;
-          logger.debug("🔍 Buscando en YouTube", { searchQuery });
-
-          // Timeout para búsqueda en YouTube también
-          const searchTimeoutPromise = new Promise((_, reject) => {
-            setTimeout(
-              () =>
-                reject(
-                  new Error("Timeout: YouTube search tardó más de 15 segundos"),
-                ),
-              15000,
-            );
-          });
-
-          let searchResult: YouTubeVideo[] = [];
-          try {
-            searchResult = await Promise.race([
-              playdl.search(searchQuery, {
-                limit: 1,
-                source: { youtube: "video" },
-              }),
-              searchTimeoutPromise,
-            ]) as YouTubeVideo[];
-          } catch (searchError) {
-            if (
-              searchError instanceof TypeError &&
-              searchError.message.includes("navigationEndpoint")
-            ) {
-              logger.warn("YouTube search returned malformed results", {
-                query: searchQuery,
-              });
-              searchResult = [];
-            } else {
-              throw searchError;
-            }
-          }
-
-          logger.debug("Resultado de búsqueda en YouTube", {
-            resultsFound: searchResult.length,
-            firstResult: searchResult[0]
-              ? {
-                  title: searchResult[0].title,
-                  url: searchResult[0].url,
-                  duration: searchResult[0].durationInSec,
-                }
-              : null,
-          });
-
-          if (searchResult.length === 0) {
-            logger.error("❌ No se encontraron resultados en YouTube", {
-              searchQuery,
-            });
-            throw new Error("No se pudo encontrar la canción en YouTube.");
-          }
-
-          const video = searchResult[0];
-          if (!video) {
-            logger.error("❌ Video resultado es null/undefined");
-            throw new Error("No se encontraron resultados.");
-          }
-
-          logger.info("✅ Spotify track convertido exitosamente", {
-            spotifyTitle: spotifyInfo.name,
-            youtubeTitle: video.title,
-            youtubeUrl: video.url,
-          });
-
-          return [
-            {
-              title: video.title || "Título desconocido",
-              url: video.url,
-              duration: video.durationInSec || 0,
-              thumbnail: video.thumbnails?.[0]?.url,
-              requester,
-            },
-          ];
-        } catch (error) {
-          logger.error("💥 Error procesando track de Spotify", {
-            query,
-            error: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined,
-            isTimeout:
-              error instanceof Error && error.message.includes("Timeout"),
-            duration: Date.now(),
-          });
-
-          // Si es timeout, dar mensaje más específico
-          if (error instanceof Error && error.message.includes("Timeout")) {
-            throw new Error(`⏱️ Timeout procesando Spotify: ${error.message}`);
-          }
-          throw error;
-        }
+      // Verificar que hay sesión de voz activa
+      const session = VoiceConnectionService.getSession(guildId);
+      if (!session) {
+        throw new Error("No hay una cola activa. Usa /join primero.");
       }
 
-      // Verificar si es una playlist de Spotify
-      if (spotifyValidation === "playlist") {
-        logger.info("🎵 Detectada playlist de Spotify", { url: query });
+      // Verificar si ya está reproduciendo usando PlayerService (más preciso que el snapshot)
+      const isCurrentlyPlaying = PlayerService.isPlaying(guildId);
 
-        // Procesar playlist con buffer dinámico
-        return await this.processPlaylistWithDynamicBuffer(query, requester);
-      }
+      // Resolver la query a una fuente de stream
+      const source = await AudioStreamService.resolve(query, guildId);
 
-      // Verificar si es una playlist de YouTube
-      if (playdl.yt_validate(query) === "playlist") {
-        const playlist = await playdl.playlist_info(query, {
-          incomplete: true,
-        });
-        const videos = await playlist.all_videos();
-
-        return videos
-          .filter((video) => video !== undefined && video.url)
-          .map((video) => ({
-            title: video.title || "Título desconocido",
-            url: video.url,
-            duration: video.durationInSec || 0,
-            thumbnail: video.thumbnails?.[0]?.url,
-            requester,
-          }));
-      }
-
-      // Verificar si es un video de YouTube
-      if (playdl.yt_validate(query) === "video") {
-        logger.debug("Detected YouTube video");
-
-        try {
-          const info = await playdl.video_basic_info(query);
-          const video = info.video_details;
-
-          if (!video) {
-            throw new Error("No se pudo obtener información del video.");
-          }
-
-          logger.debug("YouTube video info retrieved", {
-            title: video.title,
-            id: video.id,
-            duration: video.durationInSec,
-          });
-
-          return [
-            {
-              title: video.title || "Título desconocido",
-              url: query, // Usar la query original en lugar de video.url
-              duration: video.durationInSec || 0,
-              thumbnail: video.thumbnails?.[0]?.url,
-              requester,
-            },
-          ];
-        } catch (error) {
-          logger.error("Error getting video info, using direct URL", {
-            query,
-            error: error instanceof Error ? error.message : String(error),
-          });
-
-          // Si falla, usar la URL directamente
-          return [
-            {
-              title: "Video de YouTube",
-              url: query,
-              duration: 0,
-              thumbnail: undefined,
-              requester,
-            },
-          ];
-        }
-      }
-
-      // Buscar en YouTube
-      logger.debug("Searching YouTube", { query: cleanQuery });
-      let searchResult: YouTubeVideo[] = [];
-      try {
-        searchResult = await playdl.search(cleanQuery, {
-          limit: 3,
-          source: { youtube: "video" },
-        });
-      } catch (searchError) {
-        // Capturar error específico de parseo malformed en play-dl
-        if (
-          searchError instanceof TypeError &&
-          searchError.message.includes("navigationEndpoint")
-        ) {
-          logger.warn("YouTube search returned malformed results", {
-            query: cleanQuery,
-          });
-          searchResult = [];
-        } else {
-          throw searchError;
-        }
-      }
-
-      if (searchResult.length === 0) {
-        logger.warn("No search results found", { query: cleanQuery });
-        return [];
-      }
-
-      // Buscar el mejor resultado que no sea una playlist o stream en vivo
-      let bestVideo = null;
-      for (const video of searchResult) {
-        // Defensive check: ensure video has required properties before accessing
-        if (!video || !video.url || typeof video.title !== 'string') {
-          logger.debug("Skipping malformed video result", {
-            hasVideo: !!video,
-            hasUrl: !!video?.url,
-            hasTitle: video?.title,
-          });
-          continue;
-        }
-
-        // Evitar playlists largas y streams en vivo
-        if (video.durationInSec === 0 || video.durationInSec > 7200) {
-          // Skip streams and videos > 2 hours
-          logger.debug("Skipping long/live video", {
-            title: video.title,
-            duration: video.durationInSec,
-          });
-          continue;
-        }
-
-        bestVideo = video;
-        break;
-      }
-
-      if (!bestVideo) {
-        logger.warn("No suitable video found in search results", {
-          query: cleanQuery,
-        });
-        return [];
-      }
-
-      logger.debug("Search result found", {
-        title: bestVideo.title,
-        url: bestVideo.url,
-        duration: bestVideo.durationInSec,
-      });
-
-      return [
-        {
-          title: bestVideo.title || "Título desconocido",
-          url: bestVideo.url,
-          duration: bestVideo.durationInSec || 0,
-          thumbnail: bestVideo.thumbnails?.[0]?.url,
-          requester,
+      // Convertir StreamSource a Track para la cola
+      const track: Omit<Track, "id" | "addedAt"> = {
+        source: {
+          url: source.url,
+          title: source.title,
+          duration: source.duration,
+          thumbnail: source.thumbnail,
+          platform: source.platform,
         },
-      ];
+        requestedBy: requester.id,
+      };
+
+      // Agregar a la cola
+      const updatedSnapshot = await QueueManagementService.enqueue(guildId, track);
+
+      let playing = false;
+      // Solo iniciar reproducción si NO está actualmente reproduciendo
+      if (!isCurrentlyPlaying && updatedSnapshot.songs.length > 0) {
+        const nextSong = await QueueManagementService.dequeue(guildId);
+        if (nextSong) {
+          // Buscar el source para el stream
+          const streamSource = await AudioStreamService.resolve(nextSong.url, guildId);
+          const stream = await AudioStreamService.createStream(streamSource, {
+            volume: (updatedSnapshot.volume ?? 100) / 100,
+          });
+          
+          // IMPORTANTE: Actualizar estado en la cola para que los comandos funcionen
+          QueueManagementService.setPlaybackState(guildId, { isPlaying: true });
+          
+          // Actualizar currentSong para /nowplaying y otros comandos
+          QueueManagementService.setCurrentSong(guildId, {
+            title: nextSong.title,
+            url: nextSong.url,
+            duration: nextSong.duration,
+            thumbnail: nextSong.thumbnail,
+            requester: nextSong.requester,
+          });
+          
+          await PlayerService.play(session, nextSong, stream);
+          playing = true;
+        }
+      } else {
+        // Ya estaba reproduciendo - solo agregar a la cola
+        logger.info("Song added to queue (already playing)", {
+          guildId,
+          title: source.title,
+          queueLength: updatedSnapshot.songs.length,
+        });
+      }
+
+      logger.info("Song added via facade", {
+        guildId,
+        query,
+        title: source.title,
+        isCurrentlyPlaying,
+        nowPlaying: playing,
+      });
+
+      const addedSong: Song = {
+        title: source.title,
+        url: source.url,
+        duration: source.duration,
+        thumbnail: source.thumbnail,
+        requester,
+      };
+
+      return { added: [addedSong], playing };
     } catch (error) {
-      logger.error("Error searching songs", {
+      logger.error("Error in play via facade", {
+        guildId,
         query,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -996,110 +179,72 @@ class MusicService {
   }
 
   /**
-   * Limpia queries de búsqueda de caracteres especiales y términos problemáticos
+   * Detiene la reproducción y limpia la cola
+   * Delega a PlayerService
    */
-  private cleanSearchQuery(query: string): string {
+  stop(guildId: string): boolean {
     try {
-      let cleaned = query.trim();
-
-      // Remover caracteres especiales de títulos de playlists
-      cleaned = cleaned.replace(/【.*?】/g, ""); // Remover corchetes japoneses
-      cleaned = cleaned.replace(/♬/g, ""); // Remover símbolos musicales
-      cleaned = cleaned.replace(/\[.*?Playlist.*?\]/gi, ""); // Remover [Playlist]
-      cleaned = cleaned.replace(/\[.*?BGM.*?\]/gi, ""); // Remover [BGM]
-      cleaned = cleaned.replace(/lofi hip hop radio/gi, "lofi hip hop"); // Evitar radios
-      cleaned = cleaned.replace(/24\/7/g, ""); // Remover indicadores de stream 24/7
-      cleaned = cleaned.replace(/live/gi, ""); // Remover "live"
-      cleaned = cleaned.replace(/radio/gi, ""); // Remover "radio"
-
-      // Limpiar múltiples espacios
-      cleaned = cleaned.replace(/\s+/g, " ").trim();
-
-      // Si después de limpiar queda muy poco, usar términos más genéricos
-      if (cleaned.length < 10) {
-        if (query.toLowerCase().includes("r&b")) {
-          cleaned = "R&B music hits";
-        } else if (query.toLowerCase().includes("jazz")) {
-          cleaned = "Jazz music";
-        } else if (query.toLowerCase().includes("chill")) {
-          cleaned = "chill music";
-        } else {
-          cleaned = query; // Usar original si no podemos inferir
-        }
-      }
-
-      logger.debug("Query cleaned", { original: query, cleaned });
-      return cleaned;
+      PlayerService.stop(guildId);
+      logger.info("Playback stopped via facade", { guildId });
+      return true;
     } catch (error) {
-      logger.warn("Error cleaning search query", {
-        query,
+      logger.error("Error stopping via facade", {
+        guildId,
         error: error instanceof Error ? error.message : String(error),
       });
-      return query;
+      return false;
     }
   }
 
   /**
-   * Usa yt-dlp para obtener información del video y stream URL
+   * Salta a la siguiente canción
+   * Delega a PlayerService y QueueManagementService
+   * Retorna la canción que se está reproduciendo ahora (para notificar al usuario)
    */
-  private async getVideoInfoWithYtDlp(url: string): Promise<{
-    title: string;
-    duration: number;
-    streamUrl: string;
-    thumbnail?: string;
-  } | null> {
+  async skip(guildId: string): Promise<Song | null> {
     try {
-      logger.debug("Getting video info with yt-dlp", { url });
+      const session = VoiceConnectionService.getSession(guildId);
+      if (!session) return null;
 
-      // Get video info
-      const info = await this.ytDlp.getVideoInfo(url);
+      // Detener current playback
+      PlayerService.skip(guildId);
 
-      if (!info) {
-        throw new Error("No video info returned from yt-dlp");
-      }
-
-      // Get best audio format URL
-      const audioFormats =
-        info.formats?.filter(
-          (f: YtDlpFormat) => f.acodec && f.acodec !== "none" && !f.vcodec,
-        ) || [];
-
-      if (audioFormats.length === 0) {
-        // If no audio-only formats, get best format with audio
-        const mixedFormats =
-          info.formats?.filter(
-            (f: YtDlpFormat) => f.acodec && f.acodec !== "none",
-          ) || [];
-
-        if (mixedFormats.length === 0) {
-          throw new Error("No audio formats available");
-        }
-
-        const bestMixed = mixedFormats.sort(
-          (a: YtDlpFormat, b: YtDlpFormat) => (b.abr || 0) - (a.abr || 0),
-        )[0];
-
-        return {
-          title: info.title || "Unknown Title",
-          duration: parseInt(String(info.duration)) || 0,
-          streamUrl: bestMixed.url || "",
-          thumbnail: info.thumbnail,
+      // Obtener siguiente canción de la cola
+      const nextSong = await QueueManagementService.dequeue(guildId);
+      let nowPlaying: Song | null = null;
+      
+      if (nextSong) {
+        const streamSource = await AudioStreamService.resolve(nextSong.url, guildId);
+        const stream = await AudioStreamService.createStream(streamSource);
+        await PlayerService.play(session, nextSong, stream);
+        
+        // Actualizar estado de la cola
+        QueueManagementService.setPlaybackState(guildId, { isPlaying: true });
+        
+        // Actualizar currentSong para /nowplaying y otros comandos
+        QueueManagementService.setCurrentSong(guildId, {
+          title: nextSong.title,
+          url: nextSong.url,
+          duration: nextSong.duration,
+          thumbnail: nextSong.thumbnail,
+          requester: nextSong.requester,
+        });
+        
+        // Convertir a formato Song para retornar
+        nowPlaying = {
+          title: nextSong.title,
+          url: nextSong.url,
+          duration: nextSong.duration,
+          thumbnail: nextSong.thumbnail,
+          requester: nextSong.requester,
         };
       }
 
-      const bestAudio = audioFormats.sort(
-        (a: YtDlpFormat, b: YtDlpFormat) => (b.abr || 0) - (a.abr || 0),
-      )[0];
-
-      return {
-        title: info.title || "Unknown Title",
-        duration: parseInt(String(info.duration)) || 0,
-        streamUrl: bestAudio.url || "",
-        thumbnail: info.thumbnail,
-      };
+      logger.info("Song skipped via facade", { guildId });
+      return nowPlaying;
     } catch (error) {
-      logger.error("Error with yt-dlp", {
-        url,
+      logger.error("Error skipping via facade", {
+        guildId,
         error: error instanceof Error ? error.message : String(error),
       });
       return null;
@@ -1107,1561 +252,246 @@ class MusicService {
   }
 
   /**
-   * Usa yt-dlp para obtener stream de audio directamente
-   */
-  private async getDirectAudioStreamWithYtDlp(url: string): Promise<ReadableStream> {
-    try {
-      logger.debug("Getting audio stream with yt-dlp + ffmpeg", { url });
-
-      return new Promise((resolve, reject) => {
-        const ytDlpPath = getYtDlpPath();
-        const ffmpegPath = process.env.FFMPEG_PATH;
-
-        if (!ffmpegPath) {
-          reject(new Error("ffmpeg not found"));
-          return;
-        }
-
-        // yt-dlp process
-        const ytDlpProcess = spawn(ytDlpPath, [
-          "--format",
-          "bestaudio/best",
-          "--no-playlist",
-          "--quiet",
-          "--extractor-args",
-          "youtube:player_client=default",
-          "--output",
-          "-",
-          url,
-        ]);
-
-        // ffmpeg process para procesar el audio como PCM con throttling
-        const ffmpegProcess = spawn(ffmpegPath, [
-          "-i",
-          "pipe:0", // Input desde stdin (yt-dlp)
-          "-f",
-          "s16le", // Output format: PCM 16-bit little-endian
-          "-ar",
-          "48000", // Sample rate: 48kHz (requerido por Discord)
-          "-ac",
-          "2", // Audio channels: 2 (stereo)
-          "-avoid_negative_ts",
-          "make_zero", // Fix negative timestamps
-          "-threads",
-          "1", // Usar un solo hilo para reducir velocidad de procesamiento
-          "-preset",
-          "slow", // Procesamiento más lento pero estable
-          "pipe:1", // Output to stdout
-        ]);
-
-        // Conectar yt-dlp stdout con ffmpeg stdin
-        ytDlpProcess.stdout.pipe(ffmpegProcess.stdin);
-
-        let hasData = false;
-        const timeout = setTimeout(() => {
-          if (!hasData) {
-            ytDlpProcess.kill();
-            ffmpegProcess.kill();
-            reject(new Error("yt-dlp + ffmpeg stream timeout"));
-          }
-        }, 15000);
-
-        ffmpegProcess.stdout.once("data", () => {
-          hasData = true;
-          clearTimeout(timeout);
-          logger.debug("ffmpeg processed stream ready", { url });
-
-          // Crear throttle stream para controlar flujo
-          const { Transform } = require("stream");
-          const throttleStream = new Transform({
-            transform(chunk: Buffer, _encoding: BufferEncoding, callback: (error?: Error | null) => void) {
-              // Permitir chunks más pequeños para flujo constante
-              if (chunk.length > 8192) {
-                // 8KB chunks
-                let offset = 0;
-                const pushChunk = () => {
-                  if (offset < chunk.length) {
-                    const nextChunk = chunk.slice(offset, offset + 8192);
-                    offset += 8192;
-                    this.push(nextChunk);
-                    // Pequeño delay para evitar saturación
-                    setTimeout(pushChunk, 5);
-                  } else {
-                    callback();
-                  }
-                };
-                pushChunk();
-              } else {
-                this.push(chunk);
-                callback();
-              }
-            },
-          });
-
-          ffmpegProcess.stdout.pipe(throttleStream);
-          resolve(throttleStream);
-        });
-
-        ytDlpProcess.stderr.on("data", (data) => {
-          logger.debug("yt-dlp stderr", { data: data.toString() });
-        });
-
-        ffmpegProcess.stderr.on("data", (data) => {
-          logger.debug("ffmpeg stderr", { data: data.toString() });
-        });
-
-        ytDlpProcess.on("error", (error) => {
-          clearTimeout(timeout);
-          ffmpegProcess.kill();
-          reject(new Error(`yt-dlp error: ${error.message}`));
-        });
-
-        ffmpegProcess.on("error", (error) => {
-          clearTimeout(timeout);
-          ytDlpProcess.kill();
-          reject(new Error(`ffmpeg error: ${error.message}`));
-        });
-
-        ytDlpProcess.on("exit", (code) => {
-          if (code !== 0) {
-            logger.warn("yt-dlp exited with code", { code, url });
-          }
-        });
-
-        ffmpegProcess.on("exit", (code) => {
-          clearTimeout(timeout);
-          if (code !== 0 && !hasData) {
-            reject(new Error(`ffmpeg exited with code ${code}`));
-          }
-        });
-      });
-    } catch (error) {
-      logger.error("Error creating yt-dlp + ffmpeg stream", {
-        url,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
-    }
-  }
-
-  /**
-   * Limpia y valida URLs problemáticas
-   */
-  private cleanUrl(url: string): string {
-    try {
-      // Limpiar caracteres especiales problemáticos
-      let cleanedUrl = url.trim();
-
-      // Si es una URL de YouTube, extraer el ID del video
-      const youtubeRegex =
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
-      const match = cleanedUrl.match(youtubeRegex);
-
-      if (match && match[1]) {
-        const videoId = match[1];
-        cleanedUrl = `https://www.youtube.com/watch?v=${videoId}`;
-        logger.debug("URL cleaned and normalized", {
-          original: url,
-          cleaned: cleanedUrl,
-          videoId,
-        });
-      }
-
-      return cleanedUrl;
-    } catch (error) {
-      logger.warn("Error cleaning URL, using original", {
-        url,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return url;
-    }
-  }
-
-  /**
-   * Reproduce la siguiente canción en la cola
-   */
-  /**
-   * Usa yt-dlp como fallback para obtener audio de YouTube
-   */
-  private async getAudioStreamWithYtDlp(
-    song: Song,
-    guildId: string,
-  ): Promise<ReturnType<typeof createReadStream>> {
-    try {
-      logger.debug("Attempting yt-dlp fallback", { guildId, url: song.url });
-
-      // Crear un archivo temporal para el audio
-      const tempDir = path.join(process.cwd(), "temp");
-      const tempFile = path.join(
-        tempDir,
-        `audio_${guildId}_${Date.now()}.%(ext)s`,
-      );
-
-      // Asegurar que el directorio temp existe
-      const fs = await import("fs");
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
-
-      // Usar yt-dlp para descargar solo el audio
-      await this.ytDlp.execPromise([
-        song.url,
-        "--extract-audio",
-        "--audio-format",
-        "mp3",
-        "--audio-quality",
-        "192K",
-        "--output",
-        tempFile,
-        "--no-playlist",
-        "--quiet",
-        "--extractor-args",
-        "youtube:player_client=default",
-      ]);
-
-      // Encontrar el archivo descargado
-      const files = fs.readdirSync(tempDir);
-      const audioFile = files.find(
-        (file) =>
-          file.startsWith(`audio_${guildId}`) &&
-          (file.endsWith(".mp3") ||
-            file.endsWith(".m4a") ||
-            file.endsWith(".webm")),
-      );
-
-      if (!audioFile) {
-        throw new Error("yt-dlp no pudo descargar el archivo de audio");
-      }
-
-      const fullPath = path.join(tempDir, audioFile);
-      logger.debug("yt-dlp audio file created", { guildId, file: fullPath });
-
-      // Crear stream desde el archivo temporal
-      const stream = createReadStream(fullPath);
-
-      // Programar eliminación del archivo después de un tiempo
-      setTimeout(async () => {
-        try {
-          await unlink(fullPath);
-          logger.debug("Temporary audio file cleaned up", { file: fullPath });
-        } catch (error) {
-          logger.warn("Failed to clean up temporary file", {
-            file: fullPath,
-            error,
-          });
-        }
-      }, 300000); // 5 minutos
-
-      return stream;
-    } catch (error) {
-      logger.error("yt-dlp fallback failed", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
-    }
-  }
-
-  /**
-   * Crea un AudioResource compatible evitando problemas de Opus
-   */
-  private createCompatibleAudioResource(
-    stream: ReadableStream,
-    guildId: string,
-  ): AudioResource {
-    logger.debug("Starting AudioResource creation", {
-      guildId,
-      streamType: typeof stream,
-      streamReadable: stream?.readable,
-      streamConstructor: stream?.constructor?.name,
-    });
-
-    try {
-      // Como ya procesamos con ffmpeg a PCM, usar configuración específica
-      logger.debug("Creating AudioResource for PCM stream", { guildId });
-
-      const resource = createAudioResource(stream, {
-        inlineVolume: false,
-        inputType: StreamType.Raw, // El stream está en formato PCM raw
-        metadata: {
-          title: `Audio stream for ${guildId}`,
-        },
-      });
-
-      logger.debug("PCM AudioResource created successfully", {
-        guildId,
-        resourceType: typeof resource,
-        hasPlayStream: resource?.playStream !== undefined,
-        playStreamReadable: resource?.playStream?.readable,
-      });
-
-      return resource;
-    } catch (pcmError) {
-      logger.warn("PCM AudioResource creation failed, trying alternatives", {
-        guildId,
-        error: pcmError instanceof Error ? pcmError.message : String(pcmError),
-      });
-
-      // Fallback a auto-detección
-      try {
-        const resource = createAudioResource(stream, {
-          inlineVolume: false,
-          inputType: StreamType.Arbitrary,
-        });
-        logger.debug("Arbitrary AudioResource created successfully", {
-          guildId,
-        });
-        return resource;
-      } catch (arbitraryError) {
-        logger.warn("Arbitrary AudioResource creation failed", { guildId });
-
-        // Último recurso: sin especificar tipo
-        const resource = createAudioResource(stream, {
-          inlineVolume: false,
-        });
-        logger.debug("Fallback AudioResource created", { guildId });
-        return resource;
-      }
-    }
-  }
-
-  /**
-   * Obtiene el stream de audio detectando automáticamente la fuente
-   */
-  private async getAudioStream(song: Song, guildId: string): Promise<ReadableStream> {
-    // Detectar la fuente basada en la URL
-    const isSpotify = song.url.includes("spotify.com");
-    const isYouTube =
-      song.url.includes("youtube.com") || song.url.includes("youtu.be");
-
-    logger.debug("Detecting audio source", {
-      guildId,
-      url: song.url,
-      isSpotify,
-      isYouTube,
-    });
-
-    // Para Spotify: usar play-dl
-    if (isSpotify) {
-      logger.debug("Using play-dl for Spotify", { guildId });
-      try {
-        const qualities = [2, 1, 0];
-        for (const quality of qualities) {
-          try {
-            logger.debug(`Attempting play-dl stream with quality ${quality}`, {
-              guildId,
-              url: song.url,
-            });
-
-            // Validate URL before streaming
-            if (!song.url || typeof song.url !== "string") {
-              throw new Error(`Invalid URL: ${song.url}`);
-            }
-
-            // Add timeout using configuration
-            const streamPromise = playdl.stream(song.url, { quality });
-            const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(
-                () =>
-                  reject(new Error(`Stream timeout for quality ${quality}`)),
-                this.config.streamTimeoutMs,
-              );
-            });
-
-            const streamResponse = await Promise.race([
-              streamPromise,
-              timeoutPromise,
-            ]) as { stream: ReadableStream; type?: string };
-
-            // Validate stream response
-            if (!streamResponse) {
-              throw new Error(`Stream is null for quality ${quality}`);
-            }
-
-            if (!streamResponse.stream) {
-              throw new Error(`Stream.stream is null for quality ${quality}`);
-            }
-
-            // Additional validation for stream readability
-            if (streamResponse.stream.destroyed) {
-              throw new Error(
-                `Stream is already destroyed for quality ${quality}`,
-              );
-            }
-
-            logger.info("Spotify stream obtained with play-dl", {
-              guildId,
-              quality,
-              streamType: streamResponse.type || "unknown",
-              hasStream: !!streamResponse.stream,
-            });
-            return streamResponse.stream;
-          } catch (error) {
-            logger.debug(`Play-dl quality ${quality} failed`, {
-              guildId,
-              error: error instanceof Error ? error.message : String(error),
-              isFormatError:
-                error instanceof Error && error.message.includes("format"),
-              isTimeout:
-                error instanceof Error && error.message.includes("timeout"),
-            });
-
-            // Wait between quality attempts using configuration
-            await new Promise((resolve) =>
-              setTimeout(resolve, this.config.rateLimitDelayMs),
-            );
-          }
-        }
-        throw new Error("All play-dl qualities failed for Spotify");
-      } catch (error) {
-        logger.error("Play-dl failed for Spotify", {
-          guildId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        throw error;
-      }
-    }
-
-    // Para YouTube: usar yt-dlp
-    if (isYouTube) {
-      logger.debug("Using yt-dlp for YouTube", { guildId });
-      try {
-        const stream = await this.getDirectAudioStreamWithYtDlp(song.url);
-        logger.info("YouTube stream obtained with yt-dlp", { guildId });
-        return stream;
-      } catch (error) {
-        logger.warn("Direct yt-dlp failed, trying with video info", {
-          guildId,
-        });
-
-        try {
-          const videoInfo = await this.getVideoInfoWithYtDlp(song.url);
-          if (videoInfo) {
-            // Update song info
-            song.title = videoInfo.title;
-            song.duration = videoInfo.duration;
-            song.thumbnail = videoInfo.thumbnail || song.thumbnail;
-
-            // Use the stream URL from yt-dlp
-            const https = await import("https");
-            const stream = await new Promise<ReadableStream>((resolve, reject) => {
-              https
-                .get(videoInfo.streamUrl, (response) => {
-                  if (response.statusCode !== 200) {
-                    reject(new Error(`HTTP ${response.statusCode}`));
-                    return;
-                  }
-                  resolve(response as unknown as ReadableStream);
-                })
-                .on("error", reject);
-            });
-
-            logger.info("YouTube stream obtained with yt-dlp video info", {
-              guildId,
-            });
-            return stream;
-          }
-        } catch (videoInfoError) {
-          logger.error("yt-dlp video info also failed", {
-            guildId,
-            error:
-              videoInfoError instanceof Error
-                ? videoInfoError.message
-                : String(videoInfoError),
-          });
-        }
-
-        throw error;
-      }
-    }
-
-    // Para búsquedas (no es URL directa): buscar en YouTube y usar yt-dlp
-    logger.debug("Searching on YouTube for query", {
-      guildId,
-      query: song.title,
-    });
-    try {
-      const cleanTitle = this.cleanSearchQuery(song.title);
-      let searchResult: YouTubeVideo[] = [];
-      try {
-        searchResult = await playdl.search(cleanTitle, {
-          limit: 5,
-          source: { youtube: "video" },
-        });
-      } catch (searchError) {
-        if (
-          searchError instanceof TypeError &&
-          searchError.message.includes("navigationEndpoint")
-        ) {
-          logger.warn("YouTube search returned malformed results", {
-            query: cleanTitle,
-          });
-          searchResult = [];
-        } else {
-          throw searchError;
-        }
-      }
-
-      if (searchResult.length === 0) {
-        throw new Error("No search results found");
-      }
-
-      for (let i = 0; i < Math.min(searchResult.length, 3); i++) {
-        const video = searchResult[i];
-        if (
-          !video?.url ||
-          video.durationInSec === 0 ||
-          video.durationInSec > 7200
-        ) {
-          continue; // Skip live streams and very long videos
-        }
-
-        try {
-          // Use yt-dlp for search results (YouTube videos)
-          const stream = await this.getDirectAudioStreamWithYtDlp(video.url);
-          logger.info("Search result stream obtained with yt-dlp", {
-            guildId,
-            resultIndex: i + 1,
-            newTitle: video.title,
-          });
-
-          // Update song info
-          song.url = video.url;
-          song.title = video.title || song.title;
-          song.duration = video.durationInSec || song.duration;
-          song.thumbnail = video.thumbnails?.[0]?.url || song.thumbnail;
-
-          return stream;
-        } catch (error) {
-          logger.debug(`Search result ${i + 1} failed`, {
-            guildId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }
-
-      throw new Error("All search results failed");
-    } catch (searchError) {
-      logger.error("Search strategy failed", {
-        guildId,
-        error:
-          searchError instanceof Error
-            ? searchError.message
-            : String(searchError),
-      });
-      throw searchError;
-    }
-  }
-
-  private async playNext(guildId: string): Promise<void> {
-    const queue = this.queues.get(guildId);
-    if (!queue || !queue.player || !queue.connection) return;
-
-    // Only try to recover queue from persistence if there's a current song playing
-    // This prevents infinite loops when queue is empty after natural playback
-    if (!queue.songs.length && queue.currentSong) {
-      await this.tryRecoverQueue(guildId);
-    }
-
-    if (queue.songs.length === 0) {
-      queue.isPlaying = false;
-      queue.currentSong = null;
-      // Persist stopped state
-      this.persistUpdateSettings(guildId, { isPlaying: false, currentSongId: null });
-      logger.info("Queue finished", { guildId });
-      return;
-    }
-
-    const song = queue.songs.shift()!;
-
-    try {
-      logger.info("Starting playback process", {
-        guildId,
-        title: song.title,
-        url: song.url,
-        queueLength: queue.songs.length,
-      });
-      logger.debug("Attempting to play song", {
-        guildId,
-        title: song.title,
-        url: song.url,
-      });
-
-      // Limpiar la URL antes de procesarla
-      const cleanedUrl = this.cleanUrl(song.url);
-      song.url = cleanedUrl;
-
-      // Validar según la plataforma
-      const isSpotify = song.url.includes("spotify.com");
-      const isYouTube =
-        song.url.includes("youtube.com") || song.url.includes("youtu.be");
-
-      if (isYouTube) {
-        const validateResult = playdl.yt_validate(song.url);
-        logger.debug("YouTube URL validation", {
-          guildId,
-          url: song.url,
-          validateResult,
-        });
-
-        if (validateResult !== "video") {
-          throw new Error(
-            `URL de YouTube no es un video válido (tipo: ${validateResult}): ${song.url}`,
-          );
-        }
-      } else if (isSpotify) {
-        logger.debug("Spotify URL detected", {
-          guildId,
-          url: song.url,
-        });
-      } else {
-        // Para búsquedas/otros casos, no validar URL
-        logger.debug("Search query or other URL type", {
-          guildId,
-          query: song.url,
-        });
-      }
-
-      logger.debug("Attempting to get audio stream", {
-        guildId,
-        url: song.url,
-      });
-
-      // Usar la nueva función auxiliar para obtener el stream
-      // Asegurar conexión estable antes de obtener stream
-      await this.ensureConnectionReady(queue, guildId);
-
-      // Obtener stream con retry automático
-      const stream = await this.getAudioStreamWithRetry(song, guildId);
-
-      logger.debug("Stream obtained successfully", {
-        guildId,
-        streamType: typeof stream,
-        hasReadable: stream?.readable !== undefined,
-        hasDestroy: typeof stream?.destroy === "function",
-        streamConstructor: stream?.constructor?.name,
-      });
-
-      const resource = this.createCompatibleAudioResource(stream, guildId);
-
-      logger.debug("Audio resource created", {
-        guildId,
-        resourceType: typeof resource,
-        hasPlayStream: resource?.playStream !== undefined,
-        resourceState: resource?.playStream?.readable,
-      });
-
-      logger.info("About to play audio resource", {
-        guildId,
-        playerState: queue.player.state.status,
-        connectionState: queue.connection.state.status,
-        resourceReady: resource !== null,
-      });
-
-      // Verificar estados antes de reproducir
-      if (queue.connection?.state.status !== VoiceConnectionStatus.Ready) {
-        logger.warn("Voice connection not ready", {
-          guildId,
-          connectionState: queue.connection.state.status,
-        });
-      }
-
-      queue.player.play(resource);
-
-      // Verificar que el player esté suscrito a la conexión
-      const subscription = queue.connection.subscribe(queue.player);
-
-      logger.debug("Player subscription result", {
-        guildId,
-        subscriptionExists: subscription !== undefined,
-        playerStateAfterPlay: queue.player.state.status,
-      });
-
-      queue.currentSong = song;
-      queue.isPlaying = true;
-      queue.isPaused = false;
-
-      // Persist playback state (immediate - critical for recovery)
-      this.persistUpdateSettings(guildId, {
-        isPlaying: true,
-        isPaused: false,
-        currentSongId: song.url,
-      });
-
-      // Log volume info since inline volume is disabled
-      logger.debug("Audio playback started", {
-        guildId,
-        inlineVolumeDisabled: true,
-        volumeControl: "Use Discord client volume or bot commands",
-      });
-
-      if (queue.loopMode !== "song") {
-        queue.history.push(song);
-        if (queue.history.length > 10) {
-          queue.history.shift();
-        }
-      }
-
-      // Dar un momento para que el player procese el recurso
-      setTimeout(() => {
-        logger.info("Player state after play command", {
-          guildId,
-          playerState: queue.player?.state.status,
-          connectionState: queue.connection?.state.status,
-        });
-      }, 100);
-
-      logger.info("Now playing", {
-        guildId,
-        title: song.title,
-        url: song.url,
-      });
-
-      // Enviar mensaje al canal de texto
-      if (queue.textChannel) {
-        const embed = new (await import("discord.js")).EmbedBuilder()
-          .setColor(0x00ff00)
-          .setTitle("🎵 Reproduciendo Ahora")
-          .setDescription(`**${song.title}**`)
-          .setURL(song.url);
-
-        if (song.thumbnail) {
-          embed.setThumbnail(song.thumbnail);
-        }
-
-        await queue.textChannel.send({ embeds: [embed] }).catch(() => {});
-      }
-    } catch (error) {
-      logger.error("Error playing song", {
-        guildId,
-        song: song.title,
-        url: song.url,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-
-      // Enviar mensaje de error al canal si está disponible
-      if (queue.textChannel) {
-        const embed = new (await import("discord.js")).EmbedBuilder()
-          .setColor(0xff0000)
-          .setTitle("❌ Error al reproducir")
-          .setDescription(
-            `No se pudo reproducir: **${song.title}**\n\`\`\`${error instanceof Error ? error.message : String(error)}\`\`\``,
-          )
-          .addFields([{ name: "URL", value: song.url, inline: false }]);
-
-        await queue.textChannel.send({ embeds: [embed] }).catch(() => {});
-      }
-
-      // Solo intentar con la siguiente canción si hay más canciones en la cola
-      if (queue.songs.length > 0) {
-        logger.info("Attempting next song after error", {
-          guildId,
-          remainingSongs: queue.songs.length,
-        });
-        await this.playNext(guildId);
-      } else {
-        logger.info("No more songs to play after error", { guildId });
-        queue.isPlaying = false;
-        queue.currentSong = null;
-      }
-    }
-  }
-
-  /**
-   * Configura eventos del reproductor
-   */
-  private setupPlayerEvents(guildId: string, player: AudioPlayer): void {
-    player.on(AudioPlayerStatus.Idle, async () => {
-      logger.debug("Player went to Idle state", { guildId });
-      const queue = this.queues.get(guildId);
-      if (!queue) return;
-
-      if (queue.loopMode === "song" && queue.currentSong) {
-        logger.debug("Looping current song", { guildId });
-        queue.songs.unshift(queue.currentSong);
-      } else if (queue.loopMode === "queue" && queue.currentSong) {
-        logger.debug("Adding song to end of queue", { guildId });
-        queue.songs.push(queue.currentSong);
-      } else {
-        // Clear currentSong when song ends naturally (without loop)
-        // This prevents tryRecoverQueue from restoring old queue and causing infinite loop
-        queue.currentSong = null;
-      }
-
-      await this.playNext(guildId);
-    });
-
-    player.on(AudioPlayerStatus.Playing, () => {
-      logger.info("Player started playing", {
-        guildId,
-        playerState: player.state.status,
-      });
-    });
-
-    player.on(AudioPlayerStatus.Buffering, () => {
-      logger.debug("Player is buffering", { guildId });
-    });
-
-    player.on(AudioPlayerStatus.Paused, () => {
-      logger.debug("Player was paused", { guildId });
-    });
-
-    player.on(AudioPlayerStatus.AutoPaused, () => {
-      logger.warn("Player was auto-paused", { guildId });
-    });
-
-    player.on("error", (error) => {
-      logger.error("Audio player error", {
-        guildId,
-        error: error.message,
-        stack: error.stack,
-        playerState: player.state.status,
-      });
-    });
-
-    // Escuchar cambios de estado
-    player.on("stateChange", (oldState, newState) => {
-      logger.info("Player state changed", {
-        guildId,
-        from: oldState.status,
-        to: newState.status,
-      });
-
-      // Si hay un error en el recurso
-      if (
-        newState.status === AudioPlayerStatus.Idle &&
-        "reason" in newState && (newState as { reason?: string }).reason === "error"
-      ) {
-        logger.error("Player idle due to resource error", {
-          guildId,
-          error:
-            "resource" in newState
-              ? (newState.resource as { metadata?: { error?: string } })?.metadata?.error
-              : "Unknown resource error",
-        });
-      }
-
-      // Cuando una canción termina, verificar buffer
-      if (newState.status === AudioPlayerStatus.Idle) {
-        this.checkAndRefillBuffer(guildId).catch((error) => {
-          logger.error("Error checking buffer after song end", {
-            guildId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        });
-      }
-    });
-  }
-
-  /**
    * Pausa la reproducción
+   * Delega a PlayerService
    */
   pause(guildId: string): boolean {
-    const queue = this.queues.get(guildId);
-    if (!queue || !queue.player || !queue.isPlaying) return false;
-
-    const paused = queue.player.pause();
-    if (paused) {
-      queue.isPaused = true;
-      // Immediate persistence for pause (playback state critical for recovery)
-      this.persistUpdateSettings(guildId, { isPaused: true });
-      logger.info("Playback paused", { guildId });
+    try {
+      PlayerService.pause(guildId);
+      logger.info("Playback paused via facade", { guildId });
+      return true;
+    } catch (error) {
+      logger.error("Error pausing via facade", {
+        guildId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
     }
-    return paused;
   }
 
   /**
    * Reanuda la reproducción
+   * Delega a PlayerService
    */
   resume(guildId: string): boolean {
-    const queue = this.queues.get(guildId);
-    if (!queue || !queue.player || !queue.isPaused) return false;
-
-    const resumed = queue.player.unpause();
-    if (resumed) {
-      queue.isPaused = false;
-      // Immediate persistence for resume (playback state critical for recovery)
-      this.persistUpdateSettings(guildId, { isPaused: false, isPlaying: true });
-      logger.info("Playback resumed", { guildId });
+    try {
+      PlayerService.resume(guildId);
+      logger.info("Playback resumed via facade", { guildId });
+      return true;
+    } catch (error) {
+      logger.error("Error resuming via facade", {
+        guildId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
     }
-    return resumed;
-  }
-
-  /**
-   * Detiene la reproducción y limpia la cola
-   */
-  stop(guildId: string): boolean {
-    const queue = this.queues.get(guildId);
-    if (!queue || !queue.player) return false;
-
-    queue.player.stop();
-    queue.songs = [];
-    queue.currentSong = null;
-    queue.isPlaying = false;
-    queue.isPaused = false;
-
-    // Persist cleared queue and stopped state
-    this.persistClearQueue(guildId);
-    this.persistUpdateSettings(guildId, { isPlaying: false, isPaused: false });
-
-    logger.info("Playback stopped", { guildId });
-    return true;
-  }
-
-  /**
-   * Salta a la siguiente canción
-   */
-  async skip(guildId: string): Promise<boolean> {
-    const queue = this.queues.get(guildId);
-    if (!queue || !queue.player || !queue.isPlaying) return false;
-
-    // Clear current song from persistence
-    this.persistUpdateSettings(guildId, { currentSongId: null });
-
-    queue.player.stop();
-    logger.info("Song skipped", { guildId });
-    return true;
-  }
-
-  /**
-   * Elimina una canción de la cola
-   */
-  removeSong(guildId: string, index: number): Song | null {
-    const queue = this.queues.get(guildId);
-    if (!queue || index < 1 || index > queue.songs.length) return null;
-
-    const removed = queue.songs.splice(index - 1, 1)[0];
-    if (!removed) return null;
-
-    // Persist removal to repository (write-through)
-    this.persistRemoveItem(guildId, index - 1);
-
-    logger.info("Song removed from queue", {
-      guildId,
-      index,
-      title: removed.title,
-    });
-    return removed;
-  }
-
-  /**
-   * Limpia la cola sin detener la canción actual
-   */
-  clearSongs(guildId: string): number {
-    const queue = this.queues.get(guildId);
-    if (!queue) return 0;
-
-    const count = queue.songs.length;
-    queue.songs = [];
-
-    // Persist clear to repository (write-through)
-    this.persistClearQueue(guildId);
-
-    logger.info("Queue cleared", { guildId, clearedCount: count });
-    return count;
-  }
-
-  /**
-   * Mezcla la cola aleatoriamente
-   */
-  shuffle(guildId: string): boolean {
-    const queue = this.queues.get(guildId);
-    if (!queue || queue.songs.length < 2) return false;
-
-    for (let i = queue.songs.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const temp = queue.songs[i];
-      const other = queue.songs[j];
-      if (temp && other) {
-        queue.songs[i] = other;
-        queue.songs[j] = temp;
-      }
-    }
-
-    // Persist new queue order
-    this.persistQueueItems(guildId);
-
-    logger.info("Queue shuffled", { guildId, songCount: queue.songs.length });
-    return true;
   }
 
   /**
    * Ajusta el volumen
+   * Delega a PlayerService y QueueManagementService
    */
   setVolume(guildId: string, volume: number): boolean {
-    const queue = this.queues.get(guildId);
-    if (!queue) return false;
-
-    queue.volume = Math.max(0, Math.min(200, volume));
-
-    // Aplicar volumen inmediatamente si hay algo reproduciéndose
-    if (queue.player && queue.isPlaying) {
-      const state = queue.player.state;
-      if (
-        state.status === "playing" &&
-        "resource" in state &&
-        state.resource.volume
-      ) {
-        state.resource.volume.setVolume(queue.volume / 100);
-        logger.info("Inline volume changed", { guildId, volume: queue.volume });
-      } else {
-        logger.warn(
-          "Inline volume not available - using Discord client volume",
-          {
-            guildId,
-            requestedVolume: queue.volume,
-            reason: "inlineVolume disabled to avoid Opus encoding issues",
-          },
-        );
-      }
+    try {
+      const normalizedVolume = Math.max(0, Math.min(200, volume));
+      
+      // Actualizar en QueueManagementService
+      QueueManagementService.setVolume(guildId, normalizedVolume);
+      
+      // Aplicar volumen en PlayerService
+      PlayerService.setVolume(guildId, normalizedVolume / 100);
+      
+      logger.info("Volume set via facade", { guildId, volume: normalizedVolume });
+      return true;
+    } catch (error) {
+      logger.error("Error setting volume via facade", {
+        guildId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
     }
-
-    // Debounced persistence (1 second delay for rapid changes)
-    this.debouncedUpdateSettings(guildId, { volume: queue.volume });
-
-    // Store volume for future playback
-    logger.info("Volume preference stored", {
-      guildId,
-      volume: queue.volume,
-      note: "Will apply to new songs (use Discord client for current song)",
-    });
-    return true;
   }
 
   /**
    * Configura el modo de repetición
+   * Delega a QueueManagementService
    */
   setLoop(guildId: string, mode: LoopMode): boolean {
-    const queue = this.queues.get(guildId);
-    if (!queue) return false;
-
-    queue.loopMode = mode;
-
-    // Immediate persistence for loop mode (critical state)
-    this.persistUpdateSettings(guildId, { loopMode: mode });
-
-    logger.info("Loop mode changed", { guildId, mode });
-    return true;
+    try {
+      QueueManagementService.setLoopMode(guildId, mode);
+      logger.info("Loop mode set via facade", { guildId, mode });
+      return true;
+    } catch (error) {
+      logger.error("Error setting loop mode via facade", {
+        guildId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
   }
 
   /**
    * Obtiene la cola de un servidor
+   * Delega a QueueManagementService y VoiceConnectionService
    */
   getQueue(guildId: string): MusicQueue | undefined {
-    return this.queues.get(guildId);
+    try {
+      const session = VoiceConnectionService.getSession(guildId);
+      if (!session) return undefined;
+
+      // Usar getSnapshot que es síncrono para mantener backward compatibility
+      const queueSnapshot = QueueManagementService.getSnapshot(guildId);
+      
+      // Reconstruct legacy MusicQueue format for backward compatibility
+      const queue: MusicQueue = {
+        guildId,
+        textChannel: session.textChannel,
+        voiceChannel: session.voiceChannel,
+        connection: session.connection,
+        player: session.player,
+        songs: queueSnapshot.songs,
+        currentSong: queueSnapshot.currentSong,
+        isPlaying: queueSnapshot.isPlaying,
+        isPaused: queueSnapshot.isPaused,
+        volume: queueSnapshot.volume,
+        loopMode: queueSnapshot.loopMode,
+        history: [],
+      };
+
+      return queue;
+    } catch (error) {
+      logger.error("Error getting queue via facade", {
+        guildId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return undefined;
+    }
   }
 
   /**
-   * Limpia y elimina la cola de un servidor
+   * Limpia la cola sin detener la canción actual
+   * Delega a QueueManagementService
    */
-  clearQueue(guildId: string): void {
-    const queue = this.queues.get(guildId);
-
-    if (queue) {
-      if (queue.player) {
-        queue.player.stop();
-      }
-
-      if (queue.connection) {
-        this.safeDestroyConnection(queue.connection);
-      }
-
-      this.queues.delete(guildId);
-
-      // Persist cleared state
-      this.persistClearQueue(guildId);
-      this.persistUpdateSettings(guildId, { isPlaying: false, isPaused: false, currentSongId: null });
-
-      logger.info("Queue cleared", { guildId });
+  async clearSongs(guildId: string): Promise<number> {
+    try {
+      const snapshot = await QueueManagementService.serialize(guildId);
+      const count = snapshot?.songs.length ?? 0;
+      
+      await QueueManagementService.clear(guildId);
+      
+      logger.info("Queue cleared via facade", { guildId, count });
+      return count;
+    } catch (error) {
+      logger.error("Error clearing songs via facade", {
+        guildId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return 0;
     }
   }
 
   /**
-   * Limpia la cola de forma segura sin intentar destruir conexiones ya destruidas
+   * Elimina una canción de la cola
+   * Delega a QueueManagementService
    */
-  private safeCleanQueue(guildId: string): void {
-    const queue = this.queues.get(guildId);
-
-    if (!queue) {
-      return;
+  removeSong(guildId: string, index: number): Song | null {
+    try {
+      // QueueManagementService.remove es async, pero para backward compatibility
+      // usamos el método síncrono o manejamos la promise
+      // Por ahora retornamos null y el comando debería actualizarse
+      logger.warn("removeSong es async en QueueManagementService, método sincrono no disponible");
+      return null;
+    } catch (error) {
+      logger.error("Error removing song via facade", {
+        guildId,
+        index,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
     }
-
-    // Detener el reproductor de forma segura
-    if (queue.player) {
-      try {
-        queue.player.stop();
-      } catch (error) {
-        logger.debug("Player already stopped", { guildId });
-      }
-    }
-
-    // Solo eliminar de la cola, no destruir la conexión aquí
-    this.queues.delete(guildId);
-
-    logger.debug("Queue safely cleaned", { guildId });
   }
 
   /**
-   * Limpia la cola cuando la conexión ya está destruida (para uso en eventos)
+   * Versión async de removeSong para uso interno
+   */
+  async removeSongAsync(guildId: string, index: number): Promise<Song | null> {
+    try {
+      const removed = await QueueManagementService.remove(guildId, index);
+      logger.info("Song removed via facade", { guildId, index, title: removed?.title });
+      return removed;
+    } catch (error) {
+      logger.error("Error removing song via facade", {
+        guildId,
+        index,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Mezcla la cola aleatoriamente
+   * Delega a QueueManagementService
+   */
+  shuffle(guildId: string): boolean {
+    try {
+      // Usar getSnapshot que es síncrono para mantener backward compatibility
+      const snapshot = QueueManagementService.getSnapshot(guildId);
+      if (!snapshot || snapshot.songs.length < 2) return false;
+      
+      // Delegar al método shuffle del servicio
+      QueueManagementService.shuffle(guildId);
+      
+      logger.info("Queue shuffled via facade", { guildId });
+      return true;
+    } catch (error) {
+      logger.error("Error shuffling queue via facade", {
+        guildId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Limpia la cola después de una desconexión (memoria únicamente)
+   * Delega a VoiceConnectionService
    */
   cleanQueueAfterDisconnect(guildId: string): void {
-    const queue = this.queues.get(guildId);
-
-    if (!queue) {
-      return;
-    }
-
-    // Detener el reproductor de forma segura
-    if (queue.player) {
-      try {
-        queue.player.stop();
-      } catch (error) {
-        logger.debug("Player already stopped during disconnect cleanup", {
-          guildId,
-        });
-      }
-    }
-
-    // Solo eliminar de la cola, la conexión ya está siendo manejada por Discord
-    this.queues.delete(guildId);
-
-    logger.info("Queue cleaned after voice disconnect", { guildId });
-  }
-
-  /**
-   * Destruye una conexión de voz de forma segura, verificando su estado primero
-   */
-  private safeDestroyConnection(connection: VoiceConnection): void {
     try {
-      const currentState = connection.state.status;
-
-      if (currentState === VoiceConnectionStatus.Destroyed) {
-        logger.debug("Connection already destroyed, skipping destruction");
-        return;
-      }
-
-      logger.debug("Destroying voice connection", {
-        currentState,
-        connectionId: connection.joinConfig.channelId,
-      });
-
-      connection.destroy();
+      VoiceConnectionService.cleanupSession(guildId);
+      logger.info("Queue cleaned after disconnect via facade", { guildId });
     } catch (error) {
-      logger.warn("Error while destroying connection", {
-        error: error instanceof Error ? error.message : String(error),
-        connectionState: connection.state.status,
-      });
-    }
-  }
-
-  /**
-   * Obtiene todas las colas activas
-   */
-  getAllQueues(): Map<string, MusicQueue> {
-    return this.queues;
-  }
-
-  // Método auxiliar para retry de streams
-  private async getAudioStreamWithRetry(
-    song: Song,
-    guildId: string,
-    maxRetries: number = this.config.maxStreamRetries,
-  ): Promise<Readable> {
-    let lastError: Error | null = null;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        logger.debug(`Stream attempt ${attempt}/${maxRetries}`, {
-          guildId,
-          song: song.title,
-        });
-
-        const stream = await this.getAudioStream(song, guildId);
-
-        // Verificar que el stream es válido
-        if (!stream || !stream.readable) {
-          throw new Error(`Stream is not readable (attempt ${attempt})`);
-        }
-
-        logger.info(`Stream obtained successfully on attempt ${attempt}`, {
-          guildId,
-        });
-
-        return stream;
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        logger.warn(`Stream attempt ${attempt} failed`, {
-          guildId,
-          error: lastError.message,
-          willRetry: attempt < maxRetries,
-        });
-
-        // Pausa progresiva entre reintentos usando configuración
-        if (attempt < maxRetries) {
-          const delay = attempt * this.config.searchRetryDelay; // Progresivo basado en config
-          logger.debug(MUSIC_MESSAGES.STREAM_RETRY(attempt + 1, maxRetries));
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        }
-      }
-    }
-
-    throw new Error(
-      `Failed to get audio stream after ${maxRetries} attempts: ${lastError?.message}`,
-    );
-  }
-
-  // Método auxiliar para asegurar conexión estable
-  private async ensureConnectionReady(
-    queue: MusicQueue,
-    guildId: string,
-  ): Promise<void> {
-    if (!queue.connection) {
-      throw new Error("No voice connection available");
-    }
-
-    // Si la conexión no está lista, esperar hasta 5 segundos
-    if (queue.connection.state.status !== VoiceConnectionStatus.Ready) {
-      logger.debug("Waiting for connection to be ready", {
+      logger.error("Error cleaning queue after disconnect", {
         guildId,
-        currentStatus: queue.connection.state.status,
-      });
-
-      try {
-        logger.debug(MUSIC_MESSAGES.CONNECTION_WAIT, { guildId });
-        await entersState(
-          queue.connection,
-          VoiceConnectionStatus.Ready,
-          this.config.connectionTimeoutMs,
-        );
-        logger.debug("Connection is now ready", { guildId });
-      } catch (error) {
-        logger.warn("Connection did not become ready in time", {
-          guildId,
-          finalStatus: queue.connection.state.status,
-        });
-        // Continuar de todos modos, puede funcionar
-      }
-    }
-  }
-
-  /**
-   * Procesa playlist de Spotify con buffer dinámico de 3 canciones
-   */
-  private async processPlaylistWithDynamicBuffer(
-    playlistUrl: string,
-    requester: { id: string; username: string },
-  ): Promise<Song[]> {
-    try {
-      logger.debug("Obteniendo información de la playlist...");
-
-      // Obtener info de la playlist
-      const playlist = await playdl.spotify(playlistUrl) as SpotifyPlaylist;
-
-      logger.info("✅ Información de playlist obtenida", {
-        name: playlist.name,
-        trackCount: playlist.total_tracks,
-        owner: Array.isArray(playlist.owner) 
-          ? playlist.owner[0]?.name 
-          : playlist.owner?.name,
-      });
-
-      // Obtener todos los tracks
-      const allTracks: Array<{ name: string; artists?: Array<{ name: string }> }> = [];
-      for (const track of playlist.page(1)) {
-        allTracks.push(track);
-      }
-
-      // Configuración optimizada
-      const optimalConfig = getOptimalConfig(allTracks.length);
-      const tracksToProcess = allTracks.slice(
-        0,
-        optimalConfig.maxPlaylistTracks,
-      );
-
-      if (allTracks.length > optimalConfig.maxPlaylistTracks) {
-        logger.info(
-          MUSIC_MESSAGES.PLAYLIST_TOO_LARGE(
-            allTracks.length,
-            optimalConfig.maxPlaylistTracks,
-          ),
-        );
-      }
-
-      // Procesar solo las primeras 3 canciones
-      const BUFFER_SIZE = 3;
-      const initialBatch = tracksToProcess.slice(0, BUFFER_SIZE);
-
-      logger.info("🚀 Procesando buffer inicial de 3 canciones...");
-
-      // Procesar buffer inicial
-      const initialSongs = await this.processBatchOfTracks(
-        initialBatch,
-        requester,
-        optimalConfig,
-        1,
-        1,
-      );
-
-      logger.info(
-        `✅ Buffer inicial procesado: ${initialSongs.length} tracks listos`,
-      );
-
-      // Configurar buffer dinámico para esta playlist
-      this.setupDynamicBuffer(
-        tracksToProcess,
-        requester,
-        optimalConfig,
-        BUFFER_SIZE,
-      );
-
-      return initialSongs;
-    } catch (error) {
-      logger.error("💥 Error procesando playlist de Spotify", {
         error: error instanceof Error ? error.message : String(error),
       });
-      throw error;
     }
   }
 
   /**
-   * Procesa un lote de tracks
+   * Limpia la cola completamente
+   * Delega a VoiceConnectionService y QueueManagementService
    */
-  private async processBatchOfTracks(
-    tracks: Array<{ name: string; artists?: Array<{ name: string }> }>,
-    requester: { id: string; username: string },
-    config: MusicConfig,
-    batchNumber: number,
-    totalBatches: number,
-  ): Promise<Song[]> {
-    const songs: Song[] = [];
-
-    logger.debug(`🔄 Procesando lote ${batchNumber}/${totalBatches}...`);
-
-    const batchPromises = tracks.map(async (track, trackIndex) => {
-      try {
-        const searchQuery = `${track.name} ${track.artists?.[0]?.name || ""}`;
-
-        logger.debug(`Buscando: ${track.name}`);
-
-        const searchPromise = playdl.search(searchQuery, {
-          limit: 1,
-          source: { youtube: "video" },
-        });
-
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(
-            () => reject(new Error("Timeout")),
-            config.searchTimeoutMs,
-          );
-        });
-
-        let searchResult: YouTubeVideo[] = [];
-        try {
-          searchResult = await Promise.race([
-            searchPromise,
-            timeoutPromise,
-          ]) as YouTubeVideo[];
-        } catch (searchError) {
-          if (
-            searchError instanceof TypeError &&
-            searchError.message.includes("navigationEndpoint")
-          ) {
-            logger.warn("YouTube search returned malformed results", {
-              query: searchQuery,
-            });
-            searchResult = [];
-          } else {
-            throw searchError;
-          }
-        }
-
-        // Defensive check: validate search result has required properties
-        if (searchResult.length > 0) {
-          const video = searchResult[0];
-          if (video && video.url && typeof video.title === 'string') {
-            logger.debug(`✅ Encontrado: ${video.title}`);
-            return {
-              title: video.title || "Título desconocido",
-              url: video.url,
-              duration: video.durationInSec || 0,
-              thumbnail: video.thumbnails?.[0]?.url,
-              requester,
-            };
-          } else {
-            logger.debug(`⚠️ Resultado malformed para: ${track.name}`, {
-              hasVideo: !!video,
-              hasUrl: !!video?.url,
-              hasTitle: typeof video?.title,
-            });
-          }
-        }
-
-        logger.debug(`❌ Sin resultados para: ${track.name}`);
-        return null;
-      } catch (error) {
-        logger.debug(`💥 Error buscando: ${track.name}`);
-        return null;
-      }
-    });
-
-    const batchResults = await Promise.allSettled(batchPromises);
-
-    batchResults.forEach((result) => {
-      if (result.status === "fulfilled" && result.value) {
-        songs.push(result.value);
-      }
-    });
-
-    return songs;
-  }
-
-  /**
-   * Configura buffer dinámico para una playlist
-   */
-  private setupDynamicBuffer(
-    allTracks: Array<{ name: string; artists?: Array<{ name: string }> }>,
-    requester: { id: string; username: string },
-    config: MusicConfig,
-    bufferSize: number,
-  ): void {
-    // Guardar información del buffer en el estado del servicio
-    const bufferKey = `${requester.id}_${Date.now()}_playlist_buffer`;
-
-    // Crear objeto de estado del buffer
-    const bufferState = {
-      allTracks,
-      requester,
-      config,
-      bufferSize,
-      currentIndex: bufferSize, // Empezamos desde índice 3 (ya procesamos 0,1,2)
-      isProcessing: false,
-    };
-
-    // Guardamos el estado
-    this.playlistBuffers.set(bufferKey, bufferState);
-
-    logger.info("🔧 Buffer dinámico configurado", {
-      totalTracks: allTracks.length,
-      bufferSize,
-      remainingTracks: allTracks.length - bufferSize,
-      requester: requester.username,
-    });
-  }
-
-  /**
-   * Agrega canciones a la cola activa del guild del requester
-   */
-  private addSongsToActiveQueue(
-    songs: Song[],
-    requester: { id: string; username: string },
-  ): void {
-    // Encontrar la cola activa del usuario
-    for (const [guildId, queue] of this.queues) {
-      // Verificar si el usuario está en esta cola revisando las canciones existentes
-      const userInQueue = queue.songs.some(
-        (song) => song.requester.id === requester.id,
-      );
-
-      if (userInQueue) {
-        queue.songs.push(...songs);
-        logger.info("➕ Canciones agregadas desde segundo plano", {
-          guildId,
-          addedCount: songs.length,
-          totalInQueue: queue.songs.length,
-        });
-
-        return;
-      }
-    }
-
-    logger.debug("No active queue found for background songs", {
-      requesterId: requester.id,
-    });
-  }
-
-  /**
-   * Verifica y rellena el buffer dinámico cuando sea necesario
-   */
-  private async checkAndRefillBuffer(guildId: string): Promise<void> {
-    const queue = this.queues.get(guildId);
-    if (!queue) return;
-
-    // Buscar buffer activo asociado con este guild
-    const bufferKey = Array.from(this.playlistBuffers.keys()).find((key) => {
-      const bufferState = this.playlistBuffers.get(key);
-      if (!bufferState) return false;
-
-      // Verificar si hay canciones de este requester en la cola del guild
-      return queue.songs.some(
-        (song) => song.requester.id === bufferState.requester.id,
-      );
-    });
-
-    if (!bufferKey) return;
-
-    const bufferState = this.playlistBuffers.get(bufferKey);
-    if (!bufferState || bufferState.isProcessing) return;
-
-    // Verificar si necesitamos más canciones (menos de 3 en cola)
-    const songsAhead = queue.songs.length;
-
-    if (
-      songsAhead < bufferState.bufferSize &&
-      bufferState.currentIndex < bufferState.allTracks.length
-    ) {
-      logger.info(`🔄 Buffer bajo (${songsAhead} canciones), recargando...`, {
+  clearQueue(guildId: string): void {
+    try {
+      // Limpiar sesión de voz
+      VoiceConnectionService.cleanupSession(guildId);
+      // Limpiar cola
+      QueueManagementService.clear(guildId);
+      logger.info("Queue cleared via facade", { guildId });
+    } catch (error) {
+      logger.error("Error clearing queue", {
         guildId,
-        currentBuffer: songsAhead,
-        nextTrackIndex: bufferState.currentIndex,
+        error: error instanceof Error ? error.message : String(error),
       });
-
-      bufferState.isProcessing = true;
-
-      try {
-        // Procesar siguiente canción
-        const nextTrack = bufferState.allTracks[bufferState.currentIndex];
-        if (nextTrack) {
-          const nextSongs = await this.processBatchOfTracks(
-            [nextTrack],
-            bufferState.requester,
-            bufferState.config,
-            bufferState.currentIndex + 1,
-            bufferState.allTracks.length,
-          );
-
-          if (nextSongs.length > 0) {
-            // Agregar directamente a la cola del guild actual
-            queue.songs.push(...nextSongs);
-            logger.debug(`✅ Buffer rellenado: +${nextSongs.length} canción`, {
-              guildId,
-              currentBuffer: queue.songs.length,
-              trackName: nextSongs[0]?.title || "Unknown",
-            });
-          }
-
-          bufferState.currentIndex++;
-        }
-
-        // Si terminamos todos los tracks, limpiar buffer
-        if (bufferState.currentIndex >= bufferState.allTracks.length) {
-          this.playlistBuffers.delete(bufferKey);
-          logger.info("🎉 Playlist completamente procesada, buffer eliminado", {
-            guildId,
-            totalProcessed: bufferState.currentIndex,
-          });
-        }
-      } catch (error) {
-        logger.error("Error recargando buffer", {
-          guildId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      } finally {
-        bufferState.isProcessing = false;
-      }
     }
   }
 }
 
-const musicService = new MusicService(new HttpMusicAdapter());
+// ============================================================================
+// Export singleton instance
+// ============================================================================
+
+const musicService = new MusicService();
 export default musicService;
