@@ -41,4 +41,7 @@ dev.*
 
 /src/generated/prisma
 
+# SDD tooling
+.atl/
+
 nul
