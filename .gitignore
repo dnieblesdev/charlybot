@@ -45,3 +45,10 @@ dev.*
 .atl/
 
 nul
+
+#SPEC
+openspec
+
+# test scripts
+apps/bot/test/
+apps/bot/scripts/
