@@ -1,15 +1,20 @@
 import { z } from 'zod';
 
+// Helper para aceptar Date o string ISO
+const dateSchema = z.union([z.date(), z.string().datetime()]).transform(val => 
+  val instanceof Date ? val : new Date(val)
+).nullable().optional();
+
 export const UserEconomySchema = z.object({
   userId: z.string(),
   guildId: z.string(),
   username: z.string(),
   pocket: z.number().default(0),
   inJail: z.boolean().default(false),
-  jailReleaseAt: z.date().nullable().optional(),
-  lastWork: z.date().nullable().optional(),
-  lastCrime: z.date().nullable().optional(),
-  lastRob: z.date().nullable().optional(),
+  jailReleaseAt: dateSchema,
+  lastWork: dateSchema,
+  lastCrime: dateSchema,
+  lastRob: dateSchema,
   totalEarned: z.number().default(0),
   totalLost: z.number().default(0),
 });

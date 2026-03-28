@@ -1,5 +1,15 @@
 # @charlybot/bot
 
+## 2.1.9
+
+### Patch Changes
+
+- fix(bot): reduce HTTP latency with in-memory cache
+
+  Implemented generic MemoryCache with 5-minute TTL for GuildConfig,
+  EconomyConfig and Leaderboard. Cache hit reduces latency from ~500ms
+  to ~2ms. Automatic invalidation on write operations.
+
 ## 2.1.8
 
 ### Patch Changes

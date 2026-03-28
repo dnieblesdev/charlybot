@@ -8,6 +8,8 @@ import type {
 } from "@charlybot/shared";
 import type { IEconomyRepository } from "../../domain/ports/IEconomyRepository";
 import { HttpRepositoryAdapter } from "./HttpRepositoryAdapter";
+import { memoryCache } from "./MemoryCache";
+import { CACHE_KEYS, CACHE_TTL } from "./cacheConstants";
 
 export class HttpEconomyAdapter
   extends HttpRepositoryAdapter
@@ -74,10 +76,20 @@ export class HttpEconomyAdapter
   }
 
   async getConfig(guildId: string): Promise<IEconomyConfig | null> {
+    const cacheKey = CACHE_KEYS.ECONOMY_CONFIG(guildId);
+    
+    // Check cache first
+    const cached = memoryCache.get(cacheKey);
+    if (cached !== undefined) {
+      return cached as IEconomyConfig | null;
+    }
+
     try {
-      return await this.client
+      const result = await this.client
         .get(`economy/config/${guildId}`)
         .json<IEconomyConfig>();
+      memoryCache.set(cacheKey, result, CACHE_TTL.CONFIG);
+      return result;
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'response' in error && (error.response as any)?.status === 404) return null;
       throw error;
@@ -88,27 +100,43 @@ export class HttpEconomyAdapter
     guildId: string,
     data: IEconomyConfig,
   ): Promise<IEconomyConfig> {
-    return await this.client
+    const result = await this.client
       .post(`economy/config`, { json: { ...data, guildId } })
       .json<IEconomyConfig>();
+    // Invalidate cache
+    memoryCache.invalidate(CACHE_KEYS.ECONOMY_CONFIG(guildId));
+    return result;
   }
 
   async updateConfig(
     guildId: string,
     data: Partial<IEconomyConfig>,
   ): Promise<IEconomyConfig> {
-    return await this.client
+    const result = await this.client
       .patch(`economy/config/${guildId}`, { json: data })
       .json<IEconomyConfig>();
+    // Invalidate cache
+    memoryCache.invalidate(CACHE_KEYS.ECONOMY_CONFIG(guildId));
+    return result;
   }
 
   async getLeaderboard(
     guildId: string,
     limit: number = 10,
   ): Promise<Leaderboard[]> {
-    return await this.client
+    const cacheKey = `${CACHE_KEYS.LEADERBOARD(guildId)}:${limit}`;
+    
+    // Check cache first
+    const cached = memoryCache.get(cacheKey);
+    if (cached !== undefined) {
+      return cached as Leaderboard[];
+    }
+
+    const result = await this.client
       .get(`economy/leaderboard/${guildId}`, { searchParams: { limit } })
       .json<Leaderboard[]>();
+    memoryCache.set(cacheKey, result, CACHE_TTL.LEADERBOARD);
+    return result;
   }
 
   async getLeaderboardEntry(
@@ -129,9 +157,12 @@ export class HttpEconomyAdapter
     guildId: string,
     data: Partial<Leaderboard>,
   ): Promise<Leaderboard> {
-    return await this.client
+    const result = await this.client
       .post(`economy/leaderboard/upsert`, { json: { ...data, guildId } })
       .json<Leaderboard>();
+    // Invalidate leaderboard cache for all limits
+    memoryCache.invalidatePattern(`${CACHE_KEYS.LEADERBOARD(guildId)}:*`);
+    return result;
   }
 
   async getUserPosition(
@@ -146,6 +177,8 @@ export class HttpEconomyAdapter
 
   async removeFromLeaderboard(guildId: string, userId: string): Promise<void> {
     await this.client.delete(`economy/leaderboard/${guildId}/${userId}`);
+    // Invalidate leaderboard cache
+    memoryCache.invalidatePattern(`${CACHE_KEYS.LEADERBOARD(guildId)}:*`);
   }
 
   // --- Roulette ---

@@ -37,10 +37,13 @@ const failMessages = [
 ];
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+  let replied = false;
+  
   try {
     logCommand(interaction.user.id, interaction.guildId || "DM", "crime");
 
     await interaction.deferReply();
+    replied = true;
 
     const userId = interaction.user.id;
     const username = interaction.user.username;
@@ -62,8 +65,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         username,
         guildId,
       );
-      const releaseTime = user.jailReleaseAt
-        ? Math.floor(user.jailReleaseAt.getTime() / 1000)
+      // Handle both Date object and ISO string from API
+      const jailDate = user.jailReleaseAt 
+        ? (user.jailReleaseAt instanceof Date ? user.jailReleaseAt : new Date(user.jailReleaseAt))
+        : null;
+      const releaseTime = jailDate
+        ? Math.floor(jailDate.getTime() / 1000)
         : 0;
 
       await interaction.editReply({
@@ -286,11 +293,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       guildId: interaction.guildId,
     });
 
-    const errorMessage = "❌ Error al cometer el crimen. Inténtalo de nuevo.";
-    if (interaction.deferred || interaction.replied) {
-      await interaction.editReply({ content: errorMessage });
-    } else {
-      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
+    if (replied) {
+      try {
+        await interaction.editReply({ content: "❌ Error al cometer el crimen. Inténtalo de nuevo." });
+      } catch {
+        // Silently ignore if we can't edit the reply
+      }
     }
   }
 }

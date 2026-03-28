@@ -223,7 +223,12 @@ router.post("/leaderboard/upsert", async (c) => {
     const entry = await prisma.leaderboard.upsert({
       where: { userId_guildId: { userId, guildId } },
       update: rest,
-      create: { userId, guildId, ...rest },
+      create: { 
+        userId, 
+        guildId, 
+        ...rest,
+        joinedServerAt: rest.joinedServerAt || new Date(),
+      },
     });
     return c.json(entry);
   } catch (error) {
