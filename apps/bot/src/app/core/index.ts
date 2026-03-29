@@ -1,6 +1,7 @@
 import { DiscordClient } from "./DiscordClient";
 import dotenv from "dotenv";
 import logger, { logError } from "../../utils/logger.ts";
+import { tempStorage } from "../../utils/temporaryStorage.ts";
 import playdl from "play-dl";
 import {
   createAudioPlayer,
@@ -124,6 +125,8 @@ process.on("uncaughtException", (error) => {
 const shutdown = async (signal: string) => {
   logger.info(`🛑 Señal ${signal} recibida, cerrando bot...`);
   try {
+    // Limpiar recursos
+    tempStorage.destroy();
     await bot.shutdown();
     process.exit(0);
   } catch (error) {

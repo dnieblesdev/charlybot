@@ -53,21 +53,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    // Ejecutar operaciones independientes en paralelo para reducir latencia
+    const [user, cooldown, config] = await Promise.all([
+      EconomyService.getOrCreateUser(userId, username, guildId),
+      EconomyService.checkCooldown(userId, guildId, "work"),
+      EconomyConfigService.getOrCreateConfig(guildId),
+    ]);
+
     // Verificar si el usuario está en prisión
-    const inJail = await EconomyService.isInJail(userId, guildId);
-    if (inJail) {
-      const user = await EconomyService.getOrCreateUser(
-        userId,
-        username,
-        guildId,
-      );
-      // Handle both Date object and ISO string from API
-      const jailDate = user.jailReleaseAt 
-        ? (user.jailReleaseAt instanceof Date ? user.jailReleaseAt : new Date(user.jailReleaseAt))
-        : null;
-      const releaseTime = jailDate
-        ? Math.floor(jailDate.getTime() / 1000)
-        : 0;
+    if (user.jailReleaseAt) {
+      const jailDate = user.jailReleaseAt instanceof Date 
+        ? user.jailReleaseAt 
+        : new Date(user.jailReleaseAt);
+      const releaseTime = Math.floor(jailDate.getTime() / 1000);
 
       await interaction.editReply({
         content: `🚔 ¡Estás en prisión! No puedes trabajar hasta <t:${releaseTime}:R>`,
@@ -76,11 +74,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     // Verificar cooldown
-    const cooldown = await EconomyService.checkCooldown(
-      userId,
-      guildId,
-      "work",
-    );
     if (cooldown.onCooldown && cooldown.remainingTime) {
       const minutes = Math.ceil(cooldown.remainingTime / 60000);
       const seconds = Math.ceil((cooldown.remainingTime % 60000) / 1000);
@@ -91,13 +84,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    // Crear o obtener usuario
-    const user = await EconomyService.getOrCreateUser(
-      userId,
-      username,
-      guildId,
-    );
-
     // Seleccionar trabajo aleatorio
     const job = jobs[Math.floor(Math.random() * jobs.length)];
 
@@ -107,9 +93,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
       return;
     }
-
-    // Obtener configuración del servidor para rangos de ganancia
-    const config = await EconomyConfigService.getOrCreateConfig(guildId);
     const minAmount = config.workMinAmount;
     const maxAmount = config.workMaxAmount;
 

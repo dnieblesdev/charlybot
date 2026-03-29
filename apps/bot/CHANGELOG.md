@@ -1,5 +1,14 @@
 # @charlybot/bot
 
+## 2.2.1
+
+### Patch Changes
+
+- perf: optimize economy commands with parallel requests and cleanup
+
+  - Add Promise.all() in /work command for parallel DB calls
+  - Add tempStorage.destroy() call on graceful shutdown
+
 ## 2.2.0
 
 ### Minor Changes

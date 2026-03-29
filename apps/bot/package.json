@@ -1,6 +1,6 @@
 {
   "name": "@charlybot/bot",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "module": "src/index.ts",
   "type": "module",
   "private": true,
