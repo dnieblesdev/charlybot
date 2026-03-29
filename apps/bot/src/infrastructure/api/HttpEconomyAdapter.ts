@@ -11,6 +11,24 @@ import { HttpRepositoryAdapter } from "./HttpRepositoryAdapter";
 import { memoryCache } from "./MemoryCache";
 import { CACHE_KEYS, CACHE_TTL } from "./cacheConstants";
 
+export interface TransferResult {
+  success: boolean;
+  fromUser: IUserEconomy;
+  toUser: IUserEconomy;
+}
+
+export interface DepositResult {
+  success: boolean;
+  user: IUserEconomy;
+  bank: IGlobalBank;
+}
+
+export interface WithdrawResult {
+  success: boolean;
+  bank: IGlobalBank;
+  user: IUserEconomy;
+}
+
 export class HttpEconomyAdapter
   extends HttpRepositoryAdapter
   implements IEconomyRepository
@@ -249,5 +267,65 @@ export class HttpEconomyAdapter
 
   async deleteRouletteGame(guildId: string, gameId: number): Promise<void> {
     await this.client.delete(`economy/roulette/game/${gameId}`);
+  }
+
+  // --- Atomic Operations (Race Condition Fix) ---
+
+  async transfer(
+    fromUserId: string,
+    toUserId: string,
+    guildId: string,
+    amount: number,
+    fromUsername: string,
+    toUsername: string,
+  ): Promise<TransferResult> {
+    return await this.client
+      .post("economy/transfer", {
+        json: {
+          fromUserId,
+          toUserId,
+          guildId,
+          amount,
+          fromUsername,
+          toUsername,
+        },
+      })
+      .json<TransferResult>();
+  }
+
+  async deposit(
+    userId: string,
+    guildId: string,
+    username: string,
+    amount: number,
+  ): Promise<DepositResult> {
+    return await this.client
+      .post("economy/deposit", {
+        json: {
+          userId,
+          guildId,
+          username,
+          amount,
+        },
+      })
+      .json<DepositResult>();
+  }
+
+  async withdraw(
+    userId: string,
+    guildId: string,
+    username: string,
+    amount: number,
+  ): Promise<WithdrawResult> {
+    return await this.client
+      .post("economy/withdraw", {
+        json: {
+          userId,
+          guildId,
+          username,
+          amount,
+        },
+      })
+      .json<WithdrawResult>();
   }
 }

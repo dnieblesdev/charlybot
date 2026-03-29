@@ -11,7 +11,18 @@
     "dev:api": "bun run --cwd apps/api dev",
     "rc": "bun --cwd apps/bot run rc",
     "cc": "bun --cwd apps/bot run cc",
-    "lc": "bun --cwd apps/bot run lc"
+    "lc": "bun --cwd apps/bot run lc",
+    
+    "db:backup": "bun run scripts/db/backup.ts create daily",
+    "db:backup:migration": "bun run scripts/db/backup.ts create migration",
+    "db:backup:list": "bun run scripts/db/backup.ts list",
+    "db:backup:latest": "bun run scripts/db/backup.ts latest",
+    "db:migrate": "bun run scripts/db/migrate.ts migrate",
+    "db:push": "bun run scripts/db/migrate.ts push",
+    "db:restore": "bun run scripts/db/restore.ts",
+    "db:restore:latest": "bun run scripts/db/restore.ts latest",
+    "db:rotate": "bun run scripts/db/rotate.ts run",
+    "db:rotate:status": "bun run scripts/db/rotate.ts status"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

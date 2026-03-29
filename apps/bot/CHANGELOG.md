@@ -1,5 +1,16 @@
 # @charlybot/bot
 
+## 2.2.0
+
+### Minor Changes
+
+- Fixed race conditions in economy operations:
+
+  - Updated EconomyService to use atomic Prisma transactions
+  - Added atomic wrapper functions in EconomyRepo
+  - Added transfer(), deposit(), withdraw() methods to HttpEconomyAdapter
+  - These changes prevent money loss/duplication during server crashes
+
 ## 2.1.9
 
 ### Patch Changes

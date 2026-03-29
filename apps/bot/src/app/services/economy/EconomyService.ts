@@ -2,7 +2,9 @@ import logger from "../../../utils/logger.js";
 import { EconomyConfigService } from "./EconomyConfigService.js";
 import LeaderboardService from "./LeaderboardService.js";
 import { Guild } from "discord.js";
-import * as EconomyRepo from "../../../config/repositories/EconomyRepo";
+import * as EconomyRepo from "../../../config/repositories/EconomyRepo.js";
+import { memoryCache } from "../../../infrastructure/api/MemoryCache.js";
+import { CACHE_KEYS } from "../../../infrastructure/api/cacheConstants.js";
 
 export class EconomyService {
   // Obtener o crear usuario en la economía (por servidor)
@@ -177,7 +179,7 @@ export class EconomyService {
     }
   }
 
-  // Transferir dinero entre usuarios (en el mismo servidor)
+  // Transferir dinero entre usuarios (en el mismo servidor) - ATOMIC
   static async transfer(
     fromUserId: string,
     toUserId: string,
@@ -188,23 +190,15 @@ export class EconomyService {
     guild: Guild,
   ) {
     try {
-      const fromUser = await EconomyRepo.getEconomyUser(guildId, fromUserId);
-      const toUser = await EconomyRepo.getEconomyUser(guildId, toUserId);
-
-      if (!fromUser || !toUser) throw new Error("One or both users not found");
-
-      // Note: Transaction is not supported directly via individual repo calls in this simplified version.
-      // In a real app, the API should have a /transfer endpoint to ensure atomicity.
-      // For now, we do sequential updates.
-      await EconomyRepo.updateEconomyUser(guildId, fromUserId, {
-        pocket: fromUser.pocket - amount,
-        totalLost: fromUser.totalLost + amount,
-      });
-
-      await EconomyRepo.updateEconomyUser(guildId, toUserId, {
-        pocket: toUser.pocket + amount,
-        totalEarned: toUser.totalEarned + amount,
-      });
+      // Usar operación atómica para evitar race conditions
+      const result = await EconomyRepo.atomicTransfer(
+        fromUserId,
+        toUserId,
+        guildId,
+        amount,
+        fromUsername,
+        toUsername,
+      );
 
       // Actualizar leaderboard para ambos usuarios
       await Promise.all([
@@ -223,8 +217,10 @@ export class EconomyService {
       ]);
 
       logger.info(
-        `Transferred ${amount} from ${fromUserId} to ${toUserId} in guild ${guildId}`,
+        `Atomic transfer: ${amount} from ${fromUserId} to ${toUserId} in guild ${guildId}`,
       );
+
+      return result;
     } catch (error) {
       logger.error("Error transferring money:", error);
       throw error;
@@ -311,7 +307,7 @@ export class EconomyService {
     }
   }
 
-  // Depositar en el banco (del bolsillo del servidor al banco global)
+  // Depositar en el banco (del bolsillo del servidor al banco global) - ATOMIC
   static async deposit(
     userId: string,
     guildId: string,
@@ -320,24 +316,13 @@ export class EconomyService {
     guild: Guild,
   ) {
     try {
-      const user = await EconomyRepo.getEconomyUser(guildId, userId);
-      const globalBank = await EconomyRepo.getGlobalBank(guildId, userId);
-
-      if (!user || user.pocket < amount) {
-        throw new Error("Fondos insuficientes en el bolsillo");
-      }
-
-      // Asegurar que existe el banco global
-      const bank = globalBank || await this.getOrCreateGlobalBank(guildId, userId, username);
-
-      // Again, atomicity should be handled by an API endpoint.
-      await EconomyRepo.updateEconomyUser(guildId, userId, {
-        pocket: user.pocket - amount,
-      });
-      
-      await EconomyRepo.updateGlobalBank(guildId, userId, {
-        bank: bank.bank + amount,
-      });
+      // Usar operación atómica para evitar race conditions
+      const result = await EconomyRepo.atomicDeposit(
+        userId,
+        guildId,
+        username,
+        amount,
+      );
 
       // Actualizar leaderboard (el dinero total no cambia, pero mantener sincronizado)
       await LeaderboardService.updateLeaderboard(
@@ -348,15 +333,17 @@ export class EconomyService {
       );
 
       logger.info(
-        `User ${userId} deposited ${amount} to global bank from guild ${guildId}`,
+        `Atomic deposit: ${amount} from user ${userId} to global bank in guild ${guildId}`,
       );
+
+      return result;
     } catch (error) {
       logger.error("Error depositing to bank:", error);
       throw error;
     }
   }
 
-  // Retirar del banco (del banco global al bolsillo del servidor)
+  // Retirar del banco (del banco global al bolsillo del servidor) - ATOMIC
   static async withdraw(
     userId: string,
     guildId: string,
@@ -365,23 +352,13 @@ export class EconomyService {
     guild: Guild,
   ) {
     try {
-      const globalBank = await EconomyRepo.getGlobalBank(guildId, userId);
-      const user = await EconomyRepo.getEconomyUser(guildId, userId);
-
-      if (!globalBank || globalBank.bank < amount) {
-        throw new Error("Fondos insuficientes en el banco");
-      }
-
-      // Asegurar que existe el usuario en este servidor
-      const currentUser = user || await this.getOrCreateUser(userId, username, guildId);
-
-      await EconomyRepo.updateGlobalBank(guildId, userId, {
-        bank: globalBank.bank - amount,
-      });
-
-      await EconomyRepo.updateEconomyUser(guildId, userId, {
-        pocket: currentUser.pocket + amount,
-      });
+      // Usar operación atómica para evitar race conditions
+      const result = await EconomyRepo.atomicWithdraw(
+        userId,
+        guildId,
+        username,
+        amount,
+      );
 
       // Actualizar leaderboard (el dinero total no cambia, pero mantener sincronizado)
       await LeaderboardService.updateLeaderboard(
@@ -392,8 +369,10 @@ export class EconomyService {
       );
 
       logger.info(
-        `User ${userId} withdrew ${amount} from global bank to guild ${guildId}`,
+        `Atomic withdraw: ${amount} from global bank to user ${userId} in guild ${guildId}`,
       );
+
+      return result;
     } catch (error) {
       logger.error("Error withdrawing from bank:", error);
       throw error;

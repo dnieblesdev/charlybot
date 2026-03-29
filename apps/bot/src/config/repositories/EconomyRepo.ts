@@ -1,4 +1,5 @@
 import { HttpEconomyAdapter } from "../../infrastructure/api/HttpEconomyAdapter";
+import type { TransferResult, DepositResult, WithdrawResult } from "../../infrastructure/api/HttpEconomyAdapter";
 import logger from "../../utils/logger";
 import type {
   IUserEconomy,
@@ -163,4 +164,35 @@ export async function deleteRouletteGame(
   gameId: number,
 ): Promise<void> {
   await economyRepo.deleteRouletteGame(guildId, gameId);
+}
+
+// --- Atomic Operations (Race Condition Fix) ---
+
+export async function atomicTransfer(
+  fromUserId: string,
+  toUserId: string,
+  guildId: string,
+  amount: number,
+  fromUsername: string,
+  toUsername: string,
+): Promise<TransferResult> {
+  return await economyRepo.transfer(fromUserId, toUserId, guildId, amount, fromUsername, toUsername);
+}
+
+export async function atomicDeposit(
+  userId: string,
+  guildId: string,
+  username: string,
+  amount: number,
+): Promise<DepositResult> {
+  return await economyRepo.deposit(userId, guildId, username, amount);
+}
+
+export async function atomicWithdraw(
+  userId: string,
+  guildId: string,
+  username: string,
+  amount: number,
+): Promise<WithdrawResult> {
+  return await economyRepo.withdraw(userId, guildId, username, amount);
 }

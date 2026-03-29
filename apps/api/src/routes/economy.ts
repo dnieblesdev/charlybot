@@ -3,8 +3,34 @@ import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { UserEconomySchema, GlobalBankSchema, EconomyConfigSchema } from "@charlybot/shared";
 import logger from "../utils/logger";
+import { z } from "zod";
 
 const router = new Hono();
+
+// --- Schemas for atomic operations ---
+
+const TransferSchema = z.object({
+  fromUserId: z.string(),
+  toUserId: z.string(),
+  guildId: z.string(),
+  amount: z.number().positive(),
+  fromUsername: z.string(),
+  toUsername: z.string(),
+});
+
+const DepositSchema = z.object({
+  userId: z.string(),
+  guildId: z.string(),
+  username: z.string(),
+  amount: z.number().positive(),
+});
+
+const WithdrawSchema = z.object({
+  userId: z.string(),
+  guildId: z.string(),
+  username: z.string(),
+  amount: z.number().positive(),
+});
 
 // --- User Economy ---
 
@@ -380,6 +406,192 @@ router.delete("/roulette/game/:gameId", async (c) => {
     return c.json({ message: "Deleted" });
   } catch (error) {
     return c.json({ error: "Internal error" }, 500);
+  }
+});
+
+// --- Atomic Operations (Race Condition Fix) ---
+
+// POST /api/v1/economy/transfer - Atomic transfer between users
+router.post("/transfer", zValidator("json", TransferSchema), async (c) => {
+  const { fromUserId, toUserId, guildId, amount, fromUsername, toUsername } = c.req.valid("json");
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      // Get both users in a single transaction
+      const [fromUser, toUser] = await Promise.all([
+        tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId: fromUserId, guildId } },
+        }),
+        tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId: toUserId, guildId } },
+        }),
+      ]);
+
+      if (!fromUser || !toUser) {
+        throw new Error("One or both users not found");
+      }
+
+      if (fromUser.pocket < amount) {
+        throw new Error("Insufficient funds");
+      }
+
+      // Atomic update for both users
+      const [updatedFrom, updatedTo] = await Promise.all([
+        tx.userEconomy.update({
+          where: { userId_guildId: { userId: fromUserId, guildId } },
+          data: {
+            pocket: fromUser.pocket - amount,
+            totalLost: fromUser.totalLost + amount,
+          },
+        }),
+        tx.userEconomy.update({
+          where: { userId_guildId: { userId: toUserId, guildId } },
+          data: {
+            pocket: toUser.pocket + amount,
+            totalEarned: toUser.totalEarned + amount,
+          },
+        }),
+      ]);
+
+      logger.info(
+        `Atomic transfer: ${amount} from ${fromUserId} to ${toUserId} in guild ${guildId}`,
+      );
+
+      return { fromUser: updatedFrom, toUser: updatedTo };
+    });
+
+    return c.json({
+      success: true,
+      fromUser: result.fromUser,
+      toUser: result.toUser,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Transfer failed";
+    logger.error(`Atomic transfer failed: ${message}`, { fromUserId, toUserId, guildId, amount });
+    return c.json({ error: message }, 400);
+  }
+});
+
+// POST /api/v1/economy/deposit - Atomic deposit to global bank
+router.post("/deposit", zValidator("json", DepositSchema), async (c) => {
+  const { userId, guildId, username, amount } = c.req.valid("json");
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.userEconomy.findUnique({
+        where: { userId_guildId: { userId, guildId } },
+      });
+
+      if (!user || user.pocket < amount) {
+        throw new Error("Insufficient funds in pocket");
+      }
+
+      // Get or create global bank
+      let bank = await tx.globalBank.findUnique({
+        where: { userId },
+      });
+
+      if (!bank) {
+        bank = await tx.globalBank.create({
+          data: { userId, username, bank: 0 },
+        });
+      }
+
+      // Atomic update: subtract from pocket, add to bank
+      const [updatedUser, updatedBank] = await Promise.all([
+        tx.userEconomy.update({
+          where: { userId_guildId: { userId, guildId } },
+          data: { pocket: user.pocket - amount },
+        }),
+        tx.globalBank.update({
+          where: { userId },
+          data: { bank: bank.bank + amount },
+        }),
+      ]);
+
+      logger.info(`Atomic deposit: ${amount} from user ${userId} to global bank`);
+
+      return { user: updatedUser, bank: updatedBank };
+    });
+
+    return c.json({
+      success: true,
+      user: result.user,
+      bank: result.bank,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Deposit failed";
+    logger.error(`Atomic deposit failed: ${message}`, { userId, guildId, amount });
+    return c.json({ error: message }, 400);
+  }
+});
+
+// POST /api/v1/economy/withdraw - Atomic withdraw from global bank
+router.post("/withdraw", zValidator("json", WithdrawSchema), async (c) => {
+  const { userId, guildId, username, amount } = c.req.valid("json");
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      // Get global bank first
+      const bank = await tx.globalBank.findUnique({
+        where: { userId },
+      });
+
+      if (!bank || bank.bank < amount) {
+        throw new Error("Insufficient funds in bank");
+      }
+
+      // Get or create user economy
+      let user = await tx.userEconomy.findUnique({
+        where: { userId_guildId: { userId, guildId } },
+      });
+
+      if (!user) {
+        // Get starting money from config
+        const config = await tx.economyConfig.findUnique({
+          where: { guildId },
+        });
+        const startingMoney = config?.startingMoney || 1000;
+
+        user = await tx.userEconomy.create({
+          data: {
+            userId,
+            guildId,
+            username,
+            pocket: startingMoney,
+            totalEarned: 0,
+            totalLost: 0,
+            inJail: false,
+          },
+        });
+      }
+
+      // Atomic update: subtract from bank, add to pocket
+      const [updatedBank, updatedUser] = await Promise.all([
+        tx.globalBank.update({
+          where: { userId },
+          data: { bank: bank.bank - amount },
+        }),
+        tx.userEconomy.update({
+          where: { userId_guildId: { userId, guildId } },
+          data: { pocket: user.pocket + amount },
+        }),
+      ]);
+
+      logger.info(`Atomic withdraw: ${amount} from global bank to user ${userId}`);
+
+      return { bank: updatedBank, user: updatedUser };
+    });
+
+    return c.json({
+      success: true,
+      bank: result.bank,
+      user: result.user,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Withdraw failed";
+    logger.error(`Atomic withdraw failed: ${message}`, { userId, guildId, amount });
+    return c.json({ error: message }, 400);
   }
 });
 

@@ -1,5 +1,21 @@
 # @charlybot/api
 
+## 2.2.0
+
+### Minor Changes
+
+- Added atomic economy endpoints and test suite:
+
+  - Added `/economy/transfer`, `/economy/deposit`, `/economy/withdraw` endpoints using Prisma transactions
+  - Added Vitest test configuration
+  - Added integration tests for economy endpoints (34 tests passing)
+  - Added schema validation tests (28 tests passing)
+
+### Patch Changes
+
+- Updated dependencies
+  - @charlybot/shared@2.2.0
+
 ## 2.1.1
 
 ### Patch Changes

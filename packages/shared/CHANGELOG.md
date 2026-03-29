@@ -1,5 +1,19 @@
 # @charlybot/shared
 
+## 2.2.0
+
+### Minor Changes
+
+- Added automatic database backup system:
+
+  - `bun run db:backup` - Create daily backup
+  - `bun run db:migrate` - Migration with automatic pre-backup
+  - `bun run db:push` - db push with automatic pre-backup
+  - `bun run db:restore` - Restore from backup
+  - `bun run db:rotate` - Rotate old backups (keeps 7 daily, 3 migration)
+
+  This prevents complete data loss during failed Prisma migrations.
+
 ## 2.1.1
 
 ### Patch Changes
