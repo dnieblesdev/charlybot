@@ -52,3 +52,6 @@ openspec
 # test scripts
 apps/bot/test/
 apps/bot/scripts/
+
+# prisma generated
+prisma/
