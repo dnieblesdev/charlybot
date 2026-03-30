@@ -1,5 +1,19 @@
 # @charlybot/bot
 
+## 2.3.0
+
+### Minor Changes
+
+- Add XP/Level system to Discord bot
+
+  - Add XP tracking on message events with 5-second rate limit
+  - Add automatic level role assignment on level up
+  - Add level-up notification to configurable channel
+  - Add XP commands (rank, leaderboard, config)
+  - Add XP repository and HTTP adapter for API communication
+  - Add cache keys for XP configuration and level roles
+  - Reorganize messageCreate event code
+
 ## 2.2.1
 
 ### Patch Changes

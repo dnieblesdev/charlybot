@@ -1,5 +1,16 @@
 # @charlybot/shared
 
+## 2.3.0
+
+### Minor Changes
+
+- Add XP/Level system models to Prisma schema
+
+  - Add UserXP model for tracking user XP per server
+  - Add XPConfig model for server XP settings
+  - Add LevelRole model for automatic role assignment on level up
+  - Update Prisma client to v7.6.0
+
 ## 2.2.0
 
 ### Minor Changes

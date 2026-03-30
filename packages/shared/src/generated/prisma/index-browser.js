@@ -24,12 +24,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 7.5.0
- * Query Engine version: 280c870be64f457428992c43c1f6d557fab6e29e
+ * Prisma Client JS version: 7.6.0
+ * Query Engine version: 75cbdc1eb7150937890ad5465d861175c6624711
  */
 Prisma.prismaVersion = {
-  client: "7.5.0",
-  engine: "280c870be64f457428992c43c1f6d557fab6e29e"
+  client: "7.6.0",
+  engine: "75cbdc1eb7150937890ad5465d861175c6624711"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -335,6 +335,35 @@ exports.Prisma.GuildMusicConfigScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.UserXPScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  guildId: 'guildId',
+  xp: 'xp',
+  nivel: 'nivel',
+  lastMessageAt: 'lastMessageAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.XPConfigScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  xpPerMessage: 'xpPerMessage',
+  enabled: 'enabled',
+  levelUpChannelId: 'levelUpChannelId',
+  levelUpMessage: 'levelUpMessage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LevelRoleScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  level: 'level',
+  roleId: 'roleId'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -363,7 +392,10 @@ exports.Prisma.ModelName = {
   VerificationRequest: 'VerificationRequest',
   MusicQueue: 'MusicQueue',
   MusicQueueItem: 'MusicQueueItem',
-  GuildMusicConfig: 'GuildMusicConfig'
+  GuildMusicConfig: 'GuildMusicConfig',
+  UserXP: 'UserXP',
+  XPConfig: 'XPConfig',
+  LevelRole: 'LevelRole'
 };
 
 /**

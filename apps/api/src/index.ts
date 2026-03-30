@@ -4,6 +4,7 @@ import logger from "./utils/logger";
 import { prisma } from "@charlybot/shared";
 import guildRoutes from "./routes/guilds";
 import economyRoutes from "./routes/economy";
+import xpRoutes from "./routes/xp";
 import autoroleRoutes from "./routes/autoroles";
 import verificationRoutes from "./routes/verifications";
 import classRoutes from "./routes/classes";
@@ -43,6 +44,7 @@ app.use("/api/*", authMiddleware);
 
 app.route("/api/v1/guilds", guildRoutes);
 app.route("/api/v1/economy", economyRoutes);
+app.route("/api/v1/xp", xpRoutes);
 app.route("/api/v1/autoroles", autoroleRoutes);
 app.route("/api/v1/verifications", verificationRoutes);
 app.route("/api/v1/classes", classRoutes);

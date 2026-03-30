@@ -2,9 +2,16 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { VerificationRequestSchema } from "@charlybot/shared";
+import { z } from "zod";
 import logger from "../utils/logger";
 
 const router = new Hono();
+const CreateVerificationSchema = VerificationRequestSchema.omit({
+  id: true,
+  status: true,
+}).extend({
+  status: z.enum(["pending", "approved", "rejected"]).optional(),
+});
 
 // GET /api/v1/verifications/:id
 router.get("/:id", async (c) => {
@@ -43,13 +50,15 @@ router.get("/pending/:guildId", async (c) => {
 });
 
 // POST /api/v1/verifications
-router.post("/", zValidator("json", VerificationRequestSchema), async (c) => {
+router.post("/", zValidator("json", CreateVerificationSchema), async (c) => {
   const data = c.req.valid("json");
 
   try {
     const verification = await prisma.verificationRequest.create({
       data: {
+        id: crypto.randomUUID(),
         ...data,
+        status: data.status ?? "pending",
         requestedAt: data.requestedAt ? new Date(data.requestedAt as string) : undefined,
         reviewedAt: data.reviewedAt ? new Date(data.reviewedAt as string) : undefined,
       } as any,

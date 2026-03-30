@@ -56,7 +56,7 @@ router.get("/:id/config", async (c) => {
 });
 
 // PATCH /api/v1/guilds/:id/config
-router.patch("/:id/config", zValidator("json", GuildConfigSchema.partial()), async (c) => {
+router.patch("/:id/config", zValidator("json", GuildConfigSchema.strict().partial()), async (c) => {
   const guildId = c.req.param("id");
   const data = c.req.valid("json");
 

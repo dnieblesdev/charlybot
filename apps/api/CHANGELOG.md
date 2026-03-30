@@ -1,5 +1,23 @@
 # @charlybot/api
 
+## 2.3.0
+
+### Minor Changes
+
+- Add XP API routes and improve validation
+
+  - Add /api/v1/xp endpoints for XP management
+  - Add strict validation to GuildConfig schema
+  - Add subclasses support to ClassConfig creation
+  - Make API_KEY environment variable mandatory (no fallback)
+  - Add CreateVerificationSchema with configurable status
+  - Add test setup improvements for API_KEY and Request URL normalization
+
+### Patch Changes
+
+- Updated dependencies
+  - @charlybot/shared@2.3.0
+
 ## 2.2.0
 
 ### Minor Changes

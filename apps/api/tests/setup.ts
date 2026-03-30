@@ -9,6 +9,22 @@ import { beforeAll, afterAll, afterEach, vi } from "vitest";
 const TEST_TIMEOUT = 15000;
 const SETUP_TIMEOUT = 20000;
 
+// Required by authMiddleware during module import in API tests.
+process.env.API_KEY ??= "charly_secret_key";
+
+// Normalize relative Request URLs for app.fetch() in the Node test runtime.
+const OriginalRequest = globalThis.Request;
+globalThis.Request = class extends OriginalRequest {
+  constructor(input: RequestInfo | URL, init?: RequestInit) {
+    if (typeof input === "string" && input.startsWith("/")) {
+      super(`http://localhost${input}`, init);
+      return;
+    }
+
+    super(input, init);
+  }
+};
+
 beforeAll(async () => {
   // Set longer timeouts for integration tests
   vi.setConfig({

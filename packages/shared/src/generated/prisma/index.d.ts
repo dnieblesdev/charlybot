@@ -98,6 +98,21 @@ export type MusicQueueItem = $Result.DefaultSelection<Prisma.$MusicQueueItemPayl
  * 
  */
 export type GuildMusicConfig = $Result.DefaultSelection<Prisma.$GuildMusicConfigPayload>
+/**
+ * Model UserXP
+ * 
+ */
+export type UserXP = $Result.DefaultSelection<Prisma.$UserXPPayload>
+/**
+ * Model XPConfig
+ * 
+ */
+export type XPConfig = $Result.DefaultSelection<Prisma.$XPConfigPayload>
+/**
+ * Model LevelRole
+ * 
+ */
+export type LevelRole = $Result.DefaultSelection<Prisma.$LevelRolePayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -389,6 +404,36 @@ export class PrismaClient<
     * ```
     */
   get guildMusicConfig(): Prisma.GuildMusicConfigDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.userXP`: Exposes CRUD operations for the **UserXP** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UserXPS
+    * const userXPS = await prisma.userXP.findMany()
+    * ```
+    */
+  get userXP(): Prisma.UserXPDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.xPConfig`: Exposes CRUD operations for the **XPConfig** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more XPConfigs
+    * const xPConfigs = await prisma.xPConfig.findMany()
+    * ```
+    */
+  get xPConfig(): Prisma.XPConfigDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.levelRole`: Exposes CRUD operations for the **LevelRole** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LevelRoles
+    * const levelRoles = await prisma.levelRole.findMany()
+    * ```
+    */
+  get levelRole(): Prisma.LevelRoleDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -439,8 +484,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 7.5.0
-   * Query Engine version: 280c870be64f457428992c43c1f6d557fab6e29e
+   * Prisma Client JS version: 7.6.0
+   * Query Engine version: 75cbdc1eb7150937890ad5465d861175c6624711
    */
   export type PrismaVersion = {
     client: string
@@ -839,7 +884,10 @@ export namespace Prisma {
     VerificationRequest: 'VerificationRequest',
     MusicQueue: 'MusicQueue',
     MusicQueueItem: 'MusicQueueItem',
-    GuildMusicConfig: 'GuildMusicConfig'
+    GuildMusicConfig: 'GuildMusicConfig',
+    UserXP: 'UserXP',
+    XPConfig: 'XPConfig',
+    LevelRole: 'LevelRole'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -855,7 +903,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tipoClase" | "classes" | "subclass" | "guild" | "guildConfig" | "userEconomy" | "globalBank" | "rouletteGame" | "rouletteBet" | "economyConfig" | "leaderboard" | "autoRole" | "roleMapping" | "verificationRequest" | "musicQueue" | "musicQueueItem" | "guildMusicConfig"
+      modelProps: "tipoClase" | "classes" | "subclass" | "guild" | "guildConfig" | "userEconomy" | "globalBank" | "rouletteGame" | "rouletteBet" | "economyConfig" | "leaderboard" | "autoRole" | "roleMapping" | "verificationRequest" | "musicQueue" | "musicQueueItem" | "guildMusicConfig" | "userXP" | "xPConfig" | "levelRole"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2117,6 +2165,228 @@ export namespace Prisma {
           }
         }
       }
+      UserXP: {
+        payload: Prisma.$UserXPPayload<ExtArgs>
+        fields: Prisma.UserXPFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserXPFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserXPPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserXPFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserXPPayload>
+          }
+          findFirst: {
+            args: Prisma.UserXPFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserXPPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserXPFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserXPPayload>
+          }
+          findMany: {
+            args: Prisma.UserXPFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserXPPayload>[]
+          }
+          create: {
+            args: Prisma.UserXPCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserXPPayload>
+          }
+          createMany: {
+            args: Prisma.UserXPCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserXPCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserXPPayload>[]
+          }
+          delete: {
+            args: Prisma.UserXPDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserXPPayload>
+          }
+          update: {
+            args: Prisma.UserXPUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserXPPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserXPDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserXPUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserXPUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserXPPayload>[]
+          }
+          upsert: {
+            args: Prisma.UserXPUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserXPPayload>
+          }
+          aggregate: {
+            args: Prisma.UserXPAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUserXP>
+          }
+          groupBy: {
+            args: Prisma.UserXPGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserXPGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserXPCountArgs<ExtArgs>
+            result: $Utils.Optional<UserXPCountAggregateOutputType> | number
+          }
+        }
+      }
+      XPConfig: {
+        payload: Prisma.$XPConfigPayload<ExtArgs>
+        fields: Prisma.XPConfigFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.XPConfigFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$XPConfigPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.XPConfigFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$XPConfigPayload>
+          }
+          findFirst: {
+            args: Prisma.XPConfigFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$XPConfigPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.XPConfigFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$XPConfigPayload>
+          }
+          findMany: {
+            args: Prisma.XPConfigFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$XPConfigPayload>[]
+          }
+          create: {
+            args: Prisma.XPConfigCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$XPConfigPayload>
+          }
+          createMany: {
+            args: Prisma.XPConfigCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.XPConfigCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$XPConfigPayload>[]
+          }
+          delete: {
+            args: Prisma.XPConfigDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$XPConfigPayload>
+          }
+          update: {
+            args: Prisma.XPConfigUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$XPConfigPayload>
+          }
+          deleteMany: {
+            args: Prisma.XPConfigDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.XPConfigUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.XPConfigUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$XPConfigPayload>[]
+          }
+          upsert: {
+            args: Prisma.XPConfigUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$XPConfigPayload>
+          }
+          aggregate: {
+            args: Prisma.XPConfigAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateXPConfig>
+          }
+          groupBy: {
+            args: Prisma.XPConfigGroupByArgs<ExtArgs>
+            result: $Utils.Optional<XPConfigGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.XPConfigCountArgs<ExtArgs>
+            result: $Utils.Optional<XPConfigCountAggregateOutputType> | number
+          }
+        }
+      }
+      LevelRole: {
+        payload: Prisma.$LevelRolePayload<ExtArgs>
+        fields: Prisma.LevelRoleFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LevelRoleFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LevelRolePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LevelRoleFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LevelRolePayload>
+          }
+          findFirst: {
+            args: Prisma.LevelRoleFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LevelRolePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LevelRoleFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LevelRolePayload>
+          }
+          findMany: {
+            args: Prisma.LevelRoleFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LevelRolePayload>[]
+          }
+          create: {
+            args: Prisma.LevelRoleCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LevelRolePayload>
+          }
+          createMany: {
+            args: Prisma.LevelRoleCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LevelRoleCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LevelRolePayload>[]
+          }
+          delete: {
+            args: Prisma.LevelRoleDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LevelRolePayload>
+          }
+          update: {
+            args: Prisma.LevelRoleUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LevelRolePayload>
+          }
+          deleteMany: {
+            args: Prisma.LevelRoleDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LevelRoleUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.LevelRoleUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LevelRolePayload>[]
+          }
+          upsert: {
+            args: Prisma.LevelRoleUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LevelRolePayload>
+          }
+          aggregate: {
+            args: Prisma.LevelRoleAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLevelRole>
+          }
+          groupBy: {
+            args: Prisma.LevelRoleGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LevelRoleGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LevelRoleCountArgs<ExtArgs>
+            result: $Utils.Optional<LevelRoleCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2242,6 +2512,9 @@ export namespace Prisma {
     musicQueue?: MusicQueueOmit
     musicQueueItem?: MusicQueueItemOmit
     guildMusicConfig?: GuildMusicConfigOmit
+    userXP?: UserXPOmit
+    xPConfig?: XPConfigOmit
+    levelRole?: LevelRoleOmit
   }
 
   /* Types for Logging */
@@ -21937,6 +22210,3183 @@ export namespace Prisma {
 
 
   /**
+   * Model UserXP
+   */
+
+  export type AggregateUserXP = {
+    _count: UserXPCountAggregateOutputType | null
+    _avg: UserXPAvgAggregateOutputType | null
+    _sum: UserXPSumAggregateOutputType | null
+    _min: UserXPMinAggregateOutputType | null
+    _max: UserXPMaxAggregateOutputType | null
+  }
+
+  export type UserXPAvgAggregateOutputType = {
+    id: number | null
+    xp: number | null
+    nivel: number | null
+  }
+
+  export type UserXPSumAggregateOutputType = {
+    id: number | null
+    xp: number | null
+    nivel: number | null
+  }
+
+  export type UserXPMinAggregateOutputType = {
+    id: number | null
+    userId: string | null
+    guildId: string | null
+    xp: number | null
+    nivel: number | null
+    lastMessageAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserXPMaxAggregateOutputType = {
+    id: number | null
+    userId: string | null
+    guildId: string | null
+    xp: number | null
+    nivel: number | null
+    lastMessageAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserXPCountAggregateOutputType = {
+    id: number
+    userId: number
+    guildId: number
+    xp: number
+    nivel: number
+    lastMessageAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type UserXPAvgAggregateInputType = {
+    id?: true
+    xp?: true
+    nivel?: true
+  }
+
+  export type UserXPSumAggregateInputType = {
+    id?: true
+    xp?: true
+    nivel?: true
+  }
+
+  export type UserXPMinAggregateInputType = {
+    id?: true
+    userId?: true
+    guildId?: true
+    xp?: true
+    nivel?: true
+    lastMessageAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserXPMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    guildId?: true
+    xp?: true
+    nivel?: true
+    lastMessageAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserXPCountAggregateInputType = {
+    id?: true
+    userId?: true
+    guildId?: true
+    xp?: true
+    nivel?: true
+    lastMessageAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type UserXPAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserXP to aggregate.
+     */
+    where?: UserXPWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserXPS to fetch.
+     */
+    orderBy?: UserXPOrderByWithRelationInput | UserXPOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserXPWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserXPS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserXPS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UserXPS
+    **/
+    _count?: true | UserXPCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: UserXPAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: UserXPSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserXPMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserXPMaxAggregateInputType
+  }
+
+  export type GetUserXPAggregateType<T extends UserXPAggregateArgs> = {
+        [P in keyof T & keyof AggregateUserXP]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUserXP[P]>
+      : GetScalarType<T[P], AggregateUserXP[P]>
+  }
+
+
+
+
+  export type UserXPGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserXPWhereInput
+    orderBy?: UserXPOrderByWithAggregationInput | UserXPOrderByWithAggregationInput[]
+    by: UserXPScalarFieldEnum[] | UserXPScalarFieldEnum
+    having?: UserXPScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserXPCountAggregateInputType | true
+    _avg?: UserXPAvgAggregateInputType
+    _sum?: UserXPSumAggregateInputType
+    _min?: UserXPMinAggregateInputType
+    _max?: UserXPMaxAggregateInputType
+  }
+
+  export type UserXPGroupByOutputType = {
+    id: number
+    userId: string
+    guildId: string
+    xp: number
+    nivel: number
+    lastMessageAt: Date
+    createdAt: Date
+    updatedAt: Date
+    _count: UserXPCountAggregateOutputType | null
+    _avg: UserXPAvgAggregateOutputType | null
+    _sum: UserXPSumAggregateOutputType | null
+    _min: UserXPMinAggregateOutputType | null
+    _max: UserXPMaxAggregateOutputType | null
+  }
+
+  type GetUserXPGroupByPayload<T extends UserXPGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserXPGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserXPGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserXPGroupByOutputType[P]>
+            : GetScalarType<T[P], UserXPGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserXPSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    guildId?: boolean
+    xp?: boolean
+    nivel?: boolean
+    lastMessageAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["userXP"]>
+
+  export type UserXPSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    guildId?: boolean
+    xp?: boolean
+    nivel?: boolean
+    lastMessageAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["userXP"]>
+
+  export type UserXPSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    guildId?: boolean
+    xp?: boolean
+    nivel?: boolean
+    lastMessageAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["userXP"]>
+
+  export type UserXPSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    guildId?: boolean
+    xp?: boolean
+    nivel?: boolean
+    lastMessageAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type UserXPOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "guildId" | "xp" | "nivel" | "lastMessageAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userXP"]>
+
+  export type $UserXPPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UserXP"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      userId: string
+      guildId: string
+      xp: number
+      nivel: number
+      lastMessageAt: Date
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["userXP"]>
+    composites: {}
+  }
+
+  type UserXPGetPayload<S extends boolean | null | undefined | UserXPDefaultArgs> = $Result.GetResult<Prisma.$UserXPPayload, S>
+
+  type UserXPCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserXPFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserXPCountAggregateInputType | true
+    }
+
+  export interface UserXPDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserXP'], meta: { name: 'UserXP' } }
+    /**
+     * Find zero or one UserXP that matches the filter.
+     * @param {UserXPFindUniqueArgs} args - Arguments to find a UserXP
+     * @example
+     * // Get one UserXP
+     * const userXP = await prisma.userXP.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserXPFindUniqueArgs>(args: SelectSubset<T, UserXPFindUniqueArgs<ExtArgs>>): Prisma__UserXPClient<$Result.GetResult<Prisma.$UserXPPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one UserXP that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserXPFindUniqueOrThrowArgs} args - Arguments to find a UserXP
+     * @example
+     * // Get one UserXP
+     * const userXP = await prisma.userXP.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserXPFindUniqueOrThrowArgs>(args: SelectSubset<T, UserXPFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserXPClient<$Result.GetResult<Prisma.$UserXPPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserXP that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserXPFindFirstArgs} args - Arguments to find a UserXP
+     * @example
+     * // Get one UserXP
+     * const userXP = await prisma.userXP.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserXPFindFirstArgs>(args?: SelectSubset<T, UserXPFindFirstArgs<ExtArgs>>): Prisma__UserXPClient<$Result.GetResult<Prisma.$UserXPPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserXP that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserXPFindFirstOrThrowArgs} args - Arguments to find a UserXP
+     * @example
+     * // Get one UserXP
+     * const userXP = await prisma.userXP.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserXPFindFirstOrThrowArgs>(args?: SelectSubset<T, UserXPFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserXPClient<$Result.GetResult<Prisma.$UserXPPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more UserXPS that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserXPFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UserXPS
+     * const userXPS = await prisma.userXP.findMany()
+     * 
+     * // Get first 10 UserXPS
+     * const userXPS = await prisma.userXP.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userXPWithIdOnly = await prisma.userXP.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserXPFindManyArgs>(args?: SelectSubset<T, UserXPFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserXPPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a UserXP.
+     * @param {UserXPCreateArgs} args - Arguments to create a UserXP.
+     * @example
+     * // Create one UserXP
+     * const UserXP = await prisma.userXP.create({
+     *   data: {
+     *     // ... data to create a UserXP
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserXPCreateArgs>(args: SelectSubset<T, UserXPCreateArgs<ExtArgs>>): Prisma__UserXPClient<$Result.GetResult<Prisma.$UserXPPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many UserXPS.
+     * @param {UserXPCreateManyArgs} args - Arguments to create many UserXPS.
+     * @example
+     * // Create many UserXPS
+     * const userXP = await prisma.userXP.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserXPCreateManyArgs>(args?: SelectSubset<T, UserXPCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many UserXPS and returns the data saved in the database.
+     * @param {UserXPCreateManyAndReturnArgs} args - Arguments to create many UserXPS.
+     * @example
+     * // Create many UserXPS
+     * const userXP = await prisma.userXP.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many UserXPS and only return the `id`
+     * const userXPWithIdOnly = await prisma.userXP.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserXPCreateManyAndReturnArgs>(args?: SelectSubset<T, UserXPCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserXPPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a UserXP.
+     * @param {UserXPDeleteArgs} args - Arguments to delete one UserXP.
+     * @example
+     * // Delete one UserXP
+     * const UserXP = await prisma.userXP.delete({
+     *   where: {
+     *     // ... filter to delete one UserXP
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserXPDeleteArgs>(args: SelectSubset<T, UserXPDeleteArgs<ExtArgs>>): Prisma__UserXPClient<$Result.GetResult<Prisma.$UserXPPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one UserXP.
+     * @param {UserXPUpdateArgs} args - Arguments to update one UserXP.
+     * @example
+     * // Update one UserXP
+     * const userXP = await prisma.userXP.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserXPUpdateArgs>(args: SelectSubset<T, UserXPUpdateArgs<ExtArgs>>): Prisma__UserXPClient<$Result.GetResult<Prisma.$UserXPPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more UserXPS.
+     * @param {UserXPDeleteManyArgs} args - Arguments to filter UserXPS to delete.
+     * @example
+     * // Delete a few UserXPS
+     * const { count } = await prisma.userXP.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserXPDeleteManyArgs>(args?: SelectSubset<T, UserXPDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserXPS.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserXPUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UserXPS
+     * const userXP = await prisma.userXP.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserXPUpdateManyArgs>(args: SelectSubset<T, UserXPUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserXPS and returns the data updated in the database.
+     * @param {UserXPUpdateManyAndReturnArgs} args - Arguments to update many UserXPS.
+     * @example
+     * // Update many UserXPS
+     * const userXP = await prisma.userXP.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more UserXPS and only return the `id`
+     * const userXPWithIdOnly = await prisma.userXP.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserXPUpdateManyAndReturnArgs>(args: SelectSubset<T, UserXPUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserXPPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one UserXP.
+     * @param {UserXPUpsertArgs} args - Arguments to update or create a UserXP.
+     * @example
+     * // Update or create a UserXP
+     * const userXP = await prisma.userXP.upsert({
+     *   create: {
+     *     // ... data to create a UserXP
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UserXP we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserXPUpsertArgs>(args: SelectSubset<T, UserXPUpsertArgs<ExtArgs>>): Prisma__UserXPClient<$Result.GetResult<Prisma.$UserXPPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of UserXPS.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserXPCountArgs} args - Arguments to filter UserXPS to count.
+     * @example
+     * // Count the number of UserXPS
+     * const count = await prisma.userXP.count({
+     *   where: {
+     *     // ... the filter for the UserXPS we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserXPCountArgs>(
+      args?: Subset<T, UserXPCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserXPCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UserXP.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserXPAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserXPAggregateArgs>(args: Subset<T, UserXPAggregateArgs>): Prisma.PrismaPromise<GetUserXPAggregateType<T>>
+
+    /**
+     * Group by UserXP.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserXPGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserXPGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserXPGroupByArgs['orderBy'] }
+        : { orderBy?: UserXPGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserXPGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserXPGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UserXP model
+   */
+  readonly fields: UserXPFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UserXP.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserXPClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UserXP model
+   */
+  interface UserXPFieldRefs {
+    readonly id: FieldRef<"UserXP", 'Int'>
+    readonly userId: FieldRef<"UserXP", 'String'>
+    readonly guildId: FieldRef<"UserXP", 'String'>
+    readonly xp: FieldRef<"UserXP", 'Int'>
+    readonly nivel: FieldRef<"UserXP", 'Int'>
+    readonly lastMessageAt: FieldRef<"UserXP", 'DateTime'>
+    readonly createdAt: FieldRef<"UserXP", 'DateTime'>
+    readonly updatedAt: FieldRef<"UserXP", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UserXP findUnique
+   */
+  export type UserXPFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+    /**
+     * Filter, which UserXP to fetch.
+     */
+    where: UserXPWhereUniqueInput
+  }
+
+  /**
+   * UserXP findUniqueOrThrow
+   */
+  export type UserXPFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+    /**
+     * Filter, which UserXP to fetch.
+     */
+    where: UserXPWhereUniqueInput
+  }
+
+  /**
+   * UserXP findFirst
+   */
+  export type UserXPFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+    /**
+     * Filter, which UserXP to fetch.
+     */
+    where?: UserXPWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserXPS to fetch.
+     */
+    orderBy?: UserXPOrderByWithRelationInput | UserXPOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserXPS.
+     */
+    cursor?: UserXPWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserXPS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserXPS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserXPS.
+     */
+    distinct?: UserXPScalarFieldEnum | UserXPScalarFieldEnum[]
+  }
+
+  /**
+   * UserXP findFirstOrThrow
+   */
+  export type UserXPFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+    /**
+     * Filter, which UserXP to fetch.
+     */
+    where?: UserXPWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserXPS to fetch.
+     */
+    orderBy?: UserXPOrderByWithRelationInput | UserXPOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserXPS.
+     */
+    cursor?: UserXPWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserXPS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserXPS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserXPS.
+     */
+    distinct?: UserXPScalarFieldEnum | UserXPScalarFieldEnum[]
+  }
+
+  /**
+   * UserXP findMany
+   */
+  export type UserXPFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+    /**
+     * Filter, which UserXPS to fetch.
+     */
+    where?: UserXPWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserXPS to fetch.
+     */
+    orderBy?: UserXPOrderByWithRelationInput | UserXPOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UserXPS.
+     */
+    cursor?: UserXPWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserXPS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserXPS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserXPS.
+     */
+    distinct?: UserXPScalarFieldEnum | UserXPScalarFieldEnum[]
+  }
+
+  /**
+   * UserXP create
+   */
+  export type UserXPCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+    /**
+     * The data needed to create a UserXP.
+     */
+    data: XOR<UserXPCreateInput, UserXPUncheckedCreateInput>
+  }
+
+  /**
+   * UserXP createMany
+   */
+  export type UserXPCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UserXPS.
+     */
+    data: UserXPCreateManyInput | UserXPCreateManyInput[]
+  }
+
+  /**
+   * UserXP createManyAndReturn
+   */
+  export type UserXPCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+    /**
+     * The data used to create many UserXPS.
+     */
+    data: UserXPCreateManyInput | UserXPCreateManyInput[]
+  }
+
+  /**
+   * UserXP update
+   */
+  export type UserXPUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+    /**
+     * The data needed to update a UserXP.
+     */
+    data: XOR<UserXPUpdateInput, UserXPUncheckedUpdateInput>
+    /**
+     * Choose, which UserXP to update.
+     */
+    where: UserXPWhereUniqueInput
+  }
+
+  /**
+   * UserXP updateMany
+   */
+  export type UserXPUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UserXPS.
+     */
+    data: XOR<UserXPUpdateManyMutationInput, UserXPUncheckedUpdateManyInput>
+    /**
+     * Filter which UserXPS to update
+     */
+    where?: UserXPWhereInput
+    /**
+     * Limit how many UserXPS to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserXP updateManyAndReturn
+   */
+  export type UserXPUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+    /**
+     * The data used to update UserXPS.
+     */
+    data: XOR<UserXPUpdateManyMutationInput, UserXPUncheckedUpdateManyInput>
+    /**
+     * Filter which UserXPS to update
+     */
+    where?: UserXPWhereInput
+    /**
+     * Limit how many UserXPS to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserXP upsert
+   */
+  export type UserXPUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+    /**
+     * The filter to search for the UserXP to update in case it exists.
+     */
+    where: UserXPWhereUniqueInput
+    /**
+     * In case the UserXP found by the `where` argument doesn't exist, create a new UserXP with this data.
+     */
+    create: XOR<UserXPCreateInput, UserXPUncheckedCreateInput>
+    /**
+     * In case the UserXP was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserXPUpdateInput, UserXPUncheckedUpdateInput>
+  }
+
+  /**
+   * UserXP delete
+   */
+  export type UserXPDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+    /**
+     * Filter which UserXP to delete.
+     */
+    where: UserXPWhereUniqueInput
+  }
+
+  /**
+   * UserXP deleteMany
+   */
+  export type UserXPDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserXPS to delete
+     */
+    where?: UserXPWhereInput
+    /**
+     * Limit how many UserXPS to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserXP without action
+   */
+  export type UserXPDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserXP
+     */
+    select?: UserXPSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserXP
+     */
+    omit?: UserXPOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model XPConfig
+   */
+
+  export type AggregateXPConfig = {
+    _count: XPConfigCountAggregateOutputType | null
+    _avg: XPConfigAvgAggregateOutputType | null
+    _sum: XPConfigSumAggregateOutputType | null
+    _min: XPConfigMinAggregateOutputType | null
+    _max: XPConfigMaxAggregateOutputType | null
+  }
+
+  export type XPConfigAvgAggregateOutputType = {
+    id: number | null
+    xpPerMessage: number | null
+  }
+
+  export type XPConfigSumAggregateOutputType = {
+    id: number | null
+    xpPerMessage: number | null
+  }
+
+  export type XPConfigMinAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    xpPerMessage: number | null
+    enabled: boolean | null
+    levelUpChannelId: string | null
+    levelUpMessage: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type XPConfigMaxAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    xpPerMessage: number | null
+    enabled: boolean | null
+    levelUpChannelId: string | null
+    levelUpMessage: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type XPConfigCountAggregateOutputType = {
+    id: number
+    guildId: number
+    xpPerMessage: number
+    enabled: number
+    levelUpChannelId: number
+    levelUpMessage: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type XPConfigAvgAggregateInputType = {
+    id?: true
+    xpPerMessage?: true
+  }
+
+  export type XPConfigSumAggregateInputType = {
+    id?: true
+    xpPerMessage?: true
+  }
+
+  export type XPConfigMinAggregateInputType = {
+    id?: true
+    guildId?: true
+    xpPerMessage?: true
+    enabled?: true
+    levelUpChannelId?: true
+    levelUpMessage?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type XPConfigMaxAggregateInputType = {
+    id?: true
+    guildId?: true
+    xpPerMessage?: true
+    enabled?: true
+    levelUpChannelId?: true
+    levelUpMessage?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type XPConfigCountAggregateInputType = {
+    id?: true
+    guildId?: true
+    xpPerMessage?: true
+    enabled?: true
+    levelUpChannelId?: true
+    levelUpMessage?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type XPConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which XPConfig to aggregate.
+     */
+    where?: XPConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of XPConfigs to fetch.
+     */
+    orderBy?: XPConfigOrderByWithRelationInput | XPConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: XPConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` XPConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` XPConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned XPConfigs
+    **/
+    _count?: true | XPConfigCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: XPConfigAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: XPConfigSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: XPConfigMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: XPConfigMaxAggregateInputType
+  }
+
+  export type GetXPConfigAggregateType<T extends XPConfigAggregateArgs> = {
+        [P in keyof T & keyof AggregateXPConfig]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateXPConfig[P]>
+      : GetScalarType<T[P], AggregateXPConfig[P]>
+  }
+
+
+
+
+  export type XPConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: XPConfigWhereInput
+    orderBy?: XPConfigOrderByWithAggregationInput | XPConfigOrderByWithAggregationInput[]
+    by: XPConfigScalarFieldEnum[] | XPConfigScalarFieldEnum
+    having?: XPConfigScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: XPConfigCountAggregateInputType | true
+    _avg?: XPConfigAvgAggregateInputType
+    _sum?: XPConfigSumAggregateInputType
+    _min?: XPConfigMinAggregateInputType
+    _max?: XPConfigMaxAggregateInputType
+  }
+
+  export type XPConfigGroupByOutputType = {
+    id: number
+    guildId: string
+    xpPerMessage: number
+    enabled: boolean
+    levelUpChannelId: string | null
+    levelUpMessage: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: XPConfigCountAggregateOutputType | null
+    _avg: XPConfigAvgAggregateOutputType | null
+    _sum: XPConfigSumAggregateOutputType | null
+    _min: XPConfigMinAggregateOutputType | null
+    _max: XPConfigMaxAggregateOutputType | null
+  }
+
+  type GetXPConfigGroupByPayload<T extends XPConfigGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<XPConfigGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof XPConfigGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], XPConfigGroupByOutputType[P]>
+            : GetScalarType<T[P], XPConfigGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type XPConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    xpPerMessage?: boolean
+    enabled?: boolean
+    levelUpChannelId?: boolean
+    levelUpMessage?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["xPConfig"]>
+
+  export type XPConfigSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    xpPerMessage?: boolean
+    enabled?: boolean
+    levelUpChannelId?: boolean
+    levelUpMessage?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["xPConfig"]>
+
+  export type XPConfigSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    xpPerMessage?: boolean
+    enabled?: boolean
+    levelUpChannelId?: boolean
+    levelUpMessage?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["xPConfig"]>
+
+  export type XPConfigSelectScalar = {
+    id?: boolean
+    guildId?: boolean
+    xpPerMessage?: boolean
+    enabled?: boolean
+    levelUpChannelId?: boolean
+    levelUpMessage?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type XPConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "xpPerMessage" | "enabled" | "levelUpChannelId" | "levelUpMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["xPConfig"]>
+
+  export type $XPConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "XPConfig"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      guildId: string
+      xpPerMessage: number
+      enabled: boolean
+      levelUpChannelId: string | null
+      levelUpMessage: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["xPConfig"]>
+    composites: {}
+  }
+
+  type XPConfigGetPayload<S extends boolean | null | undefined | XPConfigDefaultArgs> = $Result.GetResult<Prisma.$XPConfigPayload, S>
+
+  type XPConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<XPConfigFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: XPConfigCountAggregateInputType | true
+    }
+
+  export interface XPConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['XPConfig'], meta: { name: 'XPConfig' } }
+    /**
+     * Find zero or one XPConfig that matches the filter.
+     * @param {XPConfigFindUniqueArgs} args - Arguments to find a XPConfig
+     * @example
+     * // Get one XPConfig
+     * const xPConfig = await prisma.xPConfig.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends XPConfigFindUniqueArgs>(args: SelectSubset<T, XPConfigFindUniqueArgs<ExtArgs>>): Prisma__XPConfigClient<$Result.GetResult<Prisma.$XPConfigPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one XPConfig that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {XPConfigFindUniqueOrThrowArgs} args - Arguments to find a XPConfig
+     * @example
+     * // Get one XPConfig
+     * const xPConfig = await prisma.xPConfig.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends XPConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, XPConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__XPConfigClient<$Result.GetResult<Prisma.$XPConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first XPConfig that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {XPConfigFindFirstArgs} args - Arguments to find a XPConfig
+     * @example
+     * // Get one XPConfig
+     * const xPConfig = await prisma.xPConfig.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends XPConfigFindFirstArgs>(args?: SelectSubset<T, XPConfigFindFirstArgs<ExtArgs>>): Prisma__XPConfigClient<$Result.GetResult<Prisma.$XPConfigPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first XPConfig that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {XPConfigFindFirstOrThrowArgs} args - Arguments to find a XPConfig
+     * @example
+     * // Get one XPConfig
+     * const xPConfig = await prisma.xPConfig.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends XPConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, XPConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__XPConfigClient<$Result.GetResult<Prisma.$XPConfigPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more XPConfigs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {XPConfigFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all XPConfigs
+     * const xPConfigs = await prisma.xPConfig.findMany()
+     * 
+     * // Get first 10 XPConfigs
+     * const xPConfigs = await prisma.xPConfig.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const xPConfigWithIdOnly = await prisma.xPConfig.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends XPConfigFindManyArgs>(args?: SelectSubset<T, XPConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$XPConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a XPConfig.
+     * @param {XPConfigCreateArgs} args - Arguments to create a XPConfig.
+     * @example
+     * // Create one XPConfig
+     * const XPConfig = await prisma.xPConfig.create({
+     *   data: {
+     *     // ... data to create a XPConfig
+     *   }
+     * })
+     * 
+     */
+    create<T extends XPConfigCreateArgs>(args: SelectSubset<T, XPConfigCreateArgs<ExtArgs>>): Prisma__XPConfigClient<$Result.GetResult<Prisma.$XPConfigPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many XPConfigs.
+     * @param {XPConfigCreateManyArgs} args - Arguments to create many XPConfigs.
+     * @example
+     * // Create many XPConfigs
+     * const xPConfig = await prisma.xPConfig.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends XPConfigCreateManyArgs>(args?: SelectSubset<T, XPConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many XPConfigs and returns the data saved in the database.
+     * @param {XPConfigCreateManyAndReturnArgs} args - Arguments to create many XPConfigs.
+     * @example
+     * // Create many XPConfigs
+     * const xPConfig = await prisma.xPConfig.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many XPConfigs and only return the `id`
+     * const xPConfigWithIdOnly = await prisma.xPConfig.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends XPConfigCreateManyAndReturnArgs>(args?: SelectSubset<T, XPConfigCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$XPConfigPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a XPConfig.
+     * @param {XPConfigDeleteArgs} args - Arguments to delete one XPConfig.
+     * @example
+     * // Delete one XPConfig
+     * const XPConfig = await prisma.xPConfig.delete({
+     *   where: {
+     *     // ... filter to delete one XPConfig
+     *   }
+     * })
+     * 
+     */
+    delete<T extends XPConfigDeleteArgs>(args: SelectSubset<T, XPConfigDeleteArgs<ExtArgs>>): Prisma__XPConfigClient<$Result.GetResult<Prisma.$XPConfigPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one XPConfig.
+     * @param {XPConfigUpdateArgs} args - Arguments to update one XPConfig.
+     * @example
+     * // Update one XPConfig
+     * const xPConfig = await prisma.xPConfig.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends XPConfigUpdateArgs>(args: SelectSubset<T, XPConfigUpdateArgs<ExtArgs>>): Prisma__XPConfigClient<$Result.GetResult<Prisma.$XPConfigPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more XPConfigs.
+     * @param {XPConfigDeleteManyArgs} args - Arguments to filter XPConfigs to delete.
+     * @example
+     * // Delete a few XPConfigs
+     * const { count } = await prisma.xPConfig.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends XPConfigDeleteManyArgs>(args?: SelectSubset<T, XPConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more XPConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {XPConfigUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many XPConfigs
+     * const xPConfig = await prisma.xPConfig.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends XPConfigUpdateManyArgs>(args: SelectSubset<T, XPConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more XPConfigs and returns the data updated in the database.
+     * @param {XPConfigUpdateManyAndReturnArgs} args - Arguments to update many XPConfigs.
+     * @example
+     * // Update many XPConfigs
+     * const xPConfig = await prisma.xPConfig.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more XPConfigs and only return the `id`
+     * const xPConfigWithIdOnly = await prisma.xPConfig.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends XPConfigUpdateManyAndReturnArgs>(args: SelectSubset<T, XPConfigUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$XPConfigPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one XPConfig.
+     * @param {XPConfigUpsertArgs} args - Arguments to update or create a XPConfig.
+     * @example
+     * // Update or create a XPConfig
+     * const xPConfig = await prisma.xPConfig.upsert({
+     *   create: {
+     *     // ... data to create a XPConfig
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the XPConfig we want to update
+     *   }
+     * })
+     */
+    upsert<T extends XPConfigUpsertArgs>(args: SelectSubset<T, XPConfigUpsertArgs<ExtArgs>>): Prisma__XPConfigClient<$Result.GetResult<Prisma.$XPConfigPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of XPConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {XPConfigCountArgs} args - Arguments to filter XPConfigs to count.
+     * @example
+     * // Count the number of XPConfigs
+     * const count = await prisma.xPConfig.count({
+     *   where: {
+     *     // ... the filter for the XPConfigs we want to count
+     *   }
+     * })
+    **/
+    count<T extends XPConfigCountArgs>(
+      args?: Subset<T, XPConfigCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], XPConfigCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a XPConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {XPConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends XPConfigAggregateArgs>(args: Subset<T, XPConfigAggregateArgs>): Prisma.PrismaPromise<GetXPConfigAggregateType<T>>
+
+    /**
+     * Group by XPConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {XPConfigGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends XPConfigGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: XPConfigGroupByArgs['orderBy'] }
+        : { orderBy?: XPConfigGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, XPConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetXPConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the XPConfig model
+   */
+  readonly fields: XPConfigFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for XPConfig.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__XPConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the XPConfig model
+   */
+  interface XPConfigFieldRefs {
+    readonly id: FieldRef<"XPConfig", 'Int'>
+    readonly guildId: FieldRef<"XPConfig", 'String'>
+    readonly xpPerMessage: FieldRef<"XPConfig", 'Int'>
+    readonly enabled: FieldRef<"XPConfig", 'Boolean'>
+    readonly levelUpChannelId: FieldRef<"XPConfig", 'String'>
+    readonly levelUpMessage: FieldRef<"XPConfig", 'String'>
+    readonly createdAt: FieldRef<"XPConfig", 'DateTime'>
+    readonly updatedAt: FieldRef<"XPConfig", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * XPConfig findUnique
+   */
+  export type XPConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which XPConfig to fetch.
+     */
+    where: XPConfigWhereUniqueInput
+  }
+
+  /**
+   * XPConfig findUniqueOrThrow
+   */
+  export type XPConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which XPConfig to fetch.
+     */
+    where: XPConfigWhereUniqueInput
+  }
+
+  /**
+   * XPConfig findFirst
+   */
+  export type XPConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which XPConfig to fetch.
+     */
+    where?: XPConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of XPConfigs to fetch.
+     */
+    orderBy?: XPConfigOrderByWithRelationInput | XPConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for XPConfigs.
+     */
+    cursor?: XPConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` XPConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` XPConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of XPConfigs.
+     */
+    distinct?: XPConfigScalarFieldEnum | XPConfigScalarFieldEnum[]
+  }
+
+  /**
+   * XPConfig findFirstOrThrow
+   */
+  export type XPConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which XPConfig to fetch.
+     */
+    where?: XPConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of XPConfigs to fetch.
+     */
+    orderBy?: XPConfigOrderByWithRelationInput | XPConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for XPConfigs.
+     */
+    cursor?: XPConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` XPConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` XPConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of XPConfigs.
+     */
+    distinct?: XPConfigScalarFieldEnum | XPConfigScalarFieldEnum[]
+  }
+
+  /**
+   * XPConfig findMany
+   */
+  export type XPConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which XPConfigs to fetch.
+     */
+    where?: XPConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of XPConfigs to fetch.
+     */
+    orderBy?: XPConfigOrderByWithRelationInput | XPConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing XPConfigs.
+     */
+    cursor?: XPConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` XPConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` XPConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of XPConfigs.
+     */
+    distinct?: XPConfigScalarFieldEnum | XPConfigScalarFieldEnum[]
+  }
+
+  /**
+   * XPConfig create
+   */
+  export type XPConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+    /**
+     * The data needed to create a XPConfig.
+     */
+    data: XOR<XPConfigCreateInput, XPConfigUncheckedCreateInput>
+  }
+
+  /**
+   * XPConfig createMany
+   */
+  export type XPConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many XPConfigs.
+     */
+    data: XPConfigCreateManyInput | XPConfigCreateManyInput[]
+  }
+
+  /**
+   * XPConfig createManyAndReturn
+   */
+  export type XPConfigCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+    /**
+     * The data used to create many XPConfigs.
+     */
+    data: XPConfigCreateManyInput | XPConfigCreateManyInput[]
+  }
+
+  /**
+   * XPConfig update
+   */
+  export type XPConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+    /**
+     * The data needed to update a XPConfig.
+     */
+    data: XOR<XPConfigUpdateInput, XPConfigUncheckedUpdateInput>
+    /**
+     * Choose, which XPConfig to update.
+     */
+    where: XPConfigWhereUniqueInput
+  }
+
+  /**
+   * XPConfig updateMany
+   */
+  export type XPConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update XPConfigs.
+     */
+    data: XOR<XPConfigUpdateManyMutationInput, XPConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which XPConfigs to update
+     */
+    where?: XPConfigWhereInput
+    /**
+     * Limit how many XPConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * XPConfig updateManyAndReturn
+   */
+  export type XPConfigUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+    /**
+     * The data used to update XPConfigs.
+     */
+    data: XOR<XPConfigUpdateManyMutationInput, XPConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which XPConfigs to update
+     */
+    where?: XPConfigWhereInput
+    /**
+     * Limit how many XPConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * XPConfig upsert
+   */
+  export type XPConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+    /**
+     * The filter to search for the XPConfig to update in case it exists.
+     */
+    where: XPConfigWhereUniqueInput
+    /**
+     * In case the XPConfig found by the `where` argument doesn't exist, create a new XPConfig with this data.
+     */
+    create: XOR<XPConfigCreateInput, XPConfigUncheckedCreateInput>
+    /**
+     * In case the XPConfig was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<XPConfigUpdateInput, XPConfigUncheckedUpdateInput>
+  }
+
+  /**
+   * XPConfig delete
+   */
+  export type XPConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+    /**
+     * Filter which XPConfig to delete.
+     */
+    where: XPConfigWhereUniqueInput
+  }
+
+  /**
+   * XPConfig deleteMany
+   */
+  export type XPConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which XPConfigs to delete
+     */
+    where?: XPConfigWhereInput
+    /**
+     * Limit how many XPConfigs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * XPConfig without action
+   */
+  export type XPConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the XPConfig
+     */
+    select?: XPConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the XPConfig
+     */
+    omit?: XPConfigOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model LevelRole
+   */
+
+  export type AggregateLevelRole = {
+    _count: LevelRoleCountAggregateOutputType | null
+    _avg: LevelRoleAvgAggregateOutputType | null
+    _sum: LevelRoleSumAggregateOutputType | null
+    _min: LevelRoleMinAggregateOutputType | null
+    _max: LevelRoleMaxAggregateOutputType | null
+  }
+
+  export type LevelRoleAvgAggregateOutputType = {
+    id: number | null
+    level: number | null
+  }
+
+  export type LevelRoleSumAggregateOutputType = {
+    id: number | null
+    level: number | null
+  }
+
+  export type LevelRoleMinAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    level: number | null
+    roleId: string | null
+  }
+
+  export type LevelRoleMaxAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    level: number | null
+    roleId: string | null
+  }
+
+  export type LevelRoleCountAggregateOutputType = {
+    id: number
+    guildId: number
+    level: number
+    roleId: number
+    _all: number
+  }
+
+
+  export type LevelRoleAvgAggregateInputType = {
+    id?: true
+    level?: true
+  }
+
+  export type LevelRoleSumAggregateInputType = {
+    id?: true
+    level?: true
+  }
+
+  export type LevelRoleMinAggregateInputType = {
+    id?: true
+    guildId?: true
+    level?: true
+    roleId?: true
+  }
+
+  export type LevelRoleMaxAggregateInputType = {
+    id?: true
+    guildId?: true
+    level?: true
+    roleId?: true
+  }
+
+  export type LevelRoleCountAggregateInputType = {
+    id?: true
+    guildId?: true
+    level?: true
+    roleId?: true
+    _all?: true
+  }
+
+  export type LevelRoleAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LevelRole to aggregate.
+     */
+    where?: LevelRoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LevelRoles to fetch.
+     */
+    orderBy?: LevelRoleOrderByWithRelationInput | LevelRoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LevelRoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LevelRoles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LevelRoles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LevelRoles
+    **/
+    _count?: true | LevelRoleCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: LevelRoleAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: LevelRoleSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LevelRoleMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LevelRoleMaxAggregateInputType
+  }
+
+  export type GetLevelRoleAggregateType<T extends LevelRoleAggregateArgs> = {
+        [P in keyof T & keyof AggregateLevelRole]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLevelRole[P]>
+      : GetScalarType<T[P], AggregateLevelRole[P]>
+  }
+
+
+
+
+  export type LevelRoleGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LevelRoleWhereInput
+    orderBy?: LevelRoleOrderByWithAggregationInput | LevelRoleOrderByWithAggregationInput[]
+    by: LevelRoleScalarFieldEnum[] | LevelRoleScalarFieldEnum
+    having?: LevelRoleScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LevelRoleCountAggregateInputType | true
+    _avg?: LevelRoleAvgAggregateInputType
+    _sum?: LevelRoleSumAggregateInputType
+    _min?: LevelRoleMinAggregateInputType
+    _max?: LevelRoleMaxAggregateInputType
+  }
+
+  export type LevelRoleGroupByOutputType = {
+    id: number
+    guildId: string
+    level: number
+    roleId: string
+    _count: LevelRoleCountAggregateOutputType | null
+    _avg: LevelRoleAvgAggregateOutputType | null
+    _sum: LevelRoleSumAggregateOutputType | null
+    _min: LevelRoleMinAggregateOutputType | null
+    _max: LevelRoleMaxAggregateOutputType | null
+  }
+
+  type GetLevelRoleGroupByPayload<T extends LevelRoleGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LevelRoleGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LevelRoleGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LevelRoleGroupByOutputType[P]>
+            : GetScalarType<T[P], LevelRoleGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LevelRoleSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    level?: boolean
+    roleId?: boolean
+  }, ExtArgs["result"]["levelRole"]>
+
+  export type LevelRoleSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    level?: boolean
+    roleId?: boolean
+  }, ExtArgs["result"]["levelRole"]>
+
+  export type LevelRoleSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    level?: boolean
+    roleId?: boolean
+  }, ExtArgs["result"]["levelRole"]>
+
+  export type LevelRoleSelectScalar = {
+    id?: boolean
+    guildId?: boolean
+    level?: boolean
+    roleId?: boolean
+  }
+
+  export type LevelRoleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "level" | "roleId", ExtArgs["result"]["levelRole"]>
+
+  export type $LevelRolePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LevelRole"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      guildId: string
+      level: number
+      roleId: string
+    }, ExtArgs["result"]["levelRole"]>
+    composites: {}
+  }
+
+  type LevelRoleGetPayload<S extends boolean | null | undefined | LevelRoleDefaultArgs> = $Result.GetResult<Prisma.$LevelRolePayload, S>
+
+  type LevelRoleCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<LevelRoleFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: LevelRoleCountAggregateInputType | true
+    }
+
+  export interface LevelRoleDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LevelRole'], meta: { name: 'LevelRole' } }
+    /**
+     * Find zero or one LevelRole that matches the filter.
+     * @param {LevelRoleFindUniqueArgs} args - Arguments to find a LevelRole
+     * @example
+     * // Get one LevelRole
+     * const levelRole = await prisma.levelRole.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LevelRoleFindUniqueArgs>(args: SelectSubset<T, LevelRoleFindUniqueArgs<ExtArgs>>): Prisma__LevelRoleClient<$Result.GetResult<Prisma.$LevelRolePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one LevelRole that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {LevelRoleFindUniqueOrThrowArgs} args - Arguments to find a LevelRole
+     * @example
+     * // Get one LevelRole
+     * const levelRole = await prisma.levelRole.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LevelRoleFindUniqueOrThrowArgs>(args: SelectSubset<T, LevelRoleFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LevelRoleClient<$Result.GetResult<Prisma.$LevelRolePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LevelRole that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LevelRoleFindFirstArgs} args - Arguments to find a LevelRole
+     * @example
+     * // Get one LevelRole
+     * const levelRole = await prisma.levelRole.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LevelRoleFindFirstArgs>(args?: SelectSubset<T, LevelRoleFindFirstArgs<ExtArgs>>): Prisma__LevelRoleClient<$Result.GetResult<Prisma.$LevelRolePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LevelRole that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LevelRoleFindFirstOrThrowArgs} args - Arguments to find a LevelRole
+     * @example
+     * // Get one LevelRole
+     * const levelRole = await prisma.levelRole.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LevelRoleFindFirstOrThrowArgs>(args?: SelectSubset<T, LevelRoleFindFirstOrThrowArgs<ExtArgs>>): Prisma__LevelRoleClient<$Result.GetResult<Prisma.$LevelRolePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more LevelRoles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LevelRoleFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LevelRoles
+     * const levelRoles = await prisma.levelRole.findMany()
+     * 
+     * // Get first 10 LevelRoles
+     * const levelRoles = await prisma.levelRole.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const levelRoleWithIdOnly = await prisma.levelRole.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends LevelRoleFindManyArgs>(args?: SelectSubset<T, LevelRoleFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LevelRolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a LevelRole.
+     * @param {LevelRoleCreateArgs} args - Arguments to create a LevelRole.
+     * @example
+     * // Create one LevelRole
+     * const LevelRole = await prisma.levelRole.create({
+     *   data: {
+     *     // ... data to create a LevelRole
+     *   }
+     * })
+     * 
+     */
+    create<T extends LevelRoleCreateArgs>(args: SelectSubset<T, LevelRoleCreateArgs<ExtArgs>>): Prisma__LevelRoleClient<$Result.GetResult<Prisma.$LevelRolePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many LevelRoles.
+     * @param {LevelRoleCreateManyArgs} args - Arguments to create many LevelRoles.
+     * @example
+     * // Create many LevelRoles
+     * const levelRole = await prisma.levelRole.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LevelRoleCreateManyArgs>(args?: SelectSubset<T, LevelRoleCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LevelRoles and returns the data saved in the database.
+     * @param {LevelRoleCreateManyAndReturnArgs} args - Arguments to create many LevelRoles.
+     * @example
+     * // Create many LevelRoles
+     * const levelRole = await prisma.levelRole.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LevelRoles and only return the `id`
+     * const levelRoleWithIdOnly = await prisma.levelRole.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LevelRoleCreateManyAndReturnArgs>(args?: SelectSubset<T, LevelRoleCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LevelRolePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a LevelRole.
+     * @param {LevelRoleDeleteArgs} args - Arguments to delete one LevelRole.
+     * @example
+     * // Delete one LevelRole
+     * const LevelRole = await prisma.levelRole.delete({
+     *   where: {
+     *     // ... filter to delete one LevelRole
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LevelRoleDeleteArgs>(args: SelectSubset<T, LevelRoleDeleteArgs<ExtArgs>>): Prisma__LevelRoleClient<$Result.GetResult<Prisma.$LevelRolePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one LevelRole.
+     * @param {LevelRoleUpdateArgs} args - Arguments to update one LevelRole.
+     * @example
+     * // Update one LevelRole
+     * const levelRole = await prisma.levelRole.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LevelRoleUpdateArgs>(args: SelectSubset<T, LevelRoleUpdateArgs<ExtArgs>>): Prisma__LevelRoleClient<$Result.GetResult<Prisma.$LevelRolePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more LevelRoles.
+     * @param {LevelRoleDeleteManyArgs} args - Arguments to filter LevelRoles to delete.
+     * @example
+     * // Delete a few LevelRoles
+     * const { count } = await prisma.levelRole.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LevelRoleDeleteManyArgs>(args?: SelectSubset<T, LevelRoleDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LevelRoles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LevelRoleUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LevelRoles
+     * const levelRole = await prisma.levelRole.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LevelRoleUpdateManyArgs>(args: SelectSubset<T, LevelRoleUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LevelRoles and returns the data updated in the database.
+     * @param {LevelRoleUpdateManyAndReturnArgs} args - Arguments to update many LevelRoles.
+     * @example
+     * // Update many LevelRoles
+     * const levelRole = await prisma.levelRole.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more LevelRoles and only return the `id`
+     * const levelRoleWithIdOnly = await prisma.levelRole.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends LevelRoleUpdateManyAndReturnArgs>(args: SelectSubset<T, LevelRoleUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LevelRolePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one LevelRole.
+     * @param {LevelRoleUpsertArgs} args - Arguments to update or create a LevelRole.
+     * @example
+     * // Update or create a LevelRole
+     * const levelRole = await prisma.levelRole.upsert({
+     *   create: {
+     *     // ... data to create a LevelRole
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LevelRole we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LevelRoleUpsertArgs>(args: SelectSubset<T, LevelRoleUpsertArgs<ExtArgs>>): Prisma__LevelRoleClient<$Result.GetResult<Prisma.$LevelRolePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of LevelRoles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LevelRoleCountArgs} args - Arguments to filter LevelRoles to count.
+     * @example
+     * // Count the number of LevelRoles
+     * const count = await prisma.levelRole.count({
+     *   where: {
+     *     // ... the filter for the LevelRoles we want to count
+     *   }
+     * })
+    **/
+    count<T extends LevelRoleCountArgs>(
+      args?: Subset<T, LevelRoleCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LevelRoleCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LevelRole.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LevelRoleAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LevelRoleAggregateArgs>(args: Subset<T, LevelRoleAggregateArgs>): Prisma.PrismaPromise<GetLevelRoleAggregateType<T>>
+
+    /**
+     * Group by LevelRole.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LevelRoleGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LevelRoleGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LevelRoleGroupByArgs['orderBy'] }
+        : { orderBy?: LevelRoleGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LevelRoleGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLevelRoleGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LevelRole model
+   */
+  readonly fields: LevelRoleFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LevelRole.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LevelRoleClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LevelRole model
+   */
+  interface LevelRoleFieldRefs {
+    readonly id: FieldRef<"LevelRole", 'Int'>
+    readonly guildId: FieldRef<"LevelRole", 'String'>
+    readonly level: FieldRef<"LevelRole", 'Int'>
+    readonly roleId: FieldRef<"LevelRole", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LevelRole findUnique
+   */
+  export type LevelRoleFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+    /**
+     * Filter, which LevelRole to fetch.
+     */
+    where: LevelRoleWhereUniqueInput
+  }
+
+  /**
+   * LevelRole findUniqueOrThrow
+   */
+  export type LevelRoleFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+    /**
+     * Filter, which LevelRole to fetch.
+     */
+    where: LevelRoleWhereUniqueInput
+  }
+
+  /**
+   * LevelRole findFirst
+   */
+  export type LevelRoleFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+    /**
+     * Filter, which LevelRole to fetch.
+     */
+    where?: LevelRoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LevelRoles to fetch.
+     */
+    orderBy?: LevelRoleOrderByWithRelationInput | LevelRoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LevelRoles.
+     */
+    cursor?: LevelRoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LevelRoles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LevelRoles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LevelRoles.
+     */
+    distinct?: LevelRoleScalarFieldEnum | LevelRoleScalarFieldEnum[]
+  }
+
+  /**
+   * LevelRole findFirstOrThrow
+   */
+  export type LevelRoleFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+    /**
+     * Filter, which LevelRole to fetch.
+     */
+    where?: LevelRoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LevelRoles to fetch.
+     */
+    orderBy?: LevelRoleOrderByWithRelationInput | LevelRoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LevelRoles.
+     */
+    cursor?: LevelRoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LevelRoles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LevelRoles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LevelRoles.
+     */
+    distinct?: LevelRoleScalarFieldEnum | LevelRoleScalarFieldEnum[]
+  }
+
+  /**
+   * LevelRole findMany
+   */
+  export type LevelRoleFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+    /**
+     * Filter, which LevelRoles to fetch.
+     */
+    where?: LevelRoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LevelRoles to fetch.
+     */
+    orderBy?: LevelRoleOrderByWithRelationInput | LevelRoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LevelRoles.
+     */
+    cursor?: LevelRoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LevelRoles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LevelRoles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LevelRoles.
+     */
+    distinct?: LevelRoleScalarFieldEnum | LevelRoleScalarFieldEnum[]
+  }
+
+  /**
+   * LevelRole create
+   */
+  export type LevelRoleCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+    /**
+     * The data needed to create a LevelRole.
+     */
+    data: XOR<LevelRoleCreateInput, LevelRoleUncheckedCreateInput>
+  }
+
+  /**
+   * LevelRole createMany
+   */
+  export type LevelRoleCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LevelRoles.
+     */
+    data: LevelRoleCreateManyInput | LevelRoleCreateManyInput[]
+  }
+
+  /**
+   * LevelRole createManyAndReturn
+   */
+  export type LevelRoleCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+    /**
+     * The data used to create many LevelRoles.
+     */
+    data: LevelRoleCreateManyInput | LevelRoleCreateManyInput[]
+  }
+
+  /**
+   * LevelRole update
+   */
+  export type LevelRoleUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+    /**
+     * The data needed to update a LevelRole.
+     */
+    data: XOR<LevelRoleUpdateInput, LevelRoleUncheckedUpdateInput>
+    /**
+     * Choose, which LevelRole to update.
+     */
+    where: LevelRoleWhereUniqueInput
+  }
+
+  /**
+   * LevelRole updateMany
+   */
+  export type LevelRoleUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LevelRoles.
+     */
+    data: XOR<LevelRoleUpdateManyMutationInput, LevelRoleUncheckedUpdateManyInput>
+    /**
+     * Filter which LevelRoles to update
+     */
+    where?: LevelRoleWhereInput
+    /**
+     * Limit how many LevelRoles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * LevelRole updateManyAndReturn
+   */
+  export type LevelRoleUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+    /**
+     * The data used to update LevelRoles.
+     */
+    data: XOR<LevelRoleUpdateManyMutationInput, LevelRoleUncheckedUpdateManyInput>
+    /**
+     * Filter which LevelRoles to update
+     */
+    where?: LevelRoleWhereInput
+    /**
+     * Limit how many LevelRoles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * LevelRole upsert
+   */
+  export type LevelRoleUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+    /**
+     * The filter to search for the LevelRole to update in case it exists.
+     */
+    where: LevelRoleWhereUniqueInput
+    /**
+     * In case the LevelRole found by the `where` argument doesn't exist, create a new LevelRole with this data.
+     */
+    create: XOR<LevelRoleCreateInput, LevelRoleUncheckedCreateInput>
+    /**
+     * In case the LevelRole was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LevelRoleUpdateInput, LevelRoleUncheckedUpdateInput>
+  }
+
+  /**
+   * LevelRole delete
+   */
+  export type LevelRoleDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+    /**
+     * Filter which LevelRole to delete.
+     */
+    where: LevelRoleWhereUniqueInput
+  }
+
+  /**
+   * LevelRole deleteMany
+   */
+  export type LevelRoleDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LevelRoles to delete
+     */
+    where?: LevelRoleWhereInput
+    /**
+     * Limit how many LevelRoles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * LevelRole without action
+   */
+  export type LevelRoleDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LevelRole
+     */
+    select?: LevelRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LevelRole
+     */
+    omit?: LevelRoleOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -22214,6 +25664,44 @@ export namespace Prisma {
   };
 
   export type GuildMusicConfigScalarFieldEnum = (typeof GuildMusicConfigScalarFieldEnum)[keyof typeof GuildMusicConfigScalarFieldEnum]
+
+
+  export const UserXPScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    guildId: 'guildId',
+    xp: 'xp',
+    nivel: 'nivel',
+    lastMessageAt: 'lastMessageAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type UserXPScalarFieldEnum = (typeof UserXPScalarFieldEnum)[keyof typeof UserXPScalarFieldEnum]
+
+
+  export const XPConfigScalarFieldEnum: {
+    id: 'id',
+    guildId: 'guildId',
+    xpPerMessage: 'xpPerMessage',
+    enabled: 'enabled',
+    levelUpChannelId: 'levelUpChannelId',
+    levelUpMessage: 'levelUpMessage',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type XPConfigScalarFieldEnum = (typeof XPConfigScalarFieldEnum)[keyof typeof XPConfigScalarFieldEnum]
+
+
+  export const LevelRoleScalarFieldEnum: {
+    id: 'id',
+    guildId: 'guildId',
+    level: 'level',
+    roleId: 'roleId'
+  };
+
+  export type LevelRoleScalarFieldEnum = (typeof LevelRoleScalarFieldEnum)[keyof typeof LevelRoleScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -23641,6 +27129,195 @@ export namespace Prisma {
     maxQueueSize?: IntWithAggregatesFilter<"GuildMusicConfig"> | number
     updatedAt?: DateTimeWithAggregatesFilter<"GuildMusicConfig"> | Date | string
     createdAt?: DateTimeWithAggregatesFilter<"GuildMusicConfig"> | Date | string
+  }
+
+  export type UserXPWhereInput = {
+    AND?: UserXPWhereInput | UserXPWhereInput[]
+    OR?: UserXPWhereInput[]
+    NOT?: UserXPWhereInput | UserXPWhereInput[]
+    id?: IntFilter<"UserXP"> | number
+    userId?: StringFilter<"UserXP"> | string
+    guildId?: StringFilter<"UserXP"> | string
+    xp?: IntFilter<"UserXP"> | number
+    nivel?: IntFilter<"UserXP"> | number
+    lastMessageAt?: DateTimeFilter<"UserXP"> | Date | string
+    createdAt?: DateTimeFilter<"UserXP"> | Date | string
+    updatedAt?: DateTimeFilter<"UserXP"> | Date | string
+  }
+
+  export type UserXPOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    guildId?: SortOrder
+    xp?: SortOrder
+    nivel?: SortOrder
+    lastMessageAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserXPWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    userId_guildId?: UserXPUserIdGuildIdCompoundUniqueInput
+    AND?: UserXPWhereInput | UserXPWhereInput[]
+    OR?: UserXPWhereInput[]
+    NOT?: UserXPWhereInput | UserXPWhereInput[]
+    userId?: StringFilter<"UserXP"> | string
+    guildId?: StringFilter<"UserXP"> | string
+    xp?: IntFilter<"UserXP"> | number
+    nivel?: IntFilter<"UserXP"> | number
+    lastMessageAt?: DateTimeFilter<"UserXP"> | Date | string
+    createdAt?: DateTimeFilter<"UserXP"> | Date | string
+    updatedAt?: DateTimeFilter<"UserXP"> | Date | string
+  }, "id" | "userId_guildId">
+
+  export type UserXPOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    guildId?: SortOrder
+    xp?: SortOrder
+    nivel?: SortOrder
+    lastMessageAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: UserXPCountOrderByAggregateInput
+    _avg?: UserXPAvgOrderByAggregateInput
+    _max?: UserXPMaxOrderByAggregateInput
+    _min?: UserXPMinOrderByAggregateInput
+    _sum?: UserXPSumOrderByAggregateInput
+  }
+
+  export type UserXPScalarWhereWithAggregatesInput = {
+    AND?: UserXPScalarWhereWithAggregatesInput | UserXPScalarWhereWithAggregatesInput[]
+    OR?: UserXPScalarWhereWithAggregatesInput[]
+    NOT?: UserXPScalarWhereWithAggregatesInput | UserXPScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"UserXP"> | number
+    userId?: StringWithAggregatesFilter<"UserXP"> | string
+    guildId?: StringWithAggregatesFilter<"UserXP"> | string
+    xp?: IntWithAggregatesFilter<"UserXP"> | number
+    nivel?: IntWithAggregatesFilter<"UserXP"> | number
+    lastMessageAt?: DateTimeWithAggregatesFilter<"UserXP"> | Date | string
+    createdAt?: DateTimeWithAggregatesFilter<"UserXP"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"UserXP"> | Date | string
+  }
+
+  export type XPConfigWhereInput = {
+    AND?: XPConfigWhereInput | XPConfigWhereInput[]
+    OR?: XPConfigWhereInput[]
+    NOT?: XPConfigWhereInput | XPConfigWhereInput[]
+    id?: IntFilter<"XPConfig"> | number
+    guildId?: StringFilter<"XPConfig"> | string
+    xpPerMessage?: IntFilter<"XPConfig"> | number
+    enabled?: BoolFilter<"XPConfig"> | boolean
+    levelUpChannelId?: StringNullableFilter<"XPConfig"> | string | null
+    levelUpMessage?: StringNullableFilter<"XPConfig"> | string | null
+    createdAt?: DateTimeFilter<"XPConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"XPConfig"> | Date | string
+  }
+
+  export type XPConfigOrderByWithRelationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    xpPerMessage?: SortOrder
+    enabled?: SortOrder
+    levelUpChannelId?: SortOrderInput | SortOrder
+    levelUpMessage?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type XPConfigWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    guildId?: string
+    AND?: XPConfigWhereInput | XPConfigWhereInput[]
+    OR?: XPConfigWhereInput[]
+    NOT?: XPConfigWhereInput | XPConfigWhereInput[]
+    xpPerMessage?: IntFilter<"XPConfig"> | number
+    enabled?: BoolFilter<"XPConfig"> | boolean
+    levelUpChannelId?: StringNullableFilter<"XPConfig"> | string | null
+    levelUpMessage?: StringNullableFilter<"XPConfig"> | string | null
+    createdAt?: DateTimeFilter<"XPConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"XPConfig"> | Date | string
+  }, "id" | "guildId">
+
+  export type XPConfigOrderByWithAggregationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    xpPerMessage?: SortOrder
+    enabled?: SortOrder
+    levelUpChannelId?: SortOrderInput | SortOrder
+    levelUpMessage?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: XPConfigCountOrderByAggregateInput
+    _avg?: XPConfigAvgOrderByAggregateInput
+    _max?: XPConfigMaxOrderByAggregateInput
+    _min?: XPConfigMinOrderByAggregateInput
+    _sum?: XPConfigSumOrderByAggregateInput
+  }
+
+  export type XPConfigScalarWhereWithAggregatesInput = {
+    AND?: XPConfigScalarWhereWithAggregatesInput | XPConfigScalarWhereWithAggregatesInput[]
+    OR?: XPConfigScalarWhereWithAggregatesInput[]
+    NOT?: XPConfigScalarWhereWithAggregatesInput | XPConfigScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"XPConfig"> | number
+    guildId?: StringWithAggregatesFilter<"XPConfig"> | string
+    xpPerMessage?: IntWithAggregatesFilter<"XPConfig"> | number
+    enabled?: BoolWithAggregatesFilter<"XPConfig"> | boolean
+    levelUpChannelId?: StringNullableWithAggregatesFilter<"XPConfig"> | string | null
+    levelUpMessage?: StringNullableWithAggregatesFilter<"XPConfig"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"XPConfig"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"XPConfig"> | Date | string
+  }
+
+  export type LevelRoleWhereInput = {
+    AND?: LevelRoleWhereInput | LevelRoleWhereInput[]
+    OR?: LevelRoleWhereInput[]
+    NOT?: LevelRoleWhereInput | LevelRoleWhereInput[]
+    id?: IntFilter<"LevelRole"> | number
+    guildId?: StringFilter<"LevelRole"> | string
+    level?: IntFilter<"LevelRole"> | number
+    roleId?: StringFilter<"LevelRole"> | string
+  }
+
+  export type LevelRoleOrderByWithRelationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    level?: SortOrder
+    roleId?: SortOrder
+  }
+
+  export type LevelRoleWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    guildId_level?: LevelRoleGuildIdLevelCompoundUniqueInput
+    AND?: LevelRoleWhereInput | LevelRoleWhereInput[]
+    OR?: LevelRoleWhereInput[]
+    NOT?: LevelRoleWhereInput | LevelRoleWhereInput[]
+    guildId?: StringFilter<"LevelRole"> | string
+    level?: IntFilter<"LevelRole"> | number
+    roleId?: StringFilter<"LevelRole"> | string
+  }, "id" | "guildId_level">
+
+  export type LevelRoleOrderByWithAggregationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    level?: SortOrder
+    roleId?: SortOrder
+    _count?: LevelRoleCountOrderByAggregateInput
+    _avg?: LevelRoleAvgOrderByAggregateInput
+    _max?: LevelRoleMaxOrderByAggregateInput
+    _min?: LevelRoleMinOrderByAggregateInput
+    _sum?: LevelRoleSumOrderByAggregateInput
+  }
+
+  export type LevelRoleScalarWhereWithAggregatesInput = {
+    AND?: LevelRoleScalarWhereWithAggregatesInput | LevelRoleScalarWhereWithAggregatesInput[]
+    OR?: LevelRoleScalarWhereWithAggregatesInput[]
+    NOT?: LevelRoleScalarWhereWithAggregatesInput | LevelRoleScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"LevelRole"> | number
+    guildId?: StringWithAggregatesFilter<"LevelRole"> | string
+    level?: IntWithAggregatesFilter<"LevelRole"> | number
+    roleId?: StringWithAggregatesFilter<"LevelRole"> | string
   }
 
   export type tipoClaseCreateInput = {
@@ -25151,6 +28828,200 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type UserXPCreateInput = {
+    userId: string
+    guildId: string
+    xp?: number
+    nivel?: number
+    lastMessageAt?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserXPUncheckedCreateInput = {
+    id?: number
+    userId: string
+    guildId: string
+    xp?: number
+    nivel?: number
+    lastMessageAt?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserXPUpdateInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    guildId?: StringFieldUpdateOperationsInput | string
+    xp?: IntFieldUpdateOperationsInput | number
+    nivel?: IntFieldUpdateOperationsInput | number
+    lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserXPUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    userId?: StringFieldUpdateOperationsInput | string
+    guildId?: StringFieldUpdateOperationsInput | string
+    xp?: IntFieldUpdateOperationsInput | number
+    nivel?: IntFieldUpdateOperationsInput | number
+    lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserXPCreateManyInput = {
+    id?: number
+    userId: string
+    guildId: string
+    xp?: number
+    nivel?: number
+    lastMessageAt?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserXPUpdateManyMutationInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    guildId?: StringFieldUpdateOperationsInput | string
+    xp?: IntFieldUpdateOperationsInput | number
+    nivel?: IntFieldUpdateOperationsInput | number
+    lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserXPUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    userId?: StringFieldUpdateOperationsInput | string
+    guildId?: StringFieldUpdateOperationsInput | string
+    xp?: IntFieldUpdateOperationsInput | number
+    nivel?: IntFieldUpdateOperationsInput | number
+    lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type XPConfigCreateInput = {
+    guildId: string
+    xpPerMessage?: number
+    enabled?: boolean
+    levelUpChannelId?: string | null
+    levelUpMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type XPConfigUncheckedCreateInput = {
+    id?: number
+    guildId: string
+    xpPerMessage?: number
+    enabled?: boolean
+    levelUpChannelId?: string | null
+    levelUpMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type XPConfigUpdateInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    xpPerMessage?: IntFieldUpdateOperationsInput | number
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    levelUpChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    levelUpMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type XPConfigUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    xpPerMessage?: IntFieldUpdateOperationsInput | number
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    levelUpChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    levelUpMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type XPConfigCreateManyInput = {
+    id?: number
+    guildId: string
+    xpPerMessage?: number
+    enabled?: boolean
+    levelUpChannelId?: string | null
+    levelUpMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type XPConfigUpdateManyMutationInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    xpPerMessage?: IntFieldUpdateOperationsInput | number
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    levelUpChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    levelUpMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type XPConfigUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    xpPerMessage?: IntFieldUpdateOperationsInput | number
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    levelUpChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    levelUpMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LevelRoleCreateInput = {
+    guildId: string
+    level: number
+    roleId: string
+  }
+
+  export type LevelRoleUncheckedCreateInput = {
+    id?: number
+    guildId: string
+    level: number
+    roleId: string
+  }
+
+  export type LevelRoleUpdateInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    roleId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type LevelRoleUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    roleId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type LevelRoleCreateManyInput = {
+    id?: number
+    guildId: string
+    level: number
+    roleId: string
+  }
+
+  export type LevelRoleUpdateManyMutationInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    roleId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type LevelRoleUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    roleId?: StringFieldUpdateOperationsInput | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -26326,6 +30197,135 @@ export namespace Prisma {
   export type GuildMusicConfigSumOrderByAggregateInput = {
     defaultVolume?: SortOrder
     maxQueueSize?: SortOrder
+  }
+
+  export type UserXPUserIdGuildIdCompoundUniqueInput = {
+    userId: string
+    guildId: string
+  }
+
+  export type UserXPCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    guildId?: SortOrder
+    xp?: SortOrder
+    nivel?: SortOrder
+    lastMessageAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserXPAvgOrderByAggregateInput = {
+    id?: SortOrder
+    xp?: SortOrder
+    nivel?: SortOrder
+  }
+
+  export type UserXPMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    guildId?: SortOrder
+    xp?: SortOrder
+    nivel?: SortOrder
+    lastMessageAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserXPMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    guildId?: SortOrder
+    xp?: SortOrder
+    nivel?: SortOrder
+    lastMessageAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserXPSumOrderByAggregateInput = {
+    id?: SortOrder
+    xp?: SortOrder
+    nivel?: SortOrder
+  }
+
+  export type XPConfigCountOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    xpPerMessage?: SortOrder
+    enabled?: SortOrder
+    levelUpChannelId?: SortOrder
+    levelUpMessage?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type XPConfigAvgOrderByAggregateInput = {
+    id?: SortOrder
+    xpPerMessage?: SortOrder
+  }
+
+  export type XPConfigMaxOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    xpPerMessage?: SortOrder
+    enabled?: SortOrder
+    levelUpChannelId?: SortOrder
+    levelUpMessage?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type XPConfigMinOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    xpPerMessage?: SortOrder
+    enabled?: SortOrder
+    levelUpChannelId?: SortOrder
+    levelUpMessage?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type XPConfigSumOrderByAggregateInput = {
+    id?: SortOrder
+    xpPerMessage?: SortOrder
+  }
+
+  export type LevelRoleGuildIdLevelCompoundUniqueInput = {
+    guildId: string
+    level: number
+  }
+
+  export type LevelRoleCountOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    level?: SortOrder
+    roleId?: SortOrder
+  }
+
+  export type LevelRoleAvgOrderByAggregateInput = {
+    id?: SortOrder
+    level?: SortOrder
+  }
+
+  export type LevelRoleMaxOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    level?: SortOrder
+    roleId?: SortOrder
+  }
+
+  export type LevelRoleMinOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    level?: SortOrder
+    roleId?: SortOrder
+  }
+
+  export type LevelRoleSumOrderByAggregateInput = {
+    id?: SortOrder
+    level?: SortOrder
   }
 
   export type classesCreateNestedManyWithoutTipoInput = {

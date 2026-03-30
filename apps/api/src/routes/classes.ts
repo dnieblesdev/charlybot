@@ -2,9 +2,19 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { ClassConfigSchema } from "@charlybot/shared";
+import { z } from "zod";
 import logger from "../utils/logger";
 
 const router = new Hono();
+const CreateClassConfigSchema = ClassConfigSchema.extend({
+  subclasses: z.array(
+    z.object({
+      name: z.string(),
+      roleId: z.string(),
+      guildId: z.string().optional(),
+    }),
+  ),
+});
 
 // GET /api/v1/classes/guild/:guildId
 router.get("/guild/:guildId", async (c) => {
@@ -77,7 +87,7 @@ router.get("/guild/:guildId/:name", async (c) => {
 });
 
 // POST /api/v1/classes
-router.post("/", zValidator("json", ClassConfigSchema), async (c) => {
+router.post("/", zValidator("json", CreateClassConfigSchema), async (c) => {
   const data = c.req.valid("json");
   const { name, roleId, type, typeRoleId, subclasses, guildId } = data;
 
