@@ -19,22 +19,10 @@ export default {
       const guildId = member.guild.id;
       const config = await getGuildConfig(guildId);
 
-      if (!config) {
-        logger.debug("No hay configuración para este servidor", {
-          guildId,
-        });
-        return;
-      }
+      if (!config || !config.welcomeChannelId) return;
 
       const channelId = config.welcomeChannelId;
       const messageTemplate = config.welcomeMessage;
-
-      if (!channelId) {
-        logger.debug("No hay canal de bienvenida configurado", {
-          guildId,
-        });
-        return;
-      }
 
       const channel = member.guild.channels.cache.get(channelId);
 

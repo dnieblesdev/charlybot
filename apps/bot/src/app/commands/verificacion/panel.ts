@@ -9,6 +9,11 @@ import type { ChatInputCommandInteraction, TextChannel } from "discord.js";
 import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
 import logger, { logCommand } from "../../../utils/logger.ts";
 import { CUSTOM_IDS } from "../../interactions/customIds.ts";
+import {
+  validateChannelConfigured,
+  ERROR_MESSAGES,
+  createErrorReply,
+} from "../../../utils/validation.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -29,23 +34,29 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Obtener la configuración del servidor
     const config = await getGuildConfig(interaction.guild.id);
 
-    if (
-      !config ||
-      !config.verificationChannelId ||
-      !config.verificationReviewChannelId ||
-      !config.verifiedRoleId
-    ) {
+    // Validar que el sistema de verificación esté configurado
+    if (!validateChannelConfigured(config?.verificationChannelId, "verificación", "verificacion setup")) {
+      await interaction.reply(createErrorReply(ERROR_MESSAGES.VERIFICATION_NOT_CONFIGURED()));
+      return;
+    }
+
+    if (!config?.verifiedRoleId) {
+      await interaction.reply(createErrorReply(ERROR_MESSAGES.CHANNEL_NOT_CONFIGURED("verificación (rol)", "verificacion setup")));
+      return;
+    }
+
+    if (!config?.verificationReviewChannelId) {
       await interaction.reply({
-        content:
-          "❌ El sistema de verificación no está configurado.\nUsa `/verificacion setup` primero.",
+        content: "❌ No hay canal de revisión configurado. Usa `/verificacion setup` para configurar.",
         flags: [MessageFlags.Ephemeral],
       });
       return;
     }
 
     // Obtener el canal de verificación
+    const verificationChannelId = config!.verificationChannelId!;
     const verificationChannel = interaction.guild.channels.cache.get(
-      config.verificationChannelId,
+      verificationChannelId,
     ) as TextChannel;
 
     if (!verificationChannel) {

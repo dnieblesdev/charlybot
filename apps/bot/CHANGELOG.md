@@ -1,5 +1,18 @@
 # @charlybot/bot
 
+## 2.4.0
+
+### Minor Changes
+
+- Add command validation system
+
+  - Add validation helpers in utils/validation.ts
+  - Validate channel configuration for upload, test-welcome, verificacion commands
+  - Validate XP system enabled for rank and leaderboard commands
+  - Add silent early returns in events (messageCreate, guildMemberAdd/Remove)
+  - Fix 500 error when enabling XP (getConfig now returns null on 404)
+  - Add 404 cache to avoid repeated API calls when system is disabled
+
 ## 2.3.0
 
 ### Minor Changes

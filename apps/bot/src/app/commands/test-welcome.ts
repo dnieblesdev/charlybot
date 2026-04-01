@@ -6,6 +6,11 @@ import {
 import type { ChatInputCommandInteraction } from "discord.js";
 import { getGuildConfig } from "../../config/repositories/GuildConfigRepo.ts";
 import logger, { logCommand } from "../../utils/logger.ts";
+import {
+  validateChannelConfigured,
+  ERROR_MESSAGES,
+  createErrorReply,
+} from "../../utils/validation.ts";
 
 export const data = new SlashCommandBuilder()
   .setName("test-welcome")
@@ -31,16 +36,24 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     const config = await getGuildConfig(interaction.guild.id);
-    if (!config || !config.welcomeChannelId || !config.welcomeMessage) {
+    const welcomeChannelId = config?.welcomeChannelId;
+
+    // Validar que el canal de bienvenida esté configurado
+    if (!validateChannelConfigured(welcomeChannelId, "bienvenida", "set-welcome")) {
+      await interaction.reply(createErrorReply(ERROR_MESSAGES.CHANNEL_NOT_CONFIGURED("bienvenida", "set-welcome")));
+      return;
+    }
+
+    if (!config?.welcomeMessage) {
       await interaction.reply({
-        content: "❌ No hay configuración de bienvenida en este servidor.",
+        content: "❌ No hay mensaje de bienvenida configurado. Usa `/set-welcome` para configurar el mensaje.",
         flags: [MessageFlags.Ephemeral],
       });
       return;
     }
 
     const channel = interaction.guild.channels.cache.get(
-      config.welcomeChannelId,
+      welcomeChannelId!,
     );
     if (!channel) {
       await interaction.reply({
@@ -51,7 +64,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     // Reemplazar placeholders con valores de prueba
-    const preview = config.welcomeMessage
+    const preview = config!.welcomeMessage
       .replace(/{user}/g, interaction.user.toString())
       .replace(/{username}/g, interaction.user.username)
       .replace(/{server}/g, interaction.guild.name);
@@ -60,7 +73,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     await (channel as any).send({ content: preview });
 
     await interaction.reply({
-      content: `✅ Mensaje de bienvenida enviado de prueba a <#${config.welcomeChannelId}>.`,
+      content: `✅ Mensaje de bienvenida enviado de prueba a <#${welcomeChannelId}>.`,
       flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {

@@ -5,6 +5,12 @@ import {
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import { HttpXPAdapter } from "../../../infrastructure/api/HttpXPAdapter.js";
+import * as XPRepo from "../../../config/repositories/XPRepo";
+import {
+  validateSystemEnabled,
+  ERROR_MESSAGES,
+  createErrorReply,
+} from "../../../utils/validation.js";
 
 const xpAdapter = new HttpXPAdapter();
 
@@ -28,12 +34,28 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await interaction.deferReply();
 
+    const guildId = interaction.guildId;
+
+    // Validar que el sistema de XP esté habilitado
+    let xpConfig;
+    try {
+      xpConfig = await XPRepo.getXPConfig(guildId);
+    } catch {
+      // Si la API falla o no hay config, treat as disabled
+      xpConfig = null;
+    }
+    
+    // Si no hay config (null), el sistema está desactivado
+    if (!xpConfig || !validateSystemEnabled(xpConfig.enabled, "XP", "xp config enable")) {
+      await interaction.editReply(createErrorReply(ERROR_MESSAGES.SYSTEM_DISABLED("XP", "xp config enable")));
+      return;
+    }
+
     // Si no se especifica usuario, usar el usuario que ejecuta el comando
     const targetUser =
       interaction.options.getUser("usuario") || interaction.user;
     const userId = targetUser.id;
     const username = targetUser.username;
-    const guildId = interaction.guildId;
 
     // Obtener datos de XP del usuario
     let userXP = await xpAdapter.getUserXP(guildId, userId);

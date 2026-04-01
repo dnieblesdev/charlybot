@@ -4,6 +4,12 @@ import { HttpRepositoryAdapter } from "./HttpRepositoryAdapter";
 import { memoryCache } from "./MemoryCache";
 import { CACHE_KEYS, CACHE_TTL } from "./cacheConstants";
 
+// Track keys where config was not found (404) to avoid repeated API calls
+const notFoundConfigKeys = new Set<string>();
+
+// Special object to mark "not found" in cache
+const NOT_FOUND_MARKER = Symbol("XP_CONFIG_NOT_FOUND");
+
 export class HttpXPAdapter
   extends HttpRepositoryAdapter
   implements IXPRepository
@@ -47,6 +53,10 @@ export class HttpXPAdapter
     
     // Check cache first
     const cached = memoryCache.get(cacheKey);
+    // Check if we already tried this guild and got 404 (not found)
+    if (cached === NOT_FOUND_MARKER || notFoundConfigKeys.has(cacheKey)) {
+      return null;
+    }
     if (cached !== undefined) {
       return cached as IXPConfig | null;
     }
@@ -56,9 +66,16 @@ export class HttpXPAdapter
         .get(`xp/config/${guildId}`)
         .json<IXPConfig>();
       memoryCache.set(cacheKey, result, CACHE_TTL.XP_CONFIG);
+      // Clear any previous "not found" record
+      notFoundConfigKeys.delete(cacheKey);
       return result;
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'response' in error && (error.response as any)?.status === 404) return null;
+      if (error && typeof error === 'object' && 'response' in error && (error.response as any)?.status === 404) {
+        // Mark as "not found" to avoid repeated API calls
+        memoryCache.set(cacheKey, NOT_FOUND_MARKER, CACHE_TTL.XP_CONFIG);
+        notFoundConfigKeys.add(cacheKey);
+        return null;
+      }
       throw error;
     }
   }
@@ -69,6 +86,8 @@ export class HttpXPAdapter
       .json<IXPConfig>();
     // Invalidate cache
     memoryCache.invalidate(CACHE_KEYS.XP_CONFIG(guildId));
+    // Clear "not found" status
+    notFoundConfigKeys.delete(CACHE_KEYS.XP_CONFIG(guildId));
     return result;
   }
 
@@ -81,6 +100,8 @@ export class HttpXPAdapter
       .json<IXPConfig>();
     // Invalidate cache
     memoryCache.invalidate(CACHE_KEYS.XP_CONFIG(guildId));
+    // Clear "not found" status
+    notFoundConfigKeys.delete(CACHE_KEYS.XP_CONFIG(guildId));
     return result;
   }
 

@@ -3,6 +3,11 @@ import type { ChatInputCommandInteraction, TextChannel } from "discord.js";
 import { getGuildConfig } from "../../config/repositories/GuildConfigRepo.ts";
 import logger, { logCommand } from "../../utils/logger.ts";
 import { processAttachments } from "../../utils/attachmentValidator.ts";
+import {
+  validateChannelConfigured,
+  ERROR_MESSAGES,
+  createErrorReply,
+} from "../../utils/validation.ts";
 
 export const data = new SlashCommandBuilder()
   .setName("upload")
@@ -60,15 +65,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // Obtener la configuración del servidor
     const config = await getGuildConfig(interaction.guild.id);
-    if (!config || !config.targetChannelId) {
-      logger.warn("Upload attempted without configured channel", {
-        userId: interaction.user.id,
-        guildId: interaction.guild.id,
-      });
-      await interaction.editReply({
-        content:
-          "❌ No hay un canal configurado. Usa `/set-image-channel` primero.",
-      });
+    const targetChannelId = config?.targetChannelId;
+
+    // Validar que el canal de imágenes esté configurado
+    if (!validateChannelConfigured(targetChannelId, "imágenes", "set-image-channel")) {
+      await interaction.editReply(createErrorReply(ERROR_MESSAGES.CHANNEL_NOT_CONFIGURED("subida de imágenes", "set-image-channel")));
       return;
     }
 
@@ -125,7 +126,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // Obtener el canal configurado
     const channel = await interaction.guild.channels.fetch(
-      config.targetChannelId,
+      targetChannelId!,
     );
     if (!channel || !channel.isTextBased()) {
       await interaction.editReply({
@@ -142,15 +143,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     logger.info("Images uploaded successfully", {
       userId: interaction.user.id,
       guildId: interaction.guild.id,
-      channelId: config.targetChannelId,
+      channelId: targetChannelId!,
       imageCount: imageAttachments.length,
       stats,
     });
 
     const successMessage =
       stats.failed > 0
-        ? `✅ ${imageAttachments.length} imagen(es) enviada(s) a <#${config.targetChannelId}> (${stats.failed} fallaron)`
-        : `✅ ${imageAttachments.length} imagen(es) enviada(s) a <#${config.targetChannelId}>`;
+        ? `✅ ${imageAttachments.length} imagen(es) enviada(s) a <#${targetChannelId}> (${stats.failed} fallaron)`
+        : `✅ ${imageAttachments.length} imagen(es) enviada(s) a <#${targetChannelId}>`;
 
     await interaction.editReply({
       content: successMessage,

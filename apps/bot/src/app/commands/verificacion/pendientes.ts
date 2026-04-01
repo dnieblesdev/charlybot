@@ -3,8 +3,14 @@ import {
   MessageFlags,
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
+import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
 import { getPendingRequests } from "../../../config/repositories/VerificationRepo.ts";
 import logger, { logCommand } from "../../../utils/logger.ts";
+import {
+  validateChannelConfigured,
+  ERROR_MESSAGES,
+  createErrorReply,
+} from "../../../utils/validation.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -23,6 +29,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
+    // Validar que el sistema de verificación esté configurado
+    const config = await getGuildConfig(interaction.guild.id);
+    if (!validateChannelConfigured(config?.verificationChannelId, "verificación de pendientes", "verificacion setup")) {
+      await interaction.editReply(createErrorReply(ERROR_MESSAGES.CHANNEL_NOT_CONFIGURED("verificación de pendientes", "verificacion setup")));
+      return;
+    }
 
     const pendingRequests = await getPendingRequests(interaction.guild.id);
 

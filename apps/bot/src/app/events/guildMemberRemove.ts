@@ -11,21 +11,9 @@ export default {
       const guildId = member.guild.id;
       const config = await getGuildConfig(guildId);
 
-      if (!config) {
-        logger.debug("No hay configuración para este servidor", {
-          guildId,
-        });
-        return;
-      }
+      if (!config || !config.leaveLogChannelId) return;
 
       const channelId = config.leaveLogChannelId;
-
-      if (!channelId) {
-        logger.debug("No hay canal de logs de salida configurado", {
-          guildId,
-        });
-        return;
-      }
 
       const channel = member.guild.channels.cache.get(channelId);
 

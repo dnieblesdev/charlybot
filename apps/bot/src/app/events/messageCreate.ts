@@ -16,63 +16,71 @@ export default {
     // ========== XP TRACKING (independiente de imágenes) ==========
     // No contar como XP mensajes de interacciones (comandos slash)
     if (message.interaction) return;
+    
+    // Early return silencioso si XP no está habilitado o no hay config
+    let xpConfig;
     try {
-      const xpConfig = await XPRepo.getXPConfig(guildId);
-      if (xpConfig && xpConfig.enabled) {
-        const userId = message.author.id;
-        const userXP = await XPRepo.getUserXP(guildId, userId);
+      xpConfig = await XPRepo.getXPConfig(guildId);
+    } catch {
+      // Si la API falla o no hay config, early return silencioso
+      return;
+    }
+    if (!xpConfig?.enabled) return;
+    
+    try {
+      const userId = message.author.id;
+      const userXP = await XPRepo.getUserXP(guildId, userId);
 
-        // Rate limit: si el último mensaje fue hace menos de 5 segundos, skip
-        let shouldTrack = true;
-        if (userXP?.lastMessageAt) {
-          const lastMessageTime = userXP.lastMessageAt instanceof Date
-            ? userXP.lastMessageAt.getTime()
-            : new Date(userXP.lastMessageAt).getTime();
-          if (Date.now() - lastMessageTime < 5000) {
-            shouldTrack = false;
-          }
+      // Rate limit: si el último mensaje fue hace menos de 5 segundos, skip
+      let shouldTrack = true;
+      if (userXP?.lastMessageAt) {
+        const lastMessageTime = userXP.lastMessageAt instanceof Date
+          ? userXP.lastMessageAt.getTime()
+          : new Date(userXP.lastMessageAt).getTime();
+        if (Date.now() - lastMessageTime < 5000) {
+          shouldTrack = false;
         }
+      }
 
-        if (shouldTrack) {
-          const previousXP = userXP?.xp || 0;
-          const previousNivel = userXP?.nivel || 0;
-          const xpIncrement = xpConfig.xpPerMessage;
-          const newXP = previousXP + xpIncrement;
-          // Mantiene la curva 100 * nivel^2 => nivel = floor(sqrt(xp / 100))
-          const newNivel = Math.floor(Math.sqrt(newXP / 100));
+      if (shouldTrack) {
+        const previousXP = userXP?.xp || 0;
+        const previousNivel = userXP?.nivel || 0;
+        const xpIncrement = xpConfig.xpPerMessage;
+        const newXP = previousXP + xpIncrement;
+        // Mantiene la curva 100 * nivel^2 => nivel = floor(sqrt(xp / 100))
+        const newNivel = Math.floor(Math.sqrt(newXP / 100));
 
-          // Usar incremento atómico para evitar race conditions
-          await XPRepo.incrementUserXP(guildId, userId, xpIncrement, newNivel);
+        // Usar incremento atómico para evitar race conditions
+        await XPRepo.incrementUserXP(guildId, userId, xpIncrement, newNivel);
 
-          // Verificar si hubo level up
-          if (newNivel > previousNivel) {
-            logger.info("User leveled up", { userId, guildId, previousLevel: previousNivel, newLevel: newNivel, xp: newXP });
+        // Verificar si hubo level up
+        if (newNivel > previousNivel) {
+          logger.info("User leveled up", { userId, guildId, previousLevel: previousNivel, newLevel: newNivel, xp: newXP });
 
-            const levelRoles = await XPRepo.getLevelRoles(guildId);
-            if (levelRoles.length > 0 && message.member) {
-              for (const levelRole of levelRoles) {
-                if (levelRole.level <= newNivel) {
-                  try {
-                    if (!message.member.roles.cache.has(levelRole.roleId)) {
-                      await message.member.roles.add(levelRole.roleId);
-                      logger.debug("Added level role to user", { userId, guildId, roleId: levelRole.roleId, level: levelRole.level });
-                    }
-                  } catch (error) {
-                    logger.error("Failed to add level role", { error: error instanceof Error ? error.message : String(error), userId, guildId, roleId: levelRole.roleId });
+          const levelRoles = await XPRepo.getLevelRoles(guildId);
+          if (levelRoles.length > 0 && message.member) {
+            for (const levelRole of levelRoles) {
+              if (levelRole.level <= newNivel) {
+                try {
+                  if (!message.member.roles.cache.has(levelRole.roleId)) {
+                    await message.member.roles.add(levelRole.roleId);
+                    logger.debug("Added level role to user", { userId, guildId, roleId: levelRole.roleId, level: levelRole.level });
                   }
+                } catch (error) {
+                  logger.error("Failed to add level role", { error: error instanceof Error ? error.message : String(error), userId, guildId, roleId: levelRole.roleId });
                 }
               }
             }
+          }
 
-            // Enviar mensaje de level up si está configurado
-            if (xpConfig.levelUpChannelId) {
-              const levelUpChannel = message.guild?.channels.cache.get(xpConfig.levelUpChannelId);
-              if (levelUpChannel && levelUpChannel instanceof TextChannel) {
-                const messageText = xpConfig.levelUpMessage
-                  ? xpConfig.levelUpMessage.replace(/{user}/g, message.author.username).replace(/{level}/g, String(newNivel)).replace(/{xp}/g, String(newXP))
-                  : `🎉 ¡${message.author.username} ha subido al nivel ${newNivel}!`;
-                await levelUpChannel.send({ content: messageText });
-              }
+          // Enviar mensaje de level up si está configurado
+          if (xpConfig.levelUpChannelId) {
+            const levelUpChannel = message.guild?.channels.cache.get(xpConfig.levelUpChannelId);
+            if (levelUpChannel && levelUpChannel instanceof TextChannel) {
+              const messageText = xpConfig.levelUpMessage
+                ? xpConfig.levelUpMessage.replace(/{user}/g, message.author.username).replace(/{level}/g, String(newNivel)).replace(/{xp}/g, String(newXP))
+                : `🎉 ¡${message.author.username} ha subido al nivel ${newNivel}!`;
+              await levelUpChannel.send({ content: messageText });
             }
           }
         }
@@ -87,11 +95,14 @@ export default {
     // ========== END XP TRACKING ==========
 
     // ========== IMAGE REPOSTING ==========
+    // Early return silencioso si no hay canal de imágenes configurado
+    const config = await getGuildConfig(guildId);
+    if (!config?.targetChannelId) return;
+
     try {
       const attachments = Array.from(message.attachments.values());
       if (attachments.length === 0) return;
 
-      const config = await getGuildConfig(guildId);
       if (!config || message.channel.id !== config.targetChannelId) return;
 
       if (!(message.channel instanceof TextChannel) && !message.channel.isThread()) return;
