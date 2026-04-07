@@ -124,6 +124,23 @@ router.post("/:id/mappings", zValidator("json", RoleMappingSchema), async (c) =>
   }
 });
 
+// DELETE /api/v1/autoroles/:id/mappings
+// Removes all mappings for an AutoRole configuration.
+router.delete("/:id/mappings", async (c) => {
+  const id = Number(c.req.param("id"));
+
+  try {
+    const result = await prisma.roleMapping.deleteMany({
+      where: { autoRoleId: id },
+    });
+
+    return c.json({ message: "Mappings deleted", count: result.count });
+  } catch (error) {
+    logger.error(`Error deleting mappings for autorole ${id}`, { error });
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 // PATCH /api/v1/autoroles/mappings/:mappingId
 router.patch("/mappings/:mappingId", zValidator("json", RoleMappingSchema.partial()), async (c) => {
   const mappingId = Number(c.req.param("mappingId"));

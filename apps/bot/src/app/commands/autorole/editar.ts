@@ -2,6 +2,8 @@ import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import * as AutoRoleRepo from "../../../config/repositories/AutoRoleRepo.js";
 
+import { openExistingAutoRoleEditor } from "./setup";
+
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
     logCommand(
@@ -28,7 +30,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!autoRole) {
       await interaction.editReply({
         content:
-          "❌ No encontré ninguna configuración de auto-roles para ese mensaje.\n\nUsa `/autorole-list` para ver las configuraciones activas.",
+          "❌ Ese mensaje no tiene una configuración de auto-roles.\n\nUsa `/autorole setup message_id:" +
+          messageId +
+          "` para configurarlo.",
       });
       return;
     }
@@ -41,7 +45,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    // Verificar que el mensaje todavía existe
+    // Verificar que el mensaje todavía existe y calcular si el bot puede editarlo
+    // (el editor puede funcionar igual para reacciones, pero bloquea editar/personalizar embed)
     try {
       const channel = await interaction.guild.channels.fetch(
         autoRole.channelId,
@@ -62,6 +67,28 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         });
         return;
       }
+
+      const botMember = await interaction.guild.members.fetchMe();
+      const messageAuthorIsBot = message.author.id === botMember.user.id;
+      const canEditMessage = messageAuthorIsBot;
+
+      // Abrir UI de edición (misma que setup) para esta config existente
+      await openExistingAutoRoleEditor(interaction, autoRole as any, {
+        targetChannelId: autoRole.channelId,
+        uiChannelId: interaction.channelId,
+        messageAuthorIsBot,
+        canEditMessage,
+      });
+
+      logger.info("AutoRole edit UI opened", {
+        userId: interaction.user.id,
+        guildId: interaction.guild.id,
+        messageId,
+        autoRoleId: autoRole.id,
+        canEditMessage,
+      });
+
+      return;
     } catch (error) {
       await interaction.editReply({
         content:
@@ -69,31 +96,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
       return;
     }
-
-    // Mensaje informativo
-    await interaction.editReply({
-      content:
-        "⚠️ **Edición de configuraciones**\n\n" +
-        "Para editar una configuración existente, tienes dos opciones:\n\n" +
-        "**1. Eliminar y recrear:**\n" +
-        "• Usa `/autorole-remove message_id:" +
-        messageId +
-        "`\n" +
-        "• Luego usa `/autorole-setup message_id:" +
-        messageId +
-        "` para crear una nueva configuración\n\n" +
-        "**2. Modificar manualmente:**\n" +
-        "• Edita el mensaje directamente en Discord\n" +
-        "• Usa este comando para actualizar solo los roles configurados (próximamente)\n\n" +
-        "💡 **Tip:** La opción 1 es más rápida y te permite reconfigurar completamente los roles.",
-    });
-
-    logger.info("AutoRole edit command executed", {
-      userId: interaction.user.id,
-      guildId: interaction.guild.id,
-      messageId,
-      autoRoleId: autoRole.id,
-    });
   } catch (error) {
     logger.error("Error executing autorole-edit command", {
       error: error instanceof Error ? error.message : String(error),
