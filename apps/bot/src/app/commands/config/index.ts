@@ -10,6 +10,7 @@ import { execute as setWelcome } from "./set-welcome";
 import { execute as setVoiceLog } from "./set-voice-log";
 import { execute as setLeaveLog } from "./set-leave-log";
 import { execute as setImageChannel } from "./set-image-channel";
+import { execute as setMessageLog } from "./set-message-log";
 import { execute as show } from "./show";
 import { execute as list } from "./list";
 import { execute as remove } from "./remove";
@@ -78,6 +79,20 @@ export const data = new SlashCommandBuilder()
       ),
   )
 
+  // subcomando: set-message-log
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName("set-message-log")
+      .setDescription("Configura el canal para registrar mensajes editados/eliminados")
+      .addChannelOption((option) =>
+        option
+          .setName("canal")
+          .setDescription("El canal donde se registrarán los logs de mensajes")
+          .addChannelTypes(ChannelType.GuildText)
+          .setRequired(false),
+      ),
+  )
+
   // subcomando: show
   .addSubcommand((subcommand) =>
     subcommand
@@ -122,6 +137,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       break;
     case "set-image-channel":
       await setImageChannel(interaction);
+      break;
+    case "set-message-log":
+      await setMessageLog(interaction);
       break;
     case "show":
       await show(interaction);

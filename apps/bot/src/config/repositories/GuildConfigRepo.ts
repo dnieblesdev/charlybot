@@ -79,6 +79,19 @@ export async function setLeaveLogChannel(
 }
 
 /**
+ * Establece el canal de logs de mensajes (edición/eliminación)
+ */
+export async function setMessageLogChannel(
+  guildId: string,
+  messageLogChannelId: string,
+): Promise<void> {
+  await guildConfigRepo.upsert(guildId, { guildId, messageLogChannelId });
+  logger.info(
+    `✅ Canal de logs de mensajes configurado: Guild ${guildId} -> Canal ${messageLogChannelId}`,
+  );
+}
+
+/**
  * Elimina la configuración de un servidor
  */
 export async function removeGuildConfig(guildId: string): Promise<void> {

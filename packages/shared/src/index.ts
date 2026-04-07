@@ -6,3 +6,4 @@ export * from './schemas/autorole';
 export * from './schemas/verification';
 export * from './schemas/music';
 export * from './schemas/xp';
+export * from './utils/truncate';

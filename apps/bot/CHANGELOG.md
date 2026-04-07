@@ -1,5 +1,15 @@
 # @charlybot/bot
 
+## 2.6.0
+
+### Minor Changes
+
+- Add message edit/delete audit log embeds
+
+  - Add `/config set-message-log` to configure a per-guild message log channel
+  - Log message edits/deletes with rich embeds (jump link, before/after, truncation)
+  - Fix embed author display to use guild nickname and guild avatar
+
 ## 2.5.0
 
 ### Minor Changes

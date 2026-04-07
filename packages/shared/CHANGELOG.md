@@ -1,5 +1,15 @@
 # @charlybot/shared
 
+## 2.3.1
+
+### Patch Changes
+
+- Persist message log channel config and export truncate helper
+
+  - Add `messageLogChannelId` to guild config schema
+  - Add `messageLogChannelId` column to `GuildConfig` Prisma model
+  - Export `truncateForEmbedField` utility
+
 ## 2.3.0
 
 ### Minor Changes

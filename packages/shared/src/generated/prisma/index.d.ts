@@ -7219,6 +7219,7 @@ export namespace Prisma {
     verificationChannelId: string | null
     verificationReviewChannelId: string | null
     verifiedRoleId: string | null
+    messageLogChannelId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -7235,6 +7236,7 @@ export namespace Prisma {
     verificationChannelId: string | null
     verificationReviewChannelId: string | null
     verifiedRoleId: string | null
+    messageLogChannelId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -7251,6 +7253,7 @@ export namespace Prisma {
     verificationChannelId: number
     verificationReviewChannelId: number
     verifiedRoleId: number
+    messageLogChannelId: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -7277,6 +7280,7 @@ export namespace Prisma {
     verificationChannelId?: true
     verificationReviewChannelId?: true
     verifiedRoleId?: true
+    messageLogChannelId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -7293,6 +7297,7 @@ export namespace Prisma {
     verificationChannelId?: true
     verificationReviewChannelId?: true
     verifiedRoleId?: true
+    messageLogChannelId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -7309,6 +7314,7 @@ export namespace Prisma {
     verificationChannelId?: true
     verificationReviewChannelId?: true
     verifiedRoleId?: true
+    messageLogChannelId?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -7412,6 +7418,7 @@ export namespace Prisma {
     verificationChannelId: string | null
     verificationReviewChannelId: string | null
     verifiedRoleId: string | null
+    messageLogChannelId: string | null
     createdAt: Date
     updatedAt: Date
     _count: GuildConfigCountAggregateOutputType | null
@@ -7447,6 +7454,7 @@ export namespace Prisma {
     verificationChannelId?: boolean
     verificationReviewChannelId?: boolean
     verifiedRoleId?: boolean
+    messageLogChannelId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     guild?: boolean | GuildDefaultArgs<ExtArgs>
@@ -7464,6 +7472,7 @@ export namespace Prisma {
     verificationChannelId?: boolean
     verificationReviewChannelId?: boolean
     verifiedRoleId?: boolean
+    messageLogChannelId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     guild?: boolean | GuildDefaultArgs<ExtArgs>
@@ -7481,6 +7490,7 @@ export namespace Prisma {
     verificationChannelId?: boolean
     verificationReviewChannelId?: boolean
     verifiedRoleId?: boolean
+    messageLogChannelId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     guild?: boolean | GuildDefaultArgs<ExtArgs>
@@ -7498,11 +7508,12 @@ export namespace Prisma {
     verificationChannelId?: boolean
     verificationReviewChannelId?: boolean
     verifiedRoleId?: boolean
+    messageLogChannelId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type GuildConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "name" | "targetChannelId" | "voiceLogChannelId" | "welcomeChannelId" | "welcomeMessage" | "leaveLogChannelId" | "verificationChannelId" | "verificationReviewChannelId" | "verifiedRoleId" | "createdAt" | "updatedAt", ExtArgs["result"]["guildConfig"]>
+  export type GuildConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "name" | "targetChannelId" | "voiceLogChannelId" | "welcomeChannelId" | "welcomeMessage" | "leaveLogChannelId" | "verificationChannelId" | "verificationReviewChannelId" | "verifiedRoleId" | "messageLogChannelId" | "createdAt" | "updatedAt", ExtArgs["result"]["guildConfig"]>
   export type GuildConfigInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     guild?: boolean | GuildDefaultArgs<ExtArgs>
   }
@@ -7530,6 +7541,7 @@ export namespace Prisma {
       verificationChannelId: string | null
       verificationReviewChannelId: string | null
       verifiedRoleId: string | null
+      messageLogChannelId: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["guildConfig"]>
@@ -7967,6 +7979,7 @@ export namespace Prisma {
     readonly verificationChannelId: FieldRef<"GuildConfig", 'String'>
     readonly verificationReviewChannelId: FieldRef<"GuildConfig", 'String'>
     readonly verifiedRoleId: FieldRef<"GuildConfig", 'String'>
+    readonly messageLogChannelId: FieldRef<"GuildConfig", 'String'>
     readonly createdAt: FieldRef<"GuildConfig", 'DateTime'>
     readonly updatedAt: FieldRef<"GuildConfig", 'DateTime'>
   }
@@ -25459,6 +25472,7 @@ export namespace Prisma {
     verificationChannelId: 'verificationChannelId',
     verificationReviewChannelId: 'verificationReviewChannelId',
     verifiedRoleId: 'verifiedRoleId',
+    messageLogChannelId: 'messageLogChannelId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -26036,6 +26050,7 @@ export namespace Prisma {
     verificationChannelId?: StringNullableFilter<"GuildConfig"> | string | null
     verificationReviewChannelId?: StringNullableFilter<"GuildConfig"> | string | null
     verifiedRoleId?: StringNullableFilter<"GuildConfig"> | string | null
+    messageLogChannelId?: StringNullableFilter<"GuildConfig"> | string | null
     createdAt?: DateTimeFilter<"GuildConfig"> | Date | string
     updatedAt?: DateTimeFilter<"GuildConfig"> | Date | string
     guild?: XOR<GuildScalarRelationFilter, GuildWhereInput>
@@ -26053,6 +26068,7 @@ export namespace Prisma {
     verificationChannelId?: SortOrderInput | SortOrder
     verificationReviewChannelId?: SortOrderInput | SortOrder
     verifiedRoleId?: SortOrderInput | SortOrder
+    messageLogChannelId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     guild?: GuildOrderByWithRelationInput
@@ -26073,6 +26089,7 @@ export namespace Prisma {
     verificationChannelId?: StringNullableFilter<"GuildConfig"> | string | null
     verificationReviewChannelId?: StringNullableFilter<"GuildConfig"> | string | null
     verifiedRoleId?: StringNullableFilter<"GuildConfig"> | string | null
+    messageLogChannelId?: StringNullableFilter<"GuildConfig"> | string | null
     createdAt?: DateTimeFilter<"GuildConfig"> | Date | string
     updatedAt?: DateTimeFilter<"GuildConfig"> | Date | string
     guild?: XOR<GuildScalarRelationFilter, GuildWhereInput>
@@ -26090,6 +26107,7 @@ export namespace Prisma {
     verificationChannelId?: SortOrderInput | SortOrder
     verificationReviewChannelId?: SortOrderInput | SortOrder
     verifiedRoleId?: SortOrderInput | SortOrder
+    messageLogChannelId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: GuildConfigCountOrderByAggregateInput
@@ -26114,6 +26132,7 @@ export namespace Prisma {
     verificationChannelId?: StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
     verificationReviewChannelId?: StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
     verifiedRoleId?: StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
+    messageLogChannelId?: StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"GuildConfig"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"GuildConfig"> | Date | string
   }
@@ -27597,6 +27616,7 @@ export namespace Prisma {
     verificationChannelId?: string | null
     verificationReviewChannelId?: string | null
     verifiedRoleId?: string | null
+    messageLogChannelId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     guild: GuildCreateNestedOneWithoutGuildConfigsInput
@@ -27614,6 +27634,7 @@ export namespace Prisma {
     verificationChannelId?: string | null
     verificationReviewChannelId?: string | null
     verifiedRoleId?: string | null
+    messageLogChannelId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -27628,6 +27649,7 @@ export namespace Prisma {
     verificationChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     guild?: GuildUpdateOneRequiredWithoutGuildConfigsNestedInput
@@ -27645,6 +27667,7 @@ export namespace Prisma {
     verificationChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27661,6 +27684,7 @@ export namespace Prisma {
     verificationChannelId?: string | null
     verificationReviewChannelId?: string | null
     verifiedRoleId?: string | null
+    messageLogChannelId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -27675,6 +27699,7 @@ export namespace Prisma {
     verificationChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27691,6 +27716,7 @@ export namespace Prisma {
     verificationChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -29359,6 +29385,7 @@ export namespace Prisma {
     verificationChannelId?: SortOrder
     verificationReviewChannelId?: SortOrder
     verifiedRoleId?: SortOrder
+    messageLogChannelId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -29379,6 +29406,7 @@ export namespace Prisma {
     verificationChannelId?: SortOrder
     verificationReviewChannelId?: SortOrder
     verifiedRoleId?: SortOrder
+    messageLogChannelId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -29395,6 +29423,7 @@ export namespace Prisma {
     verificationChannelId?: SortOrder
     verificationReviewChannelId?: SortOrder
     verifiedRoleId?: SortOrder
+    messageLogChannelId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -31224,6 +31253,7 @@ export namespace Prisma {
     verificationChannelId?: string | null
     verificationReviewChannelId?: string | null
     verifiedRoleId?: string | null
+    messageLogChannelId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -31239,6 +31269,7 @@ export namespace Prisma {
     verificationChannelId?: string | null
     verificationReviewChannelId?: string | null
     verifiedRoleId?: string | null
+    messageLogChannelId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -31269,6 +31300,7 @@ export namespace Prisma {
     verificationChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -31284,6 +31316,7 @@ export namespace Prisma {
     verificationChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

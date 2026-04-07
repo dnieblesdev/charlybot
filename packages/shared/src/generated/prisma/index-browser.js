@@ -167,6 +167,7 @@ exports.Prisma.GuildConfigScalarFieldEnum = {
   verificationChannelId: 'verificationChannelId',
   verificationReviewChannelId: 'verificationReviewChannelId',
   verifiedRoleId: 'verifiedRoleId',
+  messageLogChannelId: 'messageLogChannelId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

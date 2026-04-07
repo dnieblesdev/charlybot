@@ -1,0 +1,79 @@
+import { Events, TextChannel } from "discord.js";
+import type { Message, PartialMessage } from "discord.js";
+import { getGuildConfig } from "../../config/repositories/GuildConfigRepo.ts";
+import logger from "../../utils/logger.ts";
+import { buildMessageDeleteEmbed } from "../../utils/messageAuditEmbeds.ts";
+
+export default {
+  name: Events.MessageDelete,
+  once: false,
+  async execute(message: Message | PartialMessage) {
+    try {
+      // Guard: Ignore if not in a guild (DMs)
+      if (!message.guild) return;
+
+      // Guard: Ignore bots and webhooks
+      if (message.author?.bot || message.webhookId) return;
+
+      // Guard: Check config
+      const config = await getGuildConfig(message.guild.id);
+      if (!config || !config.messageLogChannelId) return;
+
+      const channelId = config.messageLogChannelId;
+
+      // Resolve channel
+      const channel = message.guild.channels.cache.get(channelId);
+      if (!channel) {
+        logger.warn("Canal de logs de mensajes no encontrado en caché", {
+          guildId: message.guild.id,
+          channelId,
+        });
+        return;
+      }
+
+      if (!(channel instanceof TextChannel)) {
+        logger.warn("El canal de logs de mensajes no es un canal de texto", {
+          guildId: message.guild.id,
+          channelId,
+          channelType: channel.type,
+        });
+        return;
+      }
+
+      // Get channel name safely
+      const channelName =
+        "name" in message.channel
+          ? message.channel.name || "desconocido"
+          : "desconocido";
+
+      // Build embed - if message is cached, use its content, otherwise show unknown
+      const embed = buildMessageDeleteEmbed({
+        authorTag: message.member?.displayName || message.author?.tag || "Usuario Desconocido",
+        authorAvatarURL:
+          message.member?.displayAvatarURL({ size: 256 }) ||
+          message.author?.displayAvatarURL({ size: 256 }),
+        channelName,
+        channelId: message.channelId,
+        messageId: message.id,
+        content: message.partial ? null : message.content,
+      });
+
+      await channel.send({ embeds: [embed] });
+
+      logger.info("Mensaje eliminado registrado", {
+        guildId: message.guild.id,
+        channelId,
+        messageId: message.id,
+        authorId: message.author?.id,
+        wasCached: !message.partial,
+      });
+    } catch (error) {
+      logger.error("Error al registrar mensaje eliminado", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        guildId: message.guild?.id,
+        messageId: message.id,
+      });
+    }
+  },
+};

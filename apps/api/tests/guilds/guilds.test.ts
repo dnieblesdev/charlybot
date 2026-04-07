@@ -95,6 +95,36 @@ describe("Guilds API - GET /:id/config", () => {
     expect(data.welcomeMessage).toBe("Welcome!");
   });
 
+  it("T1.2c: should return persisted messageLogChannelId", async () => {
+    // First set messageLogChannelId via PATCH
+    await app.fetch(
+      new Request(`/api/v1/guilds/${testGuildId}/config`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY,
+        },
+        body: JSON.stringify({
+          messageLogChannelId: "123456789",
+        }),
+      })
+    );
+
+    // Then retrieve and verify via GET
+    const response = await app.fetch(
+      new Request(`/api/v1/guilds/${testGuildId}/config`, {
+        method: "GET",
+        headers: {
+          "X-API-Key": API_KEY,
+        },
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const data = (await response.json()) as { guildId?: string; messageLogChannelId?: string };
+    expect(data.messageLogChannelId).toBe("123456789");
+  });
+
   it("T1.2b: should return 404 when config doesn't exist", async () => {
     const noConfigGuildId = generateTestId("guild-no-config");
     await createTestGuild(prisma, noConfigGuildId);
@@ -174,6 +204,26 @@ describe("Guilds API - PATCH /:id/config", () => {
 
     // Cleanup
     await cleanupTestGuild(prisma, newGuildId);
+  });
+
+  it("T1.3d: should persist messageLogChannelId via PATCH", async () => {
+    const response = await app.fetch(
+      new Request(`/api/v1/guilds/${testGuildId}/config`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY,
+        },
+        body: JSON.stringify({
+          messageLogChannelId: "123456789",
+        }),
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const data = (await response.json()) as { guildId?: string; messageLogChannelId?: string };
+    expect(data.guildId).toBe(testGuildId);
+    expect(data.messageLogChannelId).toBe("123456789");
   });
 
   it("T1.3c: should reject invalid payload", async () => {

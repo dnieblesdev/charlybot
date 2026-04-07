@@ -11,6 +11,7 @@ export const GuildConfigSchema = z.object({
   verificationChannelId: z.string().nullable().optional(),
   verificationReviewChannelId: z.string().nullable().optional(),
   verifiedRoleId: z.string().nullable().optional(),
+  messageLogChannelId: z.string().nullable().optional(),
 });
 
 export type IGuildConfig = z.infer<typeof GuildConfigSchema>;

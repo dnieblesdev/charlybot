@@ -61,6 +61,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
     }
 
+    // Agregar canal de logs de mensajes si existe
+    if (config.messageLogChannelId) {
+      embed.addFields({
+        name: "✏️ Canal de Logs de Mensajes",
+        value: `<#${config.messageLogChannelId}>`,
+        inline: false,
+      });
+    }
+
     logger.info("Show config command executed successfully", {
       userId: interaction.user.id,
       guildId: interaction.guild.id,

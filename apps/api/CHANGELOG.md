@@ -1,5 +1,16 @@
 # @charlybot/api
 
+## 2.3.2
+
+### Patch Changes
+
+- Fix guild config persistence for message log channel
+
+  - Persist and return `messageLogChannelId` via `/api/v1/guilds/:id/config`
+
+- Updated dependencies
+  - @charlybot/shared@2.3.1
+
 ## 2.3.1
 
 ### Patch Changes

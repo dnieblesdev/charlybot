@@ -42,6 +42,7 @@ export async function createTestGuildConfig(
     verificationChannelId: string;
     verificationReviewChannelId: string;
     verifiedRoleId: string;
+    messageLogChannelId: string;
   }> = {}
 ) {
   return tx.guildConfig.upsert({
@@ -58,6 +59,7 @@ export async function createTestGuildConfig(
       verificationChannelId: data.verificationChannelId ?? null,
       verificationReviewChannelId: data.verificationReviewChannelId ?? null,
       verifiedRoleId: data.verifiedRoleId ?? null,
+      messageLogChannelId: data.messageLogChannelId ?? null,
     },
   });
 }
