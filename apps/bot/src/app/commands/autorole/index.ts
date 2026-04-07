@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  ChannelType,
   MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -26,6 +27,15 @@ export const data = new SlashCommandBuilder()
         option
           .setName("message_id")
           .setDescription("ID del mensaje")
+          .setRequired(false),
+      )
+      .addChannelOption((option) =>
+        option
+          .setName("canal")
+          .setDescription(
+            "Canal donde se enviará el mensaje de autorole (si no usás message_id)",
+          )
+          .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
           .setRequired(false),
       ),
   )

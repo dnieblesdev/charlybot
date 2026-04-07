@@ -1,6 +1,7 @@
 import {
   PermissionFlagsBits,
   ChatInputCommandInteraction,
+  ChannelType,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
@@ -15,7 +16,6 @@ import {
   type ButtonInteraction,
   type ModalSubmitInteraction,
   type StringSelectMenuInteraction,
-  type InteractionCollector,
   type RepliableInteraction,
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
@@ -24,17 +24,16 @@ import * as AutoRoleService from "../../services/AutoRoleService.js";
 import { CUSTOM_IDS } from "../../interactions/customIds.ts";
 import type { IAutoRole, IRoleMapping } from "@charlybot/shared";
 
-// Map para almacenar collectors activos por usuario
-const activeCollectors = new Map<
-  string,
-  InteractionCollector<ButtonInteraction | StringSelectMenuInteraction>
->();
-
 interface SetupSession {
   guildId: string;
-  channelId: string;
+  /** Channel where the final autorole message will be created/edited */
+  targetChannelId: string;
+  /** Channel where the configuration UI message is posted */
+  uiChannelId: string;
   messageId?: string;
   configMessageId?: string; // ID del mensaje de configuración (interfaz)
+  messageAuthorIsBot: boolean; // true si el mensaje objetivo es del bot
+  canEditMessage: boolean; // true si el bot puede editar el mensaje objetivo
   embedTitle?: string;
   embedDesc?: string;
   embedColor?: string;
@@ -57,6 +56,57 @@ interface SetupSession {
 // Almacenamiento temporal de sesiones
 const setupSessions = new Map<string, SetupSession>();
 
+/**
+ * Opens the interactive configuration UI for an existing AutoRole configuration.
+ *
+ * Used by `/autorole editar` to ensure it only edits already-configured messageIds.
+ */
+export async function openExistingAutoRoleEditor(
+  interaction: RepliableInteraction,
+  existingConfig: IAutoRole,
+  params: {
+    /** Channel where the original autorole message lives */
+    targetChannelId: string;
+    /** Channel where we show the configuration UI */
+    uiChannelId: string;
+    /** Whether the target message was authored by the bot */
+    messageAuthorIsBot: boolean;
+    /** Whether the bot can edit the target message */
+    canEditMessage: boolean;
+  },
+): Promise<void> {
+  const sessionId = interaction.user.id;
+
+  setupSessions.set(sessionId, {
+    guildId: existingConfig.guildId,
+    targetChannelId: params.targetChannelId,
+    uiChannelId: params.uiChannelId,
+    messageId: existingConfig.messageId,
+    messageAuthorIsBot: params.messageAuthorIsBot,
+    canEditMessage: params.canEditMessage,
+    embedTitle: existingConfig.embedTitle || undefined,
+    embedDesc: existingConfig.embedDesc || undefined,
+    embedColor: existingConfig.embedColor || undefined,
+    embedFooter: existingConfig.embedFooter || undefined,
+    embedThumb: existingConfig.embedThumb || undefined,
+    embedImage: existingConfig.embedImage || undefined,
+    embedTimestamp: existingConfig.embedTimestamp || undefined,
+    embedAuthor: existingConfig.embedAuthor || undefined,
+    mode: existingConfig.mode as "multiple" | "unique",
+    mappings: (existingConfig.mappings as IRoleMapping[]).map((m) => ({
+      roleId: m.roleId,
+      type: m.type as "reaction" | "button",
+      emoji: m.emoji || undefined,
+      buttonLabel: m.buttonLabel || undefined,
+      buttonStyle: m.buttonStyle || undefined,
+      order: m.order,
+    })),
+  });
+
+  await showConfigurationInterface(interaction, sessionId);
+  startCollector(interaction, sessionId);
+}
+
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
     logCommand(
@@ -74,6 +124,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     const messageId = interaction.options.getString("message_id");
+    const targetChannel = interaction.options.getChannel("canal");
 
     // Verificar permisos del bot
     const botMember = await interaction.guild.members.fetchMe();
@@ -107,6 +158,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           return;
         }
 
+        // Determine if the bot can edit this message
+        // Bot can only edit its own messages
+        const botMember = await interaction.guild.members.fetchMe();
+        const messageAuthorIsBot = message.author.id === botMember.user.id;
+        const canEditMessage = messageAuthorIsBot;
+
         // Verificar si ya existe una configuración para este mensaje
         const existingConfig =
           await AutoRoleRepo.getAutoRoleByMessageId(interaction.guild.id, messageId);
@@ -123,8 +180,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
           setupSessions.set(sessionId, {
             guildId: interaction.guild.id,
-            channelId: interaction.channelId,
+            targetChannelId: interaction.channelId,
+            uiChannelId: interaction.channelId,
             messageId: messageId,
+            messageAuthorIsBot,
+            canEditMessage,
             embedTitle: existingConfig.embedTitle || undefined,
             embedDesc: existingConfig.embedDesc || undefined,
             embedColor: existingConfig.embedColor || undefined,
@@ -144,23 +204,29 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             })),
           });
 
-          await interaction.reply({
-            content: "✅ Configuración existente cargada. Puedes editarla ahora.",
-            flags: [MessageFlags.Ephemeral],
-          });
+          // Defer reply so showConfigurationInterface can use editReply
+          await interaction.deferReply();
         } else {
           // Crear sesión nueva con mensaje existente
           logger.info("Creating new autorole config for existing message", {
             messageId,
+            messageAuthorIsBot,
+            canEditMessage,
           });
 
           setupSessions.set(sessionId, {
             guildId: interaction.guild.id,
-            channelId: interaction.channelId,
+            targetChannelId: interaction.channelId,
+            uiChannelId: interaction.channelId,
             messageId: messageId,
+            messageAuthorIsBot,
+            canEditMessage,
             mode: "multiple",
             mappings: [],
           });
+
+          // Defer reply so showConfigurationInterface can use editReply
+          await interaction.deferReply();
         }
 
         await showConfigurationInterface(interaction, sessionId);
@@ -177,10 +243,30 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           flags: [MessageFlags.Ephemeral],
         });
       }
-    } else {
-      // Mostrar modal para crear nuevo mensaje
-      await showInitialModal(interaction);
-    }
+     } else {
+       // Crear sesión nueva (sin messageId) y permitir elegir canal destino
+       const sessionId = interaction.user.id;
+
+       const resolvedChannelId =
+         targetChannel &&
+         (targetChannel.type === ChannelType.GuildText ||
+           targetChannel.type === ChannelType.GuildAnnouncement)
+           ? targetChannel.id
+           : interaction.channelId;
+
+       setupSessions.set(sessionId, {
+         guildId: interaction.guild.id,
+         targetChannelId: resolvedChannelId,
+         uiChannelId: interaction.channelId,
+         messageAuthorIsBot: true,
+         canEditMessage: true,
+         mode: "multiple",
+         mappings: [],
+       });
+
+       // Mostrar modal para crear nuevo mensaje
+       await showInitialModal(interaction);
+     }
   } catch (error) {
     logger.error("Error executing autorole-setup command", {
       error: error instanceof Error ? error.message : String(error),
@@ -246,21 +332,12 @@ async function showInitialModal(interaction: ChatInputCommandInteraction) {
 }
 
 /**
- * Muestra la interfaz de configuración interactiva
+ * Builds the configuration embed for a session.
  */
-async function showConfigurationInterface(
-  interaction: RepliableInteraction,
-  sessionId: string,
-) {
-  const session = setupSessions.get(sessionId);
-  if (!session) {
-    await interaction.reply({
-      content: "❌ Sesión no encontrada. Inicia de nuevo.",
-      flags: [MessageFlags.Ephemeral],
-    });
-    return;
-  }
-
+async function buildConfigEmbed(
+  session: SetupSession,
+  guild: { roles: { fetch: (id: string) => Promise<{ name: string } | null> } },
+): Promise<EmbedBuilder> {
   const embed = new EmbedBuilder()
     .setTitle("⚙️ Configuración de Auto-Roles")
     .setColor(0x5865f2)
@@ -289,7 +366,7 @@ async function showConfigurationInterface(
     for (let i = 0; i < session.mappings.length; i++) {
       const mapping = session.mappings[i];
       if (!mapping) continue;
-      const role = await interaction.guild!.roles.fetch(mapping.roleId);
+      const role = await guild.roles.fetch(mapping.roleId);
       const identifier =
         mapping.type === "reaction"
           ? mapping.emoji || "❓"
@@ -309,18 +386,35 @@ async function showConfigurationInterface(
     });
   }
 
-  // Botones de acción
-  const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+  return embed;
+}
+
+/**
+ * Builds the configuration button rows for a session.
+ */
+function buildConfigComponents(session: SetupSession): ActionRowBuilder<ButtonBuilder>[] {
+  const canEdit = session.canEditMessage;
+
+  // Row 1: Add, Edit (conditional), Remove
+  const row1Components: ButtonBuilder[] = [
     new ButtonBuilder()
       .setCustomId(CUSTOM_IDS.autorole.config.ADD_MAPPING)
       .setLabel("➕ Agregar Rol")
       .setStyle(ButtonStyle.Success)
       .setDisabled(session.mappings.length >= 10),
-    new ButtonBuilder()
-      .setCustomId(CUSTOM_IDS.autorole.config.EDIT_MAPPING)
-      .setLabel("✏️ Editar")
-      .setStyle(ButtonStyle.Primary)
-      .setDisabled(session.mappings.length === 0),
+  ];
+
+  if (canEdit) {
+    row1Components.push(
+      new ButtonBuilder()
+        .setCustomId(CUSTOM_IDS.autorole.config.EDIT_MAPPING)
+        .setLabel("✏️ Editar")
+        .setStyle(ButtonStyle.Primary)
+        .setDisabled(session.mappings.length === 0),
+    );
+  }
+
+  row1Components.push(
     new ButtonBuilder()
       .setCustomId(CUSTOM_IDS.autorole.config.REMOVE_MAPPING)
       .setLabel("🗑️ Eliminar")
@@ -328,33 +422,65 @@ async function showConfigurationInterface(
       .setDisabled(session.mappings.length === 0),
   );
 
-  const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+  const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(row1Components);
+
+  // Row 2: Toggle mode, Customize (conditional), Finish, Cancel
+  const row2Components: ButtonBuilder[] = [
     new ButtonBuilder()
       .setCustomId(CUSTOM_IDS.autorole.config.TOGGLE_MODE)
       .setLabel("🔄 Cambiar Modo")
       .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder()
-      .setCustomId(CUSTOM_IDS.autorole.config.CUSTOMIZE_EMBED)
-      .setLabel("⚙️ Personalizar Embed")
-      .setStyle(ButtonStyle.Secondary),
+  ];
+
+  if (canEdit) {
+    row2Components.push(
+      new ButtonBuilder()
+        .setCustomId(CUSTOM_IDS.autorole.config.CUSTOMIZE_EMBED)
+        .setLabel("⚙️ Personalizar Embed")
+        .setStyle(ButtonStyle.Secondary),
+    );
+  }
+
+  row2Components.push(
     new ButtonBuilder()
       .setCustomId(CUSTOM_IDS.autorole.config.FINISH)
       .setLabel("✅ Finalizar")
       .setStyle(ButtonStyle.Success)
       .setDisabled(session.mappings.length === 0),
-  );
-
-  const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId(CUSTOM_IDS.autorole.config.CANCEL)
       .setLabel("❌ Cancelar")
       .setStyle(ButtonStyle.Danger),
   );
 
+  const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(row2Components);
+
+  return [row1, row2];
+}
+
+/**
+ * Muestra la interfaz de configuración interactiva
+ */
+async function showConfigurationInterface(
+  interaction: RepliableInteraction,
+  sessionId: string,
+) {
+  const session = setupSessions.get(sessionId);
+  if (!session) {
+    await interaction.reply({
+      content: "❌ Sesión no encontrada. Inicia de nuevo.",
+      flags: [MessageFlags.Ephemeral],
+    });
+    return;
+  }
+
+  const embed = await buildConfigEmbed(session, interaction.guild!);
+  const components = buildConfigComponents(session);
+
   if (interaction.replied || interaction.deferred) {
     const reply = await interaction.editReply({
       embeds: [embed],
-      components: [row1, row2, row3],
+      components,
     });
     // Guardar el ID del mensaje de configuración
     if (reply && reply.id) {
@@ -364,8 +490,7 @@ async function showConfigurationInterface(
   } else {
     const reply = await interaction.reply({
       embeds: [embed],
-      components: [row1, row2, row3],
-      flags: [MessageFlags.Ephemeral],
+      components,
       fetchReply: true,
     });
     // Guardar el ID del mensaje de configuración
@@ -383,134 +508,183 @@ async function handleAddMapping(
   interaction: ButtonInteraction,
   sessionId: string,
 ) {
+  const session = setupSessions.get(sessionId);
+  if (!session) {
+    await interaction.reply({
+      content: "❌ Sesión no encontrada.",
+      flags: [MessageFlags.Ephemeral],
+    });
+    return;
+  }
+
   const modal = new ModalBuilder()
     .setCustomId(CUSTOM_IDS.autorole.modal.ADD_MAPPING)
     .setTitle("Agregar Rol");
 
-  const typeInput = new TextInputBuilder()
-    .setCustomId("type")
-    .setLabel("Tipo (reaction o button)")
-    .setStyle(TextInputStyle.Short)
-    .setPlaceholder("reaction o button")
-    .setRequired(true);
+  // Si el bot no puede editar el mensaje, solo permitir reacciones
+  const canEdit = session.canEditMessage;
 
-  const emojiOrLabelInput = new TextInputBuilder()
-    .setCustomId("emoji_or_label")
-    .setLabel("Emoji (para reaction) o Label (para button)")
-    .setStyle(TextInputStyle.Short)
-    .setPlaceholder("😀 o Mi Rol")
-    .setRequired(true);
+  if (!canEdit) {
+    // Modal simplificado solo para reacciones
+    const emojiInput = new TextInputBuilder()
+      .setCustomId("emoji_or_label")
+      .setLabel("Emoji para reacción")
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder("😀")
+      .setRequired(true);
 
-  const roleIdInput = new TextInputBuilder()
-    .setCustomId("role_id")
-    .setLabel("ID del Rol")
-    .setStyle(TextInputStyle.Short)
-    .setPlaceholder("ID del rol de Discord")
-    .setRequired(true);
+    const roleIdInput = new TextInputBuilder()
+      .setCustomId("role_id")
+      .setLabel("ID del Rol")
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder("ID del rol de Discord")
+      .setRequired(true);
 
-  const buttonStyleInput = new TextInputBuilder()
-    .setCustomId("button_style")
-    .setLabel("Color del botón (solo si es button)")
-    .setStyle(TextInputStyle.Short)
-    .setPlaceholder("PRIMARY, SECONDARY, SUCCESS, DANGER")
-    .setRequired(false);
+    modal.addComponents(
+      new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+        emojiInput,
+      ),
+      new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+        roleIdInput,
+      ),
+    );
+  } else {
+    // Modal completo para botones y reacciones
+    const typeInput = new TextInputBuilder()
+      .setCustomId("type")
+      .setLabel("Tipo (reaction o button)")
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder("reaction o button")
+      .setRequired(true);
 
-  modal.addComponents(
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      typeInput,
-    ),
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      emojiOrLabelInput,
-    ),
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      roleIdInput,
-    ),
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      buttonStyleInput,
-    ),
-  );
+    const emojiOrLabelInput = new TextInputBuilder()
+      .setCustomId("emoji_or_label")
+      .setLabel("Emoji (para reaction) o Label (para button)")
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder("😀 o Mi Rol")
+      .setRequired(true);
+
+    const roleIdInput = new TextInputBuilder()
+      .setCustomId("role_id")
+      .setLabel("ID del Rol")
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder("ID del rol de Discord")
+      .setRequired(true);
+
+    const buttonStyleInput = new TextInputBuilder()
+      .setCustomId("button_style")
+      .setLabel("Color del botón (solo si es button)")
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder("PRIMARY, SECONDARY, SUCCESS, DANGER")
+      .setRequired(false);
+
+    modal.addComponents(
+      new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+        typeInput,
+      ),
+      new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+        emojiOrLabelInput,
+      ),
+      new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+        roleIdInput,
+      ),
+      new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+        buttonStyleInput,
+      ),
+    );
+  }
 
   await interaction.showModal(modal);
 }
 
 /**
- * Inicia el collector global para una sesión
+ * Handles configuration button interactions directly (not via collector).
+ * This is needed because ephemeral messages don't trigger channel collectors.
  */
-function startCollector(interaction: RepliableInteraction, sessionId: string) {
-  // Si ya hay un collector activo para este usuario, detenerlo
-  if (activeCollectors.has(sessionId)) {
-    activeCollectors.get(sessionId)?.stop();
+export async function handleConfigButton(
+  interaction: ButtonInteraction,
+): Promise<void> {
+  const sessionId = interaction.user.id;
+  const session = setupSessions.get(sessionId);
+
+  // Defense in depth: block edit/customize if bot can't edit the message
+  if (session) {
+    if (
+      (interaction.customId === CUSTOM_IDS.autorole.config.EDIT_MAPPING ||
+        interaction.customId === CUSTOM_IDS.autorole.config.CUSTOMIZE_EMBED) &&
+      !session.canEditMessage
+    ) {
+      await interaction.reply({
+        content:
+          "❌ No puedes editar ni personalizar este mensaje porque pertenece a otro usuario. Solo puedes agregar reacciones.",
+        flags: [MessageFlags.Ephemeral],
+      });
+      return;
+    }
   }
 
-  // Crear collector en el canal
-  const collector = interaction.channel?.createMessageComponentCollector({
-    filter: (i) =>
-      i.user.id === interaction.user.id && i.customId.startsWith("autorole:"),
-    time: 600000, // 10 minutos
-  }) as InteractionCollector<ButtonInteraction | StringSelectMenuInteraction>;
-
-  if (!collector) return;
-
-  activeCollectors.set(sessionId, collector);
-
-  collector.on("collect", async (i) => {
+  if (interaction.customId === CUSTOM_IDS.autorole.config.ADD_MAPPING) {
+    await handleAddMapping(interaction, sessionId);
+  } else if (interaction.customId === CUSTOM_IDS.autorole.config.EDIT_MAPPING) {
+    await handleEditMapping(interaction, sessionId);
+  } else if (interaction.customId === CUSTOM_IDS.autorole.config.REMOVE_MAPPING) {
+    await handleRemoveMapping(interaction, sessionId);
+  } else if (interaction.customId === CUSTOM_IDS.autorole.config.TOGGLE_MODE) {
+    await handleToggleMode(interaction, sessionId);
+  } else if (interaction.customId === CUSTOM_IDS.autorole.config.CUSTOMIZE_EMBED) {
+    await handleCustomizeEmbed(interaction, sessionId);
+  } else if (interaction.customId === CUSTOM_IDS.autorole.config.FINISH) {
+    await handleFinish(interaction, sessionId);
+  } else if (interaction.customId === CUSTOM_IDS.autorole.config.CANCEL) {
     try {
-      if (i.customId === CUSTOM_IDS.autorole.config.ADD_MAPPING) {
-        await handleAddMapping(i as ButtonInteraction, sessionId);
-      } else if (i.customId === CUSTOM_IDS.autorole.config.EDIT_MAPPING) {
-        await handleEditMapping(i as ButtonInteraction, sessionId);
-      } else if (i.customId === CUSTOM_IDS.autorole.config.REMOVE_MAPPING) {
-        await handleRemoveMapping(i as ButtonInteraction, sessionId);
-      } else if (i.customId === CUSTOM_IDS.autorole.config.TOGGLE_MODE) {
-        await handleToggleMode(i as ButtonInteraction, sessionId);
-      } else if (i.customId === CUSTOM_IDS.autorole.config.CUSTOMIZE_EMBED) {
-        await handleCustomizeEmbed(i as ButtonInteraction, sessionId);
-      } else if (i.customId === CUSTOM_IDS.autorole.config.FINISH) {
-        await handleFinish(i as ButtonInteraction, sessionId);
-        collector.stop();
-      } else if (i.customId === CUSTOM_IDS.autorole.config.CANCEL) {
-        try {
-          logger.info("Cancelling autorole setup", {
-            sessionId,
-            userId: i.user.id,
-          });
-          setupSessions.delete(sessionId);
-          await i.update({
-            content: "❌ Configuración cancelada.",
-            embeds: [],
-            components: [],
-          });
-          collector.stop();
-          logger.info("Autorole setup cancelled successfully", { sessionId });
-        } catch (cancelError) {
-          logger.error("Error cancelling autorole setup", {
-            error:
-              cancelError instanceof Error
-                ? cancelError.message
-                : String(cancelError),
-            stack: cancelError instanceof Error ? cancelError.stack : undefined,
-            sessionId,
-            userId: i.user.id,
-          });
-          if (!i.replied && !i.deferred) {
-            await i.reply({
-              content: "❌ Error al cancelar la configuración.",
-              flags: [MessageFlags.Ephemeral],
-            });
-          }
-        }
-      }
-    } catch (error) {
-      logger.error("Error handling button interaction", {
-        error: error instanceof Error ? error.message : String(error),
-        customId: i.customId,
+      logger.info("Cancelling autorole setup", {
+        sessionId,
+        userId: interaction.user.id,
       });
+      setupSessions.delete(sessionId);
+      await interaction.update({
+        content: "❌ Configuración cancelada.",
+        embeds: [],
+        components: [],
+      });
+      logger.info("Autorole setup cancelled successfully", { sessionId });
+    } catch (cancelError) {
+      logger.error("Error cancelling autorole setup", {
+        error:
+          cancelError instanceof Error
+            ? cancelError.message
+            : String(cancelError),
+        stack: cancelError instanceof Error ? cancelError.stack : undefined,
+        sessionId,
+        userId: interaction.user.id,
+      });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: "❌ Error al cancelar la configuración.",
+          flags: [MessageFlags.Ephemeral],
+        });
+      }
     }
-  });
+  } else {
+    logger.warn("autorole.setup: unknown config button", {
+      customId: interaction.customId,
+      sessionId,
+    });
+  }
+}
 
-  collector.on("end", () => {
-    setupSessions.delete(sessionId);
-    activeCollectors.delete(sessionId);
+/**
+ * Inicia el collector global para una sesión
+ * NOTE: This is kept for backwards compatibility but config buttons are now
+ * handled directly via handleConfigButton since collectors don't see
+ * interactions on ephemeral messages.
+ */
+function startCollector(interaction: RepliableInteraction, sessionId: string) {
+  // Config buttons are now handled directly in the handler, not via collector.
+  // The collector is only used for select menus that might appear in non-ephemeral messages.
+  // For now, we keep this as a no-op to avoid breaking existing flows.
+  logger.info("startCollector called (config buttons handled directly now)", {
+    sessionId,
   });
 }
 
@@ -742,92 +916,12 @@ async function handleToggleMode(
   setupSessions.set(sessionId, session);
 
   // Actualizar el mensaje con la nueva configuración
-  const embed = new EmbedBuilder()
-    .setTitle("⚙️ Configuración de Auto-Roles")
-    .setColor(0x5865f2)
-    .addFields(
-      {
-        name: "Modo",
-        value:
-          session.mode === "multiple"
-            ? "Múltiples roles (usuarios pueden tener varios)"
-            : "Rol único (solo pueden tener uno)",
-        inline: true,
-      },
-      {
-        name: "Roles configurados",
-        value:
-          session.mappings.length > 0
-            ? `${session.mappings.length}/10`
-            : "Ninguno",
-        inline: true,
-      },
-    );
-
-  // Agregar lista de roles configurados si hay
-  if (session.mappings.length > 0) {
-    let mappingsText = "";
-    for (let i = 0; i < session.mappings.length; i++) {
-      const mapping = session.mappings[i];
-      if (!mapping) continue;
-      const role = await interaction.guild!.roles.fetch(mapping.roleId);
-      const identifier =
-        mapping.type === "reaction"
-          ? mapping.emoji || "❓"
-          : `🔘 ${mapping.buttonLabel || "Sin nombre"}`;
-      mappingsText += `${i + 1}. ${identifier} → ${role?.name || "Rol desconocido"}\n`;
-    }
-    embed.addFields({
-      name: "Configuración actual",
-      value: mappingsText.substring(0, 1024),
-    });
-  }
-
-  if (session.embedTitle) {
-    embed.addFields({
-      name: "Vista previa del mensaje",
-      value: `**${session.embedTitle}**\n${session.embedDesc}`,
-    });
-  }
-
-  // Botones de acción
-  const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setCustomId(CUSTOM_IDS.autorole.config.ADD_MAPPING)
-      .setLabel("➕ Agregar Rol")
-      .setStyle(ButtonStyle.Success)
-      .setDisabled(session.mappings.length >= 10),
-    new ButtonBuilder()
-      .setCustomId(CUSTOM_IDS.autorole.config.EDIT_MAPPING)
-      .setLabel("✏️ Editar")
-      .setStyle(ButtonStyle.Primary)
-      .setDisabled(session.mappings.length === 0),
-    new ButtonBuilder()
-      .setCustomId(CUSTOM_IDS.autorole.config.REMOVE_MAPPING)
-      .setLabel("🗑️ Eliminar")
-      .setStyle(ButtonStyle.Danger)
-      .setDisabled(session.mappings.length === 0),
-  );
-
-  const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setCustomId(CUSTOM_IDS.autorole.config.TOGGLE_MODE)
-      .setLabel("🔄 Cambiar Modo")
-      .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder()
-      .setCustomId(CUSTOM_IDS.autorole.config.FINISH)
-      .setLabel("✅ Finalizar")
-      .setStyle(ButtonStyle.Success)
-      .setDisabled(session.mappings.length === 0),
-    new ButtonBuilder()
-      .setCustomId(CUSTOM_IDS.autorole.config.CANCEL)
-      .setLabel("❌ Cancelar")
-      .setStyle(ButtonStyle.Danger),
-  );
+  const embed = await buildConfigEmbed(session, interaction.guild!);
+  const components = buildConfigComponents(session);
 
   await interaction.update({
     embeds: [embed],
-    components: [row1, row2],
+    components,
   });
 }
 
@@ -850,6 +944,101 @@ async function handleFinish(
   await interaction.deferUpdate();
 
   try {
+    let baselineAutoRole:
+      | Awaited<ReturnType<typeof AutoRoleRepo.getAutoRoleByMessageId>>
+      | null
+      | undefined;
+
+    // If we are editing an existing configured message and nothing changed,
+    // do NOTHING (no Discord message edits, no DB writes).
+    if (session.messageId) {
+      baselineAutoRole = await AutoRoleRepo.getAutoRoleByMessageId(
+        session.guildId,
+        session.messageId,
+      );
+
+      const norm = (v: unknown): string =>
+        typeof v === "string" ? v : v == null ? "" : String(v);
+      const normOpt = (v: unknown): string => {
+        const s = norm(v);
+        return s.length === 0 ? "" : s;
+      };
+      const normBool = (v: unknown): boolean => Boolean(v);
+      const normStyle = (v: unknown): string => norm(v).toUpperCase();
+
+      const serializeMappings = (
+        mappings: Array<{
+          roleId: string;
+          type: string;
+          emoji?: string | null;
+          buttonLabel?: string | null;
+          buttonStyle?: string | null;
+          order: number;
+        }>,
+      ): string => {
+        return mappings
+          .slice()
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+          .map(
+            (m) =>
+              [
+                norm(m.roleId),
+                norm(m.type),
+                normOpt(m.emoji),
+                normOpt(m.buttonLabel),
+                normStyle(m.buttonStyle),
+                String(m.order ?? 0),
+              ].join("|"),
+          )
+          .join("\n");
+      };
+
+      if (baselineAutoRole) {
+        const sessionMappings = session.mappings.map((m) => ({
+          roleId: m.roleId,
+          type: m.type,
+          emoji: m.emoji ?? null,
+          buttonLabel: m.buttonLabel ?? null,
+          buttonStyle: m.buttonStyle ?? null,
+          order: m.order,
+        }));
+
+        const existingMappings = (baselineAutoRole.mappings as IRoleMapping[]).map(
+          (m) => ({
+            roleId: m.roleId,
+            type: m.type,
+            emoji: m.emoji ?? null,
+            buttonLabel: m.buttonLabel ?? null,
+            buttonStyle: m.buttonStyle ?? null,
+            order: m.order,
+          }),
+        );
+
+        const dirty =
+          baselineAutoRole.mode !== session.mode ||
+          normOpt(baselineAutoRole.embedTitle) !== normOpt(session.embedTitle) ||
+          normOpt(baselineAutoRole.embedDesc) !== normOpt(session.embedDesc) ||
+          normOpt(baselineAutoRole.embedColor) !== normOpt(session.embedColor) ||
+          normOpt(baselineAutoRole.embedFooter) !== normOpt(session.embedFooter) ||
+          normOpt(baselineAutoRole.embedThumb) !== normOpt(session.embedThumb) ||
+          normOpt(baselineAutoRole.embedImage) !== normOpt(session.embedImage) ||
+          normBool(baselineAutoRole.embedTimestamp) !==
+            normBool(session.embedTimestamp) ||
+          normOpt(baselineAutoRole.embedAuthor) !== normOpt(session.embedAuthor) ||
+          serializeMappings(existingMappings) !== serializeMappings(sessionMappings);
+
+        if (!dirty) {
+          await interaction.editReply({
+            content: "ℹ️ No hay cambios para guardar.",
+            embeds: [],
+            components: [],
+          });
+          setupSessions.delete(sessionId);
+          return;
+        }
+      }
+    }
+
     // Validar configuración
     const validation = await AutoRoleService.validateConfiguration(
       interaction.guild!,
@@ -866,7 +1055,7 @@ async function handleFinish(
     }
 
     let message;
-    let channelId = session.channelId;
+    let channelId = session.targetChannelId;
 
     // Si no hay messageId, crear nuevo mensaje
     if (!session.messageId) {
@@ -906,8 +1095,52 @@ async function handleFinish(
 
       message = result.message;
       session.messageId = message.id;
+    } else if (!session.canEditMessage) {
+      // El mensaje es de un usuario, el bot no puede editarlo
+      // Solo agregar reacciones al mensaje existente
+      logger.info("User message - adding reactions only", {
+        sessionId,
+        messageId: session.messageId,
+        mappingsCount: session.mappings.length,
+      });
+
+      const channel = await interaction.guild!.channels.fetch(channelId);
+      if (!channel || !channel.isTextBased()) {
+        await interaction.editReply({
+          content: "❌ Canal no válido.",
+          embeds: [],
+          components: [],
+        });
+        return;
+      }
+
+      message = await (channel as any).messages.fetch(session.messageId);
+
+      // Solo agregar reacciones para mappings de tipo "reaction"
+      const reactionMappings = session.mappings.filter((m) => m.type === "reaction");
+
+      for (const mapping of reactionMappings) {
+        if (mapping.emoji) {
+          try {
+            // Intentar parsear el emoji para reacción
+            // Puede ser un emoji unicode o un emoji personalizado
+            await message.react(mapping.emoji);
+            logger.info("Reaction added", {
+              messageId: session.messageId,
+              emoji: mapping.emoji,
+              roleId: mapping.roleId,
+            });
+          } catch (reactError) {
+            logger.error("Error adding reaction", {
+              error: reactError instanceof Error ? reactError.message : String(reactError),
+              emoji: mapping.emoji,
+              messageId: session.messageId,
+            });
+          }
+        }
+      }
     } else {
-      // Actualizar mensaje existente
+      // Actualizar mensaje existente (del bot)
       const channel = await interaction.guild!.channels.fetch(channelId);
       if (!channel || !channel.isTextBased()) {
         await interaction.editReply({
@@ -942,10 +1175,12 @@ async function handleFinish(
     }
 
     // Verificar si ya existe una configuración para este mensaje
-    const existingAutoRole = await AutoRoleRepo.getAutoRoleByMessageId(
-      session.guildId,
-      session.messageId!,
-    );
+    const existingAutoRole =
+      baselineAutoRole ??
+      (await AutoRoleRepo.getAutoRoleByMessageId(
+        session.guildId,
+        session.messageId!,
+      ));
 
     let autoRoleId: number;
 
@@ -1047,28 +1282,42 @@ export async function handleModalSubmit(interaction: ModalSubmitInteraction) {
 
     const sessionId = interaction.user.id;
 
-    logger.info("Creating new session", {
-      sessionId,
-      userId: interaction.user.id,
-      guildId: interaction.guild!.id,
-    });
-
-    if (!interaction.channelId) {
-      await interaction.reply({
-        content: "❌ No se pudo determinar el canal.",
-        flags: [MessageFlags.Ephemeral],
+    const existing = setupSessions.get(sessionId);
+    if (existing) {
+      // Session may have been pre-created by /autorole setup with a target channel.
+      existing.embedTitle = embedTitle;
+      existing.embedDesc = embedDesc;
+      existing.mode = modeInput as "multiple" | "unique";
+      existing.messageAuthorIsBot = true;
+      existing.canEditMessage = true;
+      setupSessions.set(sessionId, existing);
+    } else {
+      logger.info("Creating new session", {
+        sessionId,
+        userId: interaction.user.id,
+        guildId: interaction.guild!.id,
       });
-      return;
-    }
 
-    setupSessions.set(sessionId, {
-      guildId: interaction.guild!.id,
-      channelId: interaction.channelId,
-      embedTitle,
-      embedDesc,
-      mode: modeInput as "multiple" | "unique",
-      mappings: [],
-    });
+      if (!interaction.channelId) {
+        await interaction.reply({
+          content: "❌ No se pudo determinar el canal.",
+          flags: [MessageFlags.Ephemeral],
+        });
+        return;
+      }
+
+      setupSessions.set(sessionId, {
+        guildId: interaction.guild!.id,
+        targetChannelId: interaction.channelId,
+        uiChannelId: interaction.channelId,
+        messageAuthorIsBot: true, // Bot will create the message, so it can edit it
+        canEditMessage: true,
+        embedTitle,
+        embedDesc,
+        mode: modeInput as "multiple" | "unique",
+        mappings: [],
+      });
+    }
 
     logger.info("Session created and stored", {
       sessionId,
@@ -1076,11 +1325,7 @@ export async function handleModalSubmit(interaction: ModalSubmitInteraction) {
       allSessions: Array.from(setupSessions.keys()),
     });
 
-    await interaction.reply({
-      content: "✅ Configuración inicial guardada. Ahora agrega roles.",
-      flags: [MessageFlags.Ephemeral],
-    });
-
+    await interaction.deferReply();
     await showConfigurationInterface(interaction, sessionId);
 
     // Iniciar collector global para esta sesión
@@ -1096,20 +1341,33 @@ export async function handleModalSubmit(interaction: ModalSubmitInteraction) {
       return;
     }
 
-    const type = interaction.fields.getTextInputValue("type").toLowerCase() as
-      | "reaction"
-      | "button";
-    const emojiOrLabel = interaction.fields.getTextInputValue("emoji_or_label");
-    const roleId = interaction.fields.getTextInputValue("role_id");
-    const buttonStyle =
-      interaction.fields.getTextInputValue("button_style") || "PRIMARY";
+    // Determinar el tipo según si el bot puede editar el mensaje
+    let type: "reaction" | "button";
+    let emojiOrLabel: string;
+    let roleId: string;
+    let buttonStyle: string;
 
-    if (type !== "reaction" && type !== "button") {
-      await interaction.reply({
-        content: '❌ Tipo inválido. Usa "reaction" o "button".',
-        flags: [MessageFlags.Ephemeral],
-      });
-      return;
+    if (!session.canEditMessage) {
+      // Modal simplificado: solo emoji y role_id
+      type = "reaction";
+      emojiOrLabel = interaction.fields.getTextInputValue("emoji_or_label");
+      roleId = interaction.fields.getTextInputValue("role_id");
+      buttonStyle = "PRIMARY";
+    } else {
+      // Modal completo: tipo, emoji/label, role_id, button_style
+      const typeInput = interaction.fields.getTextInputValue("type").toLowerCase();
+      if (typeInput !== "reaction" && typeInput !== "button") {
+        await interaction.reply({
+          content: '❌ Tipo inválido. Usa "reaction" o "button".',
+          flags: [MessageFlags.Ephemeral],
+        });
+        return;
+      }
+      type = typeInput as "reaction" | "button";
+      emojiOrLabel = interaction.fields.getTextInputValue("emoji_or_label");
+      roleId = interaction.fields.getTextInputValue("role_id");
+      buttonStyle =
+        interaction.fields.getTextInputValue("button_style") || "PRIMARY";
     }
 
     // Verificar que el rol existe
@@ -1138,6 +1396,27 @@ export async function handleModalSubmit(interaction: ModalSubmitInteraction) {
       content: `✅ Rol agregado: ${role.name}`,
       flags: [MessageFlags.Ephemeral],
     });
+
+    // Actualizar el mensaje de configuración para reflejar el nuevo rol
+    if (session.configMessageId) {
+      try {
+        const channel = await interaction.guild!.channels.fetch(session.uiChannelId);
+        if (channel && channel.isTextBased()) {
+          const configMessage = await (channel as any).messages.fetch(session.configMessageId);
+          const updatedEmbed = await buildConfigEmbed(session, interaction.guild!);
+          const components = buildConfigComponents(session);
+          await configMessage.edit({
+            embeds: [updatedEmbed],
+            components,
+          });
+        }
+      } catch (updateError) {
+        logger.error("Error updating config message after adding role", {
+          error: updateError instanceof Error ? updateError.message : String(updateError),
+          sessionId,
+        });
+      }
+    }
   } else if (interaction.customId.startsWith("autorole:modal:customize:")) {
     try {
       logger.info("Processing customize modal", {
@@ -1251,108 +1530,17 @@ export async function handleModalSubmit(interaction: ModalSubmitInteraction) {
       // Actualizar el mensaje de configuración existente
       if (session.configMessageId) {
         try {
-          const channel = await interaction.guild!.channels.fetch(
-            session.channelId,
-          );
+          const channel = await interaction.guild!.channels.fetch(session.uiChannelId);
           if (channel && channel.isTextBased()) {
             const configMessage = await (channel as any).messages.fetch(
               session.configMessageId,
             );
 
-            // Reconstruir el embed y botones
-            const embed = new EmbedBuilder()
-              .setTitle("⚙️ Configuración de Auto-Roles")
-              .setColor(0x5865f2)
-              .addFields(
-                {
-                  name: "Modo",
-                  value:
-                    session.mode === "multiple"
-                      ? "Múltiples roles (usuarios pueden tener varios)"
-                      : "Rol único (solo pueden tener uno)",
-                  inline: true,
-                },
-                {
-                  name: "Roles configurados",
-                  value:
-                    session.mappings.length > 0
-                      ? `${session.mappings.length}/10`
-                      : "Ninguno",
-                  inline: true,
-                },
-              );
-
-            if (session.mappings.length > 0) {
-              let mappingsText = "";
-              for (let i = 0; i < session.mappings.length; i++) {
-                const mapping = session.mappings[i];
-                if (!mapping) continue;
-                const role = await interaction.guild!.roles.fetch(
-                  mapping.roleId,
-                );
-                const identifier =
-                  mapping.type === "reaction"
-                    ? mapping.emoji || "❓"
-                    : `🔘 ${mapping.buttonLabel || "Sin nombre"}`;
-                mappingsText += `${i + 1}. ${identifier} → ${role?.name || "Rol desconocido"}\n`;
-              }
-              embed.addFields({
-                name: "Configuración actual",
-                value: mappingsText.substring(0, 1024),
-              });
-            }
-
-            if (session.embedTitle) {
-              embed.addFields({
-                name: "Vista previa del mensaje",
-                value: `**${session.embedTitle}**\n${session.embedDesc}`,
-              });
-            }
-
-            const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-              new ButtonBuilder()
-                .setCustomId(CUSTOM_IDS.autorole.config.ADD_MAPPING)
-                .setLabel("➕ Agregar Rol")
-                .setStyle(ButtonStyle.Success)
-                .setDisabled(session.mappings.length >= 10),
-              new ButtonBuilder()
-                .setCustomId(CUSTOM_IDS.autorole.config.EDIT_MAPPING)
-                .setLabel("✏️ Editar")
-                .setStyle(ButtonStyle.Primary)
-                .setDisabled(session.mappings.length === 0),
-              new ButtonBuilder()
-                .setCustomId(CUSTOM_IDS.autorole.config.REMOVE_MAPPING)
-                .setLabel("🗑️ Eliminar")
-                .setStyle(ButtonStyle.Danger)
-                .setDisabled(session.mappings.length === 0),
-            );
-
-            const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-              new ButtonBuilder()
-                .setCustomId(CUSTOM_IDS.autorole.config.TOGGLE_MODE)
-                .setLabel("🔄 Cambiar Modo")
-                .setStyle(ButtonStyle.Secondary),
-              new ButtonBuilder()
-                .setCustomId(CUSTOM_IDS.autorole.config.CUSTOMIZE_EMBED)
-                .setLabel("⚙️ Personalizar Embed")
-                .setStyle(ButtonStyle.Secondary),
-              new ButtonBuilder()
-                .setCustomId(CUSTOM_IDS.autorole.config.FINISH)
-                .setLabel("✅ Finalizar")
-                .setStyle(ButtonStyle.Success)
-                .setDisabled(session.mappings.length === 0),
-            );
-
-            const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-              new ButtonBuilder()
-                .setCustomId(CUSTOM_IDS.autorole.config.CANCEL)
-                .setLabel("❌ Cancelar")
-                .setStyle(ButtonStyle.Danger),
-            );
-
+            const updatedEmbed = await buildConfigEmbed(session, interaction.guild!);
+            const components = buildConfigComponents(session);
             await configMessage.edit({
-              embeds: [embed],
-              components: [row1, row2, row3],
+              embeds: [updatedEmbed],
+              components,
             });
 
             logger.info("Configuration interface updated successfully");
@@ -1395,13 +1583,47 @@ export async function handleSelectMenu(interaction: StringSelectMenuInteraction)
     const session = setupSessions.get(sessionId);
     if (!session) return;
 
-    const index = parseInt(interaction.values[0]!);
+    const indexRaw = interaction.values[0];
+    const index = Number.parseInt(indexRaw ?? "", 10);
+
+    if (!Number.isFinite(index) || index < 0 || index >= session.mappings.length) {
+      await interaction.reply({
+        content: "❌ Selección inválida. Volvé a intentar.",
+        flags: [MessageFlags.Ephemeral],
+      });
+      return;
+    }
+
     session.mappings.splice(index, 1);
 
     // Reordenar
     session.mappings.forEach((m, i) => (m.order = i));
 
     setupSessions.set(sessionId, session);
+
+    // Mantener la UI de configuración consistente (igual que al agregar)
+    if (session.configMessageId) {
+      try {
+        const channel = await interaction.guild!.channels.fetch(session.uiChannelId);
+        if (channel && channel.isTextBased()) {
+          const configMessage = await (channel as any).messages.fetch(
+            session.configMessageId,
+          );
+          const updatedEmbed = await buildConfigEmbed(session, interaction.guild!);
+          const components = buildConfigComponents(session);
+          await configMessage.edit({
+            embeds: [updatedEmbed],
+            components,
+          });
+        }
+      } catch (updateError) {
+        logger.error("Error updating config message after removing role", {
+          error:
+            updateError instanceof Error ? updateError.message : String(updateError),
+          sessionId,
+        });
+      }
+    }
 
     await interaction.update({
       content: "✅ Rol eliminado.",

@@ -14,18 +14,19 @@ Sistema automatizado para asignar y remover roles mediante reacciones o botones 
 
 ## 🚀 Comandos Disponibles
 
-### `/autorole-setup [message_id]`
+### `/autorole-setup [message_id] [canal]`
 Configura roles automáticos en un mensaje nuevo o existente.
 
 **Parámetros:**
 - `message_id` (opcional): ID de un mensaje existente. Si no se proporciona, el bot creará un mensaje nuevo.
+- `canal` (opcional): Canal donde el bot enviará el mensaje nuevo de autorole. Si no se proporciona, usa el canal donde ejecutaste el comando.
 
 **Permisos requeridos:** Administrador
 
 **Flujo:**
 1. Si no proporcionas `message_id`:
    - Se abrirá un modal para configurar el título, descripción y modo del mensaje
-   - El bot creará un mensaje embed en el canal donde ejecutaste el comando
+   - El bot creará un mensaje embed en el `canal` elegido (o en el canal donde ejecutaste el comando)
 
 2. Si proporcionas `message_id`:
    - El bot configurará roles en ese mensaje existente
