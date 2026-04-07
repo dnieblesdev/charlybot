@@ -1,5 +1,16 @@
 # @charlybot/bot
 
+## 2.5.0
+
+### Minor Changes
+
+- Improve AutoRole editing and save flow
+
+  - `/autorole editar` now opens the same interactive editor as setup for already-configured message IDs
+  - Fix remover confirmation buttons routing by separating customId namespace
+  - Keep setup UI consistent when removing mappings and avoid saving when nothing changed
+  - API: add bulk delete endpoint for mappings (`DELETE /autoroles/:id/mappings`)
+
 ## 2.4.0
 
 ### Minor Changes
