@@ -1,6 +1,4 @@
 import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
   ChatInputCommandInteraction,
   ButtonBuilder,
   ButtonStyle,
@@ -94,12 +92,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // Botones de confirmación
     const confirmButton = new ButtonBuilder()
-      .setCustomId(CUSTOM_IDS.autorole.config.CONFIRM_REMOVE)
+      .setCustomId(CUSTOM_IDS.autorole.remove.CONFIRM)
       .setLabel("✅ Sí, eliminar")
       .setStyle(ButtonStyle.Danger);
 
     const cancelButton = new ButtonBuilder()
-      .setCustomId(CUSTOM_IDS.autorole.config.CANCEL_REMOVE)
+      .setCustomId(CUSTOM_IDS.autorole.remove.CANCEL)
       .setLabel("❌ Cancelar")
       .setStyle(ButtonStyle.Secondary);
 
@@ -121,7 +119,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         time: 60000, // 1 minuto
       });
 
-      if (confirmation.customId === CUSTOM_IDS.autorole.config.CONFIRM_REMOVE) {
+      if (confirmation.customId === CUSTOM_IDS.autorole.remove.CONFIRM) {
         // Eliminar la configuración
         await AutoRoleRepo.deleteAutoRoleByMessageId(interaction.guild.id, messageId);
 

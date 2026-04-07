@@ -57,8 +57,14 @@ export const CUSTOM_IDS = {
       CUSTOMIZE_EMBED: "autorole:config:customize_embed" as const,
       FINISH: "autorole:config:finish" as const,
       CANCEL: "autorole:config:cancel" as const,
-      CONFIRM_REMOVE: "autorole:config:confirm_remove" as const,
-      CANCEL_REMOVE: "autorole:config:cancel_remove" as const,
+    },
+
+    // ── AutoRole — remover command confirmation buttons ─────────────────────
+    // IMPORTANT: These must NOT be under `config:*` because config buttons are
+    // handled globally by setup.ts; the remover command uses awaitMessageComponent.
+    remove: {
+      CONFIRM: "autorole:remove:confirm" as const,
+      CANCEL: "autorole:remove:cancel" as const,
     },
 
     // ── AutoRole — select menus (handled by session collector in setup.ts) ───

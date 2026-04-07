@@ -1,17 +1,16 @@
 /**
  * AutoRole feature handler.
  *
- * Handles two distinct interaction types:
+ * Handles three distinct interaction types:
  *
  * 1. `autorole:assign:*` buttons — public role-assignment buttons in guild messages.
  *    Contains the logic moved from interactionCreate.ts lines 68–156.
  *
  * 2. `autorole:select:*` select menus — delegated to the session collector in setup.ts.
  *
- * NOTE: `autorole:config:*` buttons are intentionally NOT handled here.
- * Those are intercepted and handled by the channel collector created inside
- * setup.ts → startCollector(). If they somehow reach this handler (which they
- * should not in normal operation), they are silently ignored.
+ * 3. `autorole:config:*` buttons — configuration buttons (add_mapping, edit_mapping, etc.)
+ *    handled directly here instead of via channel collector (collectors don't see
+ *    interactions on ephemeral messages).
  */
 
 import { MessageFlags } from "discord.js";
@@ -21,28 +20,36 @@ import type {
 } from "discord.js";
 import * as AutoRoleRepo from "../../../config/repositories/AutoRoleRepo.ts";
 import * as AutoRoleService from "../../services/AutoRoleService.ts";
-import { handleSelectMenu as handleAutoRoleSelectMenu } from "../../commands/autorole/setup.ts";
+import {
+  handleSelectMenu as handleAutoRoleSelectMenu,
+  handleConfigButton as handleAutoRoleConfigButton,
+} from "../../commands/autorole/setup.ts";
 import { parseCustomId } from "../customIds.ts";
 import logger from "../../../utils/logger.ts";
 
 /**
  * Handles button interactions in the autorole feature.
  *
- * Only processes `autorole:assign:{roleId}` buttons.
- * Config buttons (`autorole:config:*`) are not handled here — they belong
- * to the session collector in setup.ts.
+ * Processes both public role-assignment buttons (`autorole:assign:{roleId}`)
+ * and configuration buttons (`autorole:config:*`).
  */
 export async function handleButton(
   interaction: ButtonInteraction,
 ): Promise<void> {
-  const { action, payload: roleId } = parseCustomId(interaction.customId);
+  const { action } = parseCustomId(interaction.customId);
+
+  // Configuration buttons are handled directly (not via collector)
+  if (action === "config" || action.startsWith("config:")) {
+    await handleAutoRoleConfigButton(interaction);
+    return;
+  }
 
   // Only handle public role-assignment buttons
   if (action !== "assign") {
-    // Config buttons (add_mapping, edit_mapping, etc.) are handled by the
-    // session collector in setup.ts. Nothing to do here.
     return;
   }
+
+  const { payload: roleId } = parseCustomId(interaction.customId);
 
   if (!interaction.guild) {
     return;

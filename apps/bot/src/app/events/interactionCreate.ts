@@ -4,6 +4,7 @@ import logger from "../../utils/logger.ts";
 import { parseCustomId, FEATURES } from "../interactions/customIds.ts";
 import * as verificationHandler from "../interactions/handlers/verification.handler.ts";
 import * as autoroleHandler from "../interactions/handlers/autorole.handler.ts";
+import { handleModalSubmit as handleAutoroleModal } from "../commands/autorole/setup.ts";
 import * as welcomeHandler from "../interactions/handlers/welcome.handler.ts";
 
 export default {
@@ -100,13 +101,8 @@ export default {
             await welcomeHandler.handleModal(interaction);
             break;
           case FEATURES.AUTOROLE:
-            // autorole modals are handled by the session collector in setup.ts;
-            // they should not reach here in normal operation.
-            logger.warn("interactionCreate: autorole modal reached router (should be handled by collector)", {
-              customId: interaction.customId,
-              userId: interaction.user.id,
-              guildId: interaction.guildId,
-            });
+            // Autorole modals are handled by setup.ts handleModalSubmit
+            await handleAutoroleModal(interaction);
             break;
           default:
             logger.warn("interactionCreate: unrecognized modal feature", {
