@@ -55,3 +55,6 @@ apps/bot/scripts/
 
 # prisma generated
 prisma/
+
+# docs (PDFs and documents)
+docs/
