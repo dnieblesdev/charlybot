@@ -1,130 +1,102 @@
-# agents.md — CharlyBot
+# AGENTS.md — CharlyBot Bot (`apps/bot`)
 
-Contexto para agentes de IA que trabajen en este proyecto.
-Leer COMPLETO antes de generar cualquier código.
+Contexto para agentes de IA que trabajen en el bot. Leelo completo antes de generar cualquier cambio.
 
----
+## TL;DR
 
-## Qué es este proyecto
+- Stack: **TypeScript + Bun + Discord.js v14**.
+- Entry real: `src/index.ts` (importa `src/app/core/index.ts`).
+- Comandos nuevos: carpeta + `index.ts` + subcomandos (patrón `src/app/commands/autorole/`).
+- Interacciones: `customId` SIEMPRE via `CUSTOM_IDS.*` (no strings hardcodeadas).
+- Respuestas privadas: `flags: [MessageFlags.Ephemeral]` (NUNCA `ephemeral: true`).
+- Persistencia: el bot consume la **API HTTP** (adapters en `src/infrastructure/api/*`).
 
-Bot de Discord multifuncional construido con **TypeScript + Bun + Discord.js v14**.
-Corre en un único proceso. No tiene frontend. No tiene API pública.
+## Qué Es Este Proyecto
 
-**Runtime:** Bun (no Node.js — usar APIs de Bun cuando sea posible)
-**Lenguaje:** TypeScript strict
-**ORM:** Prisma 7 con adapter LibSQL → SQLite (`dev.db`)
-**Logs:** Winston (`src/utils/logger.ts`)
+Bot de Discord multifuncional.
 
----
+- Runtime: Bun
+- Lenguaje: TypeScript (ESM)
+- Discord: Discord.js v14
+- Logs: Winston (`src/utils/logger.ts`)
 
-## Sistemas del bot
+## Sistemas Del Bot
 
 | Sistema | Qué hace | Comandos principales |
 |---|---|---|
-| **Música** | Reproduce YouTube/Spotify vía `play-dl` + `yt-dlp` con cola, loops, shuffle | `/play`, `/skip`, `/queue`, `/nowplaying`, `/pause`, `/resume`, `/stop`, `/loop`, `/shuffle`, `/volume`, `/join`, `/leave` |
-| **Verificación** | Panel con botón → modal de registro → revisión de moderador → asignación de rol | `/setup-verification`, `/send-verification-panel`, `/list-pending-verifications` |
-| **AutoRole** | Asignación de roles por reacción o botón en mensajes configurables | `/autorole setup/listar/editar/remover` |
-| **Economía** | Wallet por servidor, banco global, trabajo, crimen, robo, ruleta, leaderboard | `/work`, `/crime`, `/rob`, `/balance`, `/deposit`, `/retirar`, `/ruleta`, `/leaderboard`, `/bail` |
-| **Config** | Configuración por servidor (canales de log, bienvenida, verificación, etc.) | `/set-welcome`, `/set-voice-log-channel`, `/set-image-channel`, `/show-config` |
-| **Logs** | Eventos de voz, entrada/salida de miembros, mensajes | Automático vía events |
-| **Clases** | Sistema de roles jerárquicos (tipo → clase → subclase) para juegos de rol | `/addClass`, `/listClasses`, `/removeClass` |
+| Música | Reproduce YouTube/Spotify vía `play-dl` + `yt-dlp` con cola, loops, shuffle | `/play`, `/skip`, `/queue`, `/nowplaying`, `/pause`, `/resume`, `/stop`, `/loop`, `/shuffle`, `/volume`, `/join`, `/leave` |
+| Verificación | Panel con botón → modal de registro → revisión de moderador → asignación de rol | `/setup-verification`, `/send-verification-panel`, `/list-pending-verifications` |
+| AutoRole | Asignación de roles por reacción o botón en mensajes configurables | `/autorole setup/listar/editar/remover` |
+| Economía | Wallet por servidor, banco global, trabajo, crimen, robo, ruleta, leaderboard | `/work`, `/crime`, `/rob`, `/balance`, `/deposit`, `/retirar`, `/ruleta`, `/leaderboard`, `/bail` |
+| Config | Configuración por servidor (canales de log, bienvenida, verificación, etc.) | `/set-welcome`, `/set-voice-log-channel`, `/set-image-channel`, `/show-config` |
+| Logs | Eventos de voz, entrada/salida de miembros, mensajes | Automático vía events |
+| Clases | Sistema de roles jerárquicos (tipo → clase → subclase) | `/addClass`, `/listClasses`, `/removeClass` |
 
----
-
-## Estructura del proyecto
+## Estructura (Real)
 
 ```
 src/
-├── app/
-│   ├── core/
-│   │   ├── DiscordClient.ts     ← Clase que wrappea discord.js Client
-│   │   └── index.ts             ← Entry point: configura ffmpeg, Spotify, arranca el bot
-│   ├── commands/                ← Comandos slash
-│   │   ├── autorole/            ← PATRÓN ESTÁNDAR (ver abajo)
-│   │   │   ├── index.ts         ← SlashCommandBuilder + router de subcomandos
-│   │   │   ├── setup.ts         ← Lógica del subcomando "setup"
-│   │   │   ├── listar.ts        ← Lógica del subcomando "listar"
-│   │   │   ├── editar.ts        ← Lógica del subcomando "editar"
-│   │   │   └── remover.ts       ← Lógica del subcomando "remover"
-│   │   └── *.ts                 ← Comandos legacy (un archivo por comando) — NO agregar más así
-│   ├── events/                  ← Event handlers de Discord.js
-│   │   ├── interactionCreate.ts ← Router central de interacciones (botones, modales, selects, slash)
-│   │   ├── ready.ts
-│   │   ├── guildMemberAdd.ts
-│   │   ├── guildMemberRemove.ts
-│   │   ├── voiceStateUpdate.ts
-│   │   ├── messageCreate.ts
-│   │   ├── messageReactionAdd.ts
-│   │   ├── messageReactionRemove.ts
-│   │   └── guildCreate.ts
-│   ├── interactions/            ← Registro de customIds y handlers de interacciones
-│   │   ├── customIds.ts         ← CUSTOM_IDS, FEATURES, parseCustomId()
-│   │   └── handlers/
-│   │       ├── verification.handler.ts
-│   │       ├── autorole.handler.ts
-│   │       └── welcome.handler.ts
-│   ├── services/                ← Lógica de negocio (sin imports de discord.js cuando sea posible)
-│   │   ├── MusicService.ts      ← Singleton, maneja colas por guildId
-│   │   ├── AutoRoleService.ts   ← Funciones puras para asignar/quitar roles
-│   │   ├── VerificationHandler.ts
-│   │   ├── ImageService.ts
-│   │   └── economy/
-│   │       ├── EconomyService.ts
-│   │       ├── EconomyConfigService.ts
-│   │       ├── LeaderboardService.ts
-│   │       └── RouletteService.ts
-│   └── loader.ts                ← Carga dinámica de commands y events al iniciar
-├── config/
-│   ├── repositories/            ← Acceso a la base de datos (una función por operación)
-│   │   ├── GuildConfigRepo.ts
-│   │   ├── AutoRoleRepo.ts
-│   │   ├── VerificationRepo.ts
-│   │   └── ClassRolesRepo.ts
-│   ├── models/                  ← Tipos/interfaces de configuración
-│   └── music.ts                 ← Constantes y config del sistema de música
-├── infrastructure/
-│   └── storage/
-│       ├── prismaClient.ts      ← Instancia singleton de PrismaClient (exporta `prisma`)
-│       ├── PrismaStorage.ts     ← Clase genérica CRUD sobre Prisma (con cache opcional)
-│       ├── SimpleStorage.ts     ← LEGACY: storage JSON en archivos. NO usar para features nuevas.
-│       └── index.ts             ← Re-exporta todo
-├── adapters/
-│   ├── StorageAdapter.ts        ← Vacío. Deuda técnica del intento de abstracción previo.
-│   └── AudioAdapter.ts          ← Vacío. Deuda técnica.
-├── types/                       ← Tipos TypeScript del dominio (music, etc.)
-├── utils/
-│   └── logger.ts                ← Winston logger. Usar siempre en vez de console.log.
-├── generated/
-│   └── prisma/                  ← Generado por Prisma. NUNCA editar manualmente.
-└── container.ts                 ← Vacío. Deuda técnica del intento de DI previo.
+  index.ts                     ← importa app/core/index.ts
+  app/
+    core/
+      DiscordClient.ts         ← wrapper de discord.js Client
+      index.ts                 ← bootstrap: ffmpeg/Spotify, Valkey/streams, arranque
+    loader.ts                  ← carga dinámica de commands y events
+    commands/                  ← slash commands
+    events/                    ← event handlers (router de interacciones en interactionCreate.ts)
+    interactions/
+      customIds.ts             ← CUSTOM_IDS, FEATURES, parseCustomId()
+      handlers/
+    services/                  ← lógica de negocio
+  infrastructure/
+    api/                       ← client HTTP + adapters hacia apps/api
+    valkey/                    ← lifecycle Valkey (wrapper con fallback)
+    streams/                   ← streams de música (Valkey)
+    storage/                   ← hoy no se usa (ver deuda técnica)
+  config/
+    repositories/              ← boundary de acceso a datos (hoy via API adapters)
+  utils/
+    logger.ts                  ← Winston logger (usar siempre)
+  types/
 ```
 
----
+## Do / Don’t (Agentes)
 
-## Patrón estándar para comandos — OBLIGATORIO
+### Do
+
+- Usá el patrón de comandos por carpeta (ver abajo).
+- Antes de operaciones async largas, hacé `await interaction.deferReply(...)`.
+- Usá `CUSTOM_IDS.*` + `parseCustomId()` para interacciones.
+- Usá `logger` (Winston) en vez de `console.log`.
+
+### Don’t
+
+- **NUNCA** uses `ephemeral: true` (deprecado). Usá `flags: [MessageFlags.Ephemeral]`.
+- No hardcodees strings de `customId`.
+- No agregues comandos legacy como archivo plano en `src/app/commands/*.ts`.
+- No intentes conectar Prisma desde el bot (en el código actual, el bot habla con la API).
+
+## Patrón Estándar Para Comandos (OBLIGATORIO)
 
 Todo comando nuevo debe seguir la estructura de `src/app/commands/autorole/`:
 
 ```
 src/app/commands/<nombre-del-comando>/
-├── index.ts          ← SlashCommandBuilder + export { data, execute } + router
-├── <subcomando1>.ts  ← export async function execute(interaction)
-├── <subcomando2>.ts
-└── ...
+  index.ts          ← SlashCommandBuilder + export { data, execute } + router
+  <subcomando1>.ts  ← export async function execute(interaction)
+  <subcomando2>.ts
 ```
 
-### `index.ts` — estructura mínima
+### `index.ts` (estructura mínima)
 
-```typescript
+```ts
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { execute as subcomando1 } from "./subcomando1";
 
 export const data = new SlashCommandBuilder()
   .setName("nombre")
   .setDescription("Descripción")
-  .addSubcommand((sub) =>
-    sub.setName("subcomando1").setDescription("Hace X")
-  );
+  .addSubcommand((sub) => sub.setName("subcomando1").setDescription("Hace X"));
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const subcommand = interaction.options.getSubcommand();
@@ -138,179 +110,103 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 ### Reglas de comandos
 
-- `data` y `execute` son exports nombrados obligatorios — el loader los detecta así
-- Si el comando tiene `init(client)`, se llama al arrancar (útil para recuperar estado)
-- Para respuestas privadas: siempre usar `flags: [MessageFlags.Ephemeral]` — importar `MessageFlags` desde `discord.js`
-- **NUNCA** usar `ephemeral: true` — está deprecado en Discord.js v14 moderno
-- Siempre hacer `defer` antes de operaciones async largas: `await interaction.deferReply()`
-- Los permisos se definen en `SlashCommandBuilder` con `setDefaultMemberPermissions()`
+- `data` y `execute` son exports nombrados obligatorios (el loader los detecta así).
+- Si el comando expone `init(client)`, se llama al arrancar (útil para recuperar estado).
+- Para respuestas privadas: siempre `flags: [MessageFlags.Ephemeral]`.
+- **NUNCA** `ephemeral: true`.
+- Para tareas largas: `await interaction.deferReply(...)`.
 
----
+## Manejo de Interacciones (botones, modales, selects)
 
-## Base de datos
-
-**Motor:** SQLite (archivo `dev.db` en raíz del proyecto y en `prisma/`)
-**ORM:** Prisma 7 con adapter LibSQL (`@prisma/adapter-libsql`)
-**Schema:** `prisma/schema.prisma`
-**Client generado:** `src/generated/prisma/`
-
-### Cómo acceder a la DB
-
-Siempre importar desde `src/infrastructure/storage/`:
-
-```typescript
-import { prisma } from "../../infrastructure/storage";
-```
-
-O usar `PrismaStorage` para operaciones CRUD genéricas:
-
-```typescript
-import { prisma, PrismaStorage } from "../../infrastructure/storage";
-
-const storage = new PrismaStorage<MiModelo>({
-  prismaClient: prisma,
-  modelName: "miModelo",    // nombre del modelo en camelCase como en Prisma
-  enableCache: true,
-  cacheTTL: 300000,         // 5 minutos en ms
-});
-```
-
-### Modelos disponibles
-
-| Modelo | Propósito |
-|---|---|
-| `Guild` | Metadata del servidor (nombre, owner, member count) |
-| `GuildConfig` | Configuración por servidor (canales, roles) |
-| `UserEconomy` | Wallet por usuario+servidor (pocket, jail, cooldowns) |
-| `GlobalBank` | Banco global compartido entre servidores (por userId) |
-| `RouletteGame` / `RouletteBet` | Partidas y apuestas de ruleta |
-| `EconomyConfig` | Configuración de economía por servidor |
-| `Leaderboard` | Cache de ranking por servidor |
-| `AutoRole` / `RoleMapping` | Configuración de auto-roles por mensaje |
-| `tipoClase` / `classes` / `subclass` | Jerarquía de clases para sistema de roles de juego |
-
-### Repositories
-
-Para features nuevas que requieran acceso a DB, crear el repository en `src/config/repositories/`:
-
-```typescript
-// src/config/repositories/MiFeatureRepo.ts
-import { prisma } from "../../infrastructure/storage";
-
-export async function getMiDato(guildId: string) {
-  return prisma.miModelo.findUnique({ where: { guildId } });
-}
-```
-
-**NO** acceder directamente a `prisma` desde commands o services — siempre ir a través de un repository.
-
----
-
-## Manejo de interacciones (botones, modales, select menus)
-
-El router central está en `src/app/events/interactionCreate.ts`.
-
-Si el nuevo comando genera botones, modales o select menus con `customId` propio, hay que registrar el handler en ese archivo.
+Router central: `src/app/events/interactionCreate.ts`.
 
 ### Convención de `customId`
 
-**Formato:** `feature:action[:payload]`
+Formato: `feature:action[:payload]`
 
-- `feature` — identifica el subsistema (`verification`, `autorole`, `welcome`, ...)
-- `action` — operación dentro del subsistema (`start`, `approve`, `assign`, ...)
-- `payload` — dato de runtime opcional (userId, roleId, channelId, ...). Puede contener `_`.
-- `:` es el **único separador estructural**. `_` puede aparecer dentro del payload pero NUNCA como separador de segmentos.
+- `:` es el único separador estructural.
+- `_` puede existir dentro del payload pero no como separador.
 
-**NUNCA** escribir strings de customId hardcodeados. Siempre usar `CUSTOM_IDS.*` de `src/app/interactions/customIds.ts`:
+Regla: **NUNCA** hardcodear strings. Siempre usar `CUSTOM_IDS.*` de `src/app/interactions/customIds.ts`.
 
-```typescript
-import { CUSTOM_IDS, parseCustomId, FEATURES } from "../../interactions/customIds";
+```ts
+import { CUSTOM_IDS, parseCustomId } from "../../interactions/customIds";
 
-// Crear un botón
-new ButtonBuilder().setCustomId(CUSTOM_IDS.verification.APPROVE(userId))
+new ButtonBuilder().setCustomId(CUSTOM_IDS.verification.APPROVE(userId));
 
-// Parsear en un handler
 const { feature, action, payload } = parseCustomId(interaction.customId);
 ```
 
-Para agregar una feature nueva con botones/modales/selects:
-1. Agregar las constantes en `src/app/interactions/customIds.ts`
-2. Crear `src/app/interactions/handlers/<feature>.handler.ts`
-3. Registrar el handler en `src/app/events/interactionCreate.ts` (agregar el `case` al switch)
+Para agregar una feature nueva con interacciones:
 
----
+1. Agregar constantes en `src/app/interactions/customIds.ts`.
+2. Crear `src/app/interactions/handlers/<feature>.handler.ts`.
+3. Registrar el handler en `src/app/events/interactionCreate.ts`.
+
+## Datos y Repositories
+
+En el código actual, el bot persiste/consulta datos via HTTP hacia `apps/api`.
+
+- Client HTTP: `src/infrastructure/api/ApiClient.ts` (`API_URL` + `API_KEY`).
+- Adapters HTTP: `src/infrastructure/api/*Adapter.ts`.
+- Repositories: `src/config/repositories/*.ts` (API boundary para el resto del bot).
+
+Regla: commands/services NO deberían hablar con la API directamente; usá repositories.
 
 ## Logger
 
-Siempre usar el logger de Winston en vez de `console.log`:
+Siempre usar Winston (`src/utils/logger.ts`) en vez de `console.log`.
 
-```typescript
+```ts
 import logger from "../../utils/logger";
 
-logger.info("Mensaje informativo", { contexto: "datos adicionales" });
+logger.info("Mensaje informativo", { ctx: "algo" });
 logger.warn("Advertencia");
-logger.error("Error", { error: error instanceof Error ? error.message : String(error) });
-logger.debug("Debug detallado");  // Solo aparece en desarrollo
+logger.error("Error", { error: err instanceof Error ? err.message : String(err) });
 ```
 
----
+## Valkey
 
-## Deuda técnica — NO usar ni extender
+El bot usa Valkey con fallback en memoria.
 
-Estos archivos existen pero están vacíos o son legacy. No basar nuevas features en ellos:
+- Lifecycle: `src/infrastructure/valkey/index.ts`.
+- Streams de música: `src/infrastructure/streams/*`.
 
-- `src/adapters/StorageAdapter.ts` — vacío, intento abandonado de abstracción de storage
-- `src/adapters/AudioAdapter.ts` — vacío
-- `src/container.ts` — vacío, intento abandonado de dependency injection
-- `src/infrastructure/storage/SimpleStorage.ts` — LEGACY, guardaba datos en JSON planos. Ya no se usa para features nuevas. Toda la persistencia es vía Prisma.
+Variables típicas: `VALKEY_HOST`, `VALKEY_PORT`, `VALKEY_PASSWORD`, `VALKEY_PREFIX`, `VALKEY_MAX_RETRIES`.
 
----
+## Docker Dev
 
-## Variables de entorno
+`docker/docker-compose.dev.yml` levanta `valkey`, `api` y `bot`.
 
-Definidas en `.env` (ver `.env.example`):
+## Variables de Entorno (mínimas)
 
-| Variable | Requerida | Descripción |
-|---|---|---|
-| `DISCORD_TOKEN` | ✅ | Token del bot |
-| `CLIENT_ID` | ✅ | Application ID del bot |
-| `GUILD_ID` | ❌ | Guild ID para comandos de desarrollo |
-| `DATABASE_URL` | ❌ | Ruta a la DB SQLite (default: `file:./dev.db`) |
-| `SPOTIFY_CLIENT_ID` | ❌ | Para soporte de Spotify en música |
-| `SPOTIFY_CLIENT_SECRET` | ❌ | Para soporte de Spotify en música |
-| `SPOTIFY_REFRESH_TOKEN` | ❌ | Para soporte de Spotify en música |
+- `DISCORD_TOKEN` (requerida)
+- `CLIENT_ID` (requerida para scripts)
+- `GUILD_ID`/`GUILD_ID2`/`GUILD_ID3` (opcionales; usados por scripts de registro)
+- `API_URL` (default en código: `http://localhost:3000`)
+- `API_KEY` (default en código: `dev-key`)
+- `LOG_LEVEL`
+- `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REFRESH_TOKEN`
+- `VALKEY_*`
 
----
-
-## Scripts útiles
+## Scripts Útiles
 
 ```bash
-bun run dev          # Inicia el bot en modo desarrollo
-bun run rc           # Registra los slash commands en Discord  → scripts/registerCommands.ts
-bun run cc           # Limpia los slash commands registrados   → scripts/clearCommands.ts
-bun run lc           # Lista los comandos registrados          → scripts/listRegistered.ts
-bunx prisma migrate dev   # Crea y aplica una migración nueva
-bunx prisma studio        # GUI para inspeccionar la base de datos
+bun run dev          # Inicia el bot (apps/bot)
+bun run rc           # Registra slash commands (scripts/registerCommands.ts)
+bun run cc           # Limpia slash commands
+bun run lc           # Lista slash commands registrados
 ```
 
-> Los scripts de administración de comandos viven en `scripts/` (no en `src/`). Son ejecutables directos con Bun, no comandos del bot.
+Nota: los scripts de administración de comandos viven en `scripts/` (raíz) y se ejecutan con Bun.
 
----
+## Deuda Técnica (No Extender)
 
-## Skills disponibles
+- `src/adapters/StorageAdapter.ts` (vacío)
+- `src/adapters/AudioAdapter.ts` (vacío)
+- `src/container.ts` (vacío)
+- `src/infrastructure/storage/index.ts` (hoy no se usa; el bot consume la API)
 
-| Skill | Descripción | Archivo |
-|---|---|---|
-| `discord-command` | Crea un comando slash siguiendo la convención del proyecto (carpeta + index.ts + subcomandos) | [skills/discord-command/SKILL.md](skills/discord-command/SKILL.md) |
+## Skills Disponibles
 
----
-
-## Checklist para agregar una feature nueva
-
-1. **¿Necesita persistencia?** → Agregar modelo en `prisma/schema.prisma` + migrar + crear repository en `src/config/repositories/`
-2. **¿Tiene lógica de negocio compleja?** → Crear service en `src/app/services/`
-3. **¿Es un comando slash?** → Crear carpeta en `src/app/commands/<nombre>/` con `index.ts` + archivos por subcomando
-4. **¿Genera botones/modales/selects?** → Agregar constantes en `src/app/interactions/customIds.ts`, crear `src/app/interactions/handlers/<feature>.handler.ts`, y registrar el `case` en `src/app/events/interactionCreate.ts`
-5. **¿Necesita escuchar eventos de Discord?** → Agregar o modificar el event handler correspondiente en `src/app/events/`
-6. **Logs:** Siempre usar `logger` de Winston, nunca `console.log`
-7. **Tipos:** Definir interfaces/tipos en `src/types/` si son compartidos entre múltiples archivos
+- `skills/discord-command/SKILL.md`: guía para crear comandos slash respetando el patrón del repo.

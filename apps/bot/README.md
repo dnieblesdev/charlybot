@@ -80,7 +80,23 @@ bun run lc
 - **Framework:** Discord.js v14
 - **Lenguaje:** TypeScript
 - **Audio:** @discordjs/voice, play-dl, yt-dlp-wrap
+- **Cache/PubSub:** Valkey (ioredis) — streams para música, cache, pub/sub
 - **Logs:** Winston
+
+## 🐳 Ejecución con Docker
+
+```bash
+# Requiere tener Docker + Docker Compose instalado
+docker compose -f ../docker/docker-compose.dev.yml up bot
+```
+
+O单体:
+
+```bash
+# Con Valkey manual
+docker run -d -p 6379:6379 valkey/valkey:8.0
+cd apps/bot && bun run dev
+```
 
 ## 📁 Estructura del Proyecto
 

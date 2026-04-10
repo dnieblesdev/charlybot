@@ -1,5 +1,13 @@
 # @charlybot/api
 
+## 2.4.1
+
+### Patch Changes
+
+- docs: add structured API agent guide
+
+  - Add `apps/api/AGENTS.md` describing stack, entrypoint, routes, auth, and conventions.
+
 ## 2.4.0
 
 ### Minor Changes

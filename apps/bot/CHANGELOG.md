@@ -1,5 +1,13 @@
 # @charlybot/bot
 
+## 2.7.1
+
+### Patch Changes
+
+- docs: refresh bot agent guide
+
+  - Restructure `apps/bot/AGENTS.md` with TL;DR, conventions, and up-to-date architecture notes.
+
 ## 2.7.0
 
 ### Minor Changes
