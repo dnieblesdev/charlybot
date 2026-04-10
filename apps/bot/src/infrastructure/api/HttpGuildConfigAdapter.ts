@@ -1,7 +1,7 @@
 import type { IGuildConfig, Guild } from "@charlybot/shared";
 import type { IGuildConfigRepository } from "../../domain/ports/IGuildConfigRepository";
 import { HttpRepositoryAdapter } from "./HttpRepositoryAdapter";
-import { memoryCache } from "./MemoryCache";
+import { getValkeyClient } from "../valkey";
 import { CACHE_KEYS, CACHE_TTL } from "./cacheConstants";
 
 export class HttpGuildConfigAdapter
@@ -10,21 +10,23 @@ export class HttpGuildConfigAdapter
 {
   async findById(guildId: string): Promise<IGuildConfig | null> {
     const cacheKey = CACHE_KEYS.GUILD_CONFIG(guildId);
-    
-    // Check cache first
-    const cached = memoryCache.get(cacheKey);
+    const valkey = getValkeyClient();
+
+    // Check distributed cache first
+    const cached = await valkey.get<IGuildConfig | null>(cacheKey);
     if (cached !== undefined) {
-      return cached as IGuildConfig | null;
+      return cached;
     }
 
+    // Fetch from API
     try {
       const response = await this.client.get(`guilds/${guildId}/config`);
       if (response.status === 404) {
-        memoryCache.set(cacheKey, null, CACHE_TTL.CONFIG);
+        await valkey.set<null>(cacheKey, null, CACHE_TTL.CONFIG / 1000);
         return null;
       }
       const result = await response.json<IGuildConfig>();
-      memoryCache.set(cacheKey, result, CACHE_TTL.CONFIG);
+      await valkey.set<IGuildConfig>(cacheKey, result, CACHE_TTL.CONFIG / 1000);
       return result;
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'response' in error && (error.response as any)?.status === 404) return null;
@@ -36,14 +38,18 @@ export class HttpGuildConfigAdapter
     await this.client.patch(`guilds/${guildId}/config`, {
       json: data,
     });
-    // Invalidate cache
-    memoryCache.invalidate(CACHE_KEYS.GUILD_CONFIG(guildId));
+    // Invalidate distributed cache
+    const cacheKey = CACHE_KEYS.GUILD_CONFIG(guildId);
+    const valkey = getValkeyClient();
+    await valkey.del(cacheKey);
   }
 
   async delete(guildId: string): Promise<void> {
     await this.client.delete(`guilds/${guildId}/config`);
-    // Invalidate cache
-    memoryCache.invalidate(CACHE_KEYS.GUILD_CONFIG(guildId));
+    // Invalidate distributed cache
+    const cacheKey = CACHE_KEYS.GUILD_CONFIG(guildId);
+    const valkey = getValkeyClient();
+    await valkey.del(cacheKey);
   }
 
   async findAll(): Promise<IGuildConfig[]> {

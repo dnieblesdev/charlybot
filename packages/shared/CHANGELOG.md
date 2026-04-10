@@ -1,5 +1,15 @@
 # @charlybot/shared
 
+## 2.4.0
+
+### Minor Changes
+
+- Add Valkey (Redis-compatible) integration layer
+
+  - Add shared Valkey client wrapper with fallback
+  - Add key/channel builders for cache, pub/sub, and streams
+  - Add Streams helpers for durable music queue processing
+
 ## 2.3.1
 
 ### Patch Changes

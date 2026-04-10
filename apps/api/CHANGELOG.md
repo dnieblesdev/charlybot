@@ -1,5 +1,19 @@
 # @charlybot/api
 
+## 2.4.0
+
+### Minor Changes
+
+- Add Valkey-backed caching and pub/sub hooks
+
+  - Add Valkey provider + cache read-through service for music queue endpoint
+  - Add pub/sub subscription wiring (music domain)
+
+### Patch Changes
+
+- Updated dependencies
+  - @charlybot/shared@2.4.0
+
 ## 2.3.2
 
 ### Patch Changes

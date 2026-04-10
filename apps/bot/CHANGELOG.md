@@ -1,5 +1,14 @@
 # @charlybot/bot
 
+## 2.7.0
+
+### Minor Changes
+
+- Add Valkey-backed cache and durable Streams consumer for music
+
+  - Add Valkey provider with fallback
+  - Publish music queue events and consume via Streams (consumer groups + DLQ)
+
 ## 2.6.0
 
 ### Minor Changes

@@ -3,21 +3,25 @@ import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { MusicQueueItemSchema, MusicQueueSchema, GuildMusicConfigSchema } from "@charlybot/shared";
 import logger from "../utils/logger";
+import { getMusicQueueCacheService } from "../services/music-queue-cache.service";
 
 const router = new Hono();
 
 // GET /api/v1/music/queues/:guildId
 router.get("/queues/:guildId", async (c) => {
   const guildId = c.req.param("guildId");
+  const cacheService = getMusicQueueCacheService();
 
   try {
-    const queue = await prisma.musicQueue.findUnique({
-      where: { guildId },
-      include: {
-        items: {
-          orderBy: { position: "asc" },
+    const queue = await cacheService.getQueue(guildId, async () => {
+      return prisma.musicQueue.findUnique({
+        where: { guildId },
+        include: {
+          items: {
+            orderBy: { position: "asc" },
+          },
         },
-      },
+      });
     });
 
     if (!queue) {
@@ -35,6 +39,7 @@ router.get("/queues/:guildId", async (c) => {
 router.post("/queues/:guildId/items", zValidator("json", MusicQueueItemSchema.omit({ queueId: true, position: true })), async (c) => {
   const guildId = c.req.param("guildId");
   const itemData = c.req.valid("json");
+  const cacheService = getMusicQueueCacheService();
 
   try {
     // Ensure Queue exists first
@@ -61,6 +66,9 @@ router.post("/queues/:guildId/items", zValidator("json", MusicQueueItemSchema.om
       },
     });
 
+    // Invalidate cache on mutation
+    await cacheService.invalidateQueue(guildId);
+
     return c.json(newItem);
   } catch (error) {
     logger.error(`Error adding item to queue for ${guildId}`, { error });
@@ -72,6 +80,7 @@ router.post("/queues/:guildId/items", zValidator("json", MusicQueueItemSchema.om
 router.delete("/queues/:guildId/items/:position", async (c) => {
   const guildId = c.req.param("guildId");
   const position = parseInt(c.req.param("position"));
+  const cacheService = getMusicQueueCacheService();
 
   if (isNaN(position)) {
     return c.json({ error: "Invalid position" }, 400);
@@ -105,6 +114,9 @@ router.delete("/queues/:guildId/items/:position", async (c) => {
       WHERE queueId = ${queue.id} AND position > ${position}
     `;
 
+    // Invalidate cache on mutation
+    await cacheService.invalidateQueue(guildId);
+
     return c.json({ success: true });
   } catch (error) {
     logger.error(`Error removing item from queue for ${guildId}`, { error });
@@ -115,6 +127,7 @@ router.delete("/queues/:guildId/items/:position", async (c) => {
 // DELETE /api/v1/music/queues/:guildId/items (Clear queue)
 router.delete("/queues/:guildId/items", async (c) => {
   const guildId = c.req.param("guildId");
+  const cacheService = getMusicQueueCacheService();
 
   try {
     const queue = await prisma.musicQueue.findUnique({
@@ -128,6 +141,9 @@ router.delete("/queues/:guildId/items", async (c) => {
     await prisma.musicQueueItem.deleteMany({
       where: { queueId: queue.id },
     });
+
+    // Invalidate cache on mutation
+    await cacheService.invalidateQueue(guildId);
 
     return c.json({ success: true });
   } catch (error) {

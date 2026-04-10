@@ -18,9 +18,11 @@ build
 !package.json
 
 # Docker (excluir del copy)
-docker
-Dockerfile*
-docker-compose*
+# NOTE: Necesitamos incluir el entrypoint de runtime install en el build context.
+# Por eso ignoramos el directorio docker por defecto, pero re-incluimos lo necesario.
+docker/*
+!docker/docker/
+!docker/docker/entrypoint.sh
 
 # Database (excluir del copy, se monta como volumen)
 *.db

@@ -16,6 +16,8 @@ import { pipeline } from "stream";
 import { spawn } from "child_process";
 import { existsSync } from "fs";
 import { resolve } from "path";
+import { initializeValkey, shutdownValkey } from "../../infrastructure/valkey";
+import { startMusicStreamConsumer, stopMusicStreamConsumer } from "../../infrastructure/streams/MusicStreamConsumer";
 
 // Configurar ffmpeg con fallback chain: ffmpeg-static → sistema → error
 let ffmpegPath: string | undefined;
@@ -85,6 +87,12 @@ const initializePlayDl = async () => {
 // Inicializar play-dl
 await initializePlayDl();
 
+// Initialize Valkey (with fallback)
+await initializeValkey();
+
+// Start music stream consumer (idempotent - starts after Valkey ready)
+await startMusicStreamConsumer();
+
 // Validate required environment variables
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
@@ -125,8 +133,11 @@ process.on("uncaughtException", (error) => {
 const shutdown = async (signal: string) => {
   logger.info(`🛑 Señal ${signal} recibida, cerrando bot...`);
   try {
-    // Limpiar recursos
+    // Stop music stream consumer first
+    await stopMusicStreamConsumer();
+    // Clean resources
     tempStorage.destroy();
+    await shutdownValkey();
     await bot.shutdown();
     process.exit(0);
   } catch (error) {

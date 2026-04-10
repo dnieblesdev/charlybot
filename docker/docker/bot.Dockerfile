@@ -1,37 +1,21 @@
-# Build stage
-FROM oven/bun:1 AS builder
+# Development image - deps installed at runtime via entrypoint
+FROM oven/bun:1
 
-# Install build tools needed for native modules
+# Install build tools needed for native modules (ioredis, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3 \
+    python3-pip \
+    python3-setuptools \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
-
-# Copiar archivos del monorepo
-COPY package.json bun.lock ./
-COPY apps/bot/ ./apps/bot/
-COPY apps/api/ ./apps/api/
-COPY packages/shared/ ./packages/shared/
-
-# Instalar dependencias (--ignore-scripts para skip compilación de @discordjs/opus)
-RUN bun install --ignore-scripts
-
-# Generar Prisma client
-RUN cd packages/shared && bunx prisma generate
-
-# Production slim image
-FROM oven/bun:1-slim
-
-# Install ffmpeg + libsodio para Discord.js voice + yt-dlp + python3 (para yt-dlp)
+# Install ffmpeg + libopus + libsodium for Discord.js voice + yt-dlp
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libopus0 \
     libsodium23 \
     ca-certificates \
     wget \
-    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Download yt-dlp latest
@@ -40,14 +24,14 @@ RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/late
 
 WORKDIR /app
 
-# Copy lo necesario del builder
-COPY --from=builder /app/node_modules/ ./node_modules/
-COPY --from=builder /app/apps/ ./apps/
-COPY --from=builder /app/packages/ ./packages/
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/bun.lock ./
+# Copy source files (will be bind-mounted at runtime anyway)
+COPY package.json bun.lock ./
+COPY apps/bot/ ./apps/bot/
+COPY apps/api/ ./apps/api/
+COPY packages/shared/ ./packages/shared/
 
-WORKDIR /app
+# Copy entrypoint script
+COPY docker/docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# El bot no necesita expose porque no expose puertos - corre como servicio
 CMD ["bun", "run", "--cwd", "/app/apps/bot", "dev"]

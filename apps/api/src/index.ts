@@ -9,6 +9,7 @@ import autoroleRoutes from "./routes/autoroles";
 import verificationRoutes from "./routes/verifications";
 import classRoutes from "./routes/classes";
 import musicRoutes from "./routes/music";
+import { initializeValkey, shutdownValkey } from "./infrastructure/valkey";
 
 const app = new Hono();
 
@@ -53,6 +54,9 @@ app.route("/api/v1/music", musicRoutes);
 app.get("/api/v1/ping", (c) => {
   return c.json({ message: "pong", timestamp: new Date().toISOString() });
 });
+
+// Initialize Valkey before starting server
+await initializeValkey();
 
 logger.info("Charly API starting...");
 

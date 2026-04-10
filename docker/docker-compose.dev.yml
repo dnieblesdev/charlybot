@@ -1,4 +1,32 @@
 services:
+  valkey:
+    image: valkey/valkey:8.0
+    # NOTE: `--requirepass` cannot be passed with an empty value.
+    # This uses shell expansion to include it only when VALKEY_PASSWORD is set.
+    command:
+      - sh
+      - -c
+      - >-
+        valkey-server
+        --maxmemory 256mb
+        --maxmemory-policy allkeys-lru
+        ${VALKEY_PASSWORD:+--requirepass "$VALKEY_PASSWORD"}
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"
+    volumes:
+      - valkey-data:/data
+    networks:
+      - charlybot-net
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          valkey-cli ${VALKEY_PASSWORD:+-a "$VALKEY_PASSWORD"} ping
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
   bot:
     build:
       context: ..
@@ -12,9 +40,17 @@ services:
     environment:
       - DATABASE_URL=file:/app/packages/shared/dev.db
       - API_URL=http://api:3000
+      - VALKEY_HOST=valkey
+      - VALKEY_PORT=6379
+      - VALKEY_PREFIX=cb
+    depends_on:
+      valkey:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - charlybot-net
+    entrypoint: ["/entrypoint.sh"]
+    command: ["bun", "run", "--cwd", "/app/apps/bot", "dev"]
 
   api:
     build:
@@ -28,12 +64,23 @@ services:
       - .env.docker
     environment:
       - DATABASE_URL=file:/app/packages/shared/dev.db
+      - VALKEY_HOST=valkey
+      - VALKEY_PORT=6379
+      - VALKEY_PREFIX=cb
+    depends_on:
+      valkey:
+        condition: service_healthy
     ports:
       - "3000:3000"
     restart: unless-stopped
     networks:
       - charlybot-net
+    entrypoint: ["/entrypoint.sh"]
+    command: ["bun", "run", "--cwd", "/app/apps/api", "dev"]
 
 networks:
   charlybot-net:
     driver: bridge
+
+volumes:
+  valkey-data:

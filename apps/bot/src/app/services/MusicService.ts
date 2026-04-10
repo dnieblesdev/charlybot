@@ -28,6 +28,7 @@ import {
 } from "./music/index";
 
 import logger from "../../utils/logger.ts";
+import { getMusicQueueEventBridge } from "../../infrastructure/streams";
 
 class MusicService {
   /**
@@ -116,6 +117,19 @@ class MusicService {
       // Agregar a la cola
       const updatedSnapshot = await QueueManagementService.enqueue(guildId, track);
 
+      // Publish enqueue event to stream
+      const bridge = getMusicQueueEventBridge();
+      bridge.publishEnqueue(guildId, {
+        title: source.title,
+        url: source.url,
+        duration: source.duration,
+        thumbnail: source.thumbnail,
+        requesterId: requester.id,
+        requesterName: requester.username,
+      }, updatedSnapshot.songs.length).catch((err) => {
+        logger.warn('Stream enqueue event failed', { error: err.message });
+      });
+
       let playing = false;
       // Solo iniciar reproducción si NO está actualmente reproduciendo
       if (!isCurrentlyPlaying && updatedSnapshot.songs.length > 0) {
@@ -137,6 +151,18 @@ class MusicService {
             duration: nextSong.duration,
             thumbnail: nextSong.thumbnail,
             requester: nextSong.requester,
+          });
+
+          // Publish nowplaying event to stream
+          bridge.publishNowPlaying(guildId, {
+            title: nextSong.title,
+            url: nextSong.url,
+            duration: nextSong.duration,
+            thumbnail: nextSong.thumbnail,
+            requesterId: nextSong.requester.id,
+            requesterName: nextSong.requester.username,
+          }, updatedSnapshot.songs.length - 1).catch((err) => {
+            logger.warn('Stream nowplaying event failed', { error: err.message });
           });
           
           await PlayerService.play(session, nextSong, stream);
@@ -211,6 +237,11 @@ class MusicService {
 
       // Obtener siguiente canción de la cola
       const nextSong = await QueueManagementService.dequeue(guildId);
+      
+      // Get remaining count before publishing event
+      const snapshot = QueueManagementService.getSnapshot(guildId);
+      const remaining = snapshot.songs.length;
+      
       let nowPlaying: Song | null = null;
       
       if (nextSong) {
@@ -228,6 +259,16 @@ class MusicService {
           duration: nextSong.duration,
           thumbnail: nextSong.thumbnail,
           requester: nextSong.requester,
+        });
+
+        // Publish dequeue event to stream
+        const bridge = getMusicQueueEventBridge();
+        bridge.publishDequeue(guildId, {
+          title: nextSong.title,
+          url: nextSong.url,
+          duration: nextSong.duration,
+        }, remaining).catch((err) => {
+          logger.warn('Stream dequeue event failed', { error: err.message });
         });
         
         // Convertir a formato Song para retornar
@@ -379,6 +420,12 @@ class MusicService {
       
       await QueueManagementService.clear(guildId);
       
+      // Publish clear event to stream
+      const bridge = getMusicQueueEventBridge();
+      bridge.publishClear(guildId, count).catch((err) => {
+        logger.warn('Stream clear event failed', { error: err.message });
+      });
+      
       logger.info("Queue cleared via facade", { guildId, count });
       return count;
     } catch (error) {
@@ -416,7 +463,20 @@ class MusicService {
    */
   async removeSongAsync(guildId: string, index: number): Promise<Song | null> {
     try {
+      const snapshot = QueueManagementService.getSnapshot(guildId);
       const removed = await QueueManagementService.remove(guildId, index);
+      
+      // Publish remove event to stream
+      if (removed) {
+        const bridge = getMusicQueueEventBridge();
+        bridge.publishRemove(guildId, index, {
+          title: removed.title,
+          url: removed.url,
+        }, snapshot.songs.length - 1).catch((err) => {
+          logger.warn('Stream remove event failed', { error: err.message });
+        });
+      }
+      
       logger.info("Song removed via facade", { guildId, index, title: removed?.title });
       return removed;
     } catch (error) {
