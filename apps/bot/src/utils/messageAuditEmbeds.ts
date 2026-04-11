@@ -78,6 +78,9 @@ export function buildMessageDeleteEmbed(data: {
   channelId: string;
   messageId: string;
   content?: string | null;
+  executorTag?: string;
+  executorAvatarURL?: string;
+  isSelfDelete?: boolean;
 }): EmbedBuilder {
   const embed = new EmbedBuilder()
     .setColor(0xe74c3c) // Red for deletes
@@ -94,7 +97,30 @@ export function buildMessageDeleteEmbed(data: {
         value: `\`${data.messageId}\``,
         inline: true,
       },
-    )
+    );
+
+  // Add executor field if available
+  if (data.isSelfDelete) {
+    embed.addFields({
+      name: "🗑️ Eliminado por",
+      value: "El autor eliminó su propio mensaje",
+      inline: false,
+    });
+  } else if (data.executorTag) {
+    embed.addFields({
+      name: "🗑️ Eliminado por",
+      value: data.executorTag,
+      inline: false,
+    });
+  } else {
+    embed.addFields({
+      name: "🗑️ Eliminado por",
+      value: "Desconocido",
+      inline: false,
+    });
+  }
+
+  embed
     .setFooter({
       text: `Mensaje eliminado en #${data.channelName}`,
     })

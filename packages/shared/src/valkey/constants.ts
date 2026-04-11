@@ -24,6 +24,9 @@ export const KEYS = {
   // Stream DLQ - generic suffix appended to stream keys
   STREAM_DLQ: 'dlq',
 
+  // Audit logs
+  AUDIT_LOG: 'auditlog',
+
   // Legacy domain-specific keys (deprecated, use generic + domain param)
   PUBSUB_MUSIC: 'pubsub:music',
   PUBSUB_VERIFICATION: 'pubsub:verification',

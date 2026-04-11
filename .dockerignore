@@ -1,4 +1,5 @@
-# Dependencies
+# Dependencies (all node_modules at any depth)
+**/node_modules
 node_modules
 
 # Output
@@ -17,12 +18,8 @@ build
 *.md
 !package.json
 
-# Docker (excluir del copy)
-# NOTE: Necesitamos incluir el entrypoint de runtime install en el build context.
-# Por eso ignoramos el directorio docker por defecto, pero re-incluimos lo necesario.
-docker/*
-!docker/docker/
-!docker/docker/entrypoint.sh
+# Docker (excluir del copy, se monta como volumen)
+docker
 
 # Database (excluir del copy, se monta como volumen)
 *.db

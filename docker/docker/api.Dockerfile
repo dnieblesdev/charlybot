@@ -9,7 +9,7 @@ COPY apps/api/ ./apps/api/
 COPY packages/shared/ ./packages/shared/
 
 # Copy entrypoint script
-COPY docker/docker/entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 3000

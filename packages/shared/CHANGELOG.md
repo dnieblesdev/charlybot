@@ -1,5 +1,14 @@
 # @charlybot/shared
 
+## 2.5.0
+
+### Minor Changes
+
+- Add audit log Valkey key builders for message delete tracking
+
+  - Add `AUDIT_LOG` constant in Valkey keys
+  - Add `auditLog()`, `auditLogLastEntryId()`, `auditLogProcessedEntryId()` key methods
+
 ## 2.4.0
 
 ### Minor Changes

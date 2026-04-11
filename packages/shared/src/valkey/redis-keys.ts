@@ -69,6 +69,19 @@ export class ValkeyKeys {
     }
     return this.build(this.prefix, KEYS.STREAM, domain, KEYS.STREAM_DLQ);
   }
+
+  // Audit log keys - generic: cb:auditlog:{guildId}:{subkey}
+  auditLog(guildId: string | number, subkey: string): string {
+    return this.build(this.prefix, KEYS.AUDIT_LOG, guildId, subkey);
+  }
+
+  auditLogLastEntryId(guildId: string | number): string {
+    return this.auditLog(guildId, 'lastEntryId');
+  }
+
+  auditLogProcessedEntryId(guildId: string | number, entryId: string): string {
+    return this.auditLog(guildId, `processed:${entryId}`);
+  }
 }
 
 /**

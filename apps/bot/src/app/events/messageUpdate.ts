@@ -17,6 +17,12 @@ export default {
 
       // Note: oldMessage can be partial; we still want to log with fallbacks.
 
+      // Guard: Ignore if content didn't actually change (e.g. Discord adding link previews/embeds)
+      const oldContent = oldMessage.partial ? null : oldMessage.content;
+      const newContent = newMessage.partial ? null : newMessage.content;
+      if (oldContent !== null && newContent !== null && oldContent === newContent) return;
+      if (oldContent === null && newContent === null) return;
+
       // Guard: Check config
       const config = await getGuildConfig(newMessage.guild.id);
       if (!config || !config.messageLogChannelId) return;
@@ -41,10 +47,6 @@ export default {
         });
         return;
       }
-
-      // Get message content - handle partial (old content might not be available)
-      const oldContent = oldMessage.partial ? null : oldMessage.content;
-      const newContent = newMessage.partial ? null : newMessage.content;
 
       // Get channel name safely
       const channelName =

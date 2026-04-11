@@ -1,5 +1,17 @@
 # @charlybot/bot
 
+## 2.8.0
+
+### Minor Changes
+
+- Add message delete auditor: show who deleted a message via Discord audit logs
+
+  - New `auditLogFetcher.ts`: correlates `messageDelete` event with Discord Audit Logs (channel + target + timestamp)
+  - New `auditCache.ts`: Valkey cache for deduplication and rate limit prevention (10s/5min TTL)
+  - Updated `messageDelete.ts`: integrates audit log fetcher, shows executor in embed
+  - Updated `messageAuditEmbeds.ts`: new "Eliminado por" field (executor / self-delete / unknown)
+  - Fix `messageUpdate.ts`: skip logging when content unchanged (Discord link preview false positives)
+
 ## 2.7.1
 
 ### Patch Changes
