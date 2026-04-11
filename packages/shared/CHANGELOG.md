@@ -1,5 +1,15 @@
 # @charlybot/shared
 
+## 2.5.1
+
+### Patch Changes
+
+- Security and performance fixes
+
+  - Add `MAX_QUEUE_SIZE` and `MAX_LEADERBOARD_LIMIT` constants
+  - Add Zod validation schemas for roulette and leaderboard endpoints
+  - Fix circuit breaker: call `recordSuccess()` after successful Valkey operations
+
 ## 2.5.0
 
 ### Minor Changes

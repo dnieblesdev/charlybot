@@ -41,6 +41,10 @@ export class ApiClient {
 
 // Singleton instance
 const API_URL = process.env.API_URL || "http://localhost:3000";
-const API_KEY = process.env.API_KEY || "dev-key";
+const API_KEY = process.env.API_KEY;
+
+if (!API_KEY) {
+  throw new Error("API_KEY environment variable is required. Set API_KEY to authenticate with the API.");
+}
 
 export const apiClient = new ApiClient(API_URL, API_KEY);

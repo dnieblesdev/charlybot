@@ -1,5 +1,14 @@
 # @charlybot/bot
 
+## 2.8.1
+
+### Patch Changes
+
+- Security and performance fixes
+
+  - Remove hardcoded `API_KEY` fallback: fail fast if environment variable is missing
+  - Parallel guild startup: replace sequential loop with `Promise.all` and per-guild error handling
+
 ## 2.8.0
 
 ### Minor Changes

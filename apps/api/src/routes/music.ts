@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { prisma } from "@charlybot/shared";
+import { prisma, MAX_QUEUE_SIZE } from "@charlybot/shared";
 import { MusicQueueItemSchema, MusicQueueSchema, GuildMusicConfigSchema } from "@charlybot/shared";
 import logger from "../utils/logger";
 import { getMusicQueueCacheService } from "../services/music-queue-cache.service";
@@ -42,28 +42,35 @@ router.post("/queues/:guildId/items", zValidator("json", MusicQueueItemSchema.om
   const cacheService = getMusicQueueCacheService();
 
   try {
-    // Ensure Queue exists first
-    let queue = await prisma.musicQueue.findUnique({
-      where: { guildId },
-    });
-
-    if (!queue) {
-      queue = await prisma.musicQueue.create({
-        data: { guildId },
+    // Atomic transaction: find/create queue + count + create item
+    const newItem = await prisma.$transaction(async (tx) => {
+      let queue = await tx.musicQueue.findUnique({
+        where: { guildId },
       });
-    }
 
-    // Get current items count to determine next position
-    const itemCount = await prisma.musicQueueItem.count({
-      where: { queueId: queue.id },
-    });
+      if (!queue) {
+        queue = await tx.musicQueue.create({
+          data: { guildId },
+        });
+      }
 
-    const newItem = await prisma.musicQueueItem.create({
-      data: {
-        ...itemData,
-        queueId: queue.id,
-        position: itemCount,
-      },
+      // Get current items count to check capacity
+      const itemCount = await tx.musicQueueItem.count({
+        where: { queueId: queue.id },
+      });
+
+      // Check capacity before inserting
+      if (itemCount >= MAX_QUEUE_SIZE) {
+        throw new Error(`Queue limit of ${MAX_QUEUE_SIZE} reached`);
+      }
+
+      return tx.musicQueueItem.create({
+        data: {
+          ...itemData,
+          queueId: queue.id,
+          position: itemCount,
+        },
+      });
     });
 
     // Invalidate cache on mutation
@@ -71,6 +78,10 @@ router.post("/queues/:guildId/items", zValidator("json", MusicQueueItemSchema.om
 
     return c.json(newItem);
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    if (message.includes(`Queue limit of ${MAX_QUEUE_SIZE} reached`)) {
+      return c.json({ error: message }, 400);
+    }
     logger.error(`Error adding item to queue for ${guildId}`, { error });
     return c.json({ error: "Internal server error" }, 500);
   }

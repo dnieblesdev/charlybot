@@ -13,3 +13,13 @@ export function createConst<T extends Record<string, string>>(
 }> {
   return Object.freeze(obj) as never;
 }
+
+// ============================================================================
+// Limits & Boundaries
+// ============================================================================
+
+/** Maximum items allowed in a music queue */
+export const MAX_QUEUE_SIZE = 500;
+
+/** Maximum entries returned by any leaderboard query */
+export const MAX_LEADERBOARD_LIMIT = 100;

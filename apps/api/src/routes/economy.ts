@@ -1,36 +1,20 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { prisma } from "@charlybot/shared";
-import { UserEconomySchema, GlobalBankSchema, EconomyConfigSchema } from "@charlybot/shared";
+import { prisma, MAX_LEADERBOARD_LIMIT } from "@charlybot/shared";
+import {
+  UserEconomySchema,
+  GlobalBankSchema,
+  EconomyConfigSchema,
+  RouletteGameSchema,
+  RouletteBetSchema,
+  LeaderboardUpsertSchema,
+  TransferSchema,
+  DepositSchema,
+  WithdrawSchema,
+} from "@charlybot/shared";
 import logger from "../utils/logger";
-import { z } from "zod";
 
 const router = new Hono();
-
-// --- Schemas for atomic operations ---
-
-const TransferSchema = z.object({
-  fromUserId: z.string(),
-  toUserId: z.string(),
-  guildId: z.string(),
-  amount: z.number().positive(),
-  fromUsername: z.string(),
-  toUsername: z.string(),
-});
-
-const DepositSchema = z.object({
-  userId: z.string(),
-  guildId: z.string(),
-  username: z.string(),
-  amount: z.number().positive(),
-});
-
-const WithdrawSchema = z.object({
-  userId: z.string(),
-  guildId: z.string(),
-  username: z.string(),
-  amount: z.number().positive(),
-});
 
 // --- User Economy ---
 
@@ -205,7 +189,10 @@ router.patch("/config/:guildId", zValidator("json", EconomyConfigSchema.partial(
 // GET /api/v1/economy/leaderboard/:guildId
 router.get("/leaderboard/:guildId", async (c) => {
   const { guildId } = c.req.param();
-  const limit = Number(c.req.query("limit")) || 10;
+  const rawLimit = Number(c.req.query("limit")) || 10;
+
+  // Clamp limit to [1, MAX_LEADERBOARD_LIMIT]
+  const limit = Math.max(1, Math.min(Math.floor(rawLimit), MAX_LEADERBOARD_LIMIT));
 
   try {
     const leaderboard = await prisma.leaderboard.findMany({
@@ -241,23 +228,23 @@ router.get("/leaderboard/:guildId/user/:userId", async (c) => {
 });
 
 // POST /api/v1/economy/leaderboard/upsert
-router.post("/leaderboard/upsert", async (c) => {
-  const data = await c.req.json();
-  const { userId, guildId, ...rest } = data;
+router.post("/leaderboard/upsert", zValidator("json", LeaderboardUpsertSchema), async (c) => {
+  const { userId, guildId, ...rest } = c.req.valid("json");
 
   try {
     const entry = await prisma.leaderboard.upsert({
       where: { userId_guildId: { userId, guildId } },
       update: rest,
-      create: { 
-        userId, 
-        guildId, 
+      create: {
+        userId,
+        guildId,
         ...rest,
         joinedServerAt: rest.joinedServerAt || new Date(),
       },
     });
     return c.json(entry);
   } catch (error) {
+    logger.error(`Error upserting leaderboard entry`, { error, userId, guildId });
     return c.json({ error: "Internal error" }, 500);
   }
 });
@@ -308,8 +295,8 @@ router.delete("/leaderboard/:guildId/:userId", async (c) => {
 // --- Roulette ---
 
 // POST /api/v1/economy/roulette/game
-router.post("/roulette/game", async (c) => {
-  const data = await c.req.json();
+router.post("/roulette/game", zValidator("json", RouletteGameSchema), async (c) => {
+  const data = c.req.valid("json");
   try {
     const game = await prisma.rouletteGame.create({
       data,
@@ -317,6 +304,7 @@ router.post("/roulette/game", async (c) => {
     });
     return c.json(game, 201);
   } catch (error) {
+    logger.error(`Error creating roulette game`, { error });
     return c.json({ error: "Internal error" }, 500);
   }
 });
@@ -337,15 +325,16 @@ router.get("/roulette/game/:channelId/active", async (c) => {
 });
 
 // POST /api/v1/economy/roulette/game/:gameId/bet
-router.post("/roulette/game/:gameId/bet", async (c) => {
+router.post("/roulette/game/:gameId/bet", zValidator("json", RouletteBetSchema), async (c) => {
   const gameId = Number(c.req.param("gameId"));
-  const data = await c.req.json();
+  const data = c.req.valid("json");
   try {
     const bet = await prisma.rouletteBet.create({
       data: { ...data, gameId },
     });
     return c.json(bet, 201);
   } catch (error) {
+    logger.error(`Error placing roulette bet for game ${gameId}`, { error });
     return c.json({ error: "Internal error" }, 500);
   }
 });

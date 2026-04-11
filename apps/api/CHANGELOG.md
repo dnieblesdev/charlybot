@@ -1,5 +1,18 @@
 # @charlybot/api
 
+## 2.4.3
+
+### Patch Changes
+
+- Security and performance fixes
+
+  - Fix race condition in music queue: wrap count+create in `prisma.$transaction` with capacity check
+  - Add Zod validation via `zValidator` to roulette and leaderboard mutation endpoints
+  - Clamp leaderboard `limit` query param to [1, 100]
+
+- Updated dependencies
+  - @charlybot/shared@2.5.1
+
 ## 2.4.2
 
 ### Patch Changes

@@ -110,6 +110,7 @@ this.redis = new Redis({
     try {
       const value = await this.redis!.get(key);
       if (value === null) return undefined;
+      this.recordSuccess();
       return JSON.parse(value) as T;
     } catch (err) {
       this.recordError();
@@ -124,6 +125,7 @@ this.redis = new Redis({
 
     try {
       await this.redis!.setex(key, ttlSeconds, JSON.stringify(value));
+      this.recordSuccess();
     } catch (err) {
       this.recordError();
       throw err;
@@ -137,6 +139,7 @@ this.redis = new Redis({
 
     try {
       await this.redis!.del(key);
+      this.recordSuccess();
     } catch (err) {
       this.recordError();
       throw err;
