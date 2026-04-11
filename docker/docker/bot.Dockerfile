@@ -2,7 +2,8 @@
 # Stage 1: Build dependencies and Prisma
 FROM oven/bun:1 AS builder
 
-# Install build tools needed for native modules (ioredis, etc.)
+# Install build tools needed for native modules (ioredis, sodium-native, opus)
+# These are NOT copied to runtime — only needed during build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3 \
@@ -10,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-setuptools \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ffmpeg + libopus + libsodium for Discord.js voice + yt-dlp
+# Install runtime dependencies for Discord.js voice + yt-dlp
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libopus0 \
@@ -25,28 +26,21 @@ RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/late
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files — bot + shared only (no api)
 COPY package.json bun.lock ./
 COPY apps/bot/package.json ./apps/bot/
-COPY apps/api/package.json ./apps/api/
 COPY packages/shared/ ./packages/shared/
 
 # Install dependencies and generate Prisma
-RUN bun install --frozen-lockfile
-RUN bunx prisma generate
+RUN bun install
+RUN bunx prisma generate --schema=./packages/shared/prisma/schema.prisma
 
 # Stage 2: Runtime
+# NOTE: Production-ready — no build tools included
 FROM oven/bun:1
 
-# Install build tools needed for native modules (ioredis, etc.)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    python3 \
-    python3-pip \
-    python3-setuptools \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install ffmpeg + libopus + libsodium for Discord.js voice + yt-dlp
+# Install runtime dependencies only (ffmpeg, opus, yt-dlp)
+# build-essential, python3 are NOT included — saves ~150MB+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libopus0 \
@@ -65,9 +59,9 @@ WORKDIR /app
 COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/packages/shared/src/generated /app/packages/shared/src/generated
 
-# Copy source files
+# Copy source files — bot + shared only (no api)
+# Bot consumes API via HTTP (adapters in apps/bot/src/infrastructure/api/*)
 COPY apps/bot/ ./apps/bot/
-COPY apps/api/ ./apps/api/
 COPY packages/shared/ ./packages/shared/
 
 CMD ["bun", "run", "--cwd", "/app/apps/bot", "start"]

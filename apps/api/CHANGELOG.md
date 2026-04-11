@@ -1,5 +1,18 @@
 # @charlybot/api
 
+## 2.5.0
+
+### Minor Changes
+
+- Docker infrastructure cleanup and API start script
+
+  - Add `start` script to `apps/api/package.json` for decoupled runtime invocation
+  - Remove dead entrypoint scripts (`entrypoint.sh`, `docker/docker/entrypoint.sh`)
+  - Remove entrypoint overrides from docker-compose.dev.yml
+  - Optimize bot Dockerfile: move build deps to builder stage, remove unnecessary API source copies
+  - Remove `--frozen-lockfile` from Dockerfiles for lockfile compatibility
+  - Clarify dev vs prod strategy with comments
+
 ## 2.4.3
 
 ### Patch Changes

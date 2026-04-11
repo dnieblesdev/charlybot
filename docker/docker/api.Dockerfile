@@ -10,10 +10,11 @@ COPY apps/api/package.json ./apps/api/
 COPY packages/shared/ ./packages/shared/
 
 # Install dependencies and generate Prisma
-RUN bun install --frozen-lockfile
-RUN bunx prisma generate
+RUN bun install
+RUN bunx prisma generate --schema=./packages/shared/prisma/schema.prisma
 
 # Stage 2: Runtime
+# NOTE: Production-ready — minimal runtime with only API service
 FROM oven/bun:1
 
 WORKDIR /app
@@ -28,4 +29,5 @@ COPY packages/shared/ ./packages/shared/
 
 EXPOSE 3000
 
+# Uses "start" script from apps/api/package.json
 CMD ["bun", "run", "--cwd", "/app/apps/api", "start"]
