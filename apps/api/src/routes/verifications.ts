@@ -2,15 +2,13 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { VerificationRequestSchema } from "@charlybot/shared";
-import { z } from "zod";
 import logger from "../utils/logger";
 
 const router = new Hono();
+// Force status=pending on create - status field is completely ignored from input
 const CreateVerificationSchema = VerificationRequestSchema.omit({
   id: true,
   status: true,
-}).extend({
-  status: z.enum(["pending", "approved", "rejected"]).optional(),
 });
 
 // GET /api/v1/verifications/:id
@@ -36,13 +34,30 @@ router.get("/:id", async (c) => {
 // GET /api/v1/verifications/pending/:guildId
 router.get("/pending/:guildId", async (c) => {
   const guildId = c.req.param("guildId");
+  // Pagination: default 50, max 100
+  const page = Math.max(1, Number(c.req.query("page")) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(c.req.query("pageSize")) || 50));
+  const skip = (page - 1) * pageSize;
 
   try {
-    const pendings = await prisma.verificationRequest.findMany({
-      where: { guildId, status: "pending" },
-    });
+    const [pendings, total] = await Promise.all([
+      prisma.verificationRequest.findMany({
+        where: { guildId, status: "pending" },
+        skip,
+        take: pageSize,
+        orderBy: { requestedAt: "desc" },
+      }),
+      prisma.verificationRequest.count({
+        where: { guildId, status: "pending" },
+      }),
+    ]);
 
-    return c.json(pendings);
+    return c.json({
+      data: pendings,
+      page,
+      pageSize,
+      total,
+    });
   } catch (error) {
     logger.error(`Error fetching pending verifications for ${guildId}`, { error });
     return c.json({ error: "Internal server error" }, 500);
@@ -54,11 +69,12 @@ router.post("/", zValidator("json", CreateVerificationSchema), async (c) => {
   const data = c.req.valid("json");
 
   try {
+    // Force status to pending - ignore any status that might have been passed
     const verification = await prisma.verificationRequest.create({
       data: {
         id: crypto.randomUUID(),
         ...data,
-        status: data.status ?? "pending",
+        status: "pending",  // Always force pending, regardless of input
         requestedAt: data.requestedAt ? new Date(data.requestedAt as string) : undefined,
         reviewedAt: data.reviewedAt ? new Date(data.reviewedAt as string) : undefined,
       } as any,
@@ -66,7 +82,7 @@ router.post("/", zValidator("json", CreateVerificationSchema), async (c) => {
 
     return c.json(verification, 201);
   } catch (error) {
-    logger.error(`Error creating verification`, { error, data });
+    logger.error(`Error creating verification`, { error });
     return c.json({ error: "Internal server error" }, 500);
   }
 });

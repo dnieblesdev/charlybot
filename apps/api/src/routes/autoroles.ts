@@ -9,14 +9,28 @@ const router = new Hono();
 // GET /api/v1/autoroles/guild/:guildId
 router.get("/guild/:guildId", async (c) => {
   const { guildId } = c.req.param();
+  // Pagination: default 50, max 100
+  const page = Math.max(1, Number(c.req.query("page")) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(c.req.query("pageSize")) || 50));
+  const skip = (page - 1) * pageSize;
 
   try {
-    const autoroles = await prisma.autoRole.findMany({
-      where: { guildId },
-      include: { mappings: true },
-    });
+    const [autoroles, total] = await Promise.all([
+      prisma.autoRole.findMany({
+        where: { guildId },
+        include: { mappings: true },
+        skip,
+        take: pageSize,
+      }),
+      prisma.autoRole.count({ where: { guildId } }),
+    ]);
 
-    return c.json(autoroles);
+    return c.json({
+      data: autoroles,
+      page,
+      pageSize,
+      total,
+    });
   } catch (error) {
     logger.error(`Error fetching autoroles for guild ${guildId}`, { error });
     return c.json({ error: "Internal server error" }, 500);

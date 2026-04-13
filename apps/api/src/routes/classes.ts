@@ -19,15 +19,24 @@ const CreateClassConfigSchema = ClassConfigSchema.extend({
 // GET /api/v1/classes/guild/:guildId
 router.get("/guild/:guildId", async (c) => {
   const { guildId } = c.req.param();
+  // Pagination: default 50, max 100
+  const page = Math.max(1, Number(c.req.query("page")) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(c.req.query("pageSize")) || 50));
+  const skip = (page - 1) * pageSize;
 
   try {
-    const classes = await prisma.classes.findMany({
-      where: { guildId },
-      include: {
-        tipo: true,
-        subClases: true,
-      },
-    });
+    const [classes, total] = await Promise.all([
+      prisma.classes.findMany({
+        where: { guildId },
+        include: {
+          tipo: true,
+          subClases: true,
+        },
+        skip,
+        take: pageSize,
+      }),
+      prisma.classes.count({ where: { guildId } }),
+    ]);
 
     const config: any[] = classes.map((cls) => ({
       name: cls.name,
@@ -42,7 +51,12 @@ router.get("/guild/:guildId", async (c) => {
       guildId: cls.guildId,
     }));
 
-    return c.json(config);
+    return c.json({
+      data: config,
+      page,
+      pageSize,
+      total,
+    });
   } catch (error) {
     logger.error(`Error fetching classes for guild ${guildId}`, { error });
     return c.json({ error: "Internal server error" }, 500);
@@ -92,39 +106,42 @@ router.post("/", zValidator("json", CreateClassConfigSchema), async (c) => {
   const { name, roleId, type, typeRoleId, subclasses, guildId } = data;
 
   try {
-    // 1. Upsert tipoClase
-    await prisma.tipoClase.upsert({
-      where: { guildId_rolId: { guildId, rolId: typeRoleId } },
-      update: { nombre: type },
-      create: { guildId, rolId: typeRoleId, nombre: type },
-    });
-
-    // 2. Upsert classes
-    await prisma.classes.upsert({
-      where: { guildId_rolId: { guildId, rolId: roleId } },
-      update: { name, tipoId: typeRoleId },
-      create: { guildId, rolId: roleId, name, tipoId: typeRoleId },
-    });
-
-    // 3. Handle subclasses (delete and recreate for simplicity in this replacement-based sync)
-    await prisma.subclass.deleteMany({
-      where: { guildId, claseId: roleId },
-    });
-
-    if (subclasses.length > 0) {
-      await prisma.subclass.createMany({
-        data: subclasses.map((sub) => ({
-          guildId,
-          claseId: roleId,
-          name: sub.name,
-          rolId: sub.roleId,
-        })),
+    // Atomic transaction: all operations succeed or all fail
+    await prisma.$transaction(async (tx) => {
+      // 1. Upsert tipoClase
+      await tx.tipoClase.upsert({
+        where: { guildId_rolId: { guildId, rolId: typeRoleId } },
+        update: { nombre: type },
+        create: { guildId, rolId: typeRoleId, nombre: type },
       });
-    }
+
+      // 2. Upsert classes
+      await tx.classes.upsert({
+        where: { guildId_rolId: { guildId, rolId: roleId } },
+        update: { name, tipoId: typeRoleId },
+        create: { guildId, rolId: roleId, name, tipoId: typeRoleId },
+      });
+
+      // 3. Handle subclasses (delete and recreate for simplicity in this replacement-based sync)
+      await tx.subclass.deleteMany({
+        where: { guildId, claseId: roleId },
+      });
+
+      if (subclasses.length > 0) {
+        await tx.subclass.createMany({
+          data: subclasses.map((sub) => ({
+            guildId,
+            claseId: roleId,
+            name: sub.name,
+            rolId: sub.roleId,
+          })),
+        });
+      }
+    });
 
     return c.json({ message: "Class updated successfully" }, 201);
   } catch (error) {
-    logger.error(`Error saving class`, { error, data });
+    logger.error(`Error saving class`, { error });
     return c.json({ error: "Internal server error" }, 500);
   }
 });

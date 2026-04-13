@@ -98,38 +98,46 @@ router.delete("/queues/:guildId/items/:position", async (c) => {
   }
 
   try {
-    const queue = await prisma.musicQueue.findUnique({
-      where: { guildId },
+    // Atomic transaction: delete + reorder must be atomic
+    await prisma.$transaction(async (tx) => {
+      const queue = await tx.musicQueue.findUnique({
+        where: { guildId },
+      });
+
+      if (!queue) {
+        throw new Error("Queue not found");
+      }
+
+      const itemToDelete = await tx.musicQueueItem.findFirst({
+        where: { queueId: queue.id, position },
+      });
+
+      if (!itemToDelete) {
+        throw new Error("Item not found at this position");
+      }
+
+      // Delete the item
+      await tx.musicQueueItem.delete({
+        where: { id: itemToDelete.id },
+      });
+
+      // Reorder remaining items
+      await tx.$executeRaw`
+        UPDATE MusicQueueItem 
+        SET position = position - 1 
+        WHERE queueId = ${queue.id} AND position > ${position}
+      `;
     });
-
-    if (!queue) {
-      return c.json({ error: "Queue not found" }, 404);
-    }
-
-    const itemToDelete = await prisma.musicQueueItem.findFirst({
-      where: { queueId: queue.id, position },
-    });
-
-    if (!itemToDelete) {
-      return c.json({ error: "Item not found at this position" }, 404);
-    }
-
-    await prisma.musicQueueItem.delete({
-      where: { id: itemToDelete.id },
-    });
-
-    // Reorder remaining items
-    await prisma.$executeRaw`
-      UPDATE MusicQueueItem 
-      SET position = position - 1 
-      WHERE queueId = ${queue.id} AND position > ${position}
-    `;
 
     // Invalidate cache on mutation
     await cacheService.invalidateQueue(guildId);
 
     return c.json({ success: true });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    if (message === "Queue not found" || message === "Item not found at this position") {
+      return c.json({ error: message }, 404);
+    }
     logger.error(`Error removing item from queue for ${guildId}`, { error });
     return c.json({ error: "Internal server error" }, 500);
   }
@@ -174,6 +182,7 @@ router.put("/queues/:guildId/settings", zValidator("json", MusicQueueSchema.pick
 }).partial()), async (c) => {
   const guildId = c.req.param("guildId");
   const settings = c.req.valid("json");
+  const cacheService = getMusicQueueCacheService();
 
   try {
     const queue = await prisma.musicQueue.upsert({
@@ -184,6 +193,9 @@ router.put("/queues/:guildId/settings", zValidator("json", MusicQueueSchema.pick
         guildId,
       },
     });
+
+    // Invalidate cache after settings update
+    await cacheService.invalidateQueue(guildId);
 
     return c.json(queue);
   } catch (error) {

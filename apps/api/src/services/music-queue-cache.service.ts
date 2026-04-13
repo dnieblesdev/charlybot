@@ -109,6 +109,7 @@ function serializeConfig(config: GuildMusicConfig): CachedGuildMusicConfig {
 export class MusicQueueCacheService {
   /**
    * Get cached queue or fetch from DB and cache
+   * Fix: avoid double-fetch when cache.set fails - return already-fetched data
    */
   async getQueue(guildId: string, fetchFromDb: () => Promise<(MusicQueue & { items: MusicQueueItem[] }) | null>): Promise<(MusicQueue & { items: MusicQueueItem[] }) | null> {
     const valkey = getValkeyClient();
@@ -124,13 +125,18 @@ export class MusicQueueCacheService {
       // Fetch from DB
       const queue = await fetchFromDb();
       if (queue !== null) {
-        // Cache the result
-        await valkey.set(cacheKey, serializeQueue(queue), TTL_MUSIC_QUEUE);
+        // Try to cache - but don't re-fetch if this fails
+        try {
+          await valkey.set(cacheKey, serializeQueue(queue), TTL_MUSIC_QUEUE);
+        } catch {
+          // Cache set failed - but we already have the data, so return it
+          // No need to re-fetch from DB
+        }
       }
 
       return queue;
     } catch {
-      // Fallback: fetch from DB directly if cache fails
+      // Valkey unavailable - fetch directly without caching
       return fetchFromDb();
     }
   }

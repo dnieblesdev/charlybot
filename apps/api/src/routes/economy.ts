@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 import { prisma, MAX_LEADERBOARD_LIMIT } from "@charlybot/shared";
 import {
   UserEconomySchema,
@@ -33,7 +34,7 @@ router.get("/user/:guildId/:userId", async (c) => {
 
     return c.json(user);
   } catch (error) {
-    logger.error(`Error fetching user economy for ${userId} in ${guildId}`, { error });
+    logger.error(`Error fetching user economy for ${userId} in ${guildId}`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -49,7 +50,7 @@ router.post("/user", zValidator("json", UserEconomySchema), async (c) => {
 
     return c.json(user, 201);
   } catch (error) {
-    logger.error(`Error creating user economy`, { error, data });
+    logger.error(`Error creating user economy`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -67,7 +68,7 @@ router.patch("/user/:guildId/:userId", zValidator("json", UserEconomySchema.part
 
     return c.json(user);
   } catch (error) {
-    logger.error(`Error updating user economy for ${userId} in ${guildId}`, { error, data });
+    logger.error(`Error updating user economy for ${userId} in ${guildId}`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -89,7 +90,7 @@ router.get("/bank/:userId", async (c) => {
 
     return c.json(bank);
   } catch (error) {
-    logger.error(`Error fetching global bank for ${userId}`, { error });
+    logger.error(`Error fetching global bank for ${userId}`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -105,7 +106,7 @@ router.post("/bank", zValidator("json", GlobalBankSchema), async (c) => {
 
     return c.json(bank, 201);
   } catch (error) {
-    logger.error(`Error creating global bank`, { error, data });
+    logger.error(`Error creating global bank`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -123,7 +124,7 @@ router.patch("/bank/:userId", zValidator("json", GlobalBankSchema.partial()), as
 
     return c.json(bank);
   } catch (error) {
-    logger.error(`Error updating global bank for ${userId}`, { error, data });
+    logger.error(`Error updating global bank for ${userId}`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -145,7 +146,7 @@ router.get("/config/:guildId", async (c) => {
 
     return c.json(config);
   } catch (error) {
-    logger.error(`Error fetching economy config for ${guildId}`, { error });
+    logger.error(`Error fetching economy config for ${guildId}`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -161,7 +162,7 @@ router.post("/config", zValidator("json", EconomyConfigSchema), async (c) => {
 
     return c.json(config, 201);
   } catch (error) {
-    logger.error(`Error creating economy config`, { error, data });
+    logger.error(`Error creating economy config`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -179,7 +180,7 @@ router.patch("/config/:guildId", zValidator("json", EconomyConfigSchema.partial(
 
     return c.json(config);
   } catch (error) {
-    logger.error(`Error updating economy config for ${guildId}`, { error, data });
+    logger.error(`Error updating economy config for ${guildId}`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -206,7 +207,7 @@ router.get("/leaderboard/:guildId", async (c) => {
 
     return c.json(leaderboard);
   } catch (error) {
-    logger.error(`Error fetching leaderboard for ${guildId}`, { error });
+    logger.error(`Error fetching leaderboard for ${guildId}`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -244,7 +245,7 @@ router.post("/leaderboard/upsert", zValidator("json", LeaderboardUpsertSchema), 
     });
     return c.json(entry);
   } catch (error) {
-    logger.error(`Error upserting leaderboard entry`, { error, userId, guildId });
+    logger.error(`Error upserting leaderboard entry`, { error: error instanceof Error ? error.message : String(error), userId, guildId });
     return c.json({ error: "Internal error" }, 500);
   }
 });
@@ -294,17 +295,29 @@ router.delete("/leaderboard/:guildId/:userId", async (c) => {
 
 // --- Roulette ---
 
+// Strict Zod schemas for roulette PATCH endpoints (prevent mass assignment)
+const RouletteGamePatchSchema = z.object({
+  status: z.enum(["waiting", "spinning", "finished"]).optional(),
+  result: z.string().optional(),
+  winningNumber: z.number().int().min(0).max(36).optional(),
+});
+
+const RouletteBetPatchSchema = z.object({
+  status: z.enum(["pending", "won", "lost"]).optional(),
+  payout: z.number().int().min(0).optional(),
+});
+
 // POST /api/v1/economy/roulette/game
 router.post("/roulette/game", zValidator("json", RouletteGameSchema), async (c) => {
   const data = c.req.valid("json");
   try {
     const game = await prisma.rouletteGame.create({
       data,
-      include: { bets: true },
+      // Heavy include removed from hot path - only fetch when explicitly needed
     });
     return c.json(game, 201);
   } catch (error) {
-    logger.error(`Error creating roulette game`, { error });
+    logger.error(`Error creating roulette game: ${error instanceof Error ? error.message : String(error)}`);
     return c.json({ error: "Internal error" }, 500);
   }
 });
@@ -315,7 +328,26 @@ router.get("/roulette/game/:channelId/active", async (c) => {
   try {
     const game = await prisma.rouletteGame.findFirst({
       where: { channelId, status: "waiting" },
-      include: { bets: true },
+      // Use select instead of include to avoid heavy relation fetch
+      select: {
+        id: true,
+        channelId: true,
+        status: true,
+        result: true,
+        winningNumber: true,
+        createdAt: true,
+        updatedAt: true,
+        bets: {
+          select: {
+            id: true,
+            userId: true,
+            amount: true,
+            choice: true,
+            payout: true,
+            status: true,
+          },
+        },
+      },
     });
     if (!game) return c.json({ error: "No active game" }, 404);
     return c.json(game);
@@ -334,23 +366,23 @@ router.post("/roulette/game/:gameId/bet", zValidator("json", RouletteBetSchema),
     });
     return c.json(bet, 201);
   } catch (error) {
-    logger.error(`Error placing roulette bet for game ${gameId}`, { error });
+    logger.error(`Error placing roulette bet for game ${gameId}`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal error" }, 500);
   }
 });
 
 // PATCH /api/v1/economy/roulette/game/:gameId
-router.patch("/roulette/game/:gameId", async (c) => {
+router.patch("/roulette/game/:gameId", zValidator("json", RouletteGamePatchSchema), async (c) => {
   const gameId = Number(c.req.param("gameId"));
-  const data = await c.req.json();
+  const data = c.req.valid("json");
   try {
     const game = await prisma.rouletteGame.update({
       where: { id: gameId },
       data,
-      include: { bets: true },
     });
     return c.json(game);
   } catch (error) {
+    logger.error(`Error updating roulette game ${gameId}: ${error instanceof Error ? error.message : String(error)}`);
     return c.json({ error: "Internal error" }, 500);
   }
 });
@@ -371,9 +403,9 @@ router.get("/roulette/game/:gameId", async (c) => {
 });
 
 // PATCH /api/v1/economy/roulette/bet/:betId
-router.patch("/roulette/bet/:betId", async (c) => {
+router.patch("/roulette/bet/:betId", zValidator("json", RouletteBetPatchSchema), async (c) => {
   const betId = Number(c.req.param("betId"));
-  const data = await c.req.json();
+  const data = c.req.valid("json");
   try {
     const bet = await prisma.rouletteBet.update({
       where: { id: betId },
@@ -381,6 +413,7 @@ router.patch("/roulette/bet/:betId", async (c) => {
     });
     return c.json(bet);
   } catch (error) {
+    logger.error(`Error updating roulette bet ${betId}: ${error instanceof Error ? error.message : String(error)}`);
     return c.json({ error: "Internal error" }, 500);
   }
 });

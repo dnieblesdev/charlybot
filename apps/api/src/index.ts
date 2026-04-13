@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { authMiddleware } from "./middleware/authMiddleware";
-import logger from "./utils/logger";
+import { rateLimitMiddleware } from "./middleware/rateLimitMiddleware";
+import logger, { sanitizeUrlPath } from "./utils/logger";
 import { prisma } from "@charlybot/shared";
 import guildRoutes from "./routes/guilds";
 import economyRoutes from "./routes/economy";
@@ -13,35 +14,28 @@ import { initializeValkey, shutdownValkey } from "./infrastructure/valkey";
 
 const app = new Hono();
 
-// Custom Logger Middleware
+// Custom Logger Middleware - log path only, not full URL
 app.use("*", async (c, next) => {
   const start = Date.now();
   await next();
   const ms = Date.now() - start;
-  logger.info(`${c.req.method} ${c.req.url} - ${c.res.status} [${ms}ms]`);
+  // Sanitize URL to log path only (strips query params with sensitive data)
+  const sanitizedPath = sanitizeUrlPath(c.req.url);
+  logger.info(`${c.req.method} ${sanitizedPath} - ${c.res.status} [${ms}ms]`);
 });
 
-// Health check (Public)
+// Public liveness health check (no DB/Valkey)
 app.get("/health", async (c) => {
-  let dbStatus = "ok";
-  try {
-    // Simple query to check prisma connection
-    await prisma.$queryRaw`SELECT 1`;
-  } catch (error) {
-    logger.error("Database health check failed", { error });
-    dbStatus = "error";
-  }
-
   return c.json({
     status: "ok",
-    database: dbStatus,
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   });
 });
 
-// Protected routes
+// Protected routes - auth + rate limiting
 app.use("/api/*", authMiddleware);
+app.use("/api/*", rateLimitMiddleware);
 
 app.route("/api/v1/guilds", guildRoutes);
 app.route("/api/v1/economy", economyRoutes);
@@ -53,6 +47,40 @@ app.route("/api/v1/music", musicRoutes);
 
 app.get("/api/v1/ping", (c) => {
   return c.json({ message: "pong", timestamp: new Date().toISOString() });
+});
+
+// Auth-protected readiness health check (with DB/Valkey)
+app.get("/api/v1/health", async (c) => {
+  let dbStatus = "ok";
+  let valkeyStatus = "ok";
+
+  try {
+    // DB check
+    await prisma.$queryRaw`SELECT 1`;
+  } catch (error) {
+    logger.error("Database health check failed", { error });
+    dbStatus = "error";
+  }
+
+  try {
+    // Valkey check
+    const { getValkeyClient } = await import("./infrastructure/valkey");
+    const valkey = getValkeyClient();
+    if (!valkey.isConnected()) {
+      throw new Error("Valkey not connected");
+    }
+  } catch (error) {
+    logger.warn("Valkey health check failed", { error });
+    valkeyStatus = "degraded";
+  }
+
+  return c.json({
+    status: dbStatus === "ok" ? "ok" : "degraded",
+    database: dbStatus,
+    valkey: valkeyStatus,
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Initialize Valkey before starting server

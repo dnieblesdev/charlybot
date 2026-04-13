@@ -1,5 +1,25 @@
 # @charlybot/api
 
+## 2.5.1
+
+### Patch Changes
+
+- Security and performance fixes from adversarial review
+
+  - Add rate limiting middleware (Valkey sliding window + in-memory fallback)
+  - Fix timing-safe API key comparison (crypto.timingSafeEqual)
+  - Fix mass assignment vulnerability in roulette PATCH endpoints (Zod validation)
+  - Fix DoS vector in xp leaderboard (clamp limit to max 100)
+  - Split /health into liveness (public) and readiness (auth-protected)
+  - Add LRU eviction to Valkey in-memory fallback (prevent OOM)
+  - Add pagination to autoroles, classes, verifications pending endpoints
+  - Wrap music delete+reorder and classes POST in Prisma transactions
+  - Fix cache invalidation for music queue settings mutation
+  - Fix double DB fetch in music-queue-cache on cache.set failure
+  - Sanitize logging (strip querystring, redact sensitive fields, truncate meta)
+  - Force verification status to "pending" on create
+  - Reduce Prisma includes in roulette hot paths
+
 ## 2.5.0
 
 ### Minor Changes

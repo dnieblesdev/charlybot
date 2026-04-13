@@ -122,7 +122,9 @@ router.delete("/level-roles/:guildId/:level", async (c) => {
 // GET /api/v1/xp/leaderboard/:guildId
 router.get("/leaderboard/:guildId", async (c) => {
   const { guildId } = c.req.param();
-  const limit = Number(c.req.query("limit")) || 10;
+  // Clamp limit to max 100 via validation
+  const rawLimit = Number(c.req.query("limit")) || 10;
+  const limit = Math.max(1, Math.min(Math.floor(rawLimit), 100));
 
   try {
     const leaderboard = await prisma.userXP.findMany({
