@@ -393,7 +393,26 @@ router.get("/roulette/game/:gameId", async (c) => {
   try {
     const game = await prisma.rouletteGame.findUnique({
       where: { id: gameId },
-      include: { bets: true },
+      select: {
+        id: true,
+        channelId: true,
+        status: true,
+        result: true,
+        winningNumber: true,
+        createdAt: true,
+        updatedAt: true,
+        bets: {
+          select: {
+            id: true,
+            userId: true,
+            amount: true,
+            choice: true,
+            payout: true,
+            status: true,
+          },
+          take: 100,
+        },
+      },
     });
     if (!game) return c.json({ error: "Not found" }, 404);
     return c.json(game);
