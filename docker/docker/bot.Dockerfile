@@ -64,4 +64,5 @@ COPY --from=builder /app/packages/shared/src/generated /app/packages/shared/src/
 COPY apps/bot/ ./apps/bot/
 COPY packages/shared/ ./packages/shared/
 
-CMD ["bun", "run", "--cwd", "/app/apps/bot", "start"]
+# Run directly with Bun (no build needed — Bun executes TypeScript natively)
+CMD ["bun", "run", "--cwd", "/app/apps/bot", "src/index.ts"]

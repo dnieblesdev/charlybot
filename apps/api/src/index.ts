@@ -10,6 +10,7 @@ import autoroleRoutes from "./routes/autoroles";
 import verificationRoutes from "./routes/verifications";
 import classRoutes from "./routes/classes";
 import musicRoutes from "./routes/music";
+import authRoutes from "./routes/auth";
 import { initializeValkey, shutdownValkey } from "./infrastructure/valkey";
 
 const app = new Hono();
@@ -33,7 +34,10 @@ app.get("/health", async (c) => {
   });
 });
 
-// Protected routes - auth + rate limiting
+// Mount auth routes BEFORE auth middleware (they are public)
+app.route("/api/v1/auth", authRoutes);
+
+// Protected routes - auth + rate limiting (applied to remaining /api/* routes)
 app.use("/api/*", authMiddleware);
 app.use("/api/*", rateLimitMiddleware);
 

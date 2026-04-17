@@ -1,10 +1,8 @@
 # Development harness — uses bind mounts for hot reload
-# For production, use Dockerfiles directly (docker/docker/*.Dockerfile)
+# Use: docker compose -f docker/docker-compose.dev.yml up
 services:
   valkey:
     image: valkey/valkey:8.0
-    # NOTE: `--requirepass` cannot be passed with an empty value.
-    # This uses shell expansion to include it only when VALKEY_PASSWORD is set.
     command:
       - sh
       - -c
@@ -13,10 +11,10 @@ services:
         --maxmemory 256mb
         --maxmemory-policy allkeys-lru
         ${VALKEY_PASSWORD:+--requirepass "$VALKEY_PASSWORD"}
-    ports:
-      - "${VALKEY_PORT:-6379}:6379"
+    expose:
+      - "6379"
     volumes:
-      - valkey-data:/data
+      - valkey-data-dev:/data
     networks:
       - charlybot-net
     healthcheck:
@@ -27,62 +25,90 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
-    restart: unless-stopped
 
-  bot:
-    build:
-      context: ..
-      dockerfile: docker/docker/bot.Dockerfile
-    volumes:
-      - ../apps/bot:/app/apps/bot
-      - ../packages/shared:/app/packages/shared
-      - ../packages/shared/dev.db:/app/packages/shared/dev.db
-    env_file:
-      - .env.docker
-    environment:
-      - DATABASE_URL=file:/app/packages/shared/dev.db
-      - API_URL=http://api:3000
-      - VALKEY_HOST=valkey
-      - VALKEY_PORT=6379
-      - VALKEY_PREFIX=cb
-    depends_on:
-      valkey:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - charlybot-net
-    # NOTE: No entrypoint override — relies on default command with bind mounts
-    command: ["bun", "run", "--cwd", "/app/apps/bot", "dev"]
-
+  # API service — hot reload via bun --hot
   api:
     build:
       context: ..
       dockerfile: docker/docker/api.Dockerfile
-    volumes:
-      - ../apps/api:/app/apps/api
-      - ../packages/shared:/app/packages/shared
-      - ../packages/shared/dev.db:/app/packages/shared/dev.db
     env_file:
-      - .env.docker
-    environment:
-      - DATABASE_URL=file:/app/packages/shared/dev.db
-      - VALKEY_HOST=valkey
-      - VALKEY_PORT=6379
-      - VALKEY_PREFIX=cb
+      - ./.env.api
+    volumes:
+      - ../apps/api/src:/app/apps/api/src
+      - ../packages/shared/src:/app/packages/shared/src
+    expose:
+      - "3000"
     depends_on:
       valkey:
         condition: service_healthy
-    ports:
-      - "3000:3000"
-    restart: unless-stopped
     networks:
       - charlybot-net
-    # NOTE: No entrypoint override — relies on default command with bind mounts
     command: ["bun", "run", "--cwd", "/app/apps/api", "dev"]
+
+  # Bot service — hot reload via bun run
+  bot:
+    build:
+      context: ..
+      dockerfile: docker/docker/bot.Dockerfile
+    env_file:
+      - ./.env.bot
+    volumes:
+      - ../apps/bot/src:/app/apps/bot/src
+      - ../packages/shared/src:/app/packages/shared/src
+    depends_on:
+      valkey:
+        condition: service_healthy
+      api:
+        condition: service_started
+    networks:
+      - charlybot-net
+    command: ["bun", "run", "--cwd", "/app/apps/bot", "dev"]
+
+  # Landing — Angular SSR dev server with hot reload
+  landing:
+    build:
+      context: ..
+      dockerfile: docker/docker/landing.dev.Dockerfile
+    env_file:
+      - ./.env.landing
+    volumes:
+      - ../apps/landing/src:/app/src
+      - /app/node_modules
+    expose:
+      - "4200"
+    networks:
+      - charlybot-net
+
+  # Dashboard — Angular SPA dev server with hot reload
+  dashboard:
+    build:
+      context: ..
+      dockerfile: docker/docker/dashboard.dev.Dockerfile
+    volumes:
+      - ../apps/dashboard/src:/app/src
+      - /app/node_modules
+    expose:
+      - "4201"
+    networks:
+      - charlybot-net
+
+  # Nginx reverse proxy
+  proxy:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - landing
+      - dashboard
+      - api
+    networks:
+      - charlybot-net
 
 networks:
   charlybot-net:
     driver: bridge
 
 volumes:
-  valkey-data:
+  valkey-data-dev:

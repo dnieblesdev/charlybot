@@ -18,10 +18,17 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # dotenv environment variable files
 .env
 .env.docker
+.env.docker.example
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
+
+# Docker per-app env files (local-only, DO NOT COMMIT)
+docker/.env.api
+docker/.env.bot
+docker/.env.landing
+docker/.env.dashboard
 
 # data files
 data/
