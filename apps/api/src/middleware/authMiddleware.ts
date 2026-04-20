@@ -1,5 +1,7 @@
 import type { Context, Next } from "hono";
+import { getCookie } from "hono/cookie";
 import crypto from "node:crypto";
+import { verifyAccessToken } from "../auth/jwt";
 import logger from "../utils/logger";
 
 const API_KEY = process.env.API_KEY;
@@ -28,7 +30,26 @@ function timingSafeCompare(a: string, b: string): boolean {
   return crypto.timingSafeEqual(aPadded, bPadded) && aBuf.length === bBuf.length;
 }
 
+/**
+ * Dual-mode auth middleware: JWT cookie OR X-API-Key header
+ * - Valid JWT cookie → PASS (dashboard requests)
+ * - Valid X-API-Key header → PASS (bot backward compat)
+ * - Neither → 401
+ */
 export const authMiddleware = async (c: Context, next: Next) => {
+  // Try JWT cookie first
+  const accessToken = getCookie(c, "accessToken");
+
+  if (accessToken) {
+    const payload = await verifyAccessToken(accessToken);
+    if (payload) {
+      c.set("jwt", payload);
+      await next();
+      return;
+    }
+  }
+
+  // Fallback to API key
   const apiKey = c.req.header("X-API-Key");
 
   if (!apiKey || !timingSafeCompare(apiKey, API_KEY)) {

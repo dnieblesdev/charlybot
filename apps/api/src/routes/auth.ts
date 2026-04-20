@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { getCookie, setCookie } from "hono/cookie";
 import { jwtAuth } from "../middleware/jwtMiddleware";
 import {
   signAccessToken,
@@ -82,6 +83,7 @@ router.get("/callback", async (c) => {
       userId: user.id,
       username: user.username,
       avatar: user.avatar,
+      guilds: guilds.map((g) => g.id),
     });
 
     const refreshToken = await signRefreshToken(user.id);
@@ -95,9 +97,25 @@ router.get("/callback", async (c) => {
       guildCount: guilds.length,
     });
 
-    // Redirect to dashboard with tokens in URL hash
-    const dashboardUrl = `/dashboard/auth/callback#accessToken=${accessToken}&refreshToken=${refreshToken}`;
-    c.header("Location", dashboardUrl);
+    // Set HttpOnly cookies
+    const isProduction = process.env.NODE_ENV === "production";
+    setCookie(c, "accessToken", accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "Lax",
+      path: "/",
+      maxAge: 3600,
+    });
+    setCookie(c, "refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "Lax",
+      path: "/",
+      maxAge: 604800,
+    });
+
+    // Redirect to dashboard without tokens in URL
+    c.header("Location", "/dashboard/auth/callback");
     return c.body(null, 302);
   } catch (error) {
     logger.error("OAuth callback failed", {
@@ -138,13 +156,12 @@ router.get("/me", jwtAuth, async (c) => {
 
 // POST /api/v1/auth/refresh - Refresh access token
 router.post("/refresh", async (c) => {
-  const body = await c.req.json().catch(() => null);
+  const refreshToken = getCookie(c, "refreshToken");
 
-  if (!body || typeof body.refreshToken !== "string") {
-    return c.json({ error: "Missing refreshToken in body" }, 400);
+  if (!refreshToken) {
+    logger.warn("Missing refreshToken cookie");
+    return c.json({ error: "Missing refreshToken cookie" }, 401);
   }
-
-  const { refreshToken } = body as { refreshToken: string };
 
   try {
     // Look up userId from refresh token
@@ -168,14 +185,25 @@ router.post("/refresh", async (c) => {
       userId: session.userId,
       username: session.username,
       avatar: session.avatar,
+      guilds: session.guilds.map((g) => g.id),
     });
 
     // Reset session TTL
     await setSession(userId, session);
 
+    // Set new access token cookie
+    const isProduction = process.env.NODE_ENV === "production";
+    setCookie(c, "accessToken", accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "Lax",
+      path: "/",
+      maxAge: 3600,
+    });
+
     logger.info("Access token refreshed", { userId });
 
-    return c.json({ accessToken });
+    return c.body(null, 200);
   } catch (error) {
     logger.error("Token refresh failed", { error });
     return c.json({ error: "Failed to refresh token" }, 500);
@@ -196,9 +224,21 @@ router.post("/logout", jwtAuth, async (c) => {
       await deleteRefreshToken(body.refreshToken);
     }
 
+    // Clear cookies
+    setCookie(c, "accessToken", "", {
+      httpOnly: true,
+      path: "/",
+      maxAge: 0,
+    });
+    setCookie(c, "refreshToken", "", {
+      httpOnly: true,
+      path: "/",
+      maxAge: 0,
+    });
+
     logger.info("User logged out", { userId: jwt.userId });
 
-    return c.json({ message: "Logged out successfully" });
+    return c.json({ success: true });
   } catch (error) {
     logger.error("Logout failed", { error, userId: jwt.userId });
     return c.json({ error: "Logout failed" }, 500);

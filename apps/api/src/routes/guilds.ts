@@ -4,6 +4,7 @@ import { prisma } from "@charlybot/shared";
 import { GuildConfigSchema } from "@charlybot/shared";
 import { z } from "zod";
 import logger from "../utils/logger";
+import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
 
 const GuildUpdateSchema = z.object({
   guildId: z.string().optional(),
@@ -15,6 +16,10 @@ const GuildUpdateSchema = z.object({
 });
 
 const router = new Hono();
+
+// Apply guild access middleware to all guild-scoped routes
+router.use("/:id/config", guildAccessMiddleware);
+router.use("/:id", guildAccessMiddleware);
 
 // PATCH /api/v1/guilds/:id - Update Guild metadata
 router.patch("/:id", zValidator("json", GuildUpdateSchema), async (c) => {

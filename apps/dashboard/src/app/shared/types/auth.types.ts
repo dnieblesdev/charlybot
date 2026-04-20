@@ -10,11 +10,6 @@ export interface AuthUser {
   avatar: string | null;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
-
 export interface AuthSession {
   userId: string;
   username: string;

@@ -14,8 +14,14 @@ import {
   WithdrawSchema,
 } from "@charlybot/shared";
 import logger from "../utils/logger";
+import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
 
 const router = new Hono();
+
+// Apply guild access middleware to all guild-scoped routes
+router.use("/user/:guildId/*", guildAccessMiddleware);
+router.use("/config/:guildId", guildAccessMiddleware);
+router.use("/leaderboard/:guildId", guildAccessMiddleware);
 
 // --- User Economy ---
 
@@ -190,22 +196,28 @@ router.patch("/config/:guildId", zValidator("json", EconomyConfigSchema.partial(
 // GET /api/v1/economy/leaderboard/:guildId
 router.get("/leaderboard/:guildId", async (c) => {
   const { guildId } = c.req.param();
-  const rawLimit = Number(c.req.query("limit")) || 10;
-
-  // Clamp limit to [1, MAX_LEADERBOARD_LIMIT]
-  const limit = Math.max(1, Math.min(Math.floor(rawLimit), MAX_LEADERBOARD_LIMIT));
+  const page = Math.max(1, parseInt(c.req.query("page") || "1"));
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") || "20")));
+  const skip = (page - 1) * limit;
 
   try {
-    const leaderboard = await prisma.leaderboard.findMany({
-      where: { guildId },
-      orderBy: [
-        { totalMoney: "desc" },
-        { joinedServerAt: "asc" }
-      ],
-      take: limit,
-    });
+    const [data, total] = await Promise.all([
+      prisma.leaderboard.findMany({
+        where: { guildId },
+        orderBy: [{ totalMoney: "desc" }, { joinedServerAt: "asc" }],
+        skip,
+        take: limit,
+      }),
+      prisma.leaderboard.count({ where: { guildId } }),
+    ]);
 
-    return c.json(leaderboard);
+    return c.json({
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     logger.error(`Error fetching leaderboard for ${guildId}`, { error: error instanceof Error ? error.message : String(error) });
     return c.json({ error: "Internal server error" }, 500);
@@ -303,8 +315,8 @@ const RouletteGamePatchSchema = z.object({
 });
 
 const RouletteBetPatchSchema = z.object({
-  status: z.enum(["pending", "won", "lost"]).optional(),
-  payout: z.number().int().min(0).optional(),
+  result: z.enum(["win", "lose"]).optional(),
+  winAmount: z.number().int().min(0).optional(),
 });
 
 // POST /api/v1/economy/roulette/game
@@ -333,7 +345,6 @@ router.get("/roulette/game/:channelId/active", async (c) => {
         id: true,
         channelId: true,
         status: true,
-        result: true,
         winningNumber: true,
         createdAt: true,
         updatedAt: true,
@@ -341,10 +352,12 @@ router.get("/roulette/game/:channelId/active", async (c) => {
           select: {
             id: true,
             userId: true,
+            guildId: true,
             amount: true,
-            choice: true,
-            payout: true,
-            status: true,
+            betType: true,
+            betValue: true,
+            result: true,
+            winAmount: true,
           },
         },
       },
@@ -397,7 +410,6 @@ router.get("/roulette/game/:gameId", async (c) => {
         id: true,
         channelId: true,
         status: true,
-        result: true,
         winningNumber: true,
         createdAt: true,
         updatedAt: true,
@@ -405,10 +417,12 @@ router.get("/roulette/game/:gameId", async (c) => {
           select: {
             id: true,
             userId: true,
+            guildId: true,
             amount: true,
-            choice: true,
-            payout: true,
-            status: true,
+            betType: true,
+            betValue: true,
+            result: true,
+            winAmount: true,
           },
           take: 100,
         },

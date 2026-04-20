@@ -3,8 +3,15 @@ import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { UserXPSchema, XPConfigSchema, LevelRoleSchema, XPIncrementSchema } from "@charlybot/shared";
 import logger from "../utils/logger";
+import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
 
 const router = new Hono();
+
+// Apply guild access middleware to all guild-scoped routes
+router.use("/config/:guildId", guildAccessMiddleware);
+router.use("/level-roles/:guildId", guildAccessMiddleware);
+router.use("/leaderboard/:guildId", guildAccessMiddleware);
+router.use("/:guildId/:userId", guildAccessMiddleware);
 
 // --- XP Config (MUST be before /:guildId/:userId to avoid route collision) ---
 
@@ -122,21 +129,28 @@ router.delete("/level-roles/:guildId/:level", async (c) => {
 // GET /api/v1/xp/leaderboard/:guildId
 router.get("/leaderboard/:guildId", async (c) => {
   const { guildId } = c.req.param();
-  // Clamp limit to max 100 via validation
-  const rawLimit = Number(c.req.query("limit")) || 10;
-  const limit = Math.max(1, Math.min(Math.floor(rawLimit), 100));
+  const page = Math.max(1, parseInt(c.req.query("page") || "1"));
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") || "20")));
+  const skip = (page - 1) * limit;
 
   try {
-    const leaderboard = await prisma.userXP.findMany({
-      where: { guildId },
-      orderBy: [
-        { xp: "desc" },
-        { lastMessageAt: "asc" },
-      ],
-      take: limit,
-    });
+    const [data, total] = await Promise.all([
+      prisma.userXP.findMany({
+        where: { guildId },
+        orderBy: [{ xp: "desc" }, { lastMessageAt: "asc" }],
+        skip,
+        take: limit,
+      }),
+      prisma.userXP.count({ where: { guildId } }),
+    ]);
 
-    return c.json(leaderboard);
+    return c.json({
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     logger.error(`Error fetching XP leaderboard for ${guildId}`, { error });
     return c.json({ error: "Internal server error" }, 500);

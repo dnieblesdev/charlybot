@@ -20,9 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Download yt-dlp latest
-RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
-    && chmod a+rx /usr/local/bin/yt-dlp
+# Download yt-dlp latest (standalone binary, no Python needed)
+RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
+    && chmod 755 /usr/local/bin/yt-dlp
 
 WORKDIR /app
 
@@ -49,9 +49,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Download yt-dlp latest
-RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
-    && chmod a+rx /usr/local/bin/yt-dlp
+# Download yt-dlp latest (standalone binary, no Python needed)
+RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
+    && chmod 755 /usr/local/bin/yt-dlp
 
 WORKDIR /app
 

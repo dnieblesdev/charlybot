@@ -14,6 +14,14 @@ interface UserXPEntry {
   lastMessageAt: Date;
 }
 
+interface PaginatedXPResponse {
+  data: UserXPEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 interface LevelRole {
   guildId: string;
   roleId: string;
@@ -71,6 +79,30 @@ interface LevelRole {
                 </tbody>
               </table>
             </div>
+
+            @if (totalPages() > 1) {
+              <div class="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                <span class="text-sm text-text-secondary">
+                  Page {{ currentPage() }} of {{ totalPages() }} ({{ total() }} total)
+                </span>
+                <div class="flex gap-2">
+                  <button
+                    (click)="prevPage()"
+                    [disabled]="currentPage() <= 1"
+                    class="px-3 py-1 text-sm bg-bg-base border border-border rounded-lg text-text-primary hover:bg-bg-surface disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    (click)="nextPage()"
+                    [disabled]="currentPage() >= totalPages()"
+                    class="px-3 py-1 text-sm bg-bg-base border border-border rounded-lg text-text-primary hover:bg-bg-surface disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            }
           }
         </div>
 
@@ -105,6 +137,11 @@ export class UsersComponent implements OnInit {
   leaderboard = this.leaderboardState.data;
   levelRoles = this.levelRolesState.data;
 
+  currentPage = signal(1);
+  pageSize = signal(20);
+  totalPages = signal(1);
+  total = signal(0);
+
   ngOnInit(): void {
     this.loadData();
   }
@@ -113,9 +150,13 @@ export class UsersComponent implements OnInit {
     const guildId = this.route.parent!.snapshot.paramMap.get('guildId')!;
 
     this.leaderboardState.setLoading();
-    this.http.get<UserXPEntry[]>(`/api/v1/xp/leaderboard/${guildId}`)
+    this.http.get<PaginatedXPResponse>(`/api/v1/xp/leaderboard/${guildId}?page=${this.currentPage()}&limit=${this.pageSize()}`)
       .subscribe({
-        next: (data) => this.leaderboardState.setData(data),
+        next: (res) => {
+          this.leaderboardState.setData(res.data);
+          this.total.set(res.total);
+          this.totalPages.set(res.totalPages);
+        },
         error: (err) => this.leaderboardState.setError(err),
       });
 
@@ -125,5 +166,20 @@ export class UsersComponent implements OnInit {
         next: (data) => this.levelRolesState.setData(data),
         error: (err) => this.levelRolesState.setError(err),
       });
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+      this.loadData();
+    }
+  }
+
+  prevPage(): void {
+    this.goToPage(this.currentPage() - 1);
+  }
+
+  nextPage(): void {
+    this.goToPage(this.currentPage() + 1);
   }
 }

@@ -4,8 +4,13 @@ import { prisma, MAX_QUEUE_SIZE } from "@charlybot/shared";
 import { MusicQueueItemSchema, MusicQueueSchema, GuildMusicConfigSchema } from "@charlybot/shared";
 import logger from "../utils/logger";
 import { getMusicQueueCacheService } from "../services/music-queue-cache.service";
+import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
 
 const router = new Hono();
+
+// Apply guild access middleware to all guild-scoped routes
+router.use("/queues/:guildId", guildAccessMiddleware);
+router.use("/config/:guildId", guildAccessMiddleware);
 
 // GET /api/v1/music/queues/:guildId
 router.get("/queues/:guildId", async (c) => {

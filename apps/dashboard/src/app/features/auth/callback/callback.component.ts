@@ -21,26 +21,11 @@ export class CallbackComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Read tokens from URL hash fragment (set by API callback redirect)
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get('accessToken');
-    const refreshToken = params.get('refreshToken');
-
-    if (!accessToken || !refreshToken) {
-      // No tokens in hash — redirect to login
-      window.location.href = '/api/v1/auth/login';
-      return;
-    }
-
-    // Store tokens
-    this.authService.setTokens({ accessToken, refreshToken });
-
-    // Fetch user profile and guilds, then navigate to dashboard
-    this.authService.fetchProfile().then(() => {
-      this.router.navigate(['/']);
-    }).catch(() => {
-      window.location.href = '/api/v1/auth/login';
-    });
+    // Backend already set HttpOnly cookies — just fetch profile
+    this.authService.fetchProfile()
+      .then(() => this.router.navigate(['/']))
+      .catch(() => {
+        window.location.href = '/api/v1/auth/login';
+      });
   }
 }

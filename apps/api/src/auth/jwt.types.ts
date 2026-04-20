@@ -2,6 +2,7 @@ export interface JwtPayload {
   userId: string;
   username: string;
   avatar: string | null;
+  guilds: string[];
 }
 
 export interface DiscordUser {

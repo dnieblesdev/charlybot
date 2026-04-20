@@ -48,6 +48,8 @@ class MusicStreamConsumer {
   private handlers: Map<string, StreamEventHandler> = new Map();
   private registryKey: string;
   private knownGuildIds: Set<string> = new Set();
+  private consumeLoopInFlight: boolean = false;
+  private reclaimInFlight: boolean = false;
   
   // In-memory dedupe for idempotency
   private processedMessages = new Set<string>();
@@ -192,6 +194,11 @@ class MusicStreamConsumer {
   private async consumeLoop(): Promise<void> {
     if (!this.running) return;
 
+    // Prevent re-entrancy: setInterval can trigger again while the previous tick is still running.
+    // This would pile up Redis commands and hit ioredis commandTimeout.
+    if (this.consumeLoopInFlight) return;
+    this.consumeLoopInFlight = true;
+
     try {
       // Refresh guild list from registry
       const guildIds = await this.getActiveGuildIds();
@@ -237,6 +244,8 @@ class MusicStreamConsumer {
       logger.error('Error in consume loop', {
         error: error instanceof Error ? error.message : String(error),
       });
+    } finally {
+      this.consumeLoopInFlight = false;
     }
   }
 
@@ -427,6 +436,9 @@ class MusicStreamConsumer {
    * PEL reclaim - claim pending entries that have been idle too long
    */
   private async reclaimPendingEntries(): Promise<void> {
+    if (this.reclaimInFlight) return;
+    this.reclaimInFlight = true;
+
     try {
       const client = getValkeyClient();
       
@@ -518,6 +530,8 @@ class MusicStreamConsumer {
       logger.error('Error in PEL reclaim', {
         error: error instanceof Error ? error.message : String(error),
       });
+    } finally {
+      this.reclaimInFlight = false;
     }
   }
 

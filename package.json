@@ -12,7 +12,6 @@
     "rc": "bun --cwd apps/bot run rc",
     "cc": "bun --cwd apps/bot run cc",
     "lc": "bun --cwd apps/bot run lc",
-    
     "db:backup": "bun run scripts/db/backup.ts create daily",
     "db:backup:migration": "bun run scripts/db/backup.ts create migration",
     "db:backup:list": "bun run scripts/db/backup.ts list",
@@ -30,6 +29,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@prisma/client": "^7.5.0"
+    "@prisma/client": "^7.5.0",
+    "opencode-ai": "^1.14.19"
   }
 }
