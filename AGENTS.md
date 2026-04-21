@@ -90,3 +90,22 @@ bun run db:restore
 
 - Bot: `apps/bot/AGENTS.md`
 - API: `apps/api/AGENTS.md`
+
+## Skills Disponibles
+
+- `skills/discord-command/SKILL.md`: guía para crear comandos slash respetando el patrón del repo.
+- `skills/monorepo-versioning/SKILL.md`: reemplaza el flujo de Changesets y guía al agente para versionar workspaces manualmente, actualizar dependencias internas, mantener changelogs, y cerrar el release con commit + tag.
+
+## Flujo de versionado y release
+
+- Para versionar o sacar release del monorepo, seguir `skills/monorepo-versioning/SKILL.md`.
+- **NUNCA** usar `changeset add`, `changeset version` ni `.changeset/*.md`.
+- El flujo correcto incluye:
+  1. plan de release,
+  2. confirmación del usuario,
+  3. actualización de versiones,
+  4. actualización de `CHANGELOG.md` por workspace,
+  5. actualización de `CHANGELOG.md` raíz,
+  6. creación de artefacto en `releases/`,
+  7. commit git,
+  8. tags git por workspace (`<workspace>@<version>`).
