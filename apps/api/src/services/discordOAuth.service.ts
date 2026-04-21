@@ -88,8 +88,10 @@ async function fetchGuilds(accessToken: string): Promise<DiscordGuild[]> {
  * ADMINISTRATOR = 0x8 (8)
  * MANAGE_GUILD = 0x20 (32)
  */
-function hasAdminPermissions(permissions: string): boolean {
-  const perms = parseInt(permissions, 10);
+function hasAdminPermissions(guild: DiscordGuild): boolean {
+  if (guild.owner) return true;
+  const perms = parseInt(guild.permissions, 10);
+  if (Number.isNaN(perms)) return false;
   return (perms & 0x8) !== 0 || (perms & 0x20) !== 0;
 }
 
@@ -107,7 +109,7 @@ export async function filterAdminGuilds(
   return guilds
     .filter((guild) => {
       if (!allowedGuildIds.has(guild.id)) return false;
-      return hasAdminPermissions(guild.permissions);
+      return hasAdminPermissions(guild);
     })
     .map((guild) => ({
       id: guild.id,

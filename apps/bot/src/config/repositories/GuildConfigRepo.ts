@@ -100,6 +100,14 @@ export async function removeGuildConfig(guildId: string): Promise<void> {
 }
 
 /**
+ * Elimina el registro Guild y su configuración
+ */
+export async function deleteGuild(guildId: string): Promise<void> {
+  await guildConfigRepo.deleteGuild(guildId);
+  logger.info(`🗑️ Guild eliminado: ${guildId}`);
+}
+
+/**
  * Establece el canal donde está el embed de verificación
  */
 export async function setVerificationChannel(

@@ -1,5 +1,13 @@
 # @charlybot/api
 
+## 2.6.1
+
+### Patch Changes
+
+- Add DELETE endpoint for guild cleanup (atomic + idempotent)
+- Add guild.owner check in OAuth admin filter
+- Add NaN guard for empty permissions string
+
 ## 2.6.0
 
 ### Minor Changes

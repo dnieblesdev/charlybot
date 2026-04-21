@@ -9,4 +9,5 @@ export interface IGuildConfigRepository {
   // Guild metadata
   findGuildById(guildId: string): Promise<Guild | null>;
   upsertGuild(guildId: string, data: Partial<Guild>): Promise<Guild>;
+  deleteGuild(guildId: string): Promise<void>;
 }

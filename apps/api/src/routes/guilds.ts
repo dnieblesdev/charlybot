@@ -40,6 +40,26 @@ router.patch("/:id", zValidator("json", GuildUpdateSchema), async (c) => {
   }
 });
 
+// DELETE /api/v1/guilds/:id - Delete Guild and its config (idempotent, atomic)
+router.delete("/:id", async (c) => {
+  const guildId = c.req.param("id");
+
+  try {
+    // Callback transaction: atomic + rollback on failure
+    // deleteMany: idempotent — returns { count: 0 } if already gone
+    await prisma.$transaction(async (tx) => {
+      await tx.guildConfig.deleteMany({ where: { guildId } });
+      await tx.guild.deleteMany({ where: { guildId } });
+    });
+
+    logger.info(`Guild and config deleted: ${guildId}`);
+    return c.json({ success: true });
+  } catch (error) {
+    logger.error(`Error deleting guild ${guildId}`, { error });
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 // GET /api/v1/guilds/:id/config
 router.get("/:id/config", async (c) => {
   const guildId = c.req.param("id");

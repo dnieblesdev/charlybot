@@ -1,53 +1,41 @@
-import { Guild, Events } from "discord.js";
+import { Events, Guild } from "discord.js";
 import logger from "../../utils/logger";
-import { getGuild, upsertGuild } from "../../config/repositories/GuildConfigRepo.ts";
+import { upsertGuild } from "../../config/repositories/GuildConfigRepo.ts";
 
 export default {
   name: Events.GuildCreate,
   once: false,
   async execute(guild: Guild) {
+    // Fetch owner in its own try/catch — failure shouldn't block guild registration
+    let ownerId: string | null = null;
+    let ownerUsername: string | null = null;
+
     try {
-      const existsBefore = await getGuild(guild.id);
-      
-      const ownerUsername = await guild
-        .fetchOwner()
-        .then((owner) => owner.user.username);
-        
+      const owner = await guild.fetchOwner();
+      ownerId = owner.id;
+      ownerUsername = owner.user.username;
+    } catch (err) {
+      logger.warn(`Could not fetch owner for guild ${guild.id}`, {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    try {
       await upsertGuild(guild.id, {
         guildId: guild.id,
         name: guild.name,
-        ownerId: guild.ownerId,
-        MemberCount: guild.memberCount,
+        MemberCount: guild.memberCount ?? 0,
+        ownerId,
         ownerName: ownerUsername,
       });
-      
-      if (!existsBefore) {
-        logger.info(
-          "🎉 Bot agregado a un nuevo servidor - Servidor registrado en la BD",
-          {
-            guildId: guild.id,
-            guildName: guild.name,
-            guildOwner: guild.ownerId,
-            guildOwnerUsername: ownerUsername,
-            guildMemberCount: guild.memberCount,
-          },
-        );
-      } else {
-        logger.info(
-          "🔄 El Bot a re-ingresado a un servidor - Actualizando Registros en la BD",
-          {
-            guildId: guild.id,
-            guildName: guild.name,
-            guildOwner: guild.ownerId,
-            guildOwnerUsername: ownerUsername,
-            guildMemberCount: guild.memberCount,
-          },
-        );
-      }
-    } catch (error) {
-      logger.error("❌ Error al registrar servidor", {
+
+      logger.info(`✅ Guild registrado: ${guild.name}`, {
         guildId: guild.id,
-        error: error instanceof Error ? error.message : String(error),
+        memberCount: guild.memberCount ?? 0,
+      });
+    } catch (err) {
+      logger.error(`Error al registrar guild ${guild.id}`, {
+        error: err instanceof Error ? err.message : String(err),
       });
     }
   },

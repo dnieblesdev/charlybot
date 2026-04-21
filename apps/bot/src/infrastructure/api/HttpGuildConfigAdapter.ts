@@ -72,4 +72,12 @@ export class HttpGuildConfigAdapter
       .patch(`guilds/${guildId}`, { json: data })
       .json<Guild>();
   }
+
+  async deleteGuild(guildId: string): Promise<void> {
+    await this.client.delete(`guilds/${guildId}`);
+    // Invalidate distributed cache
+    const cacheKey = CACHE_KEYS.GUILD_CONFIG(guildId);
+    const valkey = getValkeyClient();
+    await valkey.del(cacheKey);
+  }
 }

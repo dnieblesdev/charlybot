@@ -1,5 +1,15 @@
 # @charlybot/bot
 
+## 2.9.0
+
+### Minor Changes
+
+- Add guildCreate event handler for automatic guild registration
+- Add guildDelete event handler for guild cleanup on leave
+- Add deleteGuild method to HttpGuildConfigAdapter and repository
+- Add guild.available guard to prevent data loss during Discord outages
+- Add memberCount null guard and fetchOwner fallback in guildCreate
+
 ## 2.8.2
 
 ### Patch Changes
