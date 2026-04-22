@@ -21,6 +21,27 @@ const router = new Hono();
 router.use("/:id/config", guildAccessMiddleware);
 router.use("/:id", guildAccessMiddleware);
 
+// GET /api/v1/guilds - List all registered guilds (debug/inspection)
+router.get("/", async (c) => {
+  try {
+    const guilds = await prisma.guild.findMany({
+      select: {
+        guildId: true,
+        name: true,
+        MemberCount: true,
+        ownerId: true,
+        ownerName: true,
+      },
+      orderBy: { guildId: "asc" },
+    });
+
+    return c.json({ count: guilds.length, guilds });
+  } catch (error) {
+    logger.error("Error fetching guilds list", { error });
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 // PATCH /api/v1/guilds/:id - Update Guild metadata
 router.patch("/:id", zValidator("json", GuildUpdateSchema), async (c) => {
   const guildId = c.req.param("id");

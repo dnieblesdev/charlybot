@@ -1,5 +1,13 @@
 # dashboard
 
+## 0.1.1
+
+### Patch Changes
+
+- Fix auth guard: always call fetchProfile() to validate session and get fresh guild data
+- Remove auto-navigate effect from guild selector — always show server selection panel
+- Add loading signal to AuthService for async profile fetch state
+
 ## 0.1.0
 
 ### Minor Changes

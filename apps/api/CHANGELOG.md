@@ -1,5 +1,13 @@
 # @charlybot/api
 
+## 2.6.2
+
+### Patch Changes
+
+- Fix BigInt precision loss in Discord permission checks (permissions exceed MAX_SAFE_INTEGER)
+- Add GET /api/v1/guilds debug endpoint to inspect registered guilds
+- Enhance OAuth logging with per-guild permission breakdown (BigInt-based)
+
 ## 2.6.1
 
 ### Patch Changes

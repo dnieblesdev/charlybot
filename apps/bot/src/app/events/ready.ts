@@ -8,39 +8,49 @@ export default {
   async execute(client: Client) {
     logger.info(`✅ Bot conectado como ${client.user?.tag}`);
     logger.info(`📊 Servidores activos: ${client.guilds.cache.size}`);
-    // registrar / actualizar todos los registros en la BD
-    try {
-      const guilds = client.guilds;
 
-      // Process guilds concurrently with per-guild error isolation
-      await Promise.all(
-        guilds.cache.map(async (guild) => {
-          try {
-            const fullGuild = await guild.fetch();
-            if (fullGuild.features.includes("COMMUNITY")) {
-              logger.info(
-                `✅ Servidor ${fullGuild.vanityURLCode} es un servidor de comunidad`,
-              );
-            }
-            const owner = await guild.fetchOwner();
-            const ownerUsername = owner.user.username;
+    // Registrar / actualizar todos los registros en la BD
+    const guilds = [...client.guilds.cache.values()];
 
-            await upsertGuild(guild.id, {
-              guildId: guild.id,
-              name: guild.name,
-              MemberCount: guild.memberCount,
-              ownerId: owner.id,
-              ownerName: ownerUsername,
-            });
-          } catch (err) {
-            logger.error(`Failed to sync guild ${guild.id}`, {
-              error: err instanceof Error ? err.message : String(err),
-            });
-          }
-        }),
-      );
-    } catch (error) {
-      logger.error("Error al actualizar registros en la BD", error);
+    for (const guild of guilds) {
+      try {
+        const fullGuild = await guild.fetch();
+        if (fullGuild.features.includes("COMMUNITY")) {
+          logger.info(
+            `✅ Servidor ${fullGuild.vanityURLCode} es un servidor de comunidad`,
+          );
+        }
+
+        // Fetch owner in its own try/catch — failure shouldn't block guild registration
+        let ownerId: string | null = null;
+        let ownerUsername: string | null = null;
+
+        try {
+          const owner = await guild.fetchOwner();
+          ownerId = owner.id;
+          ownerUsername = owner.user.username;
+        } catch (err) {
+          logger.warn(`Could not fetch owner for guild ${guild.id}`, {
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+
+        await upsertGuild(guild.id, {
+          guildId: guild.id,
+          name: guild.name,
+          MemberCount: guild.memberCount,
+          ownerId,
+          ownerName: ownerUsername,
+        });
+
+        logger.info(`✅ Guild sincronizado: ${guild.name}`, {
+          guildId: guild.id,
+        });
+      } catch (err) {
+        logger.error(`Failed to sync guild ${guild.id}`, {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
     }
   },
 };

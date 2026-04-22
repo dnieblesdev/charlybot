@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { FilteredGuild } from '../../../shared/types/auth.types';
@@ -9,7 +9,7 @@ import { FilteredGuild } from '../../../shared/types/auth.types';
   template: `
     <div class="min-h-screen bg-bg-base p-8">
       <h1 class="text-3xl font-bold text-text-primary mb-8">Select a Server</h1>
-      
+
       @if (guilds().length === 0) {
         <div class="text-text-secondary">You don't have any servers with admin access.</div>
       } @else {
@@ -38,18 +38,11 @@ import { FilteredGuild } from '../../../shared/types/auth.types';
     </div>
   `,
 })
-export class GuildSelectorComponent implements OnInit {
+export class GuildSelectorComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
   guilds = this.authService.guilds;
-
-  ngOnInit(): void {
-    // Auto-navigate if only one guild
-    if (this.guilds().length === 1) {
-      this.router.navigate(['/', this.guilds()[0].id, 'overview']);
-    }
-  }
 
   selectGuild(guild: FilteredGuild): void {
     this.router.navigate(['/', guild.id, 'overview']);

@@ -12,9 +12,11 @@ const STORAGE_KEYS = {
 export class AuthService {
   private readonly _user = signal<AuthUser | null>(null);
   private readonly _guilds = signal<FilteredGuild[]>([]);
+  private readonly _loading = signal(false);
 
   readonly user = this._user.asReadonly();
   readonly guilds = this._guilds.asReadonly();
+  readonly loading = this._loading.asReadonly();
   readonly isAuthenticated = computed(() => !!this._user());
 
   constructor(private http: HttpClient) {
@@ -57,6 +59,7 @@ export class AuthService {
   }
 
   async fetchProfile(): Promise<void> {
+    this._loading.set(true);
     try {
       const res = await firstValueFrom(
         this.http.get<{ user: AuthUser; guilds: FilteredGuild[] }>('/api/v1/auth/me')
@@ -65,6 +68,8 @@ export class AuthService {
     } catch (err) {
       this.clearAuth();
       throw err;
+    } finally {
+      this._loading.set(false);
     }
   }
 

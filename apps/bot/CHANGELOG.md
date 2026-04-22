@@ -1,5 +1,12 @@
 # @charlybot/bot
 
+## 2.9.1
+
+### Patch Changes
+
+- Fix ready.ts: fetchOwner failure no longer blocks guild registration on startup
+- Replace Promise.all with sequential for-of to avoid Discord rate limit bursts during guild sync
+
 ## 2.9.0
 
 ### Minor Changes

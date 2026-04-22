@@ -87,12 +87,18 @@ async function fetchGuilds(accessToken: string): Promise<DiscordGuild[]> {
  * Permission bit flags for admin/managing
  * ADMINISTRATOR = 0x8 (8)
  * MANAGE_GUILD = 0x20 (32)
+ *
+ * Uses BigInt because Discord permissions can exceed Number.MAX_SAFE_INTEGER.
+ * parseInt() loses precision on large values, silently corrupting bit checks.
  */
 function hasAdminPermissions(guild: DiscordGuild): boolean {
   if (guild.owner) return true;
-  const perms = parseInt(guild.permissions, 10);
-  if (Number.isNaN(perms)) return false;
-  return (perms & 0x8) !== 0 || (perms & 0x20) !== 0;
+  try {
+    const perms = BigInt(guild.permissions);
+    return (perms & 0x8n) !== 0n || (perms & 0x20n) !== 0n;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -149,16 +155,39 @@ export async function exchangeCodeAndFetchProfile(
   // Filter guilds
   const filteredGuilds = await filterAdminGuilds(rawGuilds, botGuildIds);
 
-  // Debug logging
+  // Debug logging — detailed per-guild breakdown
   const mod = await import("../utils/logger");
   const log = mod.default;
+
+  const botGuildSet = new Set(botGuildIds);
+  const botMatchedGuilds = rawGuilds.filter(g => botGuildSet.has(g.id));
+
   log.info("Discord guilds debug", {
     rawGuildCount: rawGuilds.length,
     botGuildCount: botGuildIds.length,
+    botMatchedCount: botMatchedGuilds.length,
     filteredCount: filteredGuilds.length,
-    rawGuildIds: rawGuilds.map(g => g.id).slice(0, 5),
-    botGuildIds: botGuildIds.slice(0, 5),
   });
+
+  for (const g of botMatchedGuilds) {
+    const perms = BigInt(g.permissions);
+    const hasAdmin = hasAdminPermissions(g);
+    log.info(`Guild check: ${g.name} (${g.id})`, {
+      owner: g.owner,
+      permissions: g.permissions,
+      hasAdminBit: (perms & 0x8n) !== 0n,
+      hasManageGuildBit: (perms & 0x20n) !== 0n,
+      isAdmin: hasAdmin,
+      passed: hasAdmin,
+    });
+  }
+
+  // Also log guilds where bot is present but user is NOT a member (shouldn't happen)
+  for (const botId of botGuildIds) {
+    if (!rawGuilds.find(g => g.id === botId)) {
+      log.warn(`Bot is in guild ${botId} but user is NOT a member`);
+    }
+  }
 
   return {
     user,
