@@ -1,5 +1,12 @@
 # @charlybot/shared
 
+## 2.5.2
+
+### Patch Changes
+
+- Add `username` field to UserXP model (optional, updated on XP increment)
+- Update XPIncrementSchema with optional `username` parameter
+
 ## 2.5.1
 
 ### Patch Changes

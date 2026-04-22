@@ -1,5 +1,14 @@
 # @charlybot/bot
 
+## 2.9.2
+
+### Patch Changes
+
+- Pass username to XP increment API call (message.author.username)
+
+- Updated dependencies
+  - @charlybot/shared@2.5.2
+
 ## 2.9.1
 
 ### Patch Changes

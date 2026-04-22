@@ -1,5 +1,14 @@
 # dashboard
 
+## 0.1.2
+
+### Patch Changes
+
+- Fix sidebar active state: add left border indicator + improved contrast (WCAG AA)
+- Enhance guild selector cards: larger icons, shadow, hover lift effect
+- Handle 404 on config endpoints gracefully (show defaults instead of error)
+- Fix overview: extract .data from paginated leaderboard response
+
 ## 0.1.1
 
 ### Patch Changes

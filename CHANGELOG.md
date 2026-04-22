@@ -1,5 +1,26 @@
 # charlybot
 
+## 2026-04-22
+
+### @charlybot/shared (2.5.2)
+- Add `username` field to UserXP model
+- Update XPIncrementSchema with optional username
+
+### @charlybot/api (2.6.3)
+- Fix guildAccessMiddleware: extract guildId from URL path (was matching wildcard routes)
+- Auto-refresh JWT on /auth/me with current bot guilds
+- Store username in XP increment endpoint
+- Handle 404 gracefully in dashboard config endpoints
+
+### @charlybot/bot (2.9.2)
+- Pass username to XP increment API call
+
+### dashboard (0.1.2)
+- Fix sidebar active state: left border indicator + improved contrast
+- Enhance guild selector cards: larger icons, shadow, hover lift
+- Handle 404 on config endpoints gracefully
+- Fix overview paginated response extraction
+
 ## 2026-04-21 (v2)
 
 ### @charlybot/api (2.6.2)

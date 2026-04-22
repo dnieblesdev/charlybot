@@ -1,5 +1,18 @@
 # @charlybot/api
 
+## 2.6.3
+
+### Patch Changes
+
+- Fix guildAccessMiddleware: extract guildId from URL path instead of Hono params (was matching wildcard routes incorrectly)
+- Add Valkey session fallback in guildAccessMiddleware for stale JWT guild lists
+- Auto-refresh JWT cookie on GET /api/v1/auth/me with current bot guilds
+- Store username in XP increment endpoint (upsert)
+- Handle 404 gracefully in dashboard config endpoints (music, economy)
+
+- Updated dependencies
+  - @charlybot/shared@2.5.2
+
 ## 2.6.2
 
 ### Patch Changes
