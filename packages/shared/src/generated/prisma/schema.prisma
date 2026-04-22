@@ -275,6 +275,7 @@ model UserXP {
   id            Int      @id @default(autoincrement())
   userId        String
   guildId       String
+  username      String? // Discord display name (updated on each XP increment)
   xp            Int      @default(0)
   nivel         Int      @default(0)
   lastMessageAt DateTime @default(now())

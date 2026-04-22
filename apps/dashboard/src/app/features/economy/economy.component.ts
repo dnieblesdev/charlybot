@@ -252,7 +252,27 @@ export class EconomyComponent implements OnInit {
           this.configState.setData(data);
           this.configForm = { ...data };
         },
-        error: (err) => this.configState.setError(err),
+        error: (err) => {
+          if (err.status === 404) {
+            // No config yet — use defaults so user can create one
+            const defaults: EconomyConfig = {
+              guildId,
+              workCooldown: 3600,
+              crimeCooldown: 7200,
+              robCooldown: 3600,
+              workMinAmount: 100,
+              workMaxAmount: 500,
+              crimeMultiplier: 2,
+              startingMoney: 1000,
+              jailTimeWork: 600,
+              jailTimeRob: 1800,
+            };
+            this.configState.setData(defaults);
+            this.configForm = { ...defaults };
+          } else {
+            this.configState.setError(err);
+          }
+        },
       });
   }
 

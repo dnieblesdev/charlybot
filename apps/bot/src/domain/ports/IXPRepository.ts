@@ -10,7 +10,7 @@ export interface XPLeaderboard {
 export interface IXPRepository {
   getUserXP(guildId: string, userId: string): Promise<IUserXP | null>;
   upsertUserXP(guildId: string, userId: string, data: Partial<IUserXP>): Promise<IUserXP>;
-  incrementUserXP(guildId: string, userId: string, xpIncrement: number, nivel: number): Promise<IUserXP>;
+  incrementUserXP(guildId: string, userId: string, xpIncrement: number, nivel: number, username?: string): Promise<IUserXP>;
   getConfig(guildId: string): Promise<IXPConfig | null>;
   createConfig(guildId: string, data: IXPConfig): Promise<IXPConfig>;
   updateConfig(guildId: string, data: Partial<IXPConfig>): Promise<IXPConfig>;

@@ -42,8 +42,8 @@ interface NavItem {
         @for (item of navItems; track item.path) {
           <a
             [routerLink]="item.path"
-            routerLinkActive="bg-accent text-text-primary"
-            class="flex items-center gap-3 p-3 rounded-lg text-text-secondary hover:bg-bg-base transition-colors mb-1"
+            routerLinkActive="border-l-4 border-primary bg-accent/80 text-text-primary font-medium"
+            class="flex items-center gap-3 p-3 rounded-lg text-text-secondary hover:bg-bg-base border-l-4 border-transparent transition-all duration-200 mb-1"
             [class.justify-center]="collapsed()"
           >
             <span [innerHTML]="item.icon"></span>

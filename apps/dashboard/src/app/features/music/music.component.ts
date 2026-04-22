@@ -169,7 +169,17 @@ export class MusicComponent implements OnInit {
     this.http.get<MusicQueue>(`/api/v1/music/queues/${guildId}`)
       .subscribe({
         next: (data) => this.queueState.setData(data),
-        error: (err) => this.queueState.setError(err),
+        error: (err) => {
+          if (err.status === 404) {
+            // No queue yet — treat as empty
+            this.queueState.setData({
+              id: '', guildId, isPlaying: false, isPaused: false,
+              volume: 50, loopMode: 'none', lastSeek: 0, items: [],
+            });
+          } else {
+            this.queueState.setError(err);
+          }
+        },
       });
 
     this.configState.setLoading();
@@ -179,7 +189,16 @@ export class MusicComponent implements OnInit {
           this.configState.setData(data);
           this.configForm = { ...data };
         },
-        error: (err) => this.configState.setError(err),
+        error: (err) => {
+          if (err.status === 404) {
+            // No config yet — use defaults so user can create one
+            const defaults: MusicConfig = { guildId, defaultVolume: 50, autoCleanup: true, maxQueueSize: 50 };
+            this.configState.setData(defaults);
+            this.configForm = { ...defaults };
+          } else {
+            this.configState.setError(err);
+          }
+        },
       });
   }
 

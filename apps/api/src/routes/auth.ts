@@ -19,6 +19,7 @@ import {
   consumeOAuthState,
   generateState,
   buildDiscordAuthUrl,
+  getBotGuildIds,
 } from "../services/discordOAuth.service";
 import type { AuthSession } from "../auth/jwt.types";
 import logger from "../utils/logger";
@@ -140,13 +141,35 @@ router.get("/me", jwtAuth, async (c) => {
       return c.json({ error: "Session expired or invalid" }, 401);
     }
 
+    // Refresh JWT with current guilds to prevent stale 403 errors
+    const botGuildIds = await getBotGuildIds();
+    const currentGuilds = session.guilds.filter((g) =>
+      botGuildIds.includes(g.id),
+    );
+
+    const newAccessToken = await signAccessToken({
+      userId: session.userId,
+      username: session.username,
+      avatar: session.avatar,
+      guilds: currentGuilds.map((g) => g.id),
+    });
+
+    const isProduction = process.env.NODE_ENV === "production";
+    setCookie(c, "accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "Lax",
+      path: "/",
+      maxAge: 3600,
+    });
+
     return c.json({
       user: {
         userId: session.userId,
         username: session.username,
         avatar: session.avatar,
       },
-      guilds: session.guilds,
+      guilds: currentGuilds,
     });
   } catch (error) {
     logger.error("Failed to fetch user profile", { error, userId: jwt.userId });

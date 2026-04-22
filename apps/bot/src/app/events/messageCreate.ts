@@ -51,7 +51,7 @@ export default {
         const newNivel = Math.floor(Math.sqrt(newXP / 100));
 
         // Usar incremento atómico para evitar race conditions
-        await XPRepo.incrementUserXP(guildId, userId, xpIncrement, newNivel);
+        await XPRepo.incrementUserXP(guildId, userId, xpIncrement, newNivel, message.author.username);
 
         // Verificar si hubo level up
         if (newNivel > previousNivel) {

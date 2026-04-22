@@ -127,7 +127,7 @@ export async function filterAdminGuilds(
 /**
  * Get all guild IDs where the bot is present (from Prisma)
  */
-async function getBotGuildIds(): Promise<string[]> {
+export async function getBotGuildIds(): Promise<string[]> {
   const guilds = await prisma.guild.findMany({
     select: { guildId: true },
   });

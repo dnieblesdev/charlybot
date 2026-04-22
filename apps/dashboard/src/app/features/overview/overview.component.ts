@@ -106,17 +106,29 @@ export class OverviewComponent implements OnInit {
     const guildId = this.route.parent!.snapshot.paramMap.get('guildId')!;
 
     this.economyState.setLoading();
-    this.http.get<LeaderboardEntry[]>(`/api/v1/economy/leaderboard/${guildId}?limit=100`)
+    this.http.get<{ data: LeaderboardEntry[] }>(`/api/v1/economy/leaderboard/${guildId}?limit=100`)
       .subscribe({
-        next: (data) => this.economyState.setData(data),
-        error: (err) => this.economyState.setError(err),
+        next: (res) => this.economyState.setData(res.data),
+        error: (err) => {
+          if (err.status === 404) {
+            this.economyState.setData([]);
+          } else {
+            this.economyState.setError(err);
+          }
+        },
       });
 
     this.xpState.setLoading();
-    this.http.get<LeaderboardEntry[]>(`/api/v1/xp/leaderboard/${guildId}?limit=100`)
+    this.http.get<{ data: LeaderboardEntry[] }>(`/api/v1/xp/leaderboard/${guildId}?limit=100`)
       .subscribe({
-        next: (data) => this.xpState.setData(data),
-        error: (err) => this.xpState.setError(err),
+        next: (res) => this.xpState.setData(res.data),
+        error: (err) => {
+          if (err.status === 404) {
+            this.xpState.setData([]);
+          } else {
+            this.xpState.setError(err);
+          }
+        },
       });
   }
 

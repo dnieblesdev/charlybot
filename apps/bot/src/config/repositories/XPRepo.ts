@@ -26,8 +26,9 @@ export async function incrementUserXP(
   userId: string,
   xpIncrement: number,
   nivel: number,
+  username?: string,
 ): Promise<IUserXP> {
-  return await xpRepo.incrementUserXP(guildId, userId, xpIncrement, nivel);
+  return await xpRepo.incrementUserXP(guildId, userId, xpIncrement, nivel, username);
 }
 
 export async function getXPConfig(

@@ -17,20 +17,20 @@ import { FilteredGuild } from '../../../shared/types/auth.types';
           @for (guild of guilds(); track guild.id) {
             <button
               (click)="selectGuild(guild)"
-              class="bg-bg-surface rounded-lg p-4 hover:bg-opacity-80 transition-colors border border-border flex items-center gap-4 cursor-pointer"
+              class="bg-bg-surface rounded-lg p-6 hover:bg-opacity-80 transition-all duration-200 border border-border flex items-center gap-4 cursor-pointer shadow-md hover:shadow-xl hover:-translate-y-1"
             >
               @if (guild.icon) {
                 <img
                   [src]="getGuildIconUrl(guild)"
                   [alt]="guild.name"
-                  class="w-16 h-16 rounded-full"
+                  class="w-20 h-20 rounded-full"
                 />
               } @else {
-                <div class="w-16 h-16 rounded-full bg-accent flex items-center justify-center text-2xl font-bold text-text-primary">
+                <div class="w-20 h-20 rounded-full bg-accent flex items-center justify-center text-2xl font-bold text-text-primary">
                   {{ guild.name.charAt(0).toUpperCase() }}
                 </div>
               }
-              <span class="text-xl font-semibold text-text-primary">{{ guild.name }}</span>
+              <span class="text-2xl font-semibold text-text-primary">{{ guild.name }}</span>
             </button>
           }
         </div>

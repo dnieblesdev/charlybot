@@ -199,7 +199,7 @@ router.post("/", zValidator("json", UserXPSchema), async (c) => {
 
 // POST /api/v1/xp/increment - Incremento atómico de XP (evita race conditions)
 router.post("/increment", zValidator("json", XPIncrementSchema), async (c) => {
-  const { userId, guildId, xpIncrement, nivel, lastMessageAt } = c.req.valid("json");
+  const { userId, guildId, username, xpIncrement, nivel, lastMessageAt } = c.req.valid("json");
 
   try {
     // Usa incremento atómico de Prisma: xp: { increment: N }
@@ -208,11 +208,13 @@ router.post("/increment", zValidator("json", XPIncrementSchema), async (c) => {
       update: {
         xp: { increment: xpIncrement },
         nivel,
+        username,
         lastMessageAt,
       },
       create: {
         userId,
         guildId,
+        username,
         xp: xpIncrement,
         nivel,
         lastMessageAt,

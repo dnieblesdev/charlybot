@@ -40,10 +40,11 @@ export class HttpXPAdapter
     userId: string,
     xpIncrement: number,
     nivel: number,
+    username?: string,
   ): Promise<IUserXP> {
     return await this.client
       .post("xp/increment", {
-        json: { guildId, userId, xpIncrement, nivel, lastMessageAt: new Date() },
+        json: { guildId, userId, username, xpIncrement, nivel, lastMessageAt: new Date() },
       })
       .json<IUserXP>();
   }

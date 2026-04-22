@@ -14,6 +14,7 @@ export const UserXPSchema = z.object({
 export const XPIncrementSchema = z.object({
   userId: z.string(),
   guildId: z.string(),
+  username: z.string().optional(),
   xpIncrement: z.number().int().min(1),
   nivel: z.number().int().default(0),
   lastMessageAt: z.union([z.date(), z.string().datetime()]).transform(val =>

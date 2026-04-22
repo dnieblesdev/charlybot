@@ -484,8 +484,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 7.6.0
-   * Query Engine version: 75cbdc1eb7150937890ad5465d861175c6624711
+   * Prisma Client JS version: 7.5.0
+   * Query Engine version: 280c870be64f457428992c43c1f6d557fab6e29e
    */
   export type PrismaVersion = {
     client: string
@@ -22250,6 +22250,7 @@ export namespace Prisma {
     id: number | null
     userId: string | null
     guildId: string | null
+    username: string | null
     xp: number | null
     nivel: number | null
     lastMessageAt: Date | null
@@ -22261,6 +22262,7 @@ export namespace Prisma {
     id: number | null
     userId: string | null
     guildId: string | null
+    username: string | null
     xp: number | null
     nivel: number | null
     lastMessageAt: Date | null
@@ -22272,6 +22274,7 @@ export namespace Prisma {
     id: number
     userId: number
     guildId: number
+    username: number
     xp: number
     nivel: number
     lastMessageAt: number
@@ -22297,6 +22300,7 @@ export namespace Prisma {
     id?: true
     userId?: true
     guildId?: true
+    username?: true
     xp?: true
     nivel?: true
     lastMessageAt?: true
@@ -22308,6 +22312,7 @@ export namespace Prisma {
     id?: true
     userId?: true
     guildId?: true
+    username?: true
     xp?: true
     nivel?: true
     lastMessageAt?: true
@@ -22319,6 +22324,7 @@ export namespace Prisma {
     id?: true
     userId?: true
     guildId?: true
+    username?: true
     xp?: true
     nivel?: true
     lastMessageAt?: true
@@ -22417,6 +22423,7 @@ export namespace Prisma {
     id: number
     userId: string
     guildId: string
+    username: string | null
     xp: number
     nivel: number
     lastMessageAt: Date
@@ -22447,6 +22454,7 @@ export namespace Prisma {
     id?: boolean
     userId?: boolean
     guildId?: boolean
+    username?: boolean
     xp?: boolean
     nivel?: boolean
     lastMessageAt?: boolean
@@ -22458,6 +22466,7 @@ export namespace Prisma {
     id?: boolean
     userId?: boolean
     guildId?: boolean
+    username?: boolean
     xp?: boolean
     nivel?: boolean
     lastMessageAt?: boolean
@@ -22469,6 +22478,7 @@ export namespace Prisma {
     id?: boolean
     userId?: boolean
     guildId?: boolean
+    username?: boolean
     xp?: boolean
     nivel?: boolean
     lastMessageAt?: boolean
@@ -22480,6 +22490,7 @@ export namespace Prisma {
     id?: boolean
     userId?: boolean
     guildId?: boolean
+    username?: boolean
     xp?: boolean
     nivel?: boolean
     lastMessageAt?: boolean
@@ -22487,7 +22498,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type UserXPOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "guildId" | "xp" | "nivel" | "lastMessageAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userXP"]>
+  export type UserXPOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "guildId" | "username" | "xp" | "nivel" | "lastMessageAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userXP"]>
 
   export type $UserXPPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "UserXP"
@@ -22496,6 +22507,7 @@ export namespace Prisma {
       id: number
       userId: string
       guildId: string
+      username: string | null
       xp: number
       nivel: number
       lastMessageAt: Date
@@ -22927,6 +22939,7 @@ export namespace Prisma {
     readonly id: FieldRef<"UserXP", 'Int'>
     readonly userId: FieldRef<"UserXP", 'String'>
     readonly guildId: FieldRef<"UserXP", 'String'>
+    readonly username: FieldRef<"UserXP", 'String'>
     readonly xp: FieldRef<"UserXP", 'Int'>
     readonly nivel: FieldRef<"UserXP", 'Int'>
     readonly lastMessageAt: FieldRef<"UserXP", 'DateTime'>
@@ -25684,6 +25697,7 @@ export namespace Prisma {
     id: 'id',
     userId: 'userId',
     guildId: 'guildId',
+    username: 'username',
     xp: 'xp',
     nivel: 'nivel',
     lastMessageAt: 'lastMessageAt',
@@ -27157,6 +27171,7 @@ export namespace Prisma {
     id?: IntFilter<"UserXP"> | number
     userId?: StringFilter<"UserXP"> | string
     guildId?: StringFilter<"UserXP"> | string
+    username?: StringNullableFilter<"UserXP"> | string | null
     xp?: IntFilter<"UserXP"> | number
     nivel?: IntFilter<"UserXP"> | number
     lastMessageAt?: DateTimeFilter<"UserXP"> | Date | string
@@ -27168,6 +27183,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     guildId?: SortOrder
+    username?: SortOrderInput | SortOrder
     xp?: SortOrder
     nivel?: SortOrder
     lastMessageAt?: SortOrder
@@ -27183,6 +27199,7 @@ export namespace Prisma {
     NOT?: UserXPWhereInput | UserXPWhereInput[]
     userId?: StringFilter<"UserXP"> | string
     guildId?: StringFilter<"UserXP"> | string
+    username?: StringNullableFilter<"UserXP"> | string | null
     xp?: IntFilter<"UserXP"> | number
     nivel?: IntFilter<"UserXP"> | number
     lastMessageAt?: DateTimeFilter<"UserXP"> | Date | string
@@ -27194,6 +27211,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     guildId?: SortOrder
+    username?: SortOrderInput | SortOrder
     xp?: SortOrder
     nivel?: SortOrder
     lastMessageAt?: SortOrder
@@ -27213,6 +27231,7 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"UserXP"> | number
     userId?: StringWithAggregatesFilter<"UserXP"> | string
     guildId?: StringWithAggregatesFilter<"UserXP"> | string
+    username?: StringNullableWithAggregatesFilter<"UserXP"> | string | null
     xp?: IntWithAggregatesFilter<"UserXP"> | number
     nivel?: IntWithAggregatesFilter<"UserXP"> | number
     lastMessageAt?: DateTimeWithAggregatesFilter<"UserXP"> | Date | string
@@ -28857,6 +28876,7 @@ export namespace Prisma {
   export type UserXPCreateInput = {
     userId: string
     guildId: string
+    username?: string | null
     xp?: number
     nivel?: number
     lastMessageAt?: Date | string
@@ -28868,6 +28888,7 @@ export namespace Prisma {
     id?: number
     userId: string
     guildId: string
+    username?: string | null
     xp?: number
     nivel?: number
     lastMessageAt?: Date | string
@@ -28878,6 +28899,7 @@ export namespace Prisma {
   export type UserXPUpdateInput = {
     userId?: StringFieldUpdateOperationsInput | string
     guildId?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     xp?: IntFieldUpdateOperationsInput | number
     nivel?: IntFieldUpdateOperationsInput | number
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28889,6 +28911,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     userId?: StringFieldUpdateOperationsInput | string
     guildId?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     xp?: IntFieldUpdateOperationsInput | number
     nivel?: IntFieldUpdateOperationsInput | number
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28900,6 +28923,7 @@ export namespace Prisma {
     id?: number
     userId: string
     guildId: string
+    username?: string | null
     xp?: number
     nivel?: number
     lastMessageAt?: Date | string
@@ -28910,6 +28934,7 @@ export namespace Prisma {
   export type UserXPUpdateManyMutationInput = {
     userId?: StringFieldUpdateOperationsInput | string
     guildId?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     xp?: IntFieldUpdateOperationsInput | number
     nivel?: IntFieldUpdateOperationsInput | number
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28921,6 +28946,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     userId?: StringFieldUpdateOperationsInput | string
     guildId?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     xp?: IntFieldUpdateOperationsInput | number
     nivel?: IntFieldUpdateOperationsInput | number
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -30237,6 +30263,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     guildId?: SortOrder
+    username?: SortOrder
     xp?: SortOrder
     nivel?: SortOrder
     lastMessageAt?: SortOrder
@@ -30254,6 +30281,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     guildId?: SortOrder
+    username?: SortOrder
     xp?: SortOrder
     nivel?: SortOrder
     lastMessageAt?: SortOrder
@@ -30265,6 +30293,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     guildId?: SortOrder
+    username?: SortOrder
     xp?: SortOrder
     nivel?: SortOrder
     lastMessageAt?: SortOrder
