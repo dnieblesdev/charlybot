@@ -7,6 +7,7 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import { EconomyService } from "../../services/economy/EconomyService.js";
 import LeaderboardService from "../../services/economy/LeaderboardService.js";
+import { rateLimitCommand } from "../../../infrastructure/valkey/rate-limit.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -21,6 +22,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
       return;
     }
+
+    // Check rate limit
+    const allowed = await rateLimitCommand(interaction, "balance");
+    if (!allowed) return;
 
     const targetUser =
       interaction.options.getUser("usuario") || interaction.user;

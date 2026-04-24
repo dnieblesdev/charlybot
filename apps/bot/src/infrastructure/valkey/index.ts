@@ -5,6 +5,8 @@ import { createValkeyClient, createValkeyFallbackWrapper, loadValkeyConfig, type
 import logger from '../../utils/logger';
 import { memoryCache } from '../api/MemoryCache';
 
+export * from './rate-limit.ts';
+
 // Singleton instance
 let valkeyClient: IValkeyClient | null = null;
 

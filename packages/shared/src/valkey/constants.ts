@@ -83,3 +83,21 @@ export const STREAMS_CONFIG = {
   // Max retry attempts before DLQ
   MAX_RETRY_ATTEMPTS: 3,
 } as const;
+
+// Bot command rate limits (key: command name, value: [limit, windowSeconds])
+export const BOT_COMMAND_RATE_LIMITS: Readonly<Record<string, readonly [limit: number, windowSeconds: number]>> = {
+  work: [3, 60],      // 3 uses per minute
+  crime: [2, 120],    // 2 uses per 2 minutes
+  rob: [2, 180],      // 2 uses per 3 minutes
+  ruleta: [5, 60],    // 5 uses per minute
+  balance: [10, 60],  // 10 uses per minute
+  deposit: [5, 60],  // 5 uses per minute
+  retire: [5, 60],   // 5 uses per minute
+};
+
+// Lock TTL for bot commands (seconds)
+export const BOT_LOCK_TTL = {
+  TRANSFER: 10,   // 10 seconds for transfer operations
+  ROB: 15,        // 15 seconds for rob operations
+  ROULETTE: 5,    // 5 seconds for roulette spin
+} as const;

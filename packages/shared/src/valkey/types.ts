@@ -44,6 +44,18 @@ export interface ValkeyPendingEntry {
   deliveryCount: number;
 }
 
+// Lock configuration for withLock helper
+export interface LockOptions {
+  /** UUID identifying the lock owner */
+  ownerId: string;
+  /** TTL in seconds for the lock */
+  ttlSeconds: number;
+  /** Max retry attempts for lock acquisition (default: 3) */
+  retryCount?: number;
+  /** Base delay in ms between retries (default: 200) */
+  retryBaseDelayMs?: number;
+}
+
 export interface IValkeyClient {
   // Lifecycle
   connect(): Promise<void>;
@@ -118,9 +130,17 @@ export interface IValkeyClient {
     windowSeconds: number,
   ): Promise<boolean>;
 
-  // Locks
-  acquireLock(key: string, ttlSeconds: number): Promise<boolean>;
-  releaseLock(key: string): Promise<void>;
+  // Locks (with owner-based safe release)
+  acquireLock(key: string, ttlSeconds: number, ownerId?: string): Promise<boolean>;
+  releaseLock(key: string, ownerId?: string): Promise<void>;
+  extendLock(key: string, ownerId: string, ttlSeconds: number): Promise<boolean>;
+  withLock<T>(
+    key: string,
+    ttlSeconds: number,
+    ownerId: string,
+    fn: () => Promise<T>,
+    retryCount?: number,
+  ): Promise<T>;
 
   // Set operations (for guild stream registry)
   setAdd(key: string, ...members: string[]): Promise<number>;

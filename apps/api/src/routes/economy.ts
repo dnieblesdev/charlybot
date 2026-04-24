@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { prisma, MAX_LEADERBOARD_LIMIT } from "@charlybot/shared";
+import { prisma, MAX_LEADERBOARD_LIMIT, BOT_LOCK_TTL } from "@charlybot/shared";
 import {
   UserEconomySchema,
   GlobalBankSchema,
@@ -15,6 +15,7 @@ import {
 } from "@charlybot/shared";
 import logger from "../utils/logger";
 import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
+import { withDistributedLock, transferLockKey, economyUserLockKey } from "../infrastructure/valkey";
 
 const router = new Hono();
 
@@ -470,50 +471,60 @@ router.delete("/roulette/game/:gameId", async (c) => {
 router.post("/transfer", zValidator("json", TransferSchema), async (c) => {
   const { fromUserId, toUserId, guildId, amount, fromUsername, toUsername } = c.req.valid("json");
 
+  // Use distributed lock to prevent double-spending
+  const lockKey = transferLockKey(guildId, fromUserId, toUserId);
+
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      // Get both users in a single transaction
-      const [fromUser, toUser] = await Promise.all([
-        tx.userEconomy.findUnique({
-          where: { userId_guildId: { userId: fromUserId, guildId } },
-        }),
-        tx.userEconomy.findUnique({
-          where: { userId_guildId: { userId: toUserId, guildId } },
-        }),
-      ]);
+    const result = await withDistributedLock(
+      'economy',
+      lockKey,
+      async () => {
+        return await prisma.$transaction(async (tx) => {
+          // Get both users in a single transaction
+          const [fromUser, toUser] = await Promise.all([
+            tx.userEconomy.findUnique({
+              where: { userId_guildId: { userId: fromUserId, guildId } },
+            }),
+            tx.userEconomy.findUnique({
+              where: { userId_guildId: { userId: toUserId, guildId } },
+            }),
+          ]);
 
-      if (!fromUser || !toUser) {
-        throw new Error("One or both users not found");
-      }
+          if (!fromUser || !toUser) {
+            throw new Error("One or both users not found");
+          }
 
-      if (fromUser.pocket < amount) {
-        throw new Error("Insufficient funds");
-      }
+          if (fromUser.pocket < amount) {
+            throw new Error("Insufficient funds");
+          }
 
-      // Atomic update for both users
-      const [updatedFrom, updatedTo] = await Promise.all([
-        tx.userEconomy.update({
-          where: { userId_guildId: { userId: fromUserId, guildId } },
-          data: {
-            pocket: fromUser.pocket - amount,
-            totalLost: fromUser.totalLost + amount,
-          },
-        }),
-        tx.userEconomy.update({
-          where: { userId_guildId: { userId: toUserId, guildId } },
-          data: {
-            pocket: toUser.pocket + amount,
-            totalEarned: toUser.totalEarned + amount,
-          },
-        }),
-      ]);
+          // Atomic update for both users
+          const [updatedFrom, updatedTo] = await Promise.all([
+            tx.userEconomy.update({
+              where: { userId_guildId: { userId: fromUserId, guildId } },
+              data: {
+                pocket: fromUser.pocket - amount,
+                totalLost: fromUser.totalLost + amount,
+              },
+            }),
+            tx.userEconomy.update({
+              where: { userId_guildId: { userId: toUserId, guildId } },
+              data: {
+                pocket: toUser.pocket + amount,
+                totalEarned: toUser.totalEarned + amount,
+              },
+            }),
+          ]);
 
-      logger.info(
-        `Atomic transfer: ${amount} from ${fromUserId} to ${toUserId} in guild ${guildId}`,
-      );
+          logger.info(
+            `Atomic transfer: ${amount} from ${fromUserId} to ${toUserId} in guild ${guildId}`,
+          );
 
-      return { fromUser: updatedFrom, toUser: updatedTo };
-    });
+          return { fromUser: updatedFrom, toUser: updatedTo };
+        });
+      },
+      BOT_LOCK_TTL.TRANSFER,
+    );
 
     return c.json({
       success: true,
@@ -521,9 +532,14 @@ router.post("/transfer", zValidator("json", TransferSchema), async (c) => {
       toUser: result.toUser,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Transfer failed";
-    logger.error(`Atomic transfer failed: ${message}`, { fromUserId, toUserId, guildId, amount });
-    return c.json({ error: message }, 400);
+    // Check if it's a lock acquisition failure
+    const errorMessage = error instanceof Error ? error.message : "Transfer failed";
+    if (errorMessage.includes('Failed to acquire lock')) {
+      logger.warn('Transfer rate limited due to concurrent operation', { fromUserId, toUserId, guildId });
+      return c.json({ error: "Concurrent transfer in progress. Please try again." }, 429);
+    }
+    logger.error(`Atomic transfer failed: ${errorMessage}`, { fromUserId, toUserId, guildId, amount });
+    return c.json({ error: errorMessage }, 400);
   }
 });
 
@@ -531,43 +547,53 @@ router.post("/transfer", zValidator("json", TransferSchema), async (c) => {
 router.post("/deposit", zValidator("json", DepositSchema), async (c) => {
   const { userId, guildId, username, amount } = c.req.valid("json");
 
+  // Use distributed lock to prevent race conditions on user balance
+  const lockKey = economyUserLockKey(guildId, userId);
+
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      const user = await tx.userEconomy.findUnique({
-        where: { userId_guildId: { userId, guildId } },
-      });
+    const result = await withDistributedLock(
+      'economy',
+      lockKey,
+      async () => {
+        return await prisma.$transaction(async (tx) => {
+          const user = await tx.userEconomy.findUnique({
+            where: { userId_guildId: { userId, guildId } },
+          });
 
-      if (!user || user.pocket < amount) {
-        throw new Error("Insufficient funds in pocket");
-      }
+          if (!user || user.pocket < amount) {
+            throw new Error("Insufficient funds in pocket");
+          }
 
-      // Get or create global bank
-      let bank = await tx.globalBank.findUnique({
-        where: { userId },
-      });
+          // Get or create global bank
+          let bank = await tx.globalBank.findUnique({
+            where: { userId },
+          });
 
-      if (!bank) {
-        bank = await tx.globalBank.create({
-          data: { userId, username, bank: 0 },
+          if (!bank) {
+            bank = await tx.globalBank.create({
+              data: { userId, username, bank: 0 },
+            });
+          }
+
+          // Atomic update: subtract from pocket, add to bank
+          const [updatedUser, updatedBank] = await Promise.all([
+            tx.userEconomy.update({
+              where: { userId_guildId: { userId, guildId } },
+              data: { pocket: user.pocket - amount },
+            }),
+            tx.globalBank.update({
+              where: { userId },
+              data: { bank: bank.bank + amount },
+            }),
+          ]);
+
+          logger.info(`Atomic deposit: ${amount} from user ${userId} to global bank`);
+
+          return { user: updatedUser, bank: updatedBank };
         });
-      }
-
-      // Atomic update: subtract from pocket, add to bank
-      const [updatedUser, updatedBank] = await Promise.all([
-        tx.userEconomy.update({
-          where: { userId_guildId: { userId, guildId } },
-          data: { pocket: user.pocket - amount },
-        }),
-        tx.globalBank.update({
-          where: { userId },
-          data: { bank: bank.bank + amount },
-        }),
-      ]);
-
-      logger.info(`Atomic deposit: ${amount} from user ${userId} to global bank`);
-
-      return { user: updatedUser, bank: updatedBank };
-    });
+      },
+      BOT_LOCK_TTL.TRANSFER,
+    );
 
     return c.json({
       success: true,
@@ -575,9 +601,13 @@ router.post("/deposit", zValidator("json", DepositSchema), async (c) => {
       bank: result.bank,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Deposit failed";
-    logger.error(`Atomic deposit failed: ${message}`, { userId, guildId, amount });
-    return c.json({ error: message }, 400);
+    const errorMessage = error instanceof Error ? error.message : "Deposit failed";
+    if (errorMessage.includes('Failed to acquire lock')) {
+      logger.warn('Deposit rate limited due to concurrent operation', { userId, guildId });
+      return c.json({ error: "Concurrent deposit in progress. Please try again." }, 429);
+    }
+    logger.error(`Atomic deposit failed: ${errorMessage}`, { userId, guildId, amount });
+    return c.json({ error: errorMessage }, 400);
   }
 });
 
@@ -585,58 +615,68 @@ router.post("/deposit", zValidator("json", DepositSchema), async (c) => {
 router.post("/withdraw", zValidator("json", WithdrawSchema), async (c) => {
   const { userId, guildId, username, amount } = c.req.valid("json");
 
+  // Use distributed lock to prevent race conditions on user balance
+  const lockKey = economyUserLockKey(guildId, userId);
+
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      // Get global bank first
-      const bank = await tx.globalBank.findUnique({
-        where: { userId },
-      });
+    const result = await withDistributedLock(
+      'economy',
+      lockKey,
+      async () => {
+        return await prisma.$transaction(async (tx) => {
+          // Get global bank first
+          const bank = await tx.globalBank.findUnique({
+            where: { userId },
+          });
 
-      if (!bank || bank.bank < amount) {
-        throw new Error("Insufficient funds in bank");
-      }
+          if (!bank || bank.bank < amount) {
+            throw new Error("Insufficient funds in bank");
+          }
 
-      // Get or create user economy
-      let user = await tx.userEconomy.findUnique({
-        where: { userId_guildId: { userId, guildId } },
-      });
+          // Get or create user economy
+          let user = await tx.userEconomy.findUnique({
+            where: { userId_guildId: { userId, guildId } },
+          });
 
-      if (!user) {
-        // Get starting money from config
-        const config = await tx.economyConfig.findUnique({
-          where: { guildId },
+          if (!user) {
+            // Get starting money from config
+            const config = await tx.economyConfig.findUnique({
+              where: { guildId },
+            });
+            const startingMoney = config?.startingMoney || 1000;
+
+            user = await tx.userEconomy.create({
+              data: {
+                userId,
+                guildId,
+                username,
+                pocket: startingMoney,
+                totalEarned: 0,
+                totalLost: 0,
+                inJail: false,
+              },
+            });
+          }
+
+          // Atomic update: subtract from bank, add to pocket
+          const [updatedBank, updatedUser] = await Promise.all([
+            tx.globalBank.update({
+              where: { userId },
+              data: { bank: bank.bank - amount },
+            }),
+            tx.userEconomy.update({
+              where: { userId_guildId: { userId, guildId } },
+              data: { pocket: user.pocket + amount },
+            }),
+          ]);
+
+          logger.info(`Atomic withdraw: ${amount} from global bank to user ${userId}`);
+
+          return { bank: updatedBank, user: updatedUser };
         });
-        const startingMoney = config?.startingMoney || 1000;
-
-        user = await tx.userEconomy.create({
-          data: {
-            userId,
-            guildId,
-            username,
-            pocket: startingMoney,
-            totalEarned: 0,
-            totalLost: 0,
-            inJail: false,
-          },
-        });
-      }
-
-      // Atomic update: subtract from bank, add to pocket
-      const [updatedBank, updatedUser] = await Promise.all([
-        tx.globalBank.update({
-          where: { userId },
-          data: { bank: bank.bank - amount },
-        }),
-        tx.userEconomy.update({
-          where: { userId_guildId: { userId, guildId } },
-          data: { pocket: user.pocket + amount },
-        }),
-      ]);
-
-      logger.info(`Atomic withdraw: ${amount} from global bank to user ${userId}`);
-
-      return { bank: updatedBank, user: updatedUser };
-    });
+      },
+      BOT_LOCK_TTL.TRANSFER,
+    );
 
     return c.json({
       success: true,
@@ -644,9 +684,13 @@ router.post("/withdraw", zValidator("json", WithdrawSchema), async (c) => {
       user: result.user,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Withdraw failed";
-    logger.error(`Atomic withdraw failed: ${message}`, { userId, guildId, amount });
-    return c.json({ error: message }, 400);
+    const errorMessage = error instanceof Error ? error.message : "Withdraw failed";
+    if (errorMessage.includes('Failed to acquire lock')) {
+      logger.warn('Withdraw rate limited due to concurrent operation', { userId, guildId });
+      return c.json({ error: "Concurrent withdraw in progress. Please try again." }, 429);
+    }
+    logger.error(`Atomic withdraw failed: ${errorMessage}`, { userId, guildId, amount });
+    return c.json({ error: errorMessage }, 400);
   }
 });
 

@@ -3,6 +3,7 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import { EconomyService } from "../../services/economy/EconomyService.js";
 import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
+import { rateLimitCommand } from "../../../infrastructure/valkey/rate-limit.js";
 
 // Lista de crímenes posibles
 const crimes = [
@@ -56,6 +57,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
       return;
     }
+
+    // Check rate limit
+    const allowed = await rateLimitCommand(interaction, "crime");
+    if (!allowed) return;
 
     // Verificar si el usuario está en prisión
     const inJail = await EconomyService.isInJail(userId, guildId);

@@ -2,8 +2,9 @@
 // Follows SDD design: migrate Valkey usage out of routes/controllers
 
 import { getValkeyClient } from '../infrastructure/valkey';
-import { createValkeyKeys, loadValkeyConfig } from '@charlybot/shared';
+import { createValkeyKeys, loadValkeyConfig, BOT_LOCK_TTL } from '@charlybot/shared';
 import type { MusicQueue, MusicQueueItem, GuildMusicConfig } from '@prisma/client';
+import { withDistributedLock, musicQueueLockKey } from '../infrastructure/valkey';
 
 interface CachedMusicQueue {
   id: string;
@@ -183,8 +184,8 @@ export class MusicQueueCacheService {
     }
   }
 
-  /**
-   * Invalidate music config cache
+/**
+ * Invalidate music config cache
    */
   async invalidateConfig(guildId: string): Promise<void> {
     const valkey = getValkeyClient();
@@ -195,6 +196,18 @@ export class MusicQueueCacheService {
     } catch {
       // Ignore cache errors
     }
+  }
+
+  /**
+   * Execute a queue modification with distributed lock to prevent concurrent modifications
+   */
+  async withQueueLock<T>(
+    guildId: string,
+    fn: () => Promise<T>,
+    ttlSeconds: number = BOT_LOCK_TTL.ROULETTE,
+  ): Promise<T> {
+    const lockKey = `music:queue:${guildId}`;
+    return await withDistributedLock('music', lockKey, fn, ttlSeconds);
   }
 }
 

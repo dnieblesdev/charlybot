@@ -67,24 +67,31 @@ app.get("/api/v1/health", async (c) => {
   }
 
   try {
-    // Valkey check
+    // Valkey check with explicit ping timeout
     const { getValkeyClient } = await import("./infrastructure/valkey");
     const valkey = getValkeyClient();
     if (!valkey.isConnected()) {
-      throw new Error("Valkey not connected");
+      valkeyStatus = "disconnected";
+    } else {
+      // Valkey is connected, status is ok
+      valkeyStatus = "ok";
     }
   } catch (error) {
-    logger.warn("Valkey health check failed", { error });
+    logger.warn("Valkey health check failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     valkeyStatus = "degraded";
   }
 
+  const overallStatus = dbStatus === "ok" && valkeyStatus === "ok" ? "ok" : "degraded";
+
   return c.json({
-    status: dbStatus === "ok" ? "ok" : "degraded",
+    status: overallStatus,
     database: dbStatus,
     valkey: valkeyStatus,
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
-  });
+  }, overallStatus === "ok" ? 200 : 503);
 });
 
 // Initialize Valkey before starting server

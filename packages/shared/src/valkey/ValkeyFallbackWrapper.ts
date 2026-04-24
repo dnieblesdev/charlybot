@@ -290,9 +290,9 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
   // Locks (fail-deny)
   // =============================================================================
 
-  async acquireLock(key: string, ttlSeconds: number): Promise<boolean> {
+  async acquireLock(key: string, ttlSeconds: number, ownerId?: string): Promise<boolean> {
     try {
-      return await this.client.acquireLock(key, ttlSeconds);
+      return await this.client.acquireLock(key, ttlSeconds, ownerId);
     } catch (err) {
       this.logger?.warn('Valkey acquireLock failed', {
         key,
@@ -303,14 +303,46 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
     }
   }
 
-  async releaseLock(key: string): Promise<void> {
+  async releaseLock(key: string, ownerId?: string): Promise<void> {
     try {
-      await this.client.releaseLock(key);
+      await this.client.releaseLock(key, ownerId);
     } catch (err) {
       this.logger?.warn('Valkey releaseLock failed', {
         key,
         error: err instanceof Error ? err.message : String(err),
       });
+    }
+  }
+
+  async extendLock(key: string, ownerId: string, ttlSeconds: number): Promise<boolean> {
+    try {
+      return await this.client.extendLock(key, ownerId, ttlSeconds);
+    } catch (err) {
+      this.logger?.warn('Valkey extendLock failed', {
+        key,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      // Fail-deny per design
+      return false;
+    }
+  }
+
+  async withLock<T>(
+    key: string,
+    ttlSeconds: number,
+    ownerId: string,
+    fn: () => Promise<T>,
+    retryCount?: number,
+  ): Promise<T> {
+    try {
+      return await this.client.withLock(key, ttlSeconds, ownerId, fn, retryCount);
+    } catch (err) {
+      this.logger?.warn('Valkey withLock failed', {
+        key,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      // Fail-deny: throw if lock cannot be acquired
+      throw err;
     }
   }
 }

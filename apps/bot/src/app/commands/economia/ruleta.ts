@@ -15,6 +15,7 @@ import { EconomyService } from "../../services/economy/EconomyService.js";
 import { RouletteService } from "../../services/economy/RouletteService.js";
 import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
 import type { RouletteBet } from "@charlybot/shared";
+import { rateLimitCommand } from "../../../infrastructure/valkey/rate-limit.js";
 
 // Mapa para almacenar los juegos activos por canal
 const activeGames = new Map<
@@ -76,6 +77,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
       return;
     }
+
+    // Check rate limit
+    const allowed = await rateLimitCommand(interaction, "ruleta");
+    if (!allowed) return;
 
     // Validar la apuesta
     if (!RouletteService.validateBet(betType, betValue)) {

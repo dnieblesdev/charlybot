@@ -1,6 +1,7 @@
 // ValkeyClient implementation using ioredis (Valkey-compatible)
 // Follows SDD design with circuit breaker, timeouts, retries
 
+import { randomUUID } from 'crypto';
 import Redis, { type Redis as RedisType } from 'ioredis';
 import {
   type ValkeyConfig,
@@ -16,6 +17,24 @@ import {
 // Helper type for xreadgroup result
 type XReadGroupMessage = [id: string, fields: [string, string][]];
 type XReadGroupResult = [streamKey: string, messages: XReadGroupMessage[]][];
+
+// Lua script for safe lock release (compare-and-delete)
+const RELEASE_LOCK_SCRIPT = `
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+  return redis.call("DEL", KEYS[1])
+else
+  return 0
+end
+`;
+
+// Lua script for lock extension (compare-and-pexpire)
+const EXTEND_LOCK_SCRIPT = `
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+  return redis.call("PEXPIRE", KEYS[1], ARGV[2])
+else
+  return 0
+end
+`;
 
 export class ValkeyClient implements IValkeyClient {
   private redis: Redis | null = null;
@@ -414,11 +433,12 @@ this.redis = new Redis({
   // Locks
   // =============================================================================
 
-  async acquireLock(key: string, ttlSeconds: number): Promise<boolean> {
+  async acquireLock(key: string, ttlSeconds: number, ownerId?: string): Promise<boolean> {
     try {
+      const owner = ownerId ?? randomUUID();
       const result = await this.redis!.set(
         key,
-        process.pid.toString(),
+        owner,
         'EX',
         ttlSeconds,
         'NX',
@@ -430,12 +450,63 @@ this.redis = new Redis({
     }
   }
 
-  async releaseLock(key: string): Promise<void> {
+  async releaseLock(key: string, ownerId?: string): Promise<void> {
     try {
-      await this.redis!.del(key);
+      if (ownerId) {
+        // Safe release: only delete if we own the lock
+        await this.redis!.eval(RELEASE_LOCK_SCRIPT, 1, key, ownerId);
+      } else {
+        // Legacy: delete without ownership check
+        await this.redis!.del(key);
+      }
     } catch (err) {
       this.logger?.warn('Valkey releaseLock failed', { key, error: err });
     }
+  }
+
+  async extendLock(key: string, ownerId: string, ttlSeconds: number): Promise<boolean> {
+    try {
+      const result = await this.redis!.eval(
+        EXTEND_LOCK_SCRIPT,
+        1,
+        key,
+        ownerId,
+        String(ttlSeconds * 1000), // PEXPIRE uses ms
+      );
+      return result === 1;
+    } catch (err) {
+      this.logger?.warn('Valkey extendLock failed', { key, error: err });
+      return false;
+    }
+  }
+
+  async withLock<T>(
+    key: string,
+    ttlSeconds: number,
+    ownerId: string,
+    fn: () => Promise<T>,
+    retryCount: number = 3,
+  ): Promise<T> {
+    const baseDelayMs = RETRY_CONFIG.baseDelayMs;
+
+    for (let attempt = 0; attempt <= retryCount; attempt++) {
+      const acquired = await this.acquireLock(key, ttlSeconds, ownerId);
+      if (acquired) {
+        try {
+          return await fn();
+        } finally {
+          await this.releaseLock(key, ownerId);
+        }
+      }
+
+      if (attempt < retryCount) {
+        // Exponential backoff: 200, 400, 800, ...
+        const delay = baseDelayMs * Math.pow(2, attempt);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+
+    throw new Error(`Failed to acquire lock after ${retryCount + 1} attempts: ${key}`);
   }
 
   // =============================================================================
