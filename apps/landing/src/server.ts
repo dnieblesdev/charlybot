@@ -13,26 +13,51 @@ const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Known SSR routes whitelist.
+ * Any request path NOT in this list will receive a 404 response before Angular SSR.
+ * Update this constant when new SSR routes are added to the Landing app.
  */
+const KNOWN_SSR_PATHS = ['/', '/health'];
 
 /**
- * Health check endpoint
+ * Suppress X-Powered-By header disclosure.
+ * Must be set before any middleware to take effect.
+ */
+app.disable('x-powered-by');
+
+/**
+ * Security headers applied to all responses.
+ * Mirrors nginx headers for consistency across Express dev server and production.
+ * CSP is Report-Only: reports violations without blocking Angular runtime styles.
+ * Switch to enforced Content-Security-Policy after validating policy via reports.
+ */
+const securityHeaders = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Content-Security-Policy-Report-Only': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'none'",
+};
+
+/**
+ * Apply security headers to all responses.
+ */
+app.use((_req, res, next) => {
+  for (const [header, value] of Object.entries(securityHeaders)) {
+    res.setHeader(header, value);
+  }
+  next();
+});
+
+/**
+ * Health check endpoint.
  */
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
 /**
- * Serve static files from /browser
+ * Serve static files from /browser.
  */
 app.use(
   express.static(browserDistFolder, {
@@ -41,6 +66,20 @@ app.use(
     redirect: false,
   }),
 );
+
+/**
+ * 404 handler for unknown paths (not in KNOWN_SSR_PATHS and not a static asset).
+ * Static file serving via express.static sets the response headers and ends the request
+ * for matching files. If we reach this middleware, the path was not handled by static
+ * and is not a known SSR route, so we return a 404.
+ */
+app.use((req, res, next) => {
+  if (!KNOWN_SSR_PATHS.includes(req.path)) {
+    res.status(404).send('<html><body><h1>404 — Page Not Found</h1></body></html>');
+    return;
+  }
+  next();
+});
 
 /**
  * Handle all other requests by rendering the Angular application.

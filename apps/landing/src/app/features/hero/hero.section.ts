@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
 
 @Component({
   selector: 'app-hero-section',
@@ -9,9 +10,9 @@ import { CommonModule } from '@angular/common';
     <section class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-bg-base to-bg-surface px-4 py-16 relative">
       <!-- Mobile Sticky CTA -->
       <div class="fixed bottom-0 left-0 right-0 p-4 pb-[env(safe-area-inset-bottom)] bg-bg-base/95 backdrop-blur-sm border-t border-border md:hidden z-50">
-        <a href="https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot&permissions=8"
+        <a [href]="discordOAuthUrl"
            class="block w-full py-4 bg-discord text-white text-center font-semibold rounded-lg hover:opacity-90 transition-opacity">
-          Agregar a Discord
+          Agregar al Servidor
         </a>
       </div>
 
@@ -24,9 +25,9 @@ import { CommonModule } from '@angular/common';
         </p>
 
         <!-- Desktop CTA -->
-        <a href="https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot&permissions=8"
+        <a [href]="discordOAuthUrl"
            class="hidden md:inline-block mt-8 px-8 py-4 bg-discord text-white text-lg font-semibold rounded-lg hover:opacity-90 transition-opacity">
-          Agregar a Discord
+          Agregar al Servidor
         </a>
 
         <!-- Bot Visual Mockup -->
@@ -59,4 +60,6 @@ import { CommonModule } from '@angular/common';
     }
   `]
 })
-export class HeroSection {}
+export class HeroSection {
+  discordOAuthUrl = DISCORD_OAUTH_URL;
+}

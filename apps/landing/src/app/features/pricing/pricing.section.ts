@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
 
 interface PricingTier {
   name: string;
@@ -93,8 +94,8 @@ export class PricingSection {
         'Bienvenida/Despedida',
         'Soporte por Discord'
       ],
-      cta: 'Agregar a Discord',
-      ctaHref: 'https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot&permissions=8',
+      cta: 'Agregar al Servidor',
+      ctaHref: DISCORD_OAUTH_URL,
       highlighted: false
     },
     {

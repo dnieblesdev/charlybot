@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
 
 @Component({
   selector: 'app-footer-section',
@@ -16,9 +17,9 @@ import { CommonModule } from '@angular/common';
           <p class="text-text-secondary mb-6">
             Únete a miles de servidores que ya usan CharlyBot.
           </p>
-          <a href="https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot&permissions=8"
+          <a [href]="discordOAuthUrl"
              class="inline-block px-8 py-4 bg-discord text-white text-lg font-semibold rounded-lg hover:opacity-90 transition-opacity">
-            Agregar a Discord
+            Agregar al Servidor
           </a>
         </div>
 
@@ -55,4 +56,6 @@ import { CommonModule } from '@angular/common';
     }
   `]
 })
-export class FooterSection {}
+export class FooterSection {
+  discordOAuthUrl = DISCORD_OAUTH_URL;
+}
