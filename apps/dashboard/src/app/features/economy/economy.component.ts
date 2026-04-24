@@ -6,20 +6,13 @@ import { LoaderComponent } from '../../shared/ui/loader.component';
 import { AlertComponent } from '../../shared/ui/alert.component';
 import { StatCardComponent } from '../../shared/ui/stat-card.component';
 import { createApiState } from '../../shared/http/api-state';
+import { PaginatedResponse } from '../../shared/types/pagination.types';
 
 interface LeaderboardEntry {
   userId: string;
   username?: string;
   totalMoney: number;
   joinedServerAt: Date;
-}
-
-interface PaginatedLeaderboardResponse {
-  data: LeaderboardEntry[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
 }
 
 interface EconomyConfig {
@@ -235,7 +228,7 @@ export class EconomyComponent implements OnInit {
     const guildId = this.route.parent!.snapshot.paramMap.get('guildId')!;
 
     this.leaderboardState.setLoading();
-    this.http.get<PaginatedLeaderboardResponse>(`/api/v1/economy/leaderboard/${guildId}?page=${this.currentPage()}&limit=${this.pageSize()}`)
+    this.http.get<PaginatedResponse<LeaderboardEntry>>(`/api/v1/economy/leaderboard/${guildId}?page=${this.currentPage()}&limit=${this.pageSize()}`)
       .subscribe({
         next: (res) => {
           this.leaderboardState.setData(res.data);

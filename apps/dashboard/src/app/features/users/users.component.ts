@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LoaderComponent } from '../../shared/ui/loader.component';
 import { AlertComponent } from '../../shared/ui/alert.component';
 import { createApiState } from '../../shared/http/api-state';
+import { PaginatedResponse } from '../../shared/types/pagination.types';
 
 interface UserXPEntry {
   userId: string;
@@ -12,14 +13,6 @@ interface UserXPEntry {
   xp: number;
   nivel: number;
   lastMessageAt: Date;
-}
-
-interface PaginatedXPResponse {
-  data: UserXPEntry[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
 }
 
 interface LevelRole {
@@ -150,7 +143,7 @@ export class UsersComponent implements OnInit {
     const guildId = this.route.parent!.snapshot.paramMap.get('guildId')!;
 
     this.leaderboardState.setLoading();
-    this.http.get<PaginatedXPResponse>(`/api/v1/xp/leaderboard/${guildId}?page=${this.currentPage()}&limit=${this.pageSize()}`)
+    this.http.get<PaginatedResponse<UserXPEntry>>(`/api/v1/xp/leaderboard/${guildId}?page=${this.currentPage()}&limit=${this.pageSize()}`)
       .subscribe({
         next: (res) => {
           this.leaderboardState.setData(res.data);
