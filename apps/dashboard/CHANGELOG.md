@@ -1,5 +1,15 @@
 # dashboard
 
+## 0.1.3
+
+### Patch Changes
+
+- Add security headers to nginx.conf (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, CSP Report-Only)
+- Fix logout: call backend session invalidation before redirect
+- Fix XSS vulnerability: replace innerHTML SVG icons with Angular @switch templates
+
+# dashboard
+
 ## 0.1.2
 
 ### Patch Changes

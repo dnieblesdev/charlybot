@@ -1,5 +1,23 @@
 # charlybot
 
+## 2026-04-24
+
+### dashboard (0.1.3)
+- nginx security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, CSP Report-Only)
+- Fix logout: backend session invalidation
+- Fix XSS: innerHTML SVG → @switch templates
+
+### landing (0.1.1)
+- New navbar with dashboard login link
+- Fade-in/fade-out scroll animations (animate.enter + ScrollAnimateDirective)
+- OAuth: real client ID, least-privilege permissions
+- Server security headers + X-Powered-By suppression
+- SSR 404 handler
+- @defer viewport loading for features/pricing
+- CTA text: "Agregar al Servidor"
+
+# charlybot
+
 ## 2026-04-22
 
 ### @charlybot/shared (2.5.2)
