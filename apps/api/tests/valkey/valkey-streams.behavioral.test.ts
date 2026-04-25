@@ -53,7 +53,7 @@ describe("S4: ACK-on-Success Semantics", () => {
       // Read from group - message should be in PEL
       const messages = await client.streamReadGroup(stream, group, consumer, 10, 1000);
       expect(messages).toHaveLength(1);
-      expect(messages[0].id).toBe(messageId);
+      expect(messages[0]!.id).toBe(messageId);
       
       // Verify message is pending BEFORE ack
       const pendingBefore = await client.streamPending(stream, group);
@@ -110,7 +110,7 @@ describe("S5: Reclaim PEL After Timeout", () => {
       // Verify pending for consumer1
       const pending = await client.streamPending(stream, group);
       expect(pending).toHaveLength(1);
-      expect(pending[0].consumer).toBe(consumer1);
+      expect(pending[0]!.consumer).toBe(consumer1);
       
       // Wait for idle timeout
       await new Promise((resolve) => setTimeout(resolve, minIdleMs + 50));
@@ -118,12 +118,12 @@ describe("S5: Reclaim PEL After Timeout", () => {
       // Claim the message for consumer2
       const claimed = await client.streamClaim(stream, group, minIdleMs, [messageId], consumer2);
       expect(claimed).toHaveLength(1);
-      expect(claimed[0].id).toBe(messageId);
+      expect(claimed[0]!.id).toBe(messageId);
       
       // Verify message is now owned by consumer2 (check via pending)
       const pendingAfterClaim = await client.streamPending(stream, group);
       expect(pendingAfterClaim).toHaveLength(1);
-      expect(pendingAfterClaim[0].consumer).toBe(consumer2);
+      expect(pendingAfterClaim[0]!.consumer).toBe(consumer2);
     } finally {
       // Cleanup
       await client.del(stream);
@@ -168,9 +168,9 @@ describe("S6: DLQ on Max Retries", () => {
       const dlqMessages = await client.streamReadGroup(dlqStream, "dlq-group", "dlq-consumer", 10, 1000);
       
       expect(dlqMessages.length).toBeGreaterThanOrEqual(1);
-      expect(dlqMessages[0].fields.originalMessageId).toBe("test-msg-123");
-      expect(dlqMessages[0].fields.reason).toBe("max_retries");
-      expect(dlqMessages[0].fields.attempts).toBe("4");
+      expect(dlqMessages[0]!.fields.originalMessageId).toBe("test-msg-123");
+      expect(dlqMessages[0]!.fields.reason).toBe("max_retries");
+      expect(dlqMessages[0]!.fields.attempts).toBe("4");
     } finally {
       // Cleanup
       await client.del(dlqStream);
@@ -209,7 +209,7 @@ describe("S7: Idempotent Reprocessing", () => {
       // Read it - should get the message
       const messages1 = await client.streamReadGroup(stream, group, consumer, 10, 1000);
       expect(messages1).toHaveLength(1);
-      expect(messages1[0].id).toBe(messageId);
+      expect(messages1[0]!.id).toBe(messageId);
       
       // Acknowledge the message
       await client.streamAck(stream, group, [messageId]);
@@ -249,7 +249,7 @@ describe("S7: Idempotent Reprocessing", () => {
       // Message should be in PEL (pending) even before ack
       const pending = await client.streamPending(stream, group);
       expect(pending).toHaveLength(1);
-      expect(pending[0].consumer).toBe(consumer);
+      expect(pending[0]!.consumer).toBe(consumer);
       
       // If we try to read again immediately with '>', we won't get it
       // because it's already delivered (pending)

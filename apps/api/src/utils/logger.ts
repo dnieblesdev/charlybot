@@ -95,12 +95,10 @@ function sanitizeUrlPath(rawUrl: string): string {
     
     // Handle path-only URLs like /api/v1/xp?limit=100
     // Strip query string entirely - don't log any query params
-    const [path] = rawUrl.split('?');
-    return path;
+    return rawUrl.split('?')[0] ?? rawUrl;
   } catch {
     // On parse error, still strip querystring
-    const [path] = rawUrl.split('?');
-    return path;
+    return rawUrl.split('?')[0] ?? rawUrl;
   }
 }
 

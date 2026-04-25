@@ -83,6 +83,7 @@ export class OverviewComponent implements OnInit {
     const lb = this.economyLeaderboard();
     if (!lb || lb.length === 0) return '-';
     const top = lb[0];
+    if (!top) return '-';
     return top.username || top.userId;
   });
 
@@ -90,6 +91,7 @@ export class OverviewComponent implements OnInit {
     const lb = this.xpLeaderboard();
     if (!lb || lb.length === 0) return '-';
     const top = lb[0];
+    if (!top) return '-';
     return top.username || top.userId;
   });
 

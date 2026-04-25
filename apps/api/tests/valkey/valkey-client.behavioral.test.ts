@@ -238,9 +238,9 @@ describe("S3: Stream Consumer Group Initialization", () => {
       const messages = await client.streamReadGroup(stream, group, consumer, 10, 1000);
       
       expect(messages).toHaveLength(1);
-      expect(messages[0].fields.event).toBe("test");
-      expect(messages[0].fields.data).toBe("hello");
-      expect(typeof messages[0].id).toBe("string");
+      expect(messages[0]!.fields.event).toBe("test");
+      expect(messages[0]!.fields.data).toBe("hello");
+      expect(typeof messages[0]!.id).toBe("string");
     } finally {
       // Cleanup
       await client.del(stream);

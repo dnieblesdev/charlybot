@@ -21,6 +21,7 @@ export class ScrollAnimateDirective {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        if (!entry) return;
         const scrollingDown = window.scrollY >= lastScrollY;
         lastScrollY = window.scrollY;
 

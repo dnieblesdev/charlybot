@@ -20,5 +20,14 @@
       "@charlybot/shared/*": ["packages/shared/src/*"]
     }
   },
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "apps/bot/debug",
+    "scripts",
+    "skills",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "apps/dashboard",
+    "apps/landing"
+  ]
 }

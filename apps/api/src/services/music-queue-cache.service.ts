@@ -2,8 +2,7 @@
 // Follows SDD design: migrate Valkey usage out of routes/controllers
 
 import { getValkeyClient } from '../infrastructure/valkey';
-import { createValkeyKeys, loadValkeyConfig, BOT_LOCK_TTL } from '@charlybot/shared';
-import type { MusicQueue, MusicQueueItem, GuildMusicConfig } from '@prisma/client';
+import { createValkeyKeys, loadValkeyConfig, BOT_LOCK_TTL, type MusicQueue, type MusicQueueItem, type GuildMusicConfig } from '@charlybot/shared';
 import { withDistributedLock, musicQueueLockKey } from '../infrastructure/valkey';
 
 interface CachedMusicQueue {
@@ -24,20 +23,23 @@ interface CachedMusicQueueItem {
   id: string;
   queueId: string;
   title: string;
-  artist: string | null;
   url: string;
   duration: number | null;
+  thumbnail: string | null;
   position: number;
+  requesterId: string;
+  requesterName: string;
+  createdAt: Date;
 }
 
 interface CachedGuildMusicConfig {
   id: string;
   guildId: string;
   defaultVolume: number;
-  autoPlay: boolean;
-  djMode: boolean;
-  textChannelId: string | null;
-  voiceChannelId: string | null;
+  autoCleanup: boolean;
+  maxQueueSize: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // TTL constants (in seconds)
@@ -75,14 +77,17 @@ function serializeQueue(queue: MusicQueue & { items: MusicQueueItem[] }): Cached
     isPaused: queue.isPaused,
     lastSeek: queue.lastSeek,
     currentSongId: queue.currentSongId,
-    items: queue.items.map((item) => ({
+    items: queue.items.map((item: MusicQueueItem) => ({
       id: item.id,
       queueId: item.queueId,
       title: item.title,
-      artist: item.artist,
       url: item.url,
       duration: item.duration,
+      thumbnail: item.thumbnail,
       position: item.position,
+      requesterId: item.requesterId,
+      requesterName: item.requesterName,
+      createdAt: item.createdAt,
     })),
     createdAt: queue.createdAt,
     updatedAt: queue.updatedAt,
@@ -97,10 +102,10 @@ function serializeConfig(config: GuildMusicConfig): CachedGuildMusicConfig {
     id: config.id,
     guildId: config.guildId,
     defaultVolume: config.defaultVolume,
-    autoPlay: config.autoPlay,
-    djMode: config.djMode,
-    textChannelId: config.textChannelId,
-    voiceChannelId: config.voiceChannelId,
+    autoCleanup: config.autoCleanup,
+    maxQueueSize: config.maxQueueSize,
+    createdAt: config.createdAt,
+    updatedAt: config.updatedAt,
   };
 }
 

@@ -57,7 +57,7 @@ describe("T7: Schema Validation Tests", () => {
       const result = TransferSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].path).toContain("amount");
+        expect(result.error.issues[0]!.path).toContain("amount");
       }
     });
 
@@ -74,7 +74,7 @@ describe("T7: Schema Validation Tests", () => {
       const result = TransferSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].path).toContain("amount");
+        expect(result.error.issues[0]!.path).toContain("amount");
       }
     });
 
@@ -145,7 +145,7 @@ describe("T7: Schema Validation Tests", () => {
       const result = DepositSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].path).toContain("amount");
+        expect(result.error.issues[0]!.path).toContain("amount");
       }
     });
 
@@ -160,7 +160,7 @@ describe("T7: Schema Validation Tests", () => {
       const result = DepositSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].path).toContain("amount");
+        expect(result.error.issues[0]!.path).toContain("amount");
       }
     });
 
@@ -225,7 +225,7 @@ describe("T7: Schema Validation Tests", () => {
       const result = WithdrawSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].path).toContain("amount");
+        expect(result.error.issues[0]!.path).toContain("amount");
       }
     });
 
@@ -240,7 +240,7 @@ describe("T7: Schema Validation Tests", () => {
       const result = WithdrawSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].path).toContain("amount");
+        expect(result.error.issues[0]!.path).toContain("amount");
       }
     });
 

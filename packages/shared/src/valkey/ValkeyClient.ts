@@ -320,10 +320,10 @@ this.redis = new Redis({
           fieldsObj = Object.fromEntries(fields as [string, string][]);
         } else {
           // Flat format: [key, value, key, value, ...]
-          const flatFields = fields as string[];
+          const flatFields = fields as unknown as string[];
           fieldsObj = {};
           for (let i = 0; i < flatFields.length; i += 2) {
-            fieldsObj[flatFields[i]] = flatFields[i + 1];
+            fieldsObj[flatFields[i]!] = flatFields[i + 1]!;
           }
         }
         entries.push({
@@ -372,10 +372,10 @@ this.redis = new Redis({
         fieldsObj = Object.fromEntries(fields as [string, string][]);
       } else {
         // Flat format: [key, value, key, value, ...]
-        const flatFields = fields as string[];
+        const flatFields = fields as unknown as string[];
         fieldsObj = {};
         for (let i = 0; i < flatFields.length; i += 2) {
-          fieldsObj[flatFields[i]] = flatFields[i + 1];
+          fieldsObj[flatFields[i]!] = flatFields[i + 1]!;
         }
       }
       return {

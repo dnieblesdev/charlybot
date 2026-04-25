@@ -106,7 +106,7 @@ export function createRateLimitMiddleware(options: Partial<RateLimitOptions> = {
       // 3. Check limit
       if (currentCount >= maxRequests) {
         // Oldest entry is the first since entries are sorted by score (timestamp)
-        const oldestEntry = entries.length > 0 ? parseInt(entries[0]) : now;
+        const oldestEntry = entries.length > 0 ? parseInt(entries[0] ?? '0') : now;
         const resetAt = oldestEntry + opts.windowMs;
         
         c.header("Retry-After", Math.ceil((resetAt - now) / 1000).toString());
