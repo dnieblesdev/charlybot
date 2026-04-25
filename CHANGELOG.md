@@ -1,5 +1,15 @@
 # charlybot
 
+## 2026-04-25
+
+### @charlybot/shared (2.5.3)
+- Fix ValkeyClient stream parsing: handle dual field formats (tuple and flat) in streamReadGroup and streamClaim
+- Fix streamPending: use ioredis array format [id, consumer, time, count] instead of object format
+
+### @charlybot/api (2.6.4)
+- Add Valkey behavioral tests S1-S7: 17 integration tests against real Valkey instance
+- Validate cache, pub/sub, stream groups, ACK, PEL reclaim, DLQ, and idempotency
+
 ## 2026-04-24
 
 ### dashboard (0.1.3)

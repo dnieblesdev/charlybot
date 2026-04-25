@@ -1,5 +1,14 @@
 # @charlybot/api
 
+## 2.6.4
+
+### Patch Changes
+
+- Add Valkey behavioral tests S1-S7: cache hit/miss, pub/sub delivery, stream consumer groups, ACK semantics, PEL reclaim, DLQ, idempotent reprocessing (17 tests against real Valkey instance)
+
+- Updated dependencies
+  - @charlybot/shared@2.5.3
+
 ## 2.6.3
 
 ### Patch Changes

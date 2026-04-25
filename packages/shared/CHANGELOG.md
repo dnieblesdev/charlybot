@@ -1,5 +1,12 @@
 # @charlybot/shared
 
+## 2.5.3
+
+### Patch Changes
+
+- Fix ValkeyClient stream parsing: handle dual field formats (tuple and flat) in streamReadGroup and streamClaim
+- Fix streamPending: use ioredis array format [id, consumer, time, count] instead of object format
+
 ## 2.5.2
 
 ### Patch Changes

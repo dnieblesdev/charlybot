@@ -313,9 +313,22 @@ this.redis = new Redis({
     const entries: ValkeyStreamEntry[] = [];
     for (const [, messages] of typedResult) {
       for (const [id, fields] of messages) {
+        // Handle both tuple format [[k,v], [k,v]] and flat format [k,v,k,v]
+        let fieldsObj: Record<string, string>;
+        if (Array.isArray(fields) && fields.length > 0 && Array.isArray(fields[0])) {
+          // Tuple format: [[key, value], [key, value], ...]
+          fieldsObj = Object.fromEntries(fields as [string, string][]);
+        } else {
+          // Flat format: [key, value, key, value, ...]
+          const flatFields = fields as string[];
+          fieldsObj = {};
+          for (let i = 0; i < flatFields.length; i += 2) {
+            fieldsObj[flatFields[i]] = flatFields[i + 1];
+          }
+        }
         entries.push({
           id,
-          fields: Object.fromEntries(fields),
+          fields: fieldsObj,
         });
       }
     }
@@ -352,9 +365,22 @@ this.redis = new Redis({
     // xclaim returns array of [id, [field, value, ...]] entries
     const entries: ValkeyStreamEntry[] = result.map((entry: unknown) => {
       const [id, fields] = entry as [string, [string, string][]];
+      // Handle both tuple format [[k,v], [k,v]] and flat format [k,v,k,v]
+      let fieldsObj: Record<string, string>;
+      if (Array.isArray(fields) && fields.length > 0 && Array.isArray(fields[0])) {
+        // Tuple format: [[key, value], [key, value], ...]
+        fieldsObj = Object.fromEntries(fields as [string, string][]);
+      } else {
+        // Flat format: [key, value, key, value, ...]
+        const flatFields = fields as string[];
+        fieldsObj = {};
+        for (let i = 0; i < flatFields.length; i += 2) {
+          fieldsObj[flatFields[i]] = flatFields[i + 1];
+        }
+      }
       return {
         id,
-        fields: Object.fromEntries(fields),
+        fields: fieldsObj,
       };
     });
 
@@ -391,19 +417,16 @@ this.redis = new Redis({
       start,
       end,
       count,
-    ) as Array<{
-      id: string;
-      consumer: string;
-      timeSinceDelivered: number;
-      deliveryCount: number;
-    }> | null;
-    if (!result || result.length === 0) return [];
+    );
+    
+    if (!result || !Array.isArray(result) || result.length === 0) return [];
 
-    return result.map((entry) => ({
-      id: entry.id,
-      consumer: entry.consumer,
-      timeSinceDelivered: entry.timeSinceDelivered,
-      deliveryCount: entry.deliveryCount,
+    // ioredis returns array of arrays: [id, consumer, timeSinceDelivered, deliveryCount]
+    return result.map((entry: any) => ({
+      id: entry[0] as string,
+      consumer: entry[1] as string,
+      timeSinceDelivered: entry[2] as number,
+      deliveryCount: entry[3] as number,
     }));
   }
 
