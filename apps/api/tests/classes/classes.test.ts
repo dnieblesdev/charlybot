@@ -36,10 +36,10 @@ describe("Classes API - GET /guild/:guildId", () => {
     );
 
     expect(response.status).toBe(200);
-    const data = (await response.json()) as Array<{ name?: string; type?: string }>;
-    expect(Array.isArray(data)).toBe(true);
-    expect(data.length).toBeGreaterThan(0);
-    expect(data[0]!.type).toBe("Guerrero");
+    const data = (await response.json()) as { data: Array<{ name?: string; type?: string }> };
+    expect(Array.isArray(data.data)).toBe(true);
+    expect(data.data.length).toBeGreaterThan(0);
+    expect(data.data[0]!.type).toBe("Guerrero");
   });
 
   it("T4.1b: should return empty array when no classes", async () => {
@@ -56,8 +56,8 @@ describe("Classes API - GET /guild/:guildId", () => {
     );
 
     expect(response.status).toBe(200);
-    const data = (await response.json()) as unknown[];
-    expect(data.length).toBe(0);
+    const data = (await response.json()) as { data: unknown[] };
+    expect(data.data.length).toBe(0);
 
     await prisma.guild.deleteMany({ where: { guildId: noClassGuildId } });
   });

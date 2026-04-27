@@ -370,14 +370,19 @@ describe("Race Condition Tests - Distributed Locks (requires Valkey)", () => {
                   data: { pocket: sender.pocket - amount, totalLost: sender.totalLost + amount },
                 });
 
+                // Read current receiver balance to accumulate correctly
+                const receiver = await tx.userEconomy.findUnique({
+                  where: { userId_guildId: { userId: receiverId, guildId: TEST_GUILD.ID } },
+                });
+
                 await tx.userEconomy.update({
                   where: { userId_guildId: { userId: receiverId, guildId: TEST_GUILD.ID } },
-                  data: { pocket: (sender.pocket - amount) + amount, totalEarned: amount },
+                  data: { pocket: (receiver?.pocket ?? 0) + amount, totalEarned: (receiver?.totalEarned ?? 0) + amount },
                 });
               });
             },
             30, // TTL 30 seconds
-            0   // No retries - fail immediately if lock not acquired
+            numberOfTransfers   // Allow retries to serialize concurrent access
           );
 
           successfulTransfers++;
@@ -492,7 +497,7 @@ describe("Race Condition Tests - Distributed Locks (requires Valkey)", () => {
               });
             },
             30,
-            0
+            numberOfOperations   // Allow retries to serialize concurrent access
           );
 
           successfulOps++;

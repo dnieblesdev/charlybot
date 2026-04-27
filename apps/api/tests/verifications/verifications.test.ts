@@ -104,10 +104,10 @@ describe("Verifications API - GET /pending/:guildId", () => {
     );
 
     expect(response.status).toBe(200);
-    const data = (await response.json()) as Array<{ status?: string; inGameName?: string }>;
-    expect(Array.isArray(data)).toBe(true);
-    expect(data.length).toBe(2); // Only pending
-    expect(data.every(v => v.status === "pending")).toBe(true);
+    const data = (await response.json()) as { data: Array<{ status?: string; inGameName?: string }> };
+    expect(Array.isArray(data.data)).toBe(true);
+    expect(data.data.length).toBe(2); // Only pending
+    expect(data.data.every(v => v.status === "pending")).toBe(true);
   });
 
   it("T2.2b: should return empty array when no pending verifications", async () => {
@@ -124,8 +124,8 @@ describe("Verifications API - GET /pending/:guildId", () => {
     );
 
     expect(response.status).toBe(200);
-    const data = (await response.json()) as unknown[];
-    expect(data.length).toBe(0);
+    const data = (await response.json()) as { data: unknown[] };
+    expect(data.data.length).toBe(0);
 
     await prisma.guild.deleteMany({ where: { guildId: newGuildId } });
   });

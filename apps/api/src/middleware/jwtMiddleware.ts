@@ -25,9 +25,7 @@ export async function jwtAuth(c: Context, next: Next): Promise<void> {
       path: c.req.path,
       method: c.req.method,
     });
-    c.status(401);
-    await c.json({ error: "Unauthorized" });
-    return;
+    return c.json({ error: "Unauthorized" }, 401);
   }
 
   const payload = await verifyAccessToken(token);
@@ -37,9 +35,7 @@ export async function jwtAuth(c: Context, next: Next): Promise<void> {
       path: c.req.path,
       method: c.req.method,
     });
-    c.status(401);
-    await c.json({ error: "Unauthorized" });
-    return;
+    return c.json({ error: "Unauthorized" }, 401);
   }
 
   // Set the JWT payload in context for use in route handlers

@@ -12,6 +12,9 @@ const SETUP_TIMEOUT = 20000;
 // Required by authMiddleware during module import in API tests.
 process.env.API_KEY ??= "charly_secret_key";
 
+// Required by jwt.ts getSecret() — avoids 500 when JWT_SECRET is missing
+process.env.JWT_SECRET ??= "test-secret";
+
 // Normalize relative Request URLs for app.fetch() in the Node test runtime.
 const OriginalRequest = globalThis.Request;
 globalThis.Request = class extends OriginalRequest {

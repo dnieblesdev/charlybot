@@ -69,6 +69,25 @@ router.patch("/config/:guildId", zValidator("json", XPConfigSchema.partial()), a
   }
 });
 
+// DELETE /api/v1/xp/config/:guildId
+router.delete("/config/:guildId", async (c) => {
+  const { guildId } = c.req.param();
+
+  try {
+    await prisma.xPConfig.delete({
+      where: { guildId },
+    });
+
+    return c.json({ message: "XP config deleted" });
+  } catch (error: any) {
+    if (error.code === "P2025") {
+      return c.json({ error: "XP config not found" }, 404);
+    }
+    logger.error(`Error deleting XP config for ${guildId}`, { error });
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 // --- Level Roles (also before /:guildId/:userId) ---
 
 // GET /api/v1/xp/level-roles/:guildId

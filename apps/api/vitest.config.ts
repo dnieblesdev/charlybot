@@ -15,13 +15,9 @@ export default defineConfig({
         singleFork: true,
       },
     },
-    // Coverage configuration (optional, can be enabled when needed)
-    // coverage: {
-    //   provider: "v8",
-    //   reporter: ["text", "json", "html"],
-    //   include: ["src/**/*.ts"],
-    //   exclude: ["src/index.ts"],
-    // },
+    env: {
+      JWT_SECRET: "test-secret",
+    },
   },
   resolve: {
     alias: {

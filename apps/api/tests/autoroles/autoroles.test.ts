@@ -38,11 +38,11 @@ describe("Autoroles API - GET /guild/:guildId", () => {
     );
 
     expect(response.status).toBe(200);
-    const data = (await response.json()) as Array<{ guildId?: string; messageId?: string; mappings?: unknown[] }>;
-    expect(Array.isArray(data)).toBe(true);
-    expect(data.length).toBeGreaterThan(0);
-    expect(data[0]!.messageId).toBe("msg-123");
-    expect(data[0]!.mappings).toHaveLength(2);
+    const data = (await response.json()) as { data: Array<{ guildId?: string; messageId?: string; mappings?: unknown[] }> };
+    expect(Array.isArray(data.data)).toBe(true);
+    expect(data.data.length).toBeGreaterThan(0);
+    expect(data.data[0]!.messageId).toBe("msg-123");
+    expect(data.data[0]!.mappings).toHaveLength(2);
   });
 
   it("T5.1b: should return empty array when no autoroles", async () => {
@@ -59,8 +59,8 @@ describe("Autoroles API - GET /guild/:guildId", () => {
     );
 
     expect(response.status).toBe(200);
-    const data = (await response.json()) as unknown[];
-    expect(data.length).toBe(0);
+    const data = (await response.json()) as { data: unknown[] };
+    expect(data.data.length).toBe(0);
 
     await prisma.guild.deleteMany({ where: { guildId: noAutoroleGuildId } });
   });

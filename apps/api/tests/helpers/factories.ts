@@ -251,6 +251,84 @@ export async function createTestAutorole(
   });
 }
 
+// ============ XP Factories ============
+
+export async function createTestXPConfig(
+  tx: TestPrismaClient,
+  guildId: string = TEST_GUILD_ID,
+  overrides?: Partial<{
+    xpPerMessage: number;
+    enabled: boolean;
+    levelUpChannelId: string;
+    levelUpMessage: string;
+  }>
+) {
+  return tx.xPConfig.upsert({
+    where: { guildId },
+    update: overrides ?? {},
+    create: {
+      guildId,
+      xpPerMessage: overrides?.xpPerMessage ?? 1,
+      enabled: overrides?.enabled ?? true,
+      levelUpChannelId: overrides?.levelUpChannelId ?? null,
+      levelUpMessage: overrides?.levelUpMessage ?? null,
+    },
+  });
+}
+
+export async function createTestLevelRole(
+  tx: TestPrismaClient,
+  guildId: string = TEST_GUILD_ID,
+  level: number = 10,
+  roleId: string = "role-123",
+  overrides?: Partial<{ level: number; roleId: string }>
+) {
+  return tx.levelRole.create({
+    data: {
+      guildId,
+      level: overrides?.level ?? level,
+      roleId: overrides?.roleId ?? roleId,
+    },
+  });
+}
+
+export async function createTestUserXP(
+  tx: TestPrismaClient,
+  userId: string = "user-xp-test",
+  guildId: string = TEST_GUILD_ID,
+  overrides?: Partial<{
+    xp: number;
+    nivel: number;
+    username: string;
+    lastMessageAt: Date;
+  }>
+) {
+  return tx.userXP.create({
+    data: {
+      userId,
+      guildId,
+      xp: overrides?.xp ?? 0,
+      nivel: overrides?.nivel ?? 0,
+      username: overrides?.username ?? "TestUser",
+      lastMessageAt: overrides?.lastMessageAt ?? new Date(),
+    },
+  });
+}
+
+export async function cleanupXPData(tx: TestPrismaClient, guildId: string = TEST_GUILD_ID) {
+  try {
+    await tx.userXP.deleteMany({ where: { guildId } });
+  } catch (e) { /* ignore */ }
+
+  try {
+    await tx.levelRole.deleteMany({ where: { guildId } });
+  } catch (e) { /* ignore */ }
+
+  try {
+    await tx.xPConfig.deleteMany({ where: { guildId } });
+  } catch (e) { /* ignore */ }
+}
+
 // ============ Cleanup Helpers ============
 
 export async function cleanupTestGuild(tx: TestPrismaClient, guildId: string = TEST_GUILD_ID) {
