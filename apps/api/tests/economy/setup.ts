@@ -152,6 +152,73 @@ export async function createTestLeaderboardEntry(
 }
 
 // =============================================================================
+// Roulette Factories
+// =============================================================================
+
+/**
+ * Create a test roulette game.
+ * Uses prisma directly for HTTP test setup.
+ */
+export async function createTestRouletteGame(
+  guildId: string,
+  channelId: string,
+  overrides?: Partial<{
+    messageId: string;
+    status: string;
+    winningNumber: number | null;
+    winningColor: string | null;
+    startTime: Date;
+    spinTime: Date | null;
+    endTime: Date | null;
+  }>
+) {
+  return prisma.rouletteGame.create({
+    data: {
+      guildId,
+      channelId,
+      messageId: overrides?.messageId ?? null,
+      status: overrides?.status ?? "waiting",
+      winningNumber: overrides?.winningNumber ?? null,
+      winningColor: overrides?.winningColor ?? null,
+      startTime: overrides?.startTime ?? new Date(),
+      spinTime: overrides?.spinTime ?? null,
+      endTime: overrides?.endTime ?? null,
+    },
+  });
+}
+
+/**
+ * Create a test roulette bet.
+ * Requires a user economy record to exist first (foreign key constraint).
+ * Uses prisma directly for HTTP test setup.
+ */
+export async function createTestRouletteBet(
+  gameId: number,
+  userId: string,
+  guildId: string,
+  overrides?: Partial<{
+    amount: number;
+    betType: "color" | "number";
+    betValue: string;
+    result: string | null;
+    winAmount: number | null;
+  }>
+) {
+  return prisma.rouletteBet.create({
+    data: {
+      gameId,
+      userId,
+      guildId,
+      amount: overrides?.amount ?? 100,
+      betType: overrides?.betType ?? "color",
+      betValue: overrides?.betValue ?? "red",
+      result: overrides?.result ?? null,
+      winAmount: overrides?.winAmount ?? null,
+    },
+  });
+}
+
+// =============================================================================
 // Cleanup Functions
 // =============================================================================
 
@@ -160,7 +227,22 @@ export async function createTestLeaderboardEntry(
  * Call this in afterEach to ensure test isolation.
  */
 export async function cleanupEconomyData(guildIds: string[], userIds: string[]) {
-  // Clean up in correct order to handle foreign key constraints
+  // Clean up roulette bets first (foreign key to rouletteGame)
+  await prisma.rouletteBet.deleteMany({
+    where: {
+      OR: [
+        { guildId: { in: guildIds } },
+        { userId: { in: userIds } },
+      ],
+    },
+  }).catch(() => { /* ignore */ });
+
+  // Clean up roulette games (no FK dependency)
+  await prisma.rouletteGame.deleteMany({
+    where: { guildId: { in: guildIds } },
+  }).catch(() => { /* ignore */ });
+
+  // Clean up leaderboard entries
   await prisma.leaderboard.deleteMany({
     where: {
       OR: [
@@ -170,6 +252,7 @@ export async function cleanupEconomyData(guildIds: string[], userIds: string[]) 
     },
   }).catch(() => { /* ignore */ });
 
+  // Clean up user economy (has FK to roulette bets via userId_guildId)
   await prisma.userEconomy.deleteMany({
     where: {
       OR: [
@@ -179,10 +262,12 @@ export async function cleanupEconomyData(guildIds: string[], userIds: string[]) 
     },
   }).catch(() => { /* ignore */ });
 
+  // Clean up global bank
   await prisma.globalBank.deleteMany({
     where: { userId: { in: userIds } },
   }).catch(() => { /* ignore */ });
 
+  // Clean up economy config
   await prisma.economyConfig.deleteMany({
     where: { guildId: { in: guildIds } },
   }).catch(() => { /* ignore */ });
