@@ -170,6 +170,8 @@ describe("Autoroles API - POST /", () => {
     );
 
     expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toBeDefined();
   });
 });
 
@@ -246,6 +248,8 @@ describe("Autoroles API - DELETE /:id", () => {
     );
 
     expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.message).toBeDefined();
 
     // Verify it's deleted
     const getResponse = await app.fetch(
@@ -301,6 +305,13 @@ describe("Autoroles API - POST /:id/mappings", () => {
     const data = (await response.json()) as { roleId?: string; type?: string };
     expect(data.roleId).toBe("new-role");
     expect(data.type).toBe("reaction");
+
+    // Verify mapping was actually persisted in DB
+    const mappingInDb = await prisma.roleMapping.findFirst({
+      where: { roleId: "new-role" },
+    });
+    expect(mappingInDb).not.toBeNull();
+    expect(mappingInDb?.emoji).toBe("⭐");
   });
 });
 
@@ -387,5 +398,7 @@ describe("Autoroles API - DELETE /mappings/:mappingId", () => {
     );
 
     expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.message).toBeDefined();
   });
 });

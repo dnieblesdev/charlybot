@@ -56,6 +56,8 @@ describe("Verifications API - POST /", () => {
     );
 
     expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toBeDefined();
   });
 });
 

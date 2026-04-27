@@ -79,8 +79,6 @@ describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
 
     // Receiver should have received exactly what sender lost
     expect(finalReceiver?.pocket ?? 0).toBe(successful * amount);
-
-    console.log(`Successful: ${successful}, Failed: ${failed}, Final sender pocket: ${finalSender?.pocket}`);
   });
 
   it("S6.2: concurrent deposit+withdraw should maintain consistency", async () => {
@@ -154,29 +152,10 @@ describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
     expect(finalUser?.pocket ?? 0).toBeGreaterThanOrEqual(0);
     expect(finalBank?.bank ?? 0).toBeGreaterThanOrEqual(0);
 
-    // Pocket + Bank should equal initial total
+// Pocket + Bank should equal initial total
     const finalTotal = (finalUser?.pocket ?? 0) + (finalBank?.bank ?? 0);
     const initialTotal = initialPocket + initialBank;
     expect(finalTotal).toBe(initialTotal);
-
-    console.log(`Successful: ${successful}, Failed: ${failed}, Final pocket: ${finalUser?.pocket}, Final bank: ${finalBank?.bank}`);
-  });
-});
-
-describe("Race Conditions - Distributed Lock Tests (requires Valkey)", () => {
-  const API_KEY_VALID = API_KEY;
-  let valkeyAvailable = false;
-
-  beforeAll(async () => {
-    valkeyAvailable = await isValkeyAvailable();
-  });
-
-  beforeEach(async () => {
-    await createTestEconomyConfig(TEST_GUILD.ID);
-  });
-
-  afterEach(async () => {
-    await cleanupEconomyData([TEST_GUILD.ID], []);
   });
 
   it.skipIf(!valkeyAvailable)("S6.3: distributed lock should prevent double-spending with Valkey", async () => {
@@ -230,8 +209,6 @@ describe("Race Conditions - Distributed Lock Tests (requires Valkey)", () => {
     // Sender should have 0, receiver should have all the money
     expect(finalSender?.pocket ?? 0).toBe(0);
     expect(finalReceiver?.pocket ?? 0).toBe(amount * numberOfTransfers);
-
-    console.log(`Final sender: ${finalSender?.pocket}, Final receiver: ${finalReceiver?.pocket}`);
   });
 
   it.skipIf(!valkeyAvailable)("S6.4: distributed lock should serialize deposit operations", async () => {
@@ -279,7 +256,5 @@ describe("Race Conditions - Distributed Lock Tests (requires Valkey)", () => {
     // All deposits should succeed (lock serializes)
     expect(finalUser?.pocket ?? 0).toBe(0); // All deposited
     expect(finalBank?.bank ?? 0).toBe(initialPocket + (amount * numberOfDeposits));
-
-    console.log(`Final pocket: ${finalUser?.pocket}, Final bank: ${finalBank?.bank}`);
   });
 });

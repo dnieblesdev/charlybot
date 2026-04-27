@@ -147,6 +147,13 @@ describe("Classes API - POST /", () => {
     expect(response.status).toBe(201);
     const data = (await response.json()) as { message?: string };
     expect(data.message).toBe("Class updated successfully");
+
+    // Verify class was actually persisted in DB
+    const classInDb = await prisma.classes.findFirst({
+      where: { guildId: testGuildId, name: "Paladin" },
+    });
+    expect(classInDb).not.toBeNull();
+    expect(classInDb?.rolId).toBe("role-paladin");
   });
 
   it("T4.3b: should reject invalid class data", async () => {
@@ -165,6 +172,8 @@ describe("Classes API - POST /", () => {
     );
 
     expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toBeDefined();
   });
 });
 

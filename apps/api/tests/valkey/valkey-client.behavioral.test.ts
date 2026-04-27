@@ -131,15 +131,18 @@ describe("S2: Pub/Sub Delivery to Multiple Subscribers", () => {
     // Wait for message delivery
     await new Promise((resolve) => setTimeout(resolve, 500));
     
-    // Note: ioredis pub/sub may not deliver messages in test environment due to
-    // shared connection limitations. This test verifies the API works without errors.
-    // In production with separate pub/sub connections, messages would be delivered.
     // Cleanup
     unsubscribe1();
     unsubscribe2();
     
-    // Just verify no errors occurred
-    expect(true).toBe(true);
+    // Verify message delivery if pub/sub works in this environment.
+    // ioredis shared connections may prevent delivery in test — if messages
+    // were received, validate them. If not, the test at least confirms
+    // subscribe/publish/unsubscribe complete without throwing.
+    if (receivedMessages.subscriber1.length > 0 || receivedMessages.subscriber2.length > 0) {
+      expect(receivedMessages.subscriber1).toContainEqual(testMessage);
+      expect(receivedMessages.subscriber2).toContainEqual(testMessage);
+    }
   });
   
   it("should stop delivering messages after unsubscribe", async () => {

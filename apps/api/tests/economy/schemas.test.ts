@@ -1,29 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { z } from "zod";
-
-// Import the schemas from the economy routes (inline to avoid import issues)
-const TransferSchema = z.object({
-  fromUserId: z.string(),
-  toUserId: z.string(),
-  guildId: z.string(),
-  amount: z.number().positive(),
-  fromUsername: z.string(),
-  toUsername: z.string(),
-});
-
-const DepositSchema = z.object({
-  userId: z.string(),
-  guildId: z.string(),
-  username: z.string(),
-  amount: z.number().positive(),
-});
-
-const WithdrawSchema = z.object({
-  userId: z.string(),
-  guildId: z.string(),
-  username: z.string(),
-  amount: z.number().positive(),
-});
+import { TransferSchema, DepositSchema, WithdrawSchema } from "@charlybot/shared";
 
 describe("T7: Schema Validation Tests", () => {
   describe("T7.1: Transfer Schema Validation", () => {

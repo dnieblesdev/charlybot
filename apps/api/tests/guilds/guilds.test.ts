@@ -243,6 +243,8 @@ describe("Guilds API - PATCH /:id/config", () => {
 
     // Zod validator should reject invalid fields
     expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toBeDefined();
   });
 });
 

@@ -87,6 +87,13 @@ describe("Music API - POST /queues/:guildId/items", () => {
     expect(data.title).toBe("Test Song");
     expect(data.url).toBe("https://youtube.com/watch?v=test");
     expect(data.position).toBe(0);
+
+    // Verify item was actually persisted in DB
+    const itemInDb = await prisma.musicQueueItem.findFirst({
+      where: { title: "Test Song" },
+    });
+    expect(itemInDb).not.toBeNull();
+    expect(itemInDb?.url).toBe("https://youtube.com/watch?v=test");
   });
 
   it("T3.2b: should reject invalid item data", async () => {
@@ -105,6 +112,8 @@ describe("Music API - POST /queues/:guildId/items", () => {
     );
 
     expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toBeDefined();
   });
 });
 
@@ -151,6 +160,12 @@ describe("Music API - DELETE /queues/:guildId/items/:position", () => {
     expect(response.status).toBe(200);
     const data = (await response.json()) as { success?: boolean };
     expect(data.success).toBe(true);
+
+    // Verify item was actually deleted from DB
+    const itemInDb = await prisma.musicQueueItem.findFirst({
+      where: { title: "Song 1" },
+    });
+    expect(itemInDb).toBeNull();
   });
 
   it("T3.3b: should return 404 for invalid position", async () => {
