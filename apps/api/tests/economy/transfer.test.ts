@@ -1,312 +1,333 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { prisma } from "@charlybot/shared";
-import { TEST_GUILD, TEST_USERS, createTestUser, createStandardUser, createTestConfig } from "../fixtures/users";
-import type { TestPrismaClient } from "../helpers/db";
+import { createTestUserEconomy, createTestEconomyConfig, cleanupEconomyData, API_KEY, TEST_GUILD, generateTestId } from "./setup";
+import app from "../../src/index";
 
-describe("POST /transfer - Atomic Transfer", () => {
+describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
+  const API_KEY_VALID = API_KEY;
+
   beforeEach(async () => {
     // Create test config for the guild
-    await prisma.economyConfig.upsert({
-      where: { guildId: TEST_GUILD.ID },
-      update: {},
-      create: {
-        guildId: TEST_GUILD.ID,
-        startingMoney: 1000,
-        workMinAmount: 100,
-        workMaxAmount: 300,
-        workCooldown: 300000,
-        crimeCooldown: 900000,
-        robCooldown: 1800000,
-        crimeMultiplier: 3,
-        jailTimeWork: 30,
-        jailTimeRob: 45,
-      },
-    });
+    await createTestEconomyConfig(TEST_GUILD.ID);
   });
 
-  it("T3.1: should successfully transfer money between users", async () => {
-    const senderId = `sender-${Date.now()}`;
-    const receiverId = `receiver-${Date.now()}`;
+  afterEach(async () => {
+    await cleanupEconomyData([TEST_GUILD.ID], []);
+  });
+
+  it("S1.5: should successfully transfer money between users", async () => {
+    const senderId = generateTestId("sender");
+    const receiverId = generateTestId("receiver");
     const amount = 500;
 
-    // Use Prisma transaction for test isolation
-    const result = await prisma.$transaction(async (tx) => {
-      // Create sender with 1000 pocket
-      const sender = await tx.userEconomy.create({
-        data: {
-          userId: senderId,
-          guildId: TEST_GUILD.ID,
-          username: "Sender",
-          pocket: 1000,
-          totalEarned: 0,
-          totalLost: 0,
-          inJail: false,
-        },
-      });
-
-      // Create receiver with 100 pocket
-      const receiver = await tx.userEconomy.create({
-        data: {
-          userId: receiverId,
-          guildId: TEST_GUILD.ID,
-          username: "Receiver",
-          pocket: 100,
-          totalEarned: 0,
-          totalLost: 0,
-          inJail: false,
-        },
-      });
-
-      // Perform transfer (simulating the route handler logic)
-      const transferResult = await tx.$transaction(async (innerTx) => {
-        const [fromUser, toUser] = await Promise.all([
-          innerTx.userEconomy.findUnique({
-            where: { userId_guildId: { userId: senderId, guildId: TEST_GUILD.ID } },
-          }),
-          innerTx.userEconomy.findUnique({
-            where: { userId_guildId: { userId: receiverId, guildId: TEST_GUILD.ID } },
-          }),
-        ]);
-
-        if (!fromUser || !toUser) {
-          throw new Error("One or both users not found");
-        }
-
-        if (fromUser.pocket < amount) {
-          throw new Error("Insufficient funds");
-        }
-
-        const [updatedFrom, updatedTo] = await Promise.all([
-          innerTx.userEconomy.update({
-            where: { userId_guildId: { userId: senderId, guildId: TEST_GUILD.ID } },
-            data: {
-              pocket: fromUser.pocket - amount,
-              totalLost: fromUser.totalLost + amount,
-            },
-          }),
-          innerTx.userEconomy.update({
-            where: { userId_guildId: { userId: receiverId, guildId: TEST_GUILD.ID } },
-            data: {
-              pocket: toUser.pocket + amount,
-              totalEarned: toUser.totalEarned + amount,
-            },
-          }),
-        ]);
-
-        return { fromUser: updatedFrom, toUser: updatedTo };
-      });
-
-      return transferResult;
+    // Setup: create sender with 1000 pocket, receiver with 100 pocket
+    await createTestUserEconomy(TEST_GUILD.ID, senderId, {
+      username: "Sender",
+      pocket: 1000,
+    });
+    await createTestUserEconomy(TEST_GUILD.ID, receiverId, {
+      username: "Receiver",
+      pocket: 100,
     });
 
-    // Verify sender's balance decreased
-    expect(result.fromUser.pocket).toBe(500);
-    expect(result.fromUser.totalLost).toBe(500);
-
-    // Verify receiver's balance increased
-    expect(result.toUser.pocket).toBe(600);
-    expect(result.toUser.totalEarned).toBe(500);
-
-    // Cleanup
-    await prisma.userEconomy.deleteMany({
-      where: { userId: { in: [senderId, receiverId] } },
-    });
-  });
-
-  it("T3.2: should fail transfer with insufficient funds", async () => {
-    const senderId = `sender-poor-${Date.now()}`;
-    const receiverId = `receiver-${Date.now()}`;
-    const amount = 1000;
-
-    await prisma.$transaction(async (tx) => {
-      // Create sender with only 100 pocket
-      await tx.userEconomy.create({
-        data: {
-          userId: senderId,
-          guildId: TEST_GUILD.ID,
-          username: "PoorSender",
-          pocket: 100,
-          totalEarned: 0,
-          totalLost: 0,
-          inJail: false,
+    // Act: transfer via HTTP
+    const res = await app.fetch(
+      new Request("/api/v1/economy/transfer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
         },
-      });
-
-      // Create receiver
-      await tx.userEconomy.create({
-        data: {
-          userId: receiverId,
+        body: JSON.stringify({
+          fromUserId: senderId,
+          toUserId: receiverId,
           guildId: TEST_GUILD.ID,
-          username: "Receiver",
-          pocket: 100,
-          totalEarned: 0,
-          totalLost: 0,
-          inJail: false,
-        },
-      });
+          amount,
+          fromUsername: "Sender",
+          toUsername: "Receiver",
+        }),
+      })
+    );
 
-      // Attempt transfer that should fail
-      await expect(
-        tx.$transaction(async (innerTx) => {
-          const fromUser = await innerTx.userEconomy.findUnique({
-            where: { userId_guildId: { userId: senderId, guildId: TEST_GUILD.ID } },
-          });
+    // Assert
+    expect(res.status).toBe(200);
+    const body = await res.json() as { success?: boolean; fromUser?: { pocket: number; totalLost: number }; toUser?: { pocket: number; totalEarned: number } };
+    expect(body.success).toBe(true);
+    expect(body.fromUser?.pocket).toBe(500); // 1000 - 500
+    expect(body.fromUser?.totalLost).toBe(500);
+    expect(body.toUser?.pocket).toBe(600); // 100 + 500
+    expect(body.toUser?.totalEarned).toBe(500);
 
-          if (!fromUser || fromUser.pocket < amount) {
-            throw new Error("Insufficient funds");
-          }
-        })
-      ).rejects.toThrow("Insufficient funds");
-    });
-
-    // Cleanup
-    await prisma.userEconomy.deleteMany({
-      where: { userId: { in: [senderId, receiverId] } },
-    });
-  });
-
-  it("T3.3: should fail transfer to non-existent receiver", async () => {
-    const senderId = `sender-${Date.now()}`;
-    const nonExistentReceiverId = "non-existent-user-123";
-    const amount = 100;
-
-    await prisma.$transaction(async (tx) => {
-      // Create sender
-      await tx.userEconomy.create({
-        data: {
-          userId: senderId,
-          guildId: TEST_GUILD.ID,
-          username: "Sender",
-          pocket: 1000,
-          totalEarned: 0,
-          totalLost: 0,
-          inJail: false,
-        },
-      });
-
-      // Attempt transfer to non-existent user
-      await expect(
-        tx.$transaction(async (innerTx) => {
-          const [fromUser, toUser] = await Promise.all([
-            innerTx.userEconomy.findUnique({
-              where: { userId_guildId: { userId: senderId, guildId: TEST_GUILD.ID } },
-            }),
-            innerTx.userEconomy.findUnique({
-              where: { userId_guildId: { userId: nonExistentReceiverId, guildId: TEST_GUILD.ID } },
-            }),
-          ]);
-
-          if (!fromUser || !toUser) {
-            throw new Error("One or both users not found");
-          }
-        })
-      ).rejects.toThrow("One or both users not found");
-    });
-
-    // Cleanup
-    await prisma.userEconomy.delete({
+    // Verify final state in DB
+    const updatedSender = await prisma.userEconomy.findUnique({
       where: { userId_guildId: { userId: senderId, guildId: TEST_GUILD.ID } },
     });
+    const updatedReceiver = await prisma.userEconomy.findUnique({
+      where: { userId_guildId: { userId: receiverId, guildId: TEST_GUILD.ID } },
+    });
+    expect(updatedSender?.pocket).toBe(500);
+    expect(updatedSender?.totalLost).toBe(500);
+    expect(updatedReceiver?.pocket).toBe(600);
+    expect(updatedReceiver?.totalEarned).toBe(500);
   });
 
-  it("T3.4: should fail transfer with invalid amount (zero)", async () => {
-    const senderId = `sender-${Date.now()}`;
-    const receiverId = `receiver-${Date.now()}`;
-    const amount = 0;
+  it("S1.7: should fail transfer with insufficient funds", async () => {
+    const senderId = generateTestId("sender-poor");
+    const receiverId = generateTestId("receiver");
+    const amount = 1000;
 
-    await prisma.$transaction(async (tx) => {
-      // Create users
-      await tx.userEconomy.create({
-        data: {
-          userId: senderId,
-          guildId: TEST_GUILD.ID,
-          username: "Sender",
-          pocket: 1000,
-          totalEarned: 0,
-          totalLost: 0,
-          inJail: false,
-        },
-      });
-
-      await tx.userEconomy.create({
-        data: {
-          userId: receiverId,
-          guildId: TEST_GUILD.ID,
-          username: "Receiver",
-          pocket: 100,
-          totalEarned: 0,
-          totalLost: 0,
-          inJail: false,
-        },
-      });
-
-      // Transfer with zero amount - validation should catch this
-      // The schema requires positive() number, so this would fail at validation
-      // In practice, we test the business logic rejects zero
-      await expect(
-        tx.$transaction(async (innerTx) => {
-          const fromUser = await innerTx.userEconomy.findUnique({
-            where: { userId_guildId: { userId: senderId, guildId: TEST_GUILD.ID } },
-          });
-
-          // Simulate validation check
-          if (amount <= 0) {
-            throw new Error("Amount must be positive");
-          }
-        })
-      ).rejects.toThrow("Amount must be positive");
+    // Setup: create sender with only 100 pocket
+    await createTestUserEconomy(TEST_GUILD.ID, senderId, {
+      username: "PoorSender",
+      pocket: 100,
+    });
+    await createTestUserEconomy(TEST_GUILD.ID, receiverId, {
+      username: "Receiver",
+      pocket: 100,
     });
 
-    // Cleanup
-    await prisma.userEconomy.deleteMany({
-      where: { userId: { in: [senderId, receiverId] } },
-    });
+    // Act: attempt transfer via HTTP
+    const res = await app.fetch(
+      new Request("/api/v1/economy/transfer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
+        },
+        body: JSON.stringify({
+          fromUserId: senderId,
+          toUserId: receiverId,
+          guildId: TEST_GUILD.ID,
+          amount,
+          fromUsername: "PoorSender",
+          toUsername: "Receiver",
+        }),
+      })
+    );
+
+    // Assert: should return 400 error
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error?: string };
+    expect(body.error).toBe("Insufficient funds");
   });
 
-  it("T3.4b: should fail transfer with negative amount", async () => {
-    const senderId = `sender-${Date.now()}`;
-    const receiverId = `receiver-${Date.now()}`;
-    const amount = -100;
+  it("S1.6: should fail transfer when receiver does not exist", async () => {
+    const senderId = generateTestId("sender-no-receiver");
+    const nonExistentReceiverId = generateTestId("non-existent-receiver");
+    const amount = 100;
 
-    await prisma.$transaction(async (tx) => {
-      await tx.userEconomy.create({
-        data: {
-          userId: senderId,
-          guildId: TEST_GUILD.ID,
-          username: "Sender",
-          pocket: 1000,
-          totalEarned: 0,
-          totalLost: 0,
-          inJail: false,
-        },
-      });
-
-      await tx.userEconomy.create({
-        data: {
-          userId: receiverId,
-          guildId: TEST_GUILD.ID,
-          username: "Receiver",
-          pocket: 100,
-          totalEarned: 0,
-          totalLost: 0,
-          inJail: false,
-        },
-      });
-
-      // Transfer with negative amount - validation should catch this
-      await expect(
-        tx.$transaction(async () => {
-          // Simulate validation check
-          if (amount <= 0) {
-            throw new Error("Amount must be positive");
-          }
-        })
-      ).rejects.toThrow("Amount must be positive");
+    // Setup: create sender only, no receiver
+    await createTestUserEconomy(TEST_GUILD.ID, senderId, {
+      username: "Sender",
+      pocket: 1000,
     });
 
-    // Cleanup
-    await prisma.userEconomy.deleteMany({
-      where: { userId: { in: [senderId, receiverId] } },
+    // Act: transfer to non-existent receiver via HTTP
+    const res = await app.fetch(
+      new Request("/api/v1/economy/transfer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
+        },
+        body: JSON.stringify({
+          fromUserId: senderId,
+          toUserId: nonExistentReceiverId,
+          guildId: TEST_GUILD.ID,
+          amount,
+          fromUsername: "Sender",
+          toUsername: "NonExistent",
+        }),
+      })
+    );
+
+    // Assert: should return 400 error (route throws "One or both users not found")
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error?: string };
+    expect(body.error).toBe("One or both users not found");
+  });
+
+  it("S1.8: should fail transfer with zero amount (Zod validation)", async () => {
+    const senderId = generateTestId("sender-zero");
+    const receiverId = generateTestId("receiver-zero");
+
+    // Setup: create both users
+    await createTestUserEconomy(TEST_GUILD.ID, senderId, {
+      username: "Sender",
+      pocket: 1000,
     });
+    await createTestUserEconomy(TEST_GUILD.ID, receiverId, {
+      username: "Receiver",
+      pocket: 100,
+    });
+
+    // Act: transfer with amount = 0
+    const res = await app.fetch(
+      new Request("/api/v1/economy/transfer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
+        },
+        body: JSON.stringify({
+          fromUserId: senderId,
+          toUserId: receiverId,
+          guildId: TEST_GUILD.ID,
+          amount: 0,
+          fromUsername: "Sender",
+          toUsername: "Receiver",
+        }),
+      })
+    );
+
+    // Assert: Zod requires positive number, so 0 should fail validation
+    expect(res.status).toBe(400);
+  });
+
+  it("S1.8b: should fail transfer with negative amount (Zod validation)", async () => {
+    const senderId = generateTestId("sender-negative");
+    const receiverId = generateTestId("receiver-negative");
+
+    // Setup: create both users
+    await createTestUserEconomy(TEST_GUILD.ID, senderId, {
+      username: "Sender",
+      pocket: 1000,
+    });
+    await createTestUserEconomy(TEST_GUILD.ID, receiverId, {
+      username: "Receiver",
+      pocket: 100,
+    });
+
+    // Act: transfer with negative amount
+    const res = await app.fetch(
+      new Request("/api/v1/economy/transfer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
+        },
+        body: JSON.stringify({
+          fromUserId: senderId,
+          toUserId: receiverId,
+          guildId: TEST_GUILD.ID,
+          amount: -100,
+          fromUsername: "Sender",
+          toUsername: "Receiver",
+        }),
+      })
+    );
+
+    // Assert: should return 400 due to Zod validation
+    expect(res.status).toBe(400);
+  });
+
+  it("S1.11: should return 401 when no API key is provided", async () => {
+    const senderId = generateTestId("sender-no-auth");
+    const receiverId = generateTestId("receiver-no-auth");
+
+    // Setup: create both users
+    await createTestUserEconomy(TEST_GUILD.ID, senderId, {
+      username: "Sender",
+      pocket: 1000,
+    });
+    await createTestUserEconomy(TEST_GUILD.ID, receiverId, {
+      username: "Receiver",
+      pocket: 100,
+    });
+
+    // Act: transfer WITHOUT X-API-Key header
+    const res = await app.fetch(
+      new Request("/api/v1/economy/transfer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // No X-API-Key header
+        },
+        body: JSON.stringify({
+          fromUserId: senderId,
+          toUserId: receiverId,
+          guildId: TEST_GUILD.ID,
+          amount: 100,
+          fromUsername: "Sender",
+          toUsername: "Receiver",
+        }),
+      })
+    );
+
+    // Assert: should return 401
+    expect(res.status).toBe(401);
+  });
+
+  it("S7.3: should return 401 when invalid API key is provided", async () => {
+    const senderId = generateTestId("sender-invalid-key");
+    const receiverId = generateTestId("receiver-invalid-key");
+
+    // Setup: create both users
+    await createTestUserEconomy(TEST_GUILD.ID, senderId, {
+      username: "Sender",
+      pocket: 1000,
+    });
+    await createTestUserEconomy(TEST_GUILD.ID, receiverId, {
+      username: "Receiver",
+      pocket: 100,
+    });
+
+    // Act: transfer with wrong API key
+    const res = await app.fetch(
+      new Request("/api/v1/economy/transfer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": "wrong-api-key",
+        },
+        body: JSON.stringify({
+          fromUserId: senderId,
+          toUserId: receiverId,
+          guildId: TEST_GUILD.ID,
+          amount: 100,
+          fromUsername: "Sender",
+          toUsername: "Receiver",
+        }),
+      })
+    );
+
+    // Assert: should return 401
+    expect(res.status).toBe(401);
+  });
+
+  it("S1.6 variant: should fail transfer when sender does not exist", async () => {
+    const nonExistentSenderId = generateTestId("non-existent-sender");
+    const receiverId = generateTestId("receiver-no-sender");
+    const amount = 100;
+
+    // Setup: create receiver only, no sender
+    await createTestUserEconomy(TEST_GUILD.ID, receiverId, {
+      username: "Receiver",
+      pocket: 100,
+    });
+
+    // Act: transfer from non-existent sender via HTTP
+    const res = await app.fetch(
+      new Request("/api/v1/economy/transfer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
+        },
+        body: JSON.stringify({
+          fromUserId: nonExistentSenderId,
+          toUserId: receiverId,
+          guildId: TEST_GUILD.ID,
+          amount,
+          fromUsername: "NonExistent",
+          toUsername: "Receiver",
+        }),
+      })
+    );
+
+    // Assert: should return 400 error
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error?: string };
+    expect(body.error).toBe("One or both users not found");
   });
 });

@@ -1,220 +1,257 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { prisma } from "@charlybot/shared";
-import { TEST_GUILD } from "../fixtures/users";
+import { createTestUserEconomy, createTestBank, createTestEconomyConfig, cleanupEconomyData, API_KEY, TEST_GUILD, generateTestId } from "./setup";
+import app from "../../src/index";
 
-describe("POST /withdraw - Atomic Withdraw", () => {
+describe("POST /api/v1/economy/withdraw - Atomic Withdraw", () => {
+  const API_KEY_VALID = API_KEY;
+
   beforeEach(async () => {
     // Create test config for the guild
-    await prisma.economyConfig.upsert({
-      where: { guildId: TEST_GUILD.ID },
-      update: {},
-      create: {
-        guildId: TEST_GUILD.ID,
-        startingMoney: 1000,
-        workMinAmount: 100,
-        workMaxAmount: 300,
-        workCooldown: 300000,
-        crimeCooldown: 900000,
-        robCooldown: 1800000,
-        crimeMultiplier: 3,
-        jailTimeWork: 30,
-        jailTimeRob: 45,
-      },
-    });
+    await createTestEconomyConfig(TEST_GUILD.ID);
   });
 
-  it("T5.1: should successfully withdraw money from global bank", async () => {
-    const userId = `withdrawer-${Date.now()}`;
+  afterEach(async () => {
+    await cleanupEconomyData([TEST_GUILD.ID], []);
+  });
+
+  it("S1.3: should successfully withdraw money from global bank (happy path)", async () => {
+    const userId = generateTestId("withdrawer");
     const username = "Withdrawer";
     const withdrawAmount = 300;
 
-    const result = await prisma.$transaction(async (tx) => {
-      // Create user with small pocket
-      await tx.userEconomy.create({
-        data: {
+    // Setup: create user with small pocket and bank with money
+    await createTestUserEconomy(TEST_GUILD.ID, userId, {
+      username,
+      pocket: 100,
+    });
+    await createTestBank(userId, { username, bank: 1000 });
+
+    // Act: withdraw via HTTP
+    const res = await app.fetch(
+      new Request("/api/v1/economy/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
+        },
+        body: JSON.stringify({
           userId,
           guildId: TEST_GUILD.ID,
           username,
-          pocket: 100,
-          totalEarned: 0,
-          totalLost: 0,
-          inJail: false,
-        },
-      });
+          amount: withdrawAmount,
+        }),
+      })
+    );
 
-      // Create bank with money
-      await tx.globalBank.create({
-        data: {
-          userId,
-          username,
-          bank: 1000,
-        },
-      });
+    // Assert
+    expect(res.status).toBe(200);
+    const body = await res.json() as { success?: boolean; bank?: { bank: number }; user?: { pocket: number } };
+    expect(body.success).toBe(true);
+    expect(body.bank?.bank).toBe(700); // 1000 - 300
+    expect(body.user?.pocket).toBe(400); // 100 + 300
 
-      // Perform withdraw (simulating the route handler logic)
-      const withdrawResult = await tx.$transaction(async (innerTx) => {
-        const bank = await innerTx.globalBank.findUnique({
-          where: { userId },
-        });
-
-        if (!bank || bank.bank < withdrawAmount) {
-          throw new Error("Insufficient funds in bank");
-        }
-
-        const user = await innerTx.userEconomy.findUnique({
-          where: { userId_guildId: { userId, guildId: TEST_GUILD.ID } },
-        });
-
-        const [updatedBank, updatedUser] = await Promise.all([
-          innerTx.globalBank.update({
-            where: { userId },
-            data: { bank: bank.bank - withdrawAmount },
-          }),
-          innerTx.userEconomy.update({
-            where: { userId_guildId: { userId, guildId: TEST_GUILD.ID } },
-            data: { pocket: (user?.pocket ?? 0) + withdrawAmount },
-          }),
-        ]);
-
-        return { bank: updatedBank, user: updatedUser };
-      });
-
-      return withdrawResult;
+    // Verify final state in DB
+    const updatedBank = await prisma.globalBank.findUnique({
+      where: { userId },
     });
-
-    // Verify bank's balance decreased
-    expect(result.bank.bank).toBe(700);
-
-    // Verify user's pocket increased
-    expect(result.user.pocket).toBe(400);
-
-    // Cleanup
-    await prisma.userEconomy.deleteMany({ where: { userId } });
-    await prisma.globalBank.deleteMany({ where: { userId } });
+    const updatedUser = await prisma.userEconomy.findUnique({
+      where: { userId_guildId: { userId, guildId: TEST_GUILD.ID } },
+    });
+    expect(updatedBank?.bank).toBe(700);
+    expect(updatedUser?.pocket).toBe(400);
   });
 
-  it("T5.2: should fail withdraw with insufficient funds in bank", async () => {
-    const userId = `poor-withdrawer-${Date.now()}`;
+  it("S1.4: should fail withdraw with insufficient funds in bank", async () => {
+    const userId = generateTestId("poor-withdrawer");
     const username = "PoorWithdrawer";
     const withdrawAmount = 500;
 
-    await prisma.$transaction(async (tx) => {
-      // Create user
-      await tx.userEconomy.create({
-        data: {
+    // Setup: create user with small pocket and bank with only 100
+    await createTestUserEconomy(TEST_GUILD.ID, userId, {
+      username,
+      pocket: 100,
+    });
+    await createTestBank(userId, { username, bank: 100 });
+
+    // Act: attempt withdraw via HTTP
+    const res = await app.fetch(
+      new Request("/api/v1/economy/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
+        },
+        body: JSON.stringify({
           userId,
           guildId: TEST_GUILD.ID,
           username,
-          pocket: 100,
-          totalEarned: 0,
-          totalLost: 0,
-          inJail: false,
-        },
-      });
+          amount: withdrawAmount,
+        }),
+      })
+    );
 
-      // Create bank with only 100
-      await tx.globalBank.create({
-        data: {
-          userId,
-          username,
-          bank: 100,
-        },
-      });
-
-      // Attempt withdraw that should fail
-      await expect(
-        tx.$transaction(async (innerTx) => {
-          const bank = await innerTx.globalBank.findUnique({
-            where: { userId },
-          });
-
-          if (!bank || bank.bank < withdrawAmount) {
-            throw new Error("Insufficient funds in bank");
-          }
-        })
-      ).rejects.toThrow("Insufficient funds in bank");
-    });
-
-    // Cleanup
-    await prisma.userEconomy.deleteMany({ where: { userId } });
-    await prisma.globalBank.deleteMany({ where: { userId } });
+    // Assert: should return 400 error
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error?: string };
+    expect(body.error).toBe("Insufficient funds in bank");
   });
 
-  it("T5.3: should create new user economy and withdraw to them", async () => {
-    const userId = `new-user-${Date.now()}`;
-    const username = "NewUser";
+  it("S1.3b: should create new user economy and credit starting money plus withdrawn amount", async () => {
+    const userId = generateTestId("new-user-withdraw");
+    const username = "NewUserWithdraw";
     const withdrawAmount = 500;
 
-    const result = await prisma.$transaction(async (tx) => {
-      // Create bank with money (no user economy exists yet)
-      await tx.globalBank.create({
-        data: {
-          userId,
-          username,
-          bank: 1000,
+    // Setup: create bank with money but NO user economy record
+    await createTestBank(userId, { username, bank: 1000 });
+    // Note: NOT creating a user economy record - route should create it
+
+    // Act: withdraw via HTTP
+    const res = await app.fetch(
+      new Request("/api/v1/economy/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
         },
-      });
+        body: JSON.stringify({
+          userId,
+          guildId: TEST_GUILD.ID,
+          username,
+          amount: withdrawAmount,
+        }),
+      })
+    );
 
-      // Perform withdraw (simulating the route handler logic)
-      const withdrawResult = await tx.$transaction(async (innerTx) => {
-        const bank = await innerTx.globalBank.findUnique({
-          where: { userId },
-        });
+    // Assert
+    expect(res.status).toBe(200);
+    const body = await res.json() as { success?: boolean; user?: { pocket: number } };
+    expect(body.success).toBe(true);
+    // User should be created with startingMoney (1000) + withdrawn amount (500) = 1500
+    expect(body.user?.pocket).toBe(1500);
 
-        if (!bank || bank.bank < withdrawAmount) {
-          throw new Error("Insufficient funds in bank");
-        }
-
-        // Get or create user economy
-        let user = await innerTx.userEconomy.findUnique({
-          where: { userId_guildId: { userId, guildId: TEST_GUILD.ID } },
-        });
-
-        if (!user) {
-          // Get starting money from config
-          const config = await innerTx.economyConfig.findUnique({
-            where: { guildId: TEST_GUILD.ID },
-          });
-          const startingMoney = config?.startingMoney ?? 1000;
-
-          user = await innerTx.userEconomy.create({
-            data: {
-              userId,
-              guildId: TEST_GUILD.ID,
-              username,
-              pocket: startingMoney,
-              totalEarned: 0,
-              totalLost: 0,
-              inJail: false,
-            },
-          });
-        }
-
-        const [updatedBank, updatedUser] = await Promise.all([
-          innerTx.globalBank.update({
-            where: { userId },
-            data: { bank: bank.bank - withdrawAmount },
-          }),
-          innerTx.userEconomy.update({
-            where: { userId_guildId: { userId, guildId: TEST_GUILD.ID } },
-            data: { pocket: user.pocket + withdrawAmount },
-          }),
-        ]);
-
-        return { bank: updatedBank, user: updatedUser };
-      });
-
-      return withdrawResult;
+    // Verify bank decreased
+    const updatedBank = await prisma.globalBank.findUnique({
+      where: { userId },
     });
+    expect(updatedBank?.bank).toBe(500); // 1000 - 500
 
-    // Verify bank's balance decreased
-    expect(result.bank.bank).toBe(500);
+    // Verify user was created in DB with correct pocket
+    const newUser = await prisma.userEconomy.findUnique({
+      where: { userId_guildId: { userId, guildId: TEST_GUILD.ID } },
+    });
+    expect(newUser).not.toBeNull();
+    expect(newUser?.pocket).toBe(1500);
+  });
 
-    // Verify user was created with starting money + withdrawn amount
-    expect(result.user.pocket).toBe(1500); // 1000 starting + 500 withdrawn
+  it("S7.2: should return 401 when invalid API key is provided", async () => {
+    const userId = generateTestId("withdrawer-invalid-key");
+    const username = "WithdrawerInvalidKey";
 
-    // Cleanup
-    await prisma.userEconomy.deleteMany({ where: { userId } });
-    await prisma.globalBank.deleteMany({ where: { userId } });
+    // Setup: create user with small pocket and bank with money
+    await createTestUserEconomy(TEST_GUILD.ID, userId, {
+      username,
+      pocket: 100,
+    });
+    await createTestBank(userId, { username, bank: 1000 });
+
+    // Act: withdraw with wrong API key
+    const res = await app.fetch(
+      new Request("/api/v1/economy/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": "wrong-api-key",
+        },
+        body: JSON.stringify({
+          userId,
+          guildId: TEST_GUILD.ID,
+          username,
+          amount: 100,
+        }),
+      })
+    );
+
+    // Assert: should return 401
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("POST /api/v1/economy/withdraw - Zod Validation", () => {
+  const API_KEY_VALID = API_KEY;
+
+  beforeEach(async () => {
+    await createTestEconomyConfig(TEST_GUILD.ID);
+  });
+
+  afterEach(async () => {
+    await cleanupEconomyData([TEST_GUILD.ID], []);
+  });
+
+  it("S1.2 (validation): should return 400 when amount is missing", async () => {
+    const userId = generateTestId("withdrawer-missing-amount");
+
+    // Act: withdraw with missing amount field
+    const res = await app.fetch(
+      new Request("/api/v1/economy/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
+        },
+        body: JSON.stringify({
+          userId,
+          guildId: TEST_GUILD.ID,
+          username: "TestUser",
+          // amount is missing
+        }),
+      })
+    );
+
+    // Assert: should return 400 due to Zod validation failure
+    expect(res.status).toBe(400);
+  });
+
+  it("S1.2 (validation): should return 400 when amount is zero or negative", async () => {
+    const userId = generateTestId("withdrawer-zero-amount");
+
+    // Act: withdraw with amount = 0
+    const res = await app.fetch(
+      new Request("/api/v1/economy/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
+        },
+        body: JSON.stringify({
+          userId,
+          guildId: TEST_GUILD.ID,
+          username: "TestUser",
+          amount: 0,
+        }),
+      })
+    );
+
+    // Assert: Zod schema requires positive number, so 0 should fail
+    expect(res.status).toBe(400);
+
+    // Test negative amount
+    const res2 = await app.fetch(
+      new Request("/api/v1/economy/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY_VALID,
+        },
+        body: JSON.stringify({
+          userId,
+          guildId: TEST_GUILD.ID,
+          username: "TestUser",
+          amount: -100,
+        }),
+      })
+    );
+
+    expect(res2.status).toBe(400);
   });
 });
