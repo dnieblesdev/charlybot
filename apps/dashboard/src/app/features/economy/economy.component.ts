@@ -4,7 +4,6 @@ import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LoaderComponent } from '../../shared/ui/loader.component';
 import { AlertComponent } from '../../shared/ui/alert.component';
-import { StatCardComponent } from '../../shared/ui/stat-card.component';
 import { createApiState } from '../../shared/http/api-state';
 import { PaginatedResponse } from '../../shared/types/pagination.types';
 
@@ -32,7 +31,7 @@ interface EconomyConfig {
 @Component({
   selector: 'app-economy',
   standalone: true,
-  imports: [FormsModule, LoaderComponent, AlertComponent, StatCardComponent],
+  imports: [FormsModule, LoaderComponent, AlertComponent],
   template: `
     <div class="p-6">
       <h1 class="text-2xl font-bold text-text-primary mb-6">Economy</h1>
