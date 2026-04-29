@@ -147,7 +147,7 @@ interface PaginatedResponse<T> {
                       <p class="text-text-primary font-medium">{{ autorole.embedTitle || 'AutoRole #' + autorole.id }}</p>
                       <p class="text-text-secondary text-sm">Channel: {{ autorole.channelId }}</p>
                       <p class="text-text-secondary text-sm">Mode: {{ autorole.mode }}</p>
-                      <p class="text-text-secondary text-sm">Mappings: {{ autorole.mappings?.length || 0 }}</p>
+                      <p class="text-text-secondary text-sm">Mappings: {{ autorole.mappings.length || 0 }}</p>
                     </div>
                     <div class="flex gap-2">
                       <button
