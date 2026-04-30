@@ -18,6 +18,7 @@ import { existsSync } from "fs";
 import { resolve } from "path";
 import { initializeValkey, shutdownValkey } from "../../infrastructure/valkey";
 import { startMusicStreamConsumer, stopMusicStreamConsumer } from "../../infrastructure/streams/MusicStreamConsumer";
+import { startLeaderboardStreamConsumer, stopLeaderboardStreamConsumer } from "../../infrastructure/streams/LeaderboardStreamConsumer";
 
 // Configurar ffmpeg con fallback chain: ffmpeg-static → sistema → error
 let ffmpegPath: string | undefined;
@@ -93,6 +94,9 @@ await initializeValkey();
 // Start music stream consumer (idempotent - starts after Valkey ready)
 await startMusicStreamConsumer();
 
+// Start leaderboard stream consumer (async leaderboard updates)
+await startLeaderboardStreamConsumer();
+
 // Validate required environment variables
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
@@ -134,6 +138,7 @@ const shutdown = async (signal: string) => {
   logger.info(`🛑 Señal ${signal} recibida, cerrando bot...`);
   try {
     // Stop music stream consumer first
+    await stopLeaderboardStreamConsumer();
     await stopMusicStreamConsumer();
     // Clean resources
     tempStorage.destroy();

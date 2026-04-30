@@ -72,13 +72,8 @@ export class RouletteService {
         betValue,
       );
 
-      // Update leaderboard (non-critical, can stay async)
-      await LeaderboardService.updateLeaderboard(
-        userId,
-        guildId,
-        username,
-        guild,
-      );
+      // Update leaderboard (non-critical, publish for async processing)
+      LeaderboardService.publishUpdate(userId, guildId, username);
 
       logger.info(
         `User ${userId} placed bet of ${amount} on ${betType}:${betValue} in game ${gameId} via API`,
@@ -166,12 +161,7 @@ export class RouletteService {
 
       // Update leaderboards for all affected users (non-critical, async)
       const leaderboardUpdates = atomicResult.results.map((result) =>
-        LeaderboardService.updateLeaderboard(
-          result.userId,
-          guildId,
-          "", // username unknown here, but leaderboard can still be updated
-          guild,
-        ),
+        LeaderboardService.publishUpdate(result.userId, guildId, ""),
       );
       await Promise.all(leaderboardUpdates);
 
@@ -245,12 +235,7 @@ export class RouletteService {
       if (game.bets) {
         // Update leaderboards for all refunded users (non-critical, async)
         const leaderboardUpdates = game.bets.map((bet) =>
-          LeaderboardService.updateLeaderboard(
-            bet.userId,
-            guildId,
-            "", // username unknown, leaderboard will use stored username
-            guild,
-          ),
+          LeaderboardService.publishUpdate(bet.userId, guildId, ""),
         );
         await Promise.all(leaderboardUpdates);
       }

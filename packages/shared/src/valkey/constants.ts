@@ -37,6 +37,9 @@ export const KEYS = {
 
   // Stream registry (tracking active guild streams)
   STREAM_REGISTRY_MUSIC: 'streams:music:active',
+
+  // Domain-specific streams
+  STREAM_LEADERBOARD: 'cb:stream:leaderboard',
 } as const;
 
 export const CHANNELS = KEYS;

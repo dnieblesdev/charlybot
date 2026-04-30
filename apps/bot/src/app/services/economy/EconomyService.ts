@@ -132,12 +132,7 @@ export class EconomyService {
       );
 
       // Update leaderboard (non-critical, can stay async)
-      await LeaderboardService.updateLeaderboard(
-        userId,
-        guildId,
-        username,
-        guild,
-      );
+      LeaderboardService.publishUpdate(userId, guildId, username);
 
       return updatedUser;
     } catch (error) {
@@ -165,12 +160,7 @@ export class EconomyService {
       );
 
       // Update leaderboard
-      await LeaderboardService.updateLeaderboard(
-        userId,
-        guildId,
-        username,
-        guild,
-      );
+      LeaderboardService.publishUpdate(userId, guildId, username);
 
       return updatedUser;
     } catch (error) {
@@ -201,20 +191,8 @@ export class EconomyService {
       );
 
       // Actualizar leaderboard para ambos usuarios
-      await Promise.all([
-        LeaderboardService.updateLeaderboard(
-          fromUserId,
-          guildId,
-          fromUsername,
-          guild,
-        ),
-        LeaderboardService.updateLeaderboard(
-          toUserId,
-          guildId,
-          toUsername,
-          guild,
-        ),
-      ]);
+      LeaderboardService.publishUpdate(fromUserId, guildId, fromUsername);
+      LeaderboardService.publishUpdate(toUserId, guildId, toUsername);
 
       logger.info(
         `Atomic transfer: ${amount} from ${fromUserId} to ${toUserId} in guild ${guildId}`,
@@ -325,12 +303,7 @@ export class EconomyService {
       );
 
       // Actualizar leaderboard (el dinero total no cambia, pero mantener sincronizado)
-      await LeaderboardService.updateLeaderboard(
-        userId,
-        guildId,
-        username,
-        guild,
-      );
+      LeaderboardService.publishUpdate(userId, guildId, username);
 
       logger.info(
         `Atomic deposit: ${amount} from user ${userId} to global bank in guild ${guildId}`,
@@ -361,12 +334,7 @@ export class EconomyService {
       );
 
       // Actualizar leaderboard (el dinero total no cambia, pero mantener sincronizado)
-      await LeaderboardService.updateLeaderboard(
-        userId,
-        guildId,
-        username,
-        guild,
-      );
+      LeaderboardService.publishUpdate(userId, guildId, username);
 
       logger.info(
         `Atomic withdraw: ${amount} from global bank to user ${userId} in guild ${guildId}`,

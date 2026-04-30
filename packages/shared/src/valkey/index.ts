@@ -7,6 +7,7 @@ export * from './constants.ts';
 export * from './redis-keys.ts';
 export * from './music-streams.ts';
 export * from './locks.ts';
+export * from './leaderboard-streams.ts';
 export { ValkeyClient, createValkeyClient } from './ValkeyClient.ts';
 export {
   ValkeyFallbackWrapper,

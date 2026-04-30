@@ -9,3 +9,7 @@ export {
   type StreamEventHandler 
 } from './MusicStreamConsumer.ts';
 export { getMusicQueueEventBridge, default as MusicQueueEventBridge } from './MusicQueueEventBridge.ts';
+export {
+  startLeaderboardStreamConsumer,
+  stopLeaderboardStreamConsumer,
+} from './LeaderboardStreamConsumer.ts';

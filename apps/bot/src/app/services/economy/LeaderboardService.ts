@@ -1,3 +1,6 @@
+import { getValkeyClient } from '../../../infrastructure/valkey';
+import { createLeaderboardStreamKeys, LEADERBOARD_STREAM_CONFIG, type LeaderboardStreamEvent } from '@charlybot/shared';
+import { loadValkeyConfig } from '@charlybot/shared';
 import { Guild } from "discord.js";
 import logger from "../../../utils/logger.js";
 import * as EconomyRepo from "../../../config/repositories/EconomyRepo";
@@ -71,6 +74,74 @@ class LeaderboardService {
         guildId,
         error: error instanceof Error ? error.message : String(error),
       });
+    }
+  }
+
+  /**
+   * Publish a leaderboard update event to Valkey stream (fire-and-forget).
+   * The actual DB update happens asynchronously in LeaderboardStreamConsumer.
+   */
+  static async publishUpdate(userId: string, guildId: string, username: string): Promise<void> {
+    try {
+      const valkey = getValkeyClient();
+      if (!valkey.isConnected()) return; // Silently skip if Valkey down
+
+      const config = loadValkeyConfig();
+      const keys = createLeaderboardStreamKeys(config.env ?? 'development');
+
+      const event: LeaderboardStreamEvent = {
+        v: 1,
+        type: 'leaderboard:update',
+        ts: Date.now(),
+        data: { guildId, userId, username },
+      };
+
+      await valkey.streamAdd(
+        keys.stream,
+        { payload: JSON.stringify(event) },
+        LEADERBOARD_STREAM_CONFIG.MAX_LEN,
+      );
+    } catch (error) {
+      logger.warn('Failed to publish leaderboard update', {
+        userId, guildId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  /**
+   * Process a leaderboard update (called by the stream consumer).
+   * Does not require a Discord Guild object — uses new Date() as fallback for joinedAt.
+   */
+  static async processUpdate(userId: string, guildId: string, username: string): Promise<void> {
+    try {
+      const userEconomy = await EconomyRepo.getEconomyUser(guildId, userId);
+      if (!userEconomy) {
+        logger.warn('processUpdate: user economy not found', { userId, guildId });
+        return;
+      }
+
+      const netProfit = userEconomy.totalEarned - userEconomy.totalLost;
+      const existingRecord = await EconomyRepo.getLeaderboardEntry(guildId, userId);
+
+      const data: any = {
+        userId,
+        guildId,
+        username,
+        totalMoney: netProfit,
+      };
+
+      if (!existingRecord) {
+        data.joinedServerAt = new Date(); // Fallback — precise joinedAt requires Discord API
+      }
+
+      await EconomyRepo.upsertLeaderboard(guildId, data);
+    } catch (error) {
+      logger.error('processUpdate: failed to update leaderboard', {
+        userId, guildId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error; // Re-throw for consumer to handle retry/DLQ
     }
   }
 
