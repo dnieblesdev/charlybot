@@ -132,7 +132,7 @@ export class EconomyService {
       );
 
       // Update leaderboard (non-critical, can stay async)
-      await LeaderboardService.updateLeaderboard(
+      LeaderboardService.updateLeaderboard(
         userId,
         guildId,
         username,
@@ -165,7 +165,7 @@ export class EconomyService {
       );
 
       // Update leaderboard
-      await LeaderboardService.updateLeaderboard(
+      LeaderboardService.updateLeaderboard(
         userId,
         guildId,
         username,
@@ -200,21 +200,19 @@ export class EconomyService {
         toUsername,
       );
 
-      // Actualizar leaderboard para ambos usuarios
-      await Promise.all([
-        LeaderboardService.updateLeaderboard(
-          fromUserId,
-          guildId,
-          fromUsername,
-          guild,
-        ),
-        LeaderboardService.updateLeaderboard(
-          toUserId,
-          guildId,
-          toUsername,
-          guild,
-        ),
-      ]);
+      // Actualizar leaderboard para ambos usuarios (fire-and-forget, async)
+      LeaderboardService.updateLeaderboard(
+        fromUserId,
+        guildId,
+        fromUsername,
+        guild,
+      );
+      LeaderboardService.updateLeaderboard(
+        toUserId,
+        guildId,
+        toUsername,
+        guild,
+      );
 
       logger.info(
         `Atomic transfer: ${amount} from ${fromUserId} to ${toUserId} in guild ${guildId}`,
@@ -325,7 +323,7 @@ export class EconomyService {
       );
 
       // Actualizar leaderboard (el dinero total no cambia, pero mantener sincronizado)
-      await LeaderboardService.updateLeaderboard(
+      LeaderboardService.updateLeaderboard(
         userId,
         guildId,
         username,
@@ -361,7 +359,7 @@ export class EconomyService {
       );
 
       // Actualizar leaderboard (el dinero total no cambia, pero mantener sincronizado)
-      await LeaderboardService.updateLeaderboard(
+      LeaderboardService.updateLeaderboard(
         userId,
         guildId,
         username,
