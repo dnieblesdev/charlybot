@@ -3,7 +3,7 @@
 
 import { createValkeyClient, createValkeyFallbackWrapper, loadValkeyConfig, type IValkeyClient, type IFallbackCache } from '@charlybot/shared';
 import logger from '../../utils/logger';
-import { memoryCache } from '../api/MemoryCache';
+import { memoryCache } from '../cache/MemoryCache';
 
 export * from './rate-limit.ts';
 
