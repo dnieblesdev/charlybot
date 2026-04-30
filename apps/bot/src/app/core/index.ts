@@ -19,6 +19,8 @@ import { resolve } from "path";
 import { initializeValkey, shutdownValkey } from "../../infrastructure/valkey";
 import { startMusicStreamConsumer, stopMusicStreamConsumer } from "../../infrastructure/streams/MusicStreamConsumer";
 import { startLeaderboardStreamConsumer, stopLeaderboardStreamConsumer } from "../../infrastructure/streams/LeaderboardStreamConsumer";
+import { startHealthServer } from "../../infrastructure/monitoring/health";
+import { AlertManager } from "@charlybot/shared";
 
 // Configurar ffmpeg con fallback chain: ffmpeg-static → sistema → error
 let ffmpegPath: string | undefined;
@@ -90,6 +92,15 @@ await initializePlayDl();
 
 // Initialize Valkey (with fallback)
 await initializeValkey();
+
+// Initialize alert manager (Discord webhook, opt-in via DISCORD_ALERT_WEBHOOK)
+const alertManager = new AlertManager({
+  webhookUrl: process.env.DISCORD_ALERT_WEBHOOK || '',
+  enabled: !!process.env.DISCORD_ALERT_WEBHOOK,
+});
+
+// Start health server (monitoring)
+startHealthServer();
 
 // Start music stream consumer (idempotent - starts after Valkey ready)
 await startMusicStreamConsumer();

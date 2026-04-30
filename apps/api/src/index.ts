@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { rateLimitMiddleware } from "./middleware/rateLimitMiddleware";
 import logger, { sanitizeUrlPath } from "./utils/logger";
+import { createMetricsRegistry } from "@charlybot/shared";
 import { prisma } from "@charlybot/shared";
 import guildRoutes from "./routes/guilds";
 import authRoutes from "./routes/auth";
@@ -26,6 +27,13 @@ app.get("/health", async (c) => {
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   });
+});
+
+// Public metrics endpoint
+const { register: apiRegister } = createMetricsRegistry();
+app.get("/metrics", async (c) => {
+  c.header("Content-Type", apiRegister.contentType);
+  return c.body(await apiRegister.metrics());
 });
 
 // Mount auth routes BEFORE auth middleware (they are public)

@@ -46,9 +46,13 @@ export class ValkeyClient implements IValkeyClient {
   private messageListenerSetUp = false;
 
   // Circuit breaker state
-  private circuitState: CircuitState = 'closed';
+  private _circuitState: CircuitState = 'closed';
   private circuitErrorCount = 0;
   private circuitOpenedAt = 0;
+
+  get circuitState(): CircuitState {
+    return this._circuitState ?? 'closed';
+  }
 
   // Single-flight per process
   private inflight = new Map<string, Promise<unknown>>();
@@ -625,12 +629,12 @@ this.redis = new Redis({
   // =============================================================================
 
   private checkCircuit(): boolean {
-    if (this.circuitState === 'closed') return true;
+    if (this._circuitState === 'closed') return true;
 
     const now = Date.now();
-    if (this.circuitState === 'open') {
+    if (this._circuitState === 'open') {
       if (now - this.circuitOpenedAt > CIRCUIT_BREAKER_CONFIG.openDurationMs) {
-        this.circuitState = 'half-open';
+        this._circuitState = 'half-open';
         this.logger?.info('Valkey circuit half-open');
         return true;
       }
@@ -646,7 +650,7 @@ this.redis = new Redis({
     const now = Date.now();
 
     if (this.circuitErrorCount >= CIRCUIT_BREAKER_CONFIG.errorThreshold) {
-      this.circuitState = 'open';
+      this._circuitState = 'open';
       this.circuitOpenedAt = now;
       this.logger?.warn('Valkey circuit opened', {
         errors: this.circuitErrorCount,
@@ -657,7 +661,7 @@ this.redis = new Redis({
 
   private recordSuccess(): void {
     this.circuitErrorCount = 0;
-    this.circuitState = 'closed';
+    this._circuitState = 'closed';
   }
 }
 

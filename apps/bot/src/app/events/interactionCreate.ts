@@ -1,12 +1,13 @@
 import { Events, MessageFlags } from "discord.js";
 import type { Interaction, InteractionReplyOptions } from "discord.js";
-import logger from "../../utils/logger.ts";
+import logger, { createChildLogger } from "../../utils/logger.ts";
 import { parseCustomId, FEATURES } from "../interactions/customIds.ts";
 import * as verificationHandler from "../interactions/handlers/verification.handler.ts";
 import * as autoroleHandler from "../interactions/handlers/autorole.handler.ts";
 import { handleModalSubmit as handleAutoroleModal } from "../commands/autorole/setup.ts";
 import * as welcomeHandler from "../interactions/handlers/welcome.handler.ts";
 import { isDuplicateInteraction, clearInteractionId } from "../../infrastructure/valkey/idempotency";
+import { commandDuration, commandTotal } from "../../infrastructure/monitoring/health.ts";
 
 export default {
   name: Events.InteractionCreate,
@@ -178,25 +179,31 @@ export default {
         return;
       }
 
+      // Child logger with correlation context — all logs during command execution carry user/guild/correlation info
+      const childLogger = createChildLogger(logger, {
+        correlationId: interaction.id,
+        userId: interaction.user.id,
+        guildId: interaction.guildId ?? "dm",
+        commandName: interaction.commandName,
+      });
+
       try {
-        logger.debug(`Executing command: ${interaction.commandName}`, {
-          commandName: interaction.commandName,
-          userId: interaction.user.id,
-          guildId: interaction.guildId,
-        });
-        await command.execute(interaction);
-        logger.debug(`Command executed successfully: ${interaction.commandName}`, {
-          commandName: interaction.commandName,
-          userId: interaction.user.id,
-          guildId: interaction.guildId,
-        });
+        childLogger.info(`Command started: ${interaction.commandName}`);
+        const end = commandDuration.startTimer({ command: interaction.commandName });
+        try {
+          await command.execute(interaction);
+          commandTotal.inc({ command: interaction.commandName, status: 'success' });
+        } catch (error) {
+          commandTotal.inc({ command: interaction.commandName, status: 'error' });
+          throw error;
+        } finally {
+          end();
+        }
+        childLogger.debug(`Command executed successfully: ${interaction.commandName}`);
       } catch (error) {
-        logger.error(`Error executing command: ${interaction.commandName}`, {
+        childLogger.error(`Error executing command: ${interaction.commandName}`, {
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
-          commandName: interaction.commandName,
-          userId: interaction.user.id,
-          guildId: interaction.guildId,
         });
 
         const replyOptions: InteractionReplyOptions = {

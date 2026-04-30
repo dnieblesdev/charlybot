@@ -1,106 +1,21 @@
-import winston from "winston";
-import path from "path";
 import { fileURLToPath } from "url";
+import path from "path";
+import { createLogger, createChildLogger } from "@charlybot/shared";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Define custom log levels with colors
-const customLevels = {
-  levels: {
-    error: 0,
-    warn: 1,
-    info: 2,
-    http: 3,
-    verbose: 4,
-    debug: 5,
-    silly: 6,
-  },
-  colors: {
-    error: "red",
-    warn: "yellow",
-    info: "green",
-    http: "magenta",
-    verbose: "cyan",
-    debug: "blue",
-    silly: "grey",
-  },
-};
+// Bot log directory: apps/bot/logs/
+const LOG_DIR = path.join(__dirname, "../../logs");
 
-// Add colors to winston
-winston.addColors(customLevels.colors);
+// Re-export createChildLogger so consumers can get it from this module
+export { createChildLogger };
 
-// Custom format for console output
-const consoleFormat = winston.format.combine(
-  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-  winston.format.colorize({ all: true }),
-  winston.format.printf((info) => {
-    const { timestamp, level, message, ...meta } = info;
-    let msg = `${timestamp} [${level}]: ${message}`;
-
-    // Add metadata if present
-    if (Object.keys(meta).length > 0) {
-      msg += ` ${JSON.stringify(meta, null, 2)}`;
-    }
-
-    return msg;
-  }),
-);
-
-// Custom format for file output (without colors)
-const fileFormat = winston.format.combine(
-  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-  winston.format.uncolorize(),
-  winston.format.printf((info) => {
-    const { timestamp, level, message, ...meta } = info;
-    let msg = `${timestamp} [${level.toUpperCase()}]: ${message}`;
-
-    if (Object.keys(meta).length > 0) {
-      msg += ` ${JSON.stringify(meta)}`;
-    }
-
-    return msg;
-  }),
-);
-
-// Create logger instance
-const logger = winston.createLogger({
-  levels: customLevels.levels,
-  level: process.env.LOG_LEVEL || "info",
-  transports: [
-    // Console transport
-    new winston.transports.Console({
-      format: consoleFormat,
-    }),
-    // Error log file
-    new winston.transports.File({
-      filename: path.join(__dirname, "../../logs/error.log"),
-      level: "error",
-      format: fileFormat,
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    }),
-    // Combined log file
-    new winston.transports.File({
-      filename: path.join(__dirname, "../../logs/combined.log"),
-      format: fileFormat,
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    }),
-  ],
-  // Handle uncaught exceptions and rejections
-  exceptionHandlers: [
-    new winston.transports.File({
-      filename: path.join(__dirname, "../../logs/exceptions.log"),
-      format: fileFormat,
-    }),
-  ],
-  rejectionHandlers: [
-    new winston.transports.File({
-      filename: path.join(__dirname, "../../logs/rejections.log"),
-      format: fileFormat,
-    }),
-  ],
+// Default logger instance for the bot
+const logger = createLogger({
+  appName: "bot",
+  logLevel: process.env.LOG_LEVEL || "info",
+  logDir: LOG_DIR,
 });
 
 // Helper functions for common logging patterns
