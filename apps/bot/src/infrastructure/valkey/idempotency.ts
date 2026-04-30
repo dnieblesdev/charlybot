@@ -37,16 +37,8 @@ export async function isDuplicateInteraction(interactionId: string): Promise<boo
     const acquired = await valkey.acquireLock(key, IDEMPOTENCY_TTL);
 
     if (!acquired) {
-      // Lock not acquired — could be:
-      // A) Genuine retry (key exists in Valkey from first execution)
-      // B) Valkey is down (FallbackWrapper returns false on fail-deny)
-      if (!valkey.isConnected()) {
-        // Valkey is down → fail-open, use local Set only
-        processingLocal.add(interactionId);
-        logger.warn("Idempotency: Valkey unavailable, failing open", { interactionId });
-        return false;
-      }
-      // Genuine retry → block it
+      // Lock not acquired — this is a genuine retry (key exists in Valkey from first execution)
+      // Block the interaction. The error/exception path below handles Valkey being truly unreachable.
       logger.debug("Idempotency: duplicate detected in Valkey", { interactionId });
       return true;
     }
@@ -80,3 +72,11 @@ function cleanupLocalIdempotency(): void {
 
 // Periodic GC every 5 minutes
 setInterval(cleanupLocalIdempotency, 5 * 60 * 1000);
+
+/**
+ * Remove an interaction ID from the local processing set.
+ * Call this after an interaction finishes processing (success or error).
+ */
+export function clearInteractionId(interactionId: string): void {
+  processingLocal.delete(interactionId);
+}

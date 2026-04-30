@@ -6,7 +6,7 @@ import * as verificationHandler from "../interactions/handlers/verification.hand
 import * as autoroleHandler from "../interactions/handlers/autorole.handler.ts";
 import { handleModalSubmit as handleAutoroleModal } from "../commands/autorole/setup.ts";
 import * as welcomeHandler from "../interactions/handlers/welcome.handler.ts";
-import { isDuplicateInteraction } from "../../infrastructure/valkey/idempotency";
+import { isDuplicateInteraction, clearInteractionId } from "../../infrastructure/valkey/idempotency";
 
 export default {
   name: Events.InteractionCreate,
@@ -212,6 +212,9 @@ export default {
           guildId: interaction.guildId,
         });
       }
+    } finally {
+      // Always clear the idempotency guard after command completes (success or error)
+      clearInteractionId(interaction.id);
     }
   },
 };

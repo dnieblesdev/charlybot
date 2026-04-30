@@ -57,25 +57,27 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     // Crear descripción con el ranking
-    const rankingLines = await Promise.all(
-      leaderboard.map(async (entry, index) => {
-        const position = index + 1;
-        const medal = getMedal(position);
-        
-        // Intentar obtener el usuario para mostrar su nombre
-        let username = `Usuario <${entry.userId}>`;
-        try {
-          const user = await interaction.client.users.fetch(entry.userId);
-          if (user) {
-            username = user.username;
-          }
-        } catch {
-          // Si no se puede obtener el usuario, usar ID
-        }
+    // Fetch all users in parallel with a timeout to avoid N+1 sequential fetches
+    const FETCH_TIMEOUT_MS = 3000;
+    const fetchUserWithTimeout = (userId: string): Promise<{ id: string; username: string } | null> => {
+      return Promise.race([
+        interaction.client.users.fetch(userId).then((u) => ({ id: u.id, username: u.username })),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), FETCH_TIMEOUT_MS)),
+      ]).catch(() => null);
+    };
 
-        return `${medal} **${position}.** ${username} - Nivel ${entry.nivel} | ${entry.xp} XP`;
-      }),
+    const userResults = await Promise.all(
+      leaderboard.map((entry) => fetchUserWithTimeout(entry.userId)),
     );
+
+    const rankingLines = leaderboard.map((entry, index) => {
+      const position = index + 1;
+      const medal = getMedal(position);
+      const userResult = userResults[index];
+      const username = userResult ? userResult.username : `Usuario <${entry.userId}>`;
+
+      return `${medal} **${position}.** ${username} - Nivel ${entry.nivel} | ${entry.xp} XP`;
+    });
 
     const embed = new EmbedBuilder()
       .setColor(0x00aaff)

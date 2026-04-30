@@ -149,8 +149,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     if (replied) {
       try {
-        if (errorMsg.includes("On cooldown")) {
-          const match = errorMsg.match(/remainingMs["':\s]*(\d+)/);
+        if (errorMsg.includes("ON_COOLDOWN:")) {
+          const match = errorMsg.match(/ON_COOLDOWN:(\d+)/);
           const remainingMs = match ? parseInt(match[1]) : 0;
           const minutes = Math.ceil(remainingMs / 60000);
           const seconds = Math.ceil((remainingMs % 60000) / 1000);

@@ -120,6 +120,12 @@ export class RouletteService {
           ] ?? 2;
       }
 
+      // Verificar que el juego esté en espera antes de girar
+      const currentGame = await EconomyRepo.getRouletteGame(guildId, gameId);
+      if (!currentGame || currentGame.status !== "waiting") {
+        throw new Error("Game is not in waiting status");
+      }
+
       // Actualizar el juego via API
       const game = await EconomyRepo.updateRouletteGame(guildId, gameId, {
         status: "spinning",

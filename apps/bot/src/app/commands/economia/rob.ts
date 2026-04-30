@@ -24,10 +24,13 @@ const failMessages = [
 ];
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+  let replied = false;
+
   try {
     logCommand(interaction.user.id, interaction.guildId || "DM", "rob");
 
     await interaction.deferReply();
+    replied = true;
 
     const userId = interaction.user.id;
     const username = interaction.user.username;
@@ -77,8 +80,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         username,
         guildId,
       );
-      const releaseTime = user.jailReleaseAt
-        ? Math.floor(user.jailReleaseAt.getTime() / 1000)
+      // Handle both Date object and ISO string from API
+      const jailDate = user.jailReleaseAt
+        ? (user.jailReleaseAt instanceof Date ? user.jailReleaseAt : new Date(user.jailReleaseAt))
+        : null;
+      const releaseTime = jailDate
+        ? Math.floor(jailDate.getTime() / 1000)
         : 0;
 
       await interaction.editReply({
@@ -334,8 +341,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     let errorMessage = "❌ Error al intentar robar. Inténtalo de nuevo.";
-    if (errorMsg.includes("On cooldown")) {
-      const match = errorMsg.match(/remainingMs["':\s]*(\d+)/);
+    if (errorMsg.includes("ON_COOLDOWN:")) {
+      const match = errorMsg.match(/ON_COOLDOWN:(\d+)/);
       const remainingMs = match ? parseInt(match[1]) : 0;
       const minutes = Math.ceil(remainingMs / 60000);
       const seconds = Math.ceil((remainingMs % 60000) / 1000);
