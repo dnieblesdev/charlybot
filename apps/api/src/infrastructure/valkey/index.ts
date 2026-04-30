@@ -212,7 +212,10 @@ export async function acquireDistributedLock(
   ttlSeconds: number = TTL.LOCK_DEFAULT,
 ): Promise<string | null> {
   return sharedAcquireLock(getValkeyClient(), domain, resourceId, ttlSeconds, {
+    error: (msg, meta) => logger.error(msg, meta),
     warn: (msg, meta) => logger.warn(msg, meta),
+    info: (msg, meta) => logger.info(msg, meta),
+    debug: (msg, meta) => logger.debug(msg, meta),
   });
 }
 
@@ -226,7 +229,10 @@ export async function releaseDistributedLock(
   ownerId: string,
 ): Promise<void> {
   return sharedReleaseLock(getValkeyClient(), domain, resourceId, ownerId, {
+    error: (msg, meta) => logger.error(msg, meta),
     warn: (msg, meta) => logger.warn(msg, meta),
+    info: (msg, meta) => logger.info(msg, meta),
+    debug: (msg, meta) => logger.debug(msg, meta),
   });
 }
 

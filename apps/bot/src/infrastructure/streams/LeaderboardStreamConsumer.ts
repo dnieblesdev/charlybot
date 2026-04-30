@@ -6,13 +6,13 @@ import {
   createLeaderboardStreamKeys,
   createLeaderboardConsumerId,
   LEADERBOARD_STREAM_CONFIG,
-  LEADERBOARD_STREAM_EVENTS,
+  LEADERBOARD_STREAMS_EVENTS,
   type LeaderboardStreamEvent,
   type LeaderboardUpdateData,
 } from '@charlybot/shared';
 import { loadValkeyConfig } from '@charlybot/shared';
 import logger from '../../utils/logger';
-import { processUpdate } from '../../app/services/economy/LeaderboardService';
+import LeaderboardService from '../../app/services/economy/LeaderboardService';
 
 let isRunning = false;
 let intervalId: ReturnType<typeof setInterval> | null = null;
@@ -45,8 +45,8 @@ async function processLoop(): Promise<void> {
         const payload = JSON.parse(entry.fields.payload ?? '{}');
         const event = payload as LeaderboardStreamEvent;
 
-        if (event.type === LEADERBOARD_STREAM_EVENTS.UPDATE) {
-          await processUpdate(event.data.userId, event.data.guildId, event.data.username);
+        if (event.type === LEADERBOARD_STREAMS_EVENTS.UPDATE) {
+          await LeaderboardService.processUpdate(event.data.userId, event.data.guildId, event.data.username);
         }
 
         await valkey.streamAck(keys.stream, keys.consumerGroup, [entry.id]);

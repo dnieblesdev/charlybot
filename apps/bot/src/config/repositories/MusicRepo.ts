@@ -2,7 +2,7 @@ import { prisma, MAX_QUEUE_SIZE } from "@charlybot/shared";
 import logger from "../../utils/logger";
 import type { IMusicQueue, IMusicQueueItem, IGuildMusicConfig } from "@charlybot/shared";
 import type { IMusicRepository } from "../../domain/ports/IMusicRepository";
-import { withDistributedLock, musicQueueLockKey } from "@charlybot/shared/src/valkey/locks.ts";
+import { withDistributedLock, musicQueueLockKey } from "@charlybot/shared/valkey";
 import { getValkeyClient } from "../../infrastructure/valkey/index.ts";
 
 /**
@@ -29,7 +29,7 @@ export async function getMusicQueue(guildId: string): Promise<IMusicQueue | null
       isPlaying: queue.isPlaying,
       isPaused: queue.isPaused,
       volume: queue.volume,
-      loopMode: queue.loopMode,
+      loopMode: queue.loopMode as "none" | "song" | "queue",
       lastSeek: queue.lastSeek,
       updatedAt: queue.updatedAt,
       createdAt: queue.createdAt,
@@ -269,7 +269,7 @@ export async function updateMusicQueueSettings(
       isPlaying: fullQueue.isPlaying,
       isPaused: fullQueue.isPaused,
       volume: fullQueue.volume,
-      loopMode: fullQueue.loopMode,
+      loopMode: fullQueue.loopMode as "none" | "song" | "queue",
       lastSeek: fullQueue.lastSeek,
       updatedAt: fullQueue.updatedAt,
       createdAt: fullQueue.createdAt,

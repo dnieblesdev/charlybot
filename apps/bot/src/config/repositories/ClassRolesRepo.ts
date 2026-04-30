@@ -54,7 +54,7 @@ export async function getClass(guildId: string, name: string): Promise<IClassCon
   return {
     name: cls.name,
     roleId: cls.rolId,
-    type: cls.tipo.nombre,
+    type: cls.tipo.nombre as "Healer" | "DPS" | "Tank",
     typeRoleId: cls.tipo.rolId,
     subclasses: cls.subClases.map((sub) => ({
       name: sub.name,
@@ -77,7 +77,7 @@ export async function getAllClasses(guildId: string): Promise<IClassConfig[]> {
   return classes.map((cls) => ({
     name: cls.name,
     roleId: cls.rolId,
-    type: cls.tipo.nombre,
+    type: cls.tipo.nombre as "Healer" | "DPS" | "Tank",
     typeRoleId: cls.tipo.rolId,
     subclasses: cls.subClases.map((sub) => ({
       name: sub.name,

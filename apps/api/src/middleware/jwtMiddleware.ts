@@ -8,7 +8,7 @@ import logger from "../utils/logger";
  * JWT authentication middleware for Hono
  * Reads JWT from accessToken cookie first, falls back to Authorization: Bearer header
  */
-export async function jwtAuth(c: Context, next: Next): Promise<void> {
+export async function jwtAuth(c: Context, next: Next) {
   // Try cookie first
   let token = getCookie(c, "accessToken");
 

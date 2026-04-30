@@ -456,6 +456,35 @@ this.redis = new Redis({
     }
   }
 
+  async increment(key: string): Promise<number> {
+    if (!this.checkCircuit()) {
+      throw new Error('Valkey circuit breaker is open');
+    }
+
+    try {
+      const result = await this.redis!.incr(key);
+      this.recordSuccess();
+      return result;
+    } catch (err) {
+      this.recordError();
+      throw err;
+    }
+  }
+
+  async expire(key: string, seconds: number): Promise<void> {
+    if (!this.checkCircuit()) {
+      throw new Error('Valkey circuit breaker is open');
+    }
+
+    try {
+      await this.redis!.expire(key, seconds);
+      this.recordSuccess();
+    } catch (err) {
+      this.recordError();
+      throw err;
+    }
+  }
+
   // =============================================================================
   // Locks
   // =============================================================================

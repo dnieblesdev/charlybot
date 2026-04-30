@@ -119,9 +119,13 @@ export async function getXPLeaderboard(
   guildId: string,
   limit: number = 10,
 ): Promise<XPLeaderboard[]> {
-  return await prisma.userXP.findMany({
+  const results = await prisma.userXP.findMany({
     where: { guildId },
     orderBy: [{ xp: "desc" }, { lastMessageAt: "asc" }],
     take: limit,
   });
+  return results.map((r) => ({
+    ...r,
+    username: r.username ?? "",
+  })) as unknown as XPLeaderboard[];
 }

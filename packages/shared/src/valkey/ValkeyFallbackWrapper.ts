@@ -54,6 +54,10 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
     return this.client.isConnected();
   }
 
+  get circuitState(): 'closed' | 'open' | 'half-open' {
+    return this.useFallback ? 'closed' : this.client.circuitState;
+  }
+
   // =============================================================================
   // Cache Operations (fallback on failure)
   // =============================================================================
@@ -284,6 +288,14 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
       // Fail-open per design
       return true;
     }
+  }
+
+  async increment(key: string): Promise<number> {
+    return this.client.increment(key);
+  }
+
+  async expire(key: string, seconds: number): Promise<void> {
+    return this.client.expire(key, seconds);
   }
 
   // =============================================================================

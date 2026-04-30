@@ -66,7 +66,7 @@ export function createRateLimitMiddleware(options: Partial<RateLimitOptions> = {
   return async (c: Context, next: Next) => {
     // Parse first IP from x-forwarded-for to avoid spoofing via comma-separated values
     const forwardedFor = c.req.header("x-forwarded-for");
-    const rawIp = forwardedFor ? forwardedFor.split(",")[0].trim() : null;
+    const rawIp = forwardedFor ? forwardedFor.split(",")[0]?.trim() ?? null : null;
     const ip = rawIp || c.req.header("x-real-ip") || "unknown";
     const identifier = `user:${ip}`;
 

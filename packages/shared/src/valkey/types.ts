@@ -130,6 +130,10 @@ export interface IValkeyClient {
     windowSeconds: number,
   ): Promise<boolean>;
 
+  // Increment and expire (for sliding window rate limiting)
+  increment(key: string): Promise<number>;
+  expire(key: string, seconds: number): Promise<void>;
+
   // Locks (with owner-based safe release)
   acquireLock(key: string, ttlSeconds: number, ownerId?: string): Promise<boolean>;
   releaseLock(key: string, ownerId?: string): Promise<void>;
@@ -147,6 +151,9 @@ export interface IValkeyClient {
   setMembers(key: string): Promise<string[]>;
   setRemove(key: string, ...members: string[]): Promise<number>;
   setIsMember(key: string, member: string): Promise<boolean>;
+
+  // Circuit breaker
+  get circuitState(): CircuitState;
 
   // Sorted Set operations (for guild stream registry with TTL)
   sortedSetAdd(key: string, score: number, member: string): Promise<number>;

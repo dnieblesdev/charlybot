@@ -39,7 +39,7 @@ export async function getGuildConfig(guildId: string): Promise<IGuildConfig | nu
     welcomeMessage: config.welcomeMessage ?? undefined,
     leaveLogChannelId: config.leaveLogChannelId ?? undefined,
     verificationChannelId: config.verificationChannelId ?? undefined,
-    verificationReviewChannel: config.verificationReviewChannel ?? undefined,
+    verificationReviewChannelId: config.verificationReviewChannelId ?? undefined,
     verifiedRoleId: config.verifiedRoleId ?? undefined,
     messageLogChannelId: config.messageLogChannelId ?? undefined,
   };
@@ -291,8 +291,8 @@ export async function setVerificationReviewChannel(
 
   await prisma.guildConfig.upsert({
     where: { guildId },
-    update: { verificationReviewChannel: verificationReviewChannelId },
-    create: { guildId, verificationReviewChannel: verificationReviewChannelId },
+    update: { verificationReviewChannelId: verificationReviewChannelId },
+    create: { guildId, verificationReviewChannelId: verificationReviewChannelId },
   });
 
   await valkey.del(key);
@@ -343,7 +343,7 @@ export async function getAllGuildConfigs(): Promise<IGuildConfig[]> {
     welcomeMessage: config.welcomeMessage ?? undefined,
     leaveLogChannelId: config.leaveLogChannelId ?? undefined,
     verificationChannelId: config.verificationChannelId ?? undefined,
-    verificationReviewChannel: config.verificationReviewChannel ?? undefined,
+    verificationReviewChannelId: config.verificationReviewChannelId ?? undefined,
     verifiedRoleId: config.verifiedRoleId ?? undefined,
     messageLogChannelId: config.messageLogChannelId ?? undefined,
   }));
@@ -361,12 +361,12 @@ export async function getGuild(guildId: string): Promise<Guild | null> {
 
   return {
     guildId: guild.guildId,
-    name: guild.name ?? undefined,
-    prefix: guild.prefix ?? undefined,
-    ownerId: guild.ownerId ?? undefined,
-    ownerName: guild.ownerName ?? undefined,
-    memberCount: guild.MemberCount ?? undefined,
-  };
+    name: guild.name ?? null,
+    prefix: guild.prefix ?? null,
+    ownerId: guild.ownerId ?? null,
+    ownerName: guild.ownerName ?? null,
+    MemberCount: guild.MemberCount ?? null,
+  } as unknown as Guild;
 }
 
 /**
@@ -382,7 +382,7 @@ export async function upsertGuild(
   if (data.prefix !== undefined) prismaData.prefix = data.prefix;
   if (data.ownerId !== undefined) prismaData.ownerId = data.ownerId;
   if (data.ownerName !== undefined) prismaData.ownerName = data.ownerName;
-  if (data.memberCount !== undefined) prismaData.MemberCount = data.memberCount;
+  if (data.MemberCount !== undefined) prismaData.MemberCount = data.MemberCount;
 
   const guild = await prisma.guild.upsert({
     where: { guildId },
@@ -392,10 +392,10 @@ export async function upsertGuild(
 
   return {
     guildId: guild.guildId,
-    name: guild.name ?? undefined,
-    prefix: guild.prefix ?? undefined,
-    ownerId: guild.ownerId ?? undefined,
-    ownerName: guild.ownerName ?? undefined,
-    memberCount: guild.MemberCount ?? undefined,
-  };
+    name: guild.name ?? null,
+    prefix: guild.prefix ?? null,
+    ownerId: guild.ownerId ?? null,
+    ownerName: guild.ownerName ?? null,
+    MemberCount: guild.MemberCount ?? null,
+  } as unknown as Guild;
 }

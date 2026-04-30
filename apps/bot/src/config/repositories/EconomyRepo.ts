@@ -168,7 +168,7 @@ export async function upsertLeaderboard(
   guildId: string,
   data: Partial<Leaderboard>,
 ): Promise<Leaderboard> {
-  const { userId, ...rest } = data as Leaderboard & { userId: string };
+  const { userId, guildId: _gid, ...rest } = data as Leaderboard & { userId: string };
   return await prisma.leaderboard.upsert({
     where: { userId_guildId: { userId, guildId } },
     update: rest,
