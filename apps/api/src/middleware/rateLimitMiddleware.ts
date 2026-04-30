@@ -64,28 +64,31 @@ export function createRateLimitMiddleware(options: Partial<RateLimitOptions> = {
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
   return async (c: Context, next: Next) => {
-    const ip = c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown";
+    // Parse first IP from x-forwarded-for to avoid spoofing via comma-separated values
+    const forwardedFor = c.req.header("x-forwarded-for");
+    const rawIp = forwardedFor ? forwardedFor.split(",")[0].trim() : null;
+    const ip = rawIp || c.req.header("x-real-ip") || "unknown";
     const identifier = `user:${ip}`;
 
     try {
       const valkey = getValkeyClient();
       const key = `${opts.keyPrefix}:${identifier}`;
       const now = Date.now();
-      const windowStart = now - opts.windowMs;
 
-      await valkey.sortedSetRemoveByScore(key, windowStart);
+      // Increment-based counter with expiry — O(1) instead of O(n) full scan
+      const currentCount = await valkey.increment(key);
+      if (currentCount === 1) {
+        // First request in this window — set expiry
+        await valkey.expire(key, Math.ceil(opts.windowMs / 1000));
+      }
 
-      const entries = await valkey.sortedSetRangeByScore(key, windowStart, now);
-      const currentCount = entries.length;
+      const windowReset = now + opts.windowMs;
 
-      if (currentCount >= opts.maxRequests) {
-        const oldestEntry = entries.length > 0 ? parseInt(entries[0] ?? '0') : now;
-        const resetAt = oldestEntry + opts.windowMs;
-
-        c.header("Retry-After", Math.ceil((resetAt - now) / 1000).toString());
+      if (currentCount > opts.maxRequests) {
+        c.header("Retry-After", Math.ceil(opts.windowMs / 1000).toString());
         c.header("X-RateLimit-Limit", opts.maxRequests.toString());
         c.header("X-RateLimit-Remaining", "0");
-        c.header("X-RateLimit-Reset", resetAt.toString());
+        c.header("X-RateLimit-Reset", windowReset.toString());
 
         logger.warn(`Rate limit exceeded for ${identifier}`, {
           currentCount,
@@ -96,11 +99,9 @@ export function createRateLimitMiddleware(options: Partial<RateLimitOptions> = {
         return c.json({ error: "Too many requests" }, 429);
       }
 
-      await valkey.sortedSetAdd(key, now, `${now}`);
-
       c.header("X-RateLimit-Limit", opts.maxRequests.toString());
-      c.header("X-RateLimit-Remaining", Math.max(0, opts.maxRequests - currentCount - 1).toString());
-      c.header("X-RateLimit-Reset", (now + opts.windowMs).toString());
+      c.header("X-RateLimit-Remaining", Math.max(0, opts.maxRequests - currentCount).toString());
+      c.header("X-RateLimit-Reset", windowReset.toString());
 
       await next();
     } catch (error) {

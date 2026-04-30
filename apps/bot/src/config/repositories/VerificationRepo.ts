@@ -25,8 +25,8 @@ export async function getVerificationRequest(
   guildId: string,
   id: string,
 ): Promise<IVerificationRequest | null> {
-  return await prisma.verificationRequest.findUnique({
-    where: { id },
+  return await prisma.verificationRequest.findFirst({
+    where: { id, guildId },
   });
 }
 
@@ -35,8 +35,8 @@ export async function updateVerificationRequest(
   id: string,
   updates: Partial<IVerificationRequest>,
 ): Promise<void> {
-  await prisma.verificationRequest.update({
-    where: { id },
+  await prisma.verificationRequest.updateMany({
+    where: { id, guildId },
     data: {
       ...updates,
       requestedAt: updates.requestedAt ? new Date(updates.requestedAt as string) : undefined,
@@ -61,8 +61,8 @@ export async function deleteVerificationRequest(
   guildId: string,
   id: string,
 ): Promise<void> {
-  await prisma.verificationRequest.delete({
-    where: { id },
+  await prisma.verificationRequest.deleteMany({
+    where: { id, guildId },
   });
   logger.info(`🗑️ Solicitud de verificación eliminada via API: ${id}`);
 }

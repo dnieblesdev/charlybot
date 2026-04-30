@@ -3,6 +3,7 @@
 // All function signatures remain identical; only implementation changes.
 
 import { prisma, BOT_LOCK_TTL } from "@charlybot/shared";
+import { randomUUID } from "crypto";
 import {
   withDistributedLock,
   economyUserLockKey,
@@ -340,6 +341,9 @@ export async function atomicTransfer(
   fromUsername: string,
   toUsername: string,
 ): Promise<TransferResult> {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+  }
   const valkey = getValkeyClient();
   const lockKey = transferLockKey(guildId, fromUserId, toUserId);
 
@@ -408,50 +412,64 @@ export async function atomicDeposit(
   username: string,
   amount: number,
 ): Promise<DepositResult> {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+  }
   const valkey = getValkeyClient();
-  const lockKey = economyUserLockKey(guildId, userId);
+  // Global bank is keyed ONLY by userId, so we need a global lock.
+  // We also lock the per-guild user row to avoid races with other pocket operations.
+  const bankLockKey = `economy:bank:${userId}`;
+  const userLockKey = economyUserLockKey(guildId, userId);
 
   const result = await withDistributedLock(
     valkey,
     'economy',
-    lockKey,
+    bankLockKey,
     async () => {
-      return await prisma.$transaction(async (tx) => {
-        const user = await tx.userEconomy.findUnique({
-          where: { userId_guildId: { userId, guildId } },
-        });
+      return await withDistributedLock(
+        valkey,
+        'economy',
+        userLockKey,
+        async () => {
+          return await prisma.$transaction(async (tx) => {
+            const user = await tx.userEconomy.findUnique({
+              where: { userId_guildId: { userId, guildId } },
+            });
 
-        if (!user || user.pocket < amount) {
-          throw new Error("Insufficient funds in pocket");
-        }
+            if (!user || user.pocket < amount) {
+              throw new Error("Insufficient funds in pocket");
+            }
 
-        // Get or create global bank
-        let bank = await tx.globalBank.findUnique({
-          where: { userId },
-        });
+            // Get or create global bank
+            let bank = await tx.globalBank.findUnique({
+              where: { userId },
+            });
 
-        if (!bank) {
-          bank = await tx.globalBank.create({
-            data: { userId, username, bank: 0 },
+            if (!bank) {
+              bank = await tx.globalBank.create({
+                data: { userId, username, bank: 0 },
+              });
+            }
+
+            // Atomic update
+            const [updatedUser, updatedBank] = await Promise.all([
+              tx.userEconomy.update({
+                where: { userId_guildId: { userId, guildId } },
+                data: { pocket: user.pocket - amount },
+              }),
+              tx.globalBank.update({
+                where: { userId },
+                data: { bank: bank.bank + amount },
+              }),
+            ]);
+
+            logger.info(`Atomic deposit: ${amount} from user ${userId} to global bank`);
+
+            return { user: updatedUser, bank: updatedBank };
           });
-        }
-
-        // Atomic update
-        const [updatedUser, updatedBank] = await Promise.all([
-          tx.userEconomy.update({
-            where: { userId_guildId: { userId, guildId } },
-            data: { pocket: user.pocket - amount },
-          }),
-          tx.globalBank.update({
-            where: { userId },
-            data: { bank: bank.bank + amount },
-          }),
-        ]);
-
-        logger.info(`Atomic deposit: ${amount} from user ${userId} to global bank`);
-
-        return { user: updatedUser, bank: updatedBank };
-      });
+        },
+        BOT_LOCK_TTL.TRANSFER,
+      );
     },
     BOT_LOCK_TTL.TRANSFER,
   );
@@ -469,65 +487,73 @@ export async function atomicWithdraw(
   username: string,
   amount: number,
 ): Promise<WithdrawResult> {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+  }
   const valkey = getValkeyClient();
-  const lockKey = economyUserLockKey(guildId, userId);
+  // Global bank is keyed ONLY by userId, so we need a global lock.
+  // We also lock the per-guild user row to avoid races with other pocket operations.
+  const bankLockKey = `economy:bank:${userId}`;
+  const userLockKey = economyUserLockKey(guildId, userId);
 
   const result = await withDistributedLock(
     valkey,
     'economy',
-    lockKey,
+    bankLockKey,
     async () => {
-      return await prisma.$transaction(async (tx) => {
-        // Get global bank first
-        const bank = await tx.globalBank.findUnique({
-          where: { userId },
-        });
+      return await withDistributedLock(
+        valkey,
+        'economy',
+        userLockKey,
+        async () => {
+          return await prisma.$transaction(async (tx) => {
+            // Get global bank first
+            const bank = await tx.globalBank.findUnique({
+              where: { userId },
+            });
 
-        if (!bank || bank.bank < amount) {
-          throw new Error("Insufficient funds in bank");
-        }
+            if (!bank || bank.bank < amount) {
+              throw new Error("Insufficient funds in bank");
+            }
 
-        // Get or create user economy
-        let user = await tx.userEconomy.findUnique({
-          where: { userId_guildId: { userId, guildId } },
-        });
+            // Get or create user economy
+            let user = await tx.userEconomy.findUnique({
+              where: { userId_guildId: { userId, guildId } },
+            });
 
-        if (!user) {
-          // Get starting money from config
-          const config = await tx.economyConfig.findUnique({
-            where: { guildId },
+            if (!user) {
+              user = await tx.userEconomy.create({
+                data: {
+                  userId,
+                  guildId,
+                  username,
+                  pocket: 0,
+                  totalEarned: 0,
+                  totalLost: 0,
+                  inJail: false,
+                },
+              });
+            }
+
+            // Atomic update
+            const [updatedBank, updatedUser] = await Promise.all([
+              tx.globalBank.update({
+                where: { userId },
+                data: { bank: bank.bank - amount },
+              }),
+              tx.userEconomy.update({
+                where: { userId_guildId: { userId, guildId } },
+                data: { pocket: user.pocket + amount },
+              }),
+            ]);
+
+            logger.info(`Atomic withdraw: ${amount} from global bank to user ${userId}`);
+
+            return { bank: updatedBank, user: updatedUser };
           });
-          const startingMoney = config?.startingMoney || 1000;
-
-          user = await tx.userEconomy.create({
-            data: {
-              userId,
-              guildId,
-              username,
-              pocket: startingMoney,
-              totalEarned: 0,
-              totalLost: 0,
-              inJail: false,
-            },
-          });
-        }
-
-        // Atomic update
-        const [updatedBank, updatedUser] = await Promise.all([
-          tx.globalBank.update({
-            where: { userId },
-            data: { bank: bank.bank - amount },
-          }),
-          tx.userEconomy.update({
-            where: { userId_guildId: { userId, guildId } },
-            data: { pocket: user.pocket + amount },
-          }),
-        ]);
-
-        logger.info(`Atomic withdraw: ${amount} from global bank to user ${userId}`);
-
-        return { bank: updatedBank, user: updatedUser };
-      });
+        },
+        BOT_LOCK_TTL.TRANSFER,
+      );
     },
     BOT_LOCK_TTL.TRANSFER,
   );
@@ -545,6 +571,9 @@ export async function atomicAddPocket(
   amount: number,
   cooldownType?: "work" | "crime" | "rob",
 ): Promise<IUserEconomy> {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+  }
   const valkey = getValkeyClient();
   const lockKey = economyUserLockKey(guildId, userId);
 
@@ -617,6 +646,9 @@ export async function atomicSubtractPocket(
   amount: number,
   cooldownType?: "work" | "crime" | "rob",
 ): Promise<IUserEconomy> {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+  }
   const valkey = getValkeyClient();
   const lockKey = economyUserLockKey(guildId, userId);
 
@@ -749,6 +781,9 @@ export async function atomicPlaceBet(
   betType: "color" | "number",
   betValue: string,
 ): Promise<RouletteBet> {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+  }
   const valkey = getValkeyClient();
   const lockKey = economyUserLockKey(guildId, userId);
 
@@ -795,62 +830,98 @@ export async function atomicProcessRouletteResults(
   winningColor: string,
 ): Promise<{ gameId: number; results: Array<{ betId: number; userId: string; won: boolean; winAmount: number }> }> {
   const valkey = getValkeyClient();
-  const lockKey = rouletteGameLockKey(guildId, gameId);
+  const gameLockKey = rouletteGameLockKey(guildId, gameId);
 
-  const result = await withDistributedLock(
-    valkey,
-    'economy',
-    lockKey,
-    async () => {
-      return await prisma.$transaction(async (tx) => {
-        // Get game with all bets
-        const game = await tx.rouletteGame.findUnique({
-          where: { id: gameId },
-          include: { bets: true },
-        });
+  // First, get all bets to know which users need locks
+  const gameWithBets = await prisma.rouletteGame.findUnique({
+    where: { id: gameId },
+    include: { bets: true },
+  });
 
-        if (!game) throw new Error("Game not found");
-        if (game.status !== "waiting") throw new Error("Game already processed");
+  if (!gameWithBets) throw new Error("Game not found");
 
-        // Process each bet
-        const results: any[] = [];
-        for (const bet of game.bets) {
-          const won =
-            bet.betType === "color" ? bet.betValue === winningColor : bet.betValue === String(winningNumber);
+  // Collect unique userIds, sort to avoid deadlocks
+  const userIds = [...new Set(gameWithBets.bets.map((b) => b.userId))].sort();
 
-          const winAmount = won ? (bet.betValue === "green" ? bet.amount * 14 : bet.amount * 2) : 0;
+  // Acquire per-user locks IN ORDER before processing (skip if no bets)
+  const userLockKeys = userIds.map((uid) => economyUserLockKey(guildId, uid));
 
-          await tx.rouletteBet.update({
-            where: { id: bet.id },
-            data: { result: won ? "win" : "lose", winAmount },
+  const lockOwnerId = randomUUID();
+  const acquiredUserLockKeys: string[] = [];
+  try {
+    // Acquire ALL user locks first, hold during transaction
+    for (const lockKey of userLockKeys) {
+      const acquired = await valkey.acquireLock(lockKey, BOT_LOCK_TTL.TRANSFER, lockOwnerId);
+      if (!acquired) {
+        // Release any locks we already acquired
+        for (const acquiredKey of acquiredUserLockKeys) {
+          await valkey.releaseLock(acquiredKey, lockOwnerId);
+        }
+        throw new Error("Failed to acquire user lock: lock contention");
+      }
+      acquiredUserLockKeys.push(lockKey);
+    }
+
+    const result = await withDistributedLock(
+      valkey,
+      'economy',
+      gameLockKey,
+      async () => {
+        return await prisma.$transaction(async (tx) => {
+          // Re-fetch game with bets inside transaction
+          const game = await tx.rouletteGame.findUnique({
+            where: { id: gameId },
+            include: { bets: true },
           });
 
-          if (won) {
-            await tx.userEconomy.update({
-              where: { userId_guildId: { userId: bet.userId, guildId } },
-              data: {
-                pocket: { increment: winAmount },
-                totalEarned: { increment: winAmount },
-              },
+          if (!game) throw new Error("Game not found");
+          if (game.status !== "waiting") throw new Error("Game already processed");
+
+          // Process each bet
+          const results: any[] = [];
+          for (const bet of game.bets) {
+            const won =
+              bet.betType === "color" ? bet.betValue === winningColor : bet.betValue === String(winningNumber);
+
+            const winAmount = won ? (bet.betValue === "green" ? bet.amount * 14 : bet.amount * 2) : 0;
+
+            await tx.rouletteBet.update({
+              where: { id: bet.id },
+              data: { result: won ? "win" : "lose", winAmount },
             });
+
+            if (won) {
+              await tx.userEconomy.update({
+                where: { userId_guildId: { userId: bet.userId, guildId } },
+                data: {
+                  pocket: { increment: winAmount },
+                  totalEarned: { increment: winAmount },
+                },
+              });
+            }
+
+            results.push({ betId: bet.id, userId: bet.userId, won, winAmount });
           }
 
-          results.push({ betId: bet.id, userId: bet.userId, won, winAmount });
-        }
+          // Update game status
+          await tx.rouletteGame.update({
+            where: { id: gameId },
+            data: { status: "finished", winningNumber, winningColor, endTime: new Date() },
+          });
 
-        // Update game status
-        await tx.rouletteGame.update({
-          where: { id: gameId },
-          data: { status: "finished", winningNumber, winningColor, endTime: new Date() },
+          return { gameId, results };
         });
+      },
+      BOT_LOCK_TTL.TRANSFER,
+    );
 
-        return { gameId, results };
-      });
-    },
-    BOT_LOCK_TTL.TRANSFER,
-  );
-
-  return result;
+    return result;
+  } finally {
+    // Release only the locks that were successfully acquired
+    for (const lockKey of acquiredUserLockKeys) {
+      await valkey.releaseLock(lockKey, lockOwnerId);
+    }
+  }
 }
 
 export async function atomicCancelRouletteGame(
@@ -858,49 +929,90 @@ export async function atomicCancelRouletteGame(
   guildId: string,
 ): Promise<{ gameId: number; refundedBets: number }> {
   const valkey = getValkeyClient();
-  const lockKey = rouletteGameLockKey(guildId, gameId);
+  const gameLockKey = rouletteGameLockKey(guildId, gameId);
 
-  const result = await withDistributedLock(
-    valkey,
-    'economy',
-    lockKey,
-    async () => {
-      return await prisma.$transaction(async (tx) => {
-        const game = await tx.rouletteGame.findUnique({
-          where: { id: gameId },
-          include: { bets: true },
-        });
+  // First, get all bets to know which users need locks
+  const gameWithBets = await prisma.rouletteGame.findUnique({
+    where: { id: gameId },
+    include: { bets: true },
+  });
 
-        if (!game) throw new Error("Game not found");
-        if (game.status !== "waiting") throw new Error("Game already processed");
+  if (!gameWithBets) throw new Error("Game not found");
 
-        // Refund all bets
-        for (const bet of game.bets) {
-          await tx.rouletteBet.update({
-            where: { id: bet.id },
-            data: { result: "REFUNDED", winAmount: 0 },
-          });
+  // Collect unique userIds, sort to avoid deadlocks
+  const userIds = [...new Set(gameWithBets.bets.map((b) => b.userId))].sort();
 
-          await tx.userEconomy.update({
-            where: { userId_guildId: { userId: bet.userId, guildId } },
-            data: {
-              pocket: { increment: bet.amount },
-              totalLost: { decrement: bet.amount },
-            },
-          });
+  // Acquire per-user locks IN ORDER before processing (skip if no bets)
+  const userLockKeys = userIds.map((uid) => economyUserLockKey(guildId, uid));
+
+  const lockOwnerId = randomUUID();
+  const acquiredUserLockKeys: string[] = [];
+  try {
+    // Acquire ALL user locks first, hold during transaction
+    for (const lockKey of userLockKeys) {
+      const acquired = await valkey.acquireLock(lockKey, BOT_LOCK_TTL.TRANSFER, lockOwnerId);
+      if (!acquired) {
+        // Release any locks we already acquired
+        for (const acquiredKey of acquiredUserLockKeys) {
+          await valkey.releaseLock(acquiredKey, lockOwnerId);
         }
+        throw new Error("Failed to acquire user lock: lock contention");
+      }
+      acquiredUserLockKeys.push(lockKey);
+    }
 
-        // Cancel game
-        await tx.rouletteGame.update({
-          where: { id: gameId },
-          data: { status: "finished", endTime: new Date() },
+    const result = await withDistributedLock(
+      valkey,
+      'economy',
+      gameLockKey,
+      async () => {
+        return await prisma.$transaction(async (tx) => {
+          const game = await tx.rouletteGame.findUnique({
+            where: { id: gameId },
+            include: { bets: true },
+          });
+
+          if (!game) throw new Error("Game not found");
+          if (game.status !== "waiting") throw new Error("Game already processed");
+
+          // Refund all bets
+          for (const bet of game.bets) {
+            await tx.rouletteBet.update({
+              where: { id: bet.id },
+              data: { result: "REFUNDED", winAmount: 0 },
+            });
+
+            // Get user to safely decrement totalLost
+            const user = await tx.userEconomy.findUnique({
+              where: { userId_guildId: { userId: bet.userId, guildId } },
+            });
+
+            await tx.userEconomy.update({
+              where: { userId_guildId: { userId: bet.userId, guildId } },
+              data: {
+                pocket: { increment: bet.amount },
+                totalLost: { decrement: Math.min(bet.amount, user?.totalLost ?? 0) },
+              },
+            });
+          }
+
+          // Cancel game
+          await tx.rouletteGame.update({
+            where: { id: gameId },
+            data: { status: "finished", endTime: new Date() },
+          });
+
+          return { gameId, refundedBets: game.bets.length };
         });
+      },
+      BOT_LOCK_TTL.TRANSFER,
+    );
 
-        return { gameId, refundedBets: game.bets.length };
-      });
-    },
-    BOT_LOCK_TTL.TRANSFER,
-  );
-
-  return result;
+    return result;
+  } finally {
+    // Release only the locks that were successfully acquired
+    for (const lockKey of acquiredUserLockKeys) {
+      await valkey.releaseLock(lockKey, lockOwnerId);
+    }
+  }
 }

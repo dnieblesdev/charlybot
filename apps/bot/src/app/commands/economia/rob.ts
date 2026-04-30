@@ -4,6 +4,7 @@ import logger, { logCommand } from "../../../utils/logger.js";
 import { EconomyService } from "../../services/economy/EconomyService.js";
 import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
 import { rateLimitCommand } from "../../../infrastructure/valkey/rate-limit.js";
+import { atomicClaimCooldown } from "../../../config/repositories/EconomyRepo.js";
 
 const successMessages = [
   "lograste robarle a",
@@ -94,18 +95,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    // Verificar cooldown
-    const cooldown = await EconomyService.checkCooldown(userId, guildId, "rob");
-    if (cooldown.onCooldown && cooldown.remainingTime) {
-      const hours = Math.floor(cooldown.remainingTime / 3600000);
-      const minutes = Math.ceil((cooldown.remainingTime % 3600000) / 60000);
-
-      await interaction.editReply({
-        content: `⏰ Necesitas esperar antes de robar de nuevo. Tiempo restante: **${hours}h ${minutes}m**`,
-      });
-      return;
-    }
-
     // Crear o obtener usuarios
     const robber = await EconomyService.getOrCreateUser(
       userId,
@@ -126,8 +115,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    // Obtener configuración de economía
+    const config = await EconomyConfigService.getOrCreateConfig(guildId);
+
     // Determinar si el robo tiene éxito (60% de probabilidad)
     const success = Math.random() < 0.6;
+
+    // Claim the rob cooldown BEFORE any transfer to avoid concurrent /rob race.
+    // If the user is on cooldown, this throws ON_COOLDOWN and we bail out in the catch.
+    await atomicClaimCooldown(userId, guildId, "rob", config.robCooldown);
 
     if (success) {
       // ÉXITO: Roba entre 40% y 80% del dinero del bolsillo de la víctima
@@ -200,7 +196,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       const penalty = (robberBalance.pocket + robberBalance.bank) * 0.2;
 
       // Obtener tiempo de prisión de la configuración
-      const config = await EconomyConfigService.getOrCreateConfig(guildId);
       const jailTime = config.jailTimeRob;
 
       // Verificar si tiene suficiente dinero en el bolsillo para pagar la multa

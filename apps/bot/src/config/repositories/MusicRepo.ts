@@ -2,6 +2,8 @@ import { prisma, MAX_QUEUE_SIZE } from "@charlybot/shared";
 import logger from "../../utils/logger";
 import type { IMusicQueue, IMusicQueueItem, IGuildMusicConfig } from "@charlybot/shared";
 import type { IMusicRepository } from "../../domain/ports/IMusicRepository";
+import { withDistributedLock, musicQueueLockKey } from "@charlybot/shared/src/valkey/locks.ts";
+import { getValkeyClient } from "../../infrastructure/valkey/index.ts";
 
 /**
  * Obtiene la cola de música para un guild, incluyendo sus items.
@@ -61,41 +63,49 @@ export async function addToMusicQueue(
   track: Omit<IMusicQueueItem, "id" | "queueId" | "position" | "createdAt">
 ): Promise<IMusicQueueItem> {
   try {
-    // Atomic transaction: find/create queue + count + create item
-    const newItem = await prisma.$transaction(async (tx) => {
-      let queue = await tx.musicQueue.findUnique({
-        where: { guildId },
-      });
+    // Distributed lock prevents concurrent adds from bypassing MAX_QUEUE_SIZE
+    const newItem = await withDistributedLock(
+      getValkeyClient(),
+      "music",
+      musicQueueLockKey(guildId),
+      async () => {
+        // Atomic transaction: find/create queue + count + create item
+        return prisma.$transaction(async (tx) => {
+          let queue = await tx.musicQueue.findUnique({
+            where: { guildId },
+          });
 
-      if (!queue) {
-        queue = await tx.musicQueue.create({
-          data: { guildId },
+          if (!queue) {
+            queue = await tx.musicQueue.create({
+              data: { guildId },
+            });
+          }
+
+          // Get current items count to check capacity
+          const itemCount = await tx.musicQueueItem.count({
+            where: { queueId: queue.id },
+          });
+
+          // Check capacity before inserting
+          if (itemCount >= MAX_QUEUE_SIZE) {
+            throw new Error(`Queue limit of ${MAX_QUEUE_SIZE} reached`);
+          }
+
+          return tx.musicQueueItem.create({
+            data: {
+              title: track.title,
+              url: track.url,
+              duration: track.duration,
+              thumbnail: track.thumbnail,
+              requesterId: track.requesterId,
+              requesterName: track.requesterName,
+              queueId: queue.id,
+              position: itemCount,
+            },
+          });
         });
-      }
-
-      // Get current items count to check capacity
-      const itemCount = await tx.musicQueueItem.count({
-        where: { queueId: queue.id },
-      });
-
-      // Check capacity before inserting
-      if (itemCount >= MAX_QUEUE_SIZE) {
-        throw new Error(`Queue limit of ${MAX_QUEUE_SIZE} reached`);
-      }
-
-      return tx.musicQueueItem.create({
-        data: {
-          title: track.title,
-          url: track.url,
-          duration: track.duration,
-          thumbnail: track.thumbnail,
-          requesterId: track.requesterId,
-          requesterName: track.requesterName,
-          queueId: queue.id,
-          position: itemCount,
-        },
-      });
-    });
+      },
+    );
 
     logger.info("Track added to music queue via Prisma", {
       guildId,

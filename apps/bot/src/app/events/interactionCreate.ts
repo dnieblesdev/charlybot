@@ -64,156 +64,163 @@ export default {
       }
     }
 
-    // ── Buttons ────────────────────────────────────────────────────────────────
-    if (interaction.isButton()) {
-      const { feature } = parseCustomId(interaction.customId);
-      try {
-        switch (feature) {
-          case FEATURES.VERIFICATION:
-            await verificationHandler.handleButton(interaction);
-            break;
-          case FEATURES.AUTOROLE:
-            await autoroleHandler.handleButton(interaction);
-            break;
-          default:
-            logger.warn("interactionCreate: unrecognized button feature", {
-              feature,
-              customId: interaction.customId,
-              userId: interaction.user.id,
-              guildId: interaction.guildId,
-            });
-        }
-      } catch (err) {
-        logger.error("Error procesando botón", {
-          error: err instanceof Error ? err.message : String(err),
-          customId: interaction.customId,
-          userId: interaction.user.id,
-          guildId: interaction.guildId,
-        });
-      }
-      return;
-    }
-
-    // ── Select menus ───────────────────────────────────────────────────────────
-    if (interaction.isStringSelectMenu()) {
-      const { feature } = parseCustomId(interaction.customId);
-      try {
-        switch (feature) {
-          case FEATURES.VERIFICATION:
-            await verificationHandler.handleSelect(interaction);
-            break;
-          case FEATURES.AUTOROLE:
-            await autoroleHandler.handleSelect(interaction);
-            break;
-          default:
-            logger.warn("interactionCreate: unrecognized select feature", {
-              feature,
-              customId: interaction.customId,
-              userId: interaction.user.id,
-              guildId: interaction.guildId,
-            });
-        }
-      } catch (err) {
-        logger.error("Error procesando select menu", {
-          error: err instanceof Error ? err.message : String(err),
-          customId: interaction.customId,
-          userId: interaction.user.id,
-          guildId: interaction.guildId,
-        });
-      }
-      return;
-    }
-
-    // ── Modals ─────────────────────────────────────────────────────────────────
-    if (interaction.isModalSubmit()) {
-      const { feature } = parseCustomId(interaction.customId);
-      try {
-        switch (feature) {
-          case FEATURES.VERIFICATION:
-            await verificationHandler.handleModal(interaction);
-            break;
-          case FEATURES.WELCOME:
-            await welcomeHandler.handleModal(interaction);
-            break;
-          case FEATURES.AUTOROLE:
-            // Autorole modals are handled by setup.ts handleModalSubmit
-            await handleAutoroleModal(interaction);
-            break;
-          default:
-            logger.warn("interactionCreate: unrecognized modal feature", {
-              feature,
-              customId: interaction.customId,
-              userId: interaction.user.id,
-              guildId: interaction.guildId,
-            });
-        }
-      } catch (err) {
-        logger.error("Error procesando modal", {
-          error: err instanceof Error ? err.message : String(err),
-          customId: interaction.customId,
-          userId: interaction.user.id,
-          guildId: interaction.guildId,
-        });
-      }
-      return;
-    }
-
-    // ── Slash commands ─────────────────────────────────────────────────────────
-    if (!interaction.isChatInputCommand()) return;
-
-    const command = interaction.client.commands.get(interaction.commandName);
-
-    if (!command) {
-      logger.error(`Command not found: ${interaction.commandName}`, {
-        commandName: interaction.commandName,
-        userId: interaction.user.id,
-        guildId: interaction.guildId,
-      });
-      return;
-    }
-
+    // ── All non-autocomplete interactions ─────────────────────────────────────
+    // Wrap everything in a single try/finally to ensure idempotency cleanup
+    // for ALL interaction types (buttons, modals, selects, slash commands).
+    // Previously clearInteractionId was only in the slash command's finally block,
+    // causing buttons/modals/selects to leak idempotency records on early return.
     try {
-      logger.debug(`Executing command: ${interaction.commandName}`, {
-        commandName: interaction.commandName,
-        userId: interaction.user.id,
-        guildId: interaction.guildId,
-      });
-      await command.execute(interaction);
-      logger.debug(`Command executed successfully: ${interaction.commandName}`, {
-        commandName: interaction.commandName,
-        userId: interaction.user.id,
-        guildId: interaction.guildId,
-      });
-    } catch (error) {
-      logger.error(`Error executing command: ${interaction.commandName}`, {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        commandName: interaction.commandName,
-        userId: interaction.user.id,
-        guildId: interaction.guildId,
-      });
-
-      const replyOptions: InteractionReplyOptions = {
-        content: "❌ Hubo un error ejecutando este comando.",
-        flags: [MessageFlags.Ephemeral],
-      };
-
-      try {
-        if (interaction.replied || interaction.deferred) {
-          await interaction.followUp(replyOptions);
-        } else {
-          await interaction.reply(replyOptions);
+      // ── Buttons ────────────────────────────────────────────────────────────────
+      if (interaction.isButton()) {
+        const { feature } = parseCustomId(interaction.customId);
+        try {
+          switch (feature) {
+            case FEATURES.VERIFICATION:
+              await verificationHandler.handleButton(interaction);
+              break;
+            case FEATURES.AUTOROLE:
+              await autoroleHandler.handleButton(interaction);
+              break;
+            default:
+              logger.warn("interactionCreate: unrecognized button feature", {
+                feature,
+                customId: interaction.customId,
+                userId: interaction.user.id,
+                guildId: interaction.guildId,
+              });
+          }
+        } catch (err) {
+          logger.error("Error procesando botón", {
+            error: err instanceof Error ? err.message : String(err),
+            customId: interaction.customId,
+            userId: interaction.user.id,
+            guildId: interaction.guildId,
+          });
         }
-      } catch (replyError) {
-        logger.error("Failed to send error reply to user", {
-          error: replyError instanceof Error ? replyError.message : String(replyError),
+        return;
+      }
+
+      // ── Select menus ───────────────────────────────────────────────────────────
+      if (interaction.isStringSelectMenu()) {
+        const { feature } = parseCustomId(interaction.customId);
+        try {
+          switch (feature) {
+            case FEATURES.VERIFICATION:
+              await verificationHandler.handleSelect(interaction);
+              break;
+            case FEATURES.AUTOROLE:
+              await autoroleHandler.handleSelect(interaction);
+              break;
+            default:
+              logger.warn("interactionCreate: unrecognized select feature", {
+                feature,
+                customId: interaction.customId,
+                userId: interaction.user.id,
+                guildId: interaction.guildId,
+              });
+          }
+        } catch (err) {
+          logger.error("Error procesando select menu", {
+            error: err instanceof Error ? err.message : String(err),
+            customId: interaction.customId,
+            userId: interaction.user.id,
+            guildId: interaction.guildId,
+          });
+        }
+        return;
+      }
+
+      // ── Modals ─────────────────────────────────────────────────────────────────
+      if (interaction.isModalSubmit()) {
+        const { feature } = parseCustomId(interaction.customId);
+        try {
+          switch (feature) {
+            case FEATURES.VERIFICATION:
+              await verificationHandler.handleModal(interaction);
+              break;
+            case FEATURES.WELCOME:
+              await welcomeHandler.handleModal(interaction);
+              break;
+            case FEATURES.AUTOROLE:
+              // Autorole modals are handled by setup.ts handleModalSubmit
+              await handleAutoroleModal(interaction);
+              break;
+            default:
+              logger.warn("interactionCreate: unrecognized modal feature", {
+                feature,
+                customId: interaction.customId,
+                userId: interaction.user.id,
+                guildId: interaction.guildId,
+              });
+          }
+        } catch (err) {
+          logger.error("Error procesando modal", {
+            error: err instanceof Error ? err.message : String(err),
+            customId: interaction.customId,
+            userId: interaction.user.id,
+            guildId: interaction.guildId,
+          });
+        }
+        return;
+      }
+
+      // ── Slash commands ─────────────────────────────────────────────────────────
+      if (!interaction.isChatInputCommand()) return;
+
+      const command = interaction.client.commands.get(interaction.commandName);
+
+      if (!command) {
+        logger.error(`Command not found: ${interaction.commandName}`, {
           commandName: interaction.commandName,
           userId: interaction.user.id,
           guildId: interaction.guildId,
         });
+        return;
+      }
+
+      try {
+        logger.debug(`Executing command: ${interaction.commandName}`, {
+          commandName: interaction.commandName,
+          userId: interaction.user.id,
+          guildId: interaction.guildId,
+        });
+        await command.execute(interaction);
+        logger.debug(`Command executed successfully: ${interaction.commandName}`, {
+          commandName: interaction.commandName,
+          userId: interaction.user.id,
+          guildId: interaction.guildId,
+        });
+      } catch (error) {
+        logger.error(`Error executing command: ${interaction.commandName}`, {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          commandName: interaction.commandName,
+          userId: interaction.user.id,
+          guildId: interaction.guildId,
+        });
+
+        const replyOptions: InteractionReplyOptions = {
+          content: "❌ Hubo un error ejecutando este comando.",
+          flags: [MessageFlags.Ephemeral],
+        };
+
+        try {
+          if (interaction.replied || interaction.deferred) {
+            await interaction.followUp(replyOptions);
+          } else {
+            await interaction.reply(replyOptions);
+          }
+        } catch (replyError) {
+          logger.error("Failed to send error reply to user", {
+            error: replyError instanceof Error ? replyError.message : String(replyError),
+            commandName: interaction.commandName,
+            userId: interaction.user.id,
+            guildId: interaction.guildId,
+          });
+        }
       }
     } finally {
-      // Always clear the idempotency guard after command completes (success or error)
+      // Always clear idempotency guard for ALL non-autocomplete interaction types
       clearInteractionId(interaction.id);
     }
   },

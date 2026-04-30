@@ -5,17 +5,17 @@ import type { IGuildConfig, Guild } from "@charlybot/shared";
 
 // Cache constants (inlined from deleted cacheConstants)
 const CACHE_TTL_CONFIG = 5 * 60 * 1000; // 5 minutes
-const cacheKey = (guildId: string) => `guildConfig:${guildId}`;
+const makeCacheKey = (guildId: string) => `guildConfig:${guildId}`;
 
 /**
  * Obtiene la configuración de un servidor
  */
 export async function getGuildConfig(guildId: string): Promise<IGuildConfig | null> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   // Check distributed cache first
-  const cached = await valkey.get<IGuildConfig | null>(cacheKey);
+  const cached = await valkey.get<IGuildConfig | null>(key);
   if (cached !== undefined) {
     return cached;
   }
@@ -26,7 +26,7 @@ export async function getGuildConfig(guildId: string): Promise<IGuildConfig | nu
   });
 
   if (!config) {
-    await valkey.set<null>(cacheKey, null, CACHE_TTL_CONFIG / 1000);
+    await valkey.set<null>(key, null, CACHE_TTL_CONFIG / 1000);
     return null;
   }
 
@@ -44,7 +44,7 @@ export async function getGuildConfig(guildId: string): Promise<IGuildConfig | nu
     messageLogChannelId: config.messageLogChannelId ?? undefined,
   };
 
-  await valkey.set<IGuildConfig>(cacheKey, result, CACHE_TTL_CONFIG / 1000);
+  await valkey.set<IGuildConfig>(key, result, CACHE_TTL_CONFIG / 1000);
   return result;
 }
 
@@ -55,7 +55,7 @@ export async function setImagenChannel(
   guildId: string,
   targetChannelId: string,
 ): Promise<void> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   // Ensure Guild exists first
@@ -71,7 +71,7 @@ export async function setImagenChannel(
     create: { guildId, targetChannelId },
   });
 
-  await valkey.del(cacheKey);
+  await valkey.del(key);
   logger.info(
     `✅ Configuración guardada: Guild ${guildId} -> Canal ${targetChannelId}`,
   );
@@ -84,7 +84,7 @@ export async function setVoiceLogChannel(
   guildId: string,
   voiceLogChannelId: string,
 ): Promise<void> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   await prisma.guild.upsert({
@@ -99,7 +99,7 @@ export async function setVoiceLogChannel(
     create: { guildId, voiceLogChannelId },
   });
 
-  await valkey.del(cacheKey);
+  await valkey.del(key);
   logger.info(
     `✅ Canal de logs de voz configurado: Guild ${guildId} -> Canal ${voiceLogChannelId}`,
   );
@@ -112,7 +112,7 @@ export async function setWelcomeChannel(
   guildId: string,
   welcomeChannelId: string,
 ): Promise<void> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   await prisma.guild.upsert({
@@ -127,7 +127,7 @@ export async function setWelcomeChannel(
     create: { guildId, welcomeChannelId },
   });
 
-  await valkey.del(cacheKey);
+  await valkey.del(key);
   logger.info(
     `✅ Canal de bienvenida configurado: Guild ${guildId} -> Canal ${welcomeChannelId}`,
   );
@@ -140,7 +140,7 @@ export async function setWelcomeMessage(
   guildId: string,
   welcomeMessage: string,
 ): Promise<void> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   await prisma.guild.upsert({
@@ -155,7 +155,7 @@ export async function setWelcomeMessage(
     create: { guildId, welcomeMessage },
   });
 
-  await valkey.del(cacheKey);
+  await valkey.del(key);
   logger.info(
     `✅ Mensaje de bienvenida configurado: Guild ${guildId} -> Message ${welcomeMessage}`,
   );
@@ -168,7 +168,7 @@ export async function setLeaveLogChannel(
   guildId: string,
   leaveLogChannelId: string,
 ): Promise<void> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   await prisma.guild.upsert({
@@ -183,7 +183,7 @@ export async function setLeaveLogChannel(
     create: { guildId, leaveLogChannelId },
   });
 
-  await valkey.del(cacheKey);
+  await valkey.del(key);
   logger.info(
     `✅ Canal de logs de salida configurado: Guild ${guildId} -> Canal ${leaveLogChannelId}`,
   );
@@ -196,7 +196,7 @@ export async function setMessageLogChannel(
   guildId: string,
   messageLogChannelId: string,
 ): Promise<void> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   await prisma.guild.upsert({
@@ -211,7 +211,7 @@ export async function setMessageLogChannel(
     create: { guildId, messageLogChannelId },
   });
 
-  await valkey.del(cacheKey);
+  await valkey.del(key);
   logger.info(
     `✅ Canal de logs de mensajes configurado: Guild ${guildId} -> Canal ${messageLogChannelId}`,
   );
@@ -221,11 +221,11 @@ export async function setMessageLogChannel(
  * Elimina la configuración de un servidor
  */
 export async function removeGuildConfig(guildId: string): Promise<void> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   await prisma.guildConfig.deleteMany({ where: { guildId } });
-  await valkey.del(cacheKey);
+  await valkey.del(key);
   logger.info(`🗑️ Configuración eliminada: Guild ${guildId}`);
 }
 
@@ -233,7 +233,7 @@ export async function removeGuildConfig(guildId: string): Promise<void> {
  * Elimina el registro Guild y su configuración
  */
 export async function deleteGuild(guildId: string): Promise<void> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   await prisma.$transaction(async (tx) => {
@@ -241,7 +241,7 @@ export async function deleteGuild(guildId: string): Promise<void> {
     await tx.guild.deleteMany({ where: { guildId } });
   });
 
-  await valkey.del(cacheKey);
+  await valkey.del(key);
   logger.info(`🗑️ Guild eliminado: ${guildId}`);
 }
 
@@ -252,7 +252,7 @@ export async function setVerificationChannel(
   guildId: string,
   verificationChannelId: string,
 ): Promise<void> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   await prisma.guild.upsert({
@@ -267,7 +267,7 @@ export async function setVerificationChannel(
     create: { guildId, verificationChannelId },
   });
 
-  await valkey.del(cacheKey);
+  await valkey.del(key);
   logger.info(
     `✅ Canal de verificación configurado: Guild ${guildId} -> Canal ${verificationChannelId}`,
   );
@@ -280,7 +280,7 @@ export async function setVerificationReviewChannel(
   guildId: string,
   verificationReviewChannelId: string,
 ): Promise<void> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   await prisma.guild.upsert({
@@ -295,7 +295,7 @@ export async function setVerificationReviewChannel(
     create: { guildId, verificationReviewChannel: verificationReviewChannelId },
   });
 
-  await valkey.del(cacheKey);
+  await valkey.del(key);
   logger.info(
     `✅ Canal de revisión de verificación configurado: Guild ${guildId} -> Canal ${verificationReviewChannelId}`,
   );
@@ -308,7 +308,7 @@ export async function setVerifiedRole(
   guildId: string,
   verifiedRoleId: string,
 ): Promise<void> {
-  const cacheKey = cacheKey(guildId);
+  const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
   await prisma.guild.upsert({
@@ -323,7 +323,7 @@ export async function setVerifiedRole(
     create: { guildId, verifiedRoleId },
   });
 
-  await valkey.del(cacheKey);
+  await valkey.del(key);
   logger.info(
     `✅ Rol de verificado configurado: Guild ${guildId} -> Rol ${verifiedRoleId}`,
   );

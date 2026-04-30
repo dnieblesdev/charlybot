@@ -109,6 +109,16 @@ export async function updateAutoRole(
   data: Partial<Omit<IAutoRole, "mappings">>,
 ): Promise<AutoRoleWithMappings> {
   try {
+    // Verify ownership
+    const existing = await prisma.autoRole.findUnique({
+      where: { id },
+    });
+    if (!existing || existing.guildId !== guildId) {
+      throw new Error("AutoRole not found in this guild");
+    }
+
+    // `updateMany` doesn't support `include` and returns BatchPayload.
+    // We already validated ownership, so `update` on the unique `id` is safe here.
     const autoRole = await prisma.autoRole.update({
       where: { id },
       data: {
@@ -149,8 +159,8 @@ export async function deleteAutoRole(
   id: number,
 ): Promise<void> {
   try {
-    await prisma.autoRole.delete({
-      where: { id },
+    await prisma.autoRole.deleteMany({
+      where: { id, guildId },
     });
     logger.info("AutoRole deleted via Prisma", { id });
   } catch (error) {
@@ -192,6 +202,13 @@ export async function addRoleMapping(
   data: IRoleMapping,
 ): Promise<RoleMapping> {
   try {
+    const autoRole = await prisma.autoRole.findUnique({
+      where: { id: autoRoleId },
+    });
+    if (!autoRole || autoRole.guildId !== guildId) {
+      throw new Error("AutoRole not found in this guild");
+    }
+
     const mapping = await prisma.roleMapping.create({
       data: {
         autoRoleId,
@@ -222,6 +239,15 @@ export async function removeRoleMapping(
   id: number,
 ): Promise<void> {
   try {
+    // Verify the autoRole belongs to this guild
+    const mapping = await prisma.roleMapping.findUnique({
+      where: { id },
+      include: { autoRole: true },
+    });
+    if (!mapping || mapping.autoRole.guildId !== guildId) {
+      throw new Error("RoleMapping not found in this guild");
+    }
+
     await prisma.roleMapping.delete({
       where: { id },
     });
@@ -243,6 +269,15 @@ export async function updateRoleMapping(
   data: Partial<IRoleMapping>,
 ): Promise<RoleMapping> {
   try {
+    // Verify the autoRole belongs to this guild
+    const existing = await prisma.roleMapping.findUnique({
+      where: { id },
+      include: { autoRole: true },
+    });
+    if (!existing || existing.autoRole.guildId !== guildId) {
+      throw new Error("RoleMapping not found in this guild");
+    }
+
     const mapping = await prisma.roleMapping.update({
       where: { id },
       data: {
@@ -273,6 +308,14 @@ export async function removeAllRoleMappings(
   autoRoleId: number,
 ): Promise<void> {
   try {
+    // Verify the autoRole belongs to this guild
+    const autoRole = await prisma.autoRole.findUnique({
+      where: { id: autoRoleId },
+    });
+    if (!autoRole || autoRole.guildId !== guildId) {
+      throw new Error("AutoRole not found in this guild");
+    }
+
     await prisma.roleMapping.deleteMany({
       where: { autoRoleId },
     });

@@ -183,15 +183,21 @@ export class RouletteService {
 
       logger.info(`Processed results for roulette game ${gameId} via API`);
 
+      // Build result map keyed by betId for deterministic lookup
+      const resultMap = new Map(atomicResult.results.map(r => [r.betId, r]));
+
       // Format results to match original interface
-      const results = game.bets.map((bet, index) => ({
-        userId: bet.userId,
-        betType: bet.betType,
-        betValue: bet.betValue,
-        amount: bet.amount,
-        won: atomicResult.results[index]?.won ?? false,
-        winAmount: atomicResult.results[index]?.winAmount ?? 0,
-      }));
+      const results = game.bets.map((bet) => {
+        const result = resultMap.get(bet.id);
+        return {
+          userId: bet.userId,
+          betType: bet.betType,
+          betValue: bet.betValue,
+          amount: bet.amount,
+          won: result?.won ?? false,
+          winAmount: result?.winAmount ?? 0,
+        };
+      });
 
       return {
         winningNumber: game.winningNumber,
@@ -242,7 +248,7 @@ export class RouletteService {
           LeaderboardService.updateLeaderboard(
             bet.userId,
             guildId,
-            bet.username || "",
+            "", // username unknown, leaderboard will use stored username
             guild,
           ),
         );
