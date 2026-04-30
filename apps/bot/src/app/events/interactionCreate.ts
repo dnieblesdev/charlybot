@@ -6,6 +6,7 @@ import * as verificationHandler from "../interactions/handlers/verification.hand
 import * as autoroleHandler from "../interactions/handlers/autorole.handler.ts";
 import { handleModalSubmit as handleAutoroleModal } from "../commands/autorole/setup.ts";
 import * as welcomeHandler from "../interactions/handlers/welcome.handler.ts";
+import { isDuplicateInteraction } from "../../infrastructure/valkey/idempotency";
 
 export default {
   name: Events.InteractionCreate,
@@ -27,6 +28,40 @@ export default {
         });
       }
       return;
+    }
+
+    // ── Idempotency guard ──────────────────────────────────────────────────────
+    // Protect all non-autocomplete interactions from Discord retries
+    if (!interaction.isAutocomplete()) {
+      const isDuplicate = await isDuplicateInteraction(interaction.id);
+      if (isDuplicate) {
+        logger.warn("Blocked duplicate interaction", {
+          interactionId: interaction.id,
+          type: interaction.isChatInputCommand() ? "command"
+            : interaction.isButton() ? "button"
+            : interaction.isModalSubmit() ? "modal"
+            : interaction.isStringSelectMenu() ? "select"
+            : "unknown",
+          commandName: interaction.isChatInputCommand() ? interaction.commandName : undefined,
+          userId: interaction.user?.id,
+          guildId: interaction.guildId,
+        });
+
+        // Try to inform the user if possible
+        try {
+          if (!interaction.replied && !interaction.deferred) {
+            if (interaction.isRepliable()) {
+              await interaction.reply({
+                content: "⚠️ Esta interacción ya fue procesada.",
+                flags: [MessageFlags.Ephemeral],
+              });
+            }
+          }
+        } catch {
+          // Silently ignore — interaction may already be acknowledged
+        }
+        return;
+      }
     }
 
     // ── Buttons ────────────────────────────────────────────────────────────────
