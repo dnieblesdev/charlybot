@@ -1,15 +1,23 @@
-import { HttpVerificationAdapter } from "../../infrastructure/api/HttpVerificationAdapter";
+import { prisma } from "@charlybot/shared";
 import logger from "../../utils/logger";
 import type { IVerificationRequest } from "@charlybot/shared";
-
-// Instancia del adaptador (Port implementation)
-const verificationRepo = new HttpVerificationAdapter();
 
 export async function createVerificationRequest(
   guildId: string,
   request: IVerificationRequest,
 ): Promise<void> {
-  await verificationRepo.create(guildId, request);
+  await prisma.verificationRequest.create({
+    data: {
+      id: request.id,
+      guildId,
+      discordUserId: request.discordUserId,
+      status: "pending",
+      requestedAt: request.requestedAt ? new Date(request.requestedAt) : undefined,
+      reviewedAt: request.reviewedAt ? new Date(request.reviewedAt) : undefined,
+      reviewedBy: request.reviewedBy,
+      metadata: request.metadata,
+    },
+  });
   logger.info(`✅ Solicitud de verificación creada via API: ${request.id}`);
 }
 
@@ -17,7 +25,9 @@ export async function getVerificationRequest(
   guildId: string,
   id: string,
 ): Promise<IVerificationRequest | null> {
-  return await verificationRepo.findById(guildId, id);
+  return await prisma.verificationRequest.findUnique({
+    where: { id },
+  });
 }
 
 export async function updateVerificationRequest(
@@ -25,20 +35,34 @@ export async function updateVerificationRequest(
   id: string,
   updates: Partial<IVerificationRequest>,
 ): Promise<void> {
-  await verificationRepo.update(guildId, id, updates);
+  await prisma.verificationRequest.update({
+    where: { id },
+    data: {
+      ...updates,
+      requestedAt: updates.requestedAt ? new Date(updates.requestedAt as string) : undefined,
+      reviewedAt: updates.reviewedAt ? new Date(updates.reviewedAt as string) : undefined,
+    },
+  });
   logger.info(`✅ Solicitud de verificación actualizada via API: ${id}`);
 }
 
 export async function getPendingRequests(
   guildId: string,
 ): Promise<IVerificationRequest[]> {
-  return await verificationRepo.findPending(guildId);
+  const pageSize = 50;
+  return await prisma.verificationRequest.findMany({
+    where: { guildId, status: "pending" },
+    take: pageSize,
+    orderBy: { requestedAt: "desc" },
+  });
 }
 
 export async function deleteVerificationRequest(
   guildId: string,
   id: string,
 ): Promise<void> {
-  await verificationRepo.delete(guildId, id);
+  await prisma.verificationRequest.delete({
+    where: { id },
+  });
   logger.info(`🗑️ Solicitud de verificación eliminada via API: ${id}`);
 }

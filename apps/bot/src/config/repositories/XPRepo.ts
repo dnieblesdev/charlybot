@@ -1,16 +1,20 @@
-import { HttpXPAdapter } from "../../infrastructure/api/HttpXPAdapter";
+import { prisma } from "@charlybot/shared";
 import type { XPLeaderboard } from "../../domain/ports/IXPRepository";
 import logger from "../../utils/logger";
 import type { IUserXP, IXPConfig, ILevelRole } from "@charlybot/shared";
-
-// Instancia del adaptador (Port implementation)
-const xpRepo = new HttpXPAdapter();
 
 export async function getUserXP(
   guildId: string,
   userId: string,
 ): Promise<IUserXP | null> {
-  return await xpRepo.getUserXP(guildId, userId);
+  try {
+    return await prisma.userXP.findUnique({
+      where: { userId_guildId: { userId, guildId } },
+    });
+  } catch (error) {
+    logger.error(`Error getting user XP: ${userId} in ${guildId}`, { error });
+    return null;
+  }
 }
 
 export async function upsertUserXP(
@@ -18,7 +22,11 @@ export async function upsertUserXP(
   userId: string,
   data: Partial<IUserXP>,
 ): Promise<IUserXP> {
-  return await xpRepo.upsertUserXP(guildId, userId, data);
+  return await prisma.userXP.upsert({
+    where: { userId_guildId: { userId, guildId } },
+    update: data,
+    create: { guildId, userId, ...data } as IUserXP,
+  });
 }
 
 export async function incrementUserXP(
@@ -28,33 +36,64 @@ export async function incrementUserXP(
   nivel: number,
   username?: string,
 ): Promise<IUserXP> {
-  return await xpRepo.incrementUserXP(guildId, userId, xpIncrement, nivel, username);
+  return await prisma.userXP.upsert({
+    where: { userId_guildId: { userId, guildId } },
+    update: {
+      xp: { increment: xpIncrement },
+      nivel,
+      username,
+      lastMessageAt: new Date(),
+    },
+    create: {
+      userId,
+      guildId,
+      username,
+      xp: xpIncrement,
+      nivel,
+      lastMessageAt: new Date(),
+    },
+  });
 }
 
 export async function getXPConfig(
   guildId: string,
 ): Promise<IXPConfig | null> {
-  return await xpRepo.getConfig(guildId);
+  try {
+    return await prisma.xPConfig.findUnique({
+      where: { guildId },
+    });
+  } catch (error) {
+    logger.error(`Error getting XP config for ${guildId}`, { error });
+    return null;
+  }
 }
 
 export async function createXPConfig(
   guildId: string,
   data: IXPConfig,
 ): Promise<IXPConfig> {
-  return await xpRepo.createConfig(guildId, data);
+  return await prisma.xPConfig.create({
+    data: { ...data, guildId },
+  });
 }
 
 export async function updateXPConfig(
   guildId: string,
   data: Partial<IXPConfig>,
 ): Promise<IXPConfig> {
-  return await xpRepo.updateConfig(guildId, data);
+  return await prisma.xPConfig.update({
+    where: { guildId },
+    data,
+  });
 }
 
 export async function getLevelRoles(
   guildId: string,
 ): Promise<ILevelRole[]> {
-  return await xpRepo.getLevelRoles(guildId);
+  return await prisma.levelRole.findMany({
+    where: { guildId },
+    orderBy: { level: "asc" },
+  });
 }
 
 export async function createLevelRole(
@@ -62,19 +101,27 @@ export async function createLevelRole(
   level: number,
   roleId: string,
 ): Promise<ILevelRole> {
-  return await xpRepo.createLevelRole(guildId, level, roleId);
+  return await prisma.levelRole.create({
+    data: { guildId, level, roleId },
+  });
 }
 
 export async function deleteLevelRole(
   guildId: string,
   level: number,
 ): Promise<void> {
-  await xpRepo.deleteLevelRole(guildId, level);
+  await prisma.levelRole.delete({
+    where: { guildId_level: { guildId, level } },
+  });
 }
 
 export async function getXPLeaderboard(
   guildId: string,
   limit: number = 10,
 ): Promise<XPLeaderboard[]> {
-  return await xpRepo.getLeaderboard(guildId, limit);
+  return await prisma.userXP.findMany({
+    where: { guildId },
+    orderBy: [{ xp: "desc" }, { lastMessageAt: "asc" }],
+    take: limit,
+  });
 }

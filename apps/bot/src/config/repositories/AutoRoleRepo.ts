@@ -1,10 +1,7 @@
-import { HttpAutoRoleAdapter } from "../../infrastructure/api/HttpAutoRoleAdapter";
+import { prisma } from "@charlybot/shared";
 import logger from "../../utils/logger";
 import type { AutoRole, RoleMapping, IAutoRole, IRoleMapping } from "@charlybot/shared";
 import type { AutoRoleWithMappings } from "../../domain/ports/IAutoRoleRepository";
-
-// Instancia del adaptador (Port implementation)
-const autoRoleRepo = new HttpAutoRoleAdapter();
 
 /**
  * Crea una nueva configuración de auto-role
@@ -14,16 +11,43 @@ export async function createAutoRole(
   data: IAutoRole,
 ): Promise<AutoRoleWithMappings> {
   try {
-    const autoRole = await autoRoleRepo.create(guildId, data);
+    const autoRole = await prisma.autoRole.create({
+      data: {
+        guildId,
+        channelId: data.channelId,
+        messageId: data.messageId,
+        mode: data.mode,
+        embedTitle: data.embedTitle ?? null,
+        embedDesc: data.embedDesc ?? null,
+        embedColor: data.embedColor ?? null,
+        embedFooter: data.embedFooter ?? null,
+        embedThumb: data.embedThumb ?? null,
+        embedImage: data.embedImage ?? null,
+        embedTimestamp: data.embedTimestamp ?? null,
+        embedAuthor: data.embedAuthor ?? null,
+        createdBy: data.createdBy,
+        mappings: {
+          create: data.mappings.map((m) => ({
+            roleId: m.roleId,
+            type: m.type,
+            emoji: m.emoji ?? null,
+            buttonLabel: m.buttonLabel ?? null,
+            buttonStyle: m.buttonStyle ?? null,
+            order: m.order,
+          })),
+        },
+      },
+      include: { mappings: true },
+    });
 
-    logger.info("AutoRole created via API", {
+    logger.info("AutoRole created via Prisma", {
       guildId: autoRole.guildId,
       messageId: autoRole.messageId,
     });
 
-    return autoRole;
+    return autoRole as AutoRoleWithMappings;
   } catch (error) {
-    logger.error("Error creating AutoRole via API", {
+    logger.error("Error creating AutoRole via Prisma", {
       error: error instanceof Error ? error.message : String(error),
       data,
     });
@@ -39,9 +63,14 @@ export async function getAutoRoleByMessageId(
   messageId: string,
 ): Promise<AutoRoleWithMappings | null> {
   try {
-    return await autoRoleRepo.findByMessageId(guildId, messageId);
+    const autoRole = await prisma.autoRole.findUnique({
+      where: { guildId_messageId: { guildId, messageId } },
+      include: { mappings: true },
+    });
+
+    return autoRole as AutoRoleWithMappings | null;
   } catch (error) {
-    logger.error("Error getting AutoRole by messageId via API", {
+    logger.error("Error getting AutoRole by messageId via Prisma", {
       error: error instanceof Error ? error.message : String(error),
       messageId,
     });
@@ -56,9 +85,14 @@ export async function getAutoRolesByGuild(
   guildId: string,
 ): Promise<AutoRoleWithMappings[]> {
   try {
-    return await autoRoleRepo.findByGuildId(guildId);
+    const autoroles = await prisma.autoRole.findMany({
+      where: { guildId },
+      include: { mappings: true },
+    });
+
+    return autoroles as AutoRoleWithMappings[];
   } catch (error) {
-    logger.error("Error getting AutoRoles by guildId via API", {
+    logger.error("Error getting AutoRoles by guildId via Prisma", {
       error: error instanceof Error ? error.message : String(error),
       guildId,
     });
@@ -75,15 +109,30 @@ export async function updateAutoRole(
   data: Partial<Omit<IAutoRole, "mappings">>,
 ): Promise<AutoRoleWithMappings> {
   try {
-    const autoRole = await autoRoleRepo.update(guildId, id, data);
-
-    logger.info("AutoRole updated via API", {
-      id,
+    const autoRole = await prisma.autoRole.update({
+      where: { id },
+      data: {
+        channelId: data.channelId,
+        messageId: data.messageId,
+        mode: data.mode,
+        embedTitle: data.embedTitle ?? null,
+        embedDesc: data.embedDesc ?? null,
+        embedColor: data.embedColor ?? null,
+        embedFooter: data.embedFooter ?? null,
+        embedThumb: data.embedThumb ?? null,
+        embedImage: data.embedImage ?? null,
+        embedTimestamp: data.embedTimestamp ?? null,
+        embedAuthor: data.embedAuthor ?? null,
+        createdBy: data.createdBy,
+      },
+      include: { mappings: true },
     });
 
-    return autoRole;
+    logger.info("AutoRole updated via Prisma", { id });
+
+    return autoRole as AutoRoleWithMappings;
   } catch (error) {
-    logger.error("Error updating AutoRole via API", {
+    logger.error("Error updating AutoRole via Prisma", {
       error: error instanceof Error ? error.message : String(error),
       id,
       data,
@@ -100,10 +149,12 @@ export async function deleteAutoRole(
   id: number,
 ): Promise<void> {
   try {
-    await autoRoleRepo.delete(guildId, id);
-    logger.info("AutoRole deleted via API", { id });
+    await prisma.autoRole.delete({
+      where: { id },
+    });
+    logger.info("AutoRole deleted via Prisma", { id });
   } catch (error) {
-    logger.error("Error deleting AutoRole via API", {
+    logger.error("Error deleting AutoRole via Prisma", {
       error: error instanceof Error ? error.message : String(error),
       id,
     });
@@ -119,10 +170,12 @@ export async function deleteAutoRoleByMessageId(
   messageId: string,
 ): Promise<void> {
   try {
-    await autoRoleRepo.deleteByMessageId(guildId, messageId);
-    logger.info("AutoRole deleted by messageId via API", { messageId });
+    await prisma.autoRole.delete({
+      where: { guildId_messageId: { guildId, messageId } },
+    });
+    logger.info("AutoRole deleted by messageId via Prisma", { messageId });
   } catch (error) {
-    logger.error("Error deleting AutoRole by messageId via API", {
+    logger.error("Error deleting AutoRole by messageId via Prisma", {
       error: error instanceof Error ? error.message : String(error),
       messageId,
     });
@@ -139,10 +192,20 @@ export async function addRoleMapping(
   data: IRoleMapping,
 ): Promise<RoleMapping> {
   try {
-    const mapping = await autoRoleRepo.addMapping(guildId, autoRoleId, data);
-    return mapping;
+    const mapping = await prisma.roleMapping.create({
+      data: {
+        autoRoleId,
+        roleId: data.roleId,
+        type: data.type,
+        emoji: data.emoji ?? null,
+        buttonLabel: data.buttonLabel ?? null,
+        buttonStyle: data.buttonStyle ?? null,
+        order: data.order,
+      },
+    });
+    return mapping as RoleMapping;
   } catch (error) {
-    logger.error("Error creating RoleMapping via API", {
+    logger.error("Error creating RoleMapping via Prisma", {
       error: error instanceof Error ? error.message : String(error),
       autoRoleId,
       data,
@@ -159,9 +222,11 @@ export async function removeRoleMapping(
   id: number,
 ): Promise<void> {
   try {
-    await autoRoleRepo.removeMapping(guildId, id);
+    await prisma.roleMapping.delete({
+      where: { id },
+    });
   } catch (error) {
-    logger.error("Error deleting RoleMapping via API", {
+    logger.error("Error deleting RoleMapping via Prisma", {
       error: error instanceof Error ? error.message : String(error),
       id,
     });
@@ -178,9 +243,20 @@ export async function updateRoleMapping(
   data: Partial<IRoleMapping>,
 ): Promise<RoleMapping> {
   try {
-    return await autoRoleRepo.updateMapping(guildId, id, data);
+    const mapping = await prisma.roleMapping.update({
+      where: { id },
+      data: {
+        roleId: data.roleId,
+        type: data.type,
+        emoji: data.emoji ?? null,
+        buttonLabel: data.buttonLabel ?? null,
+        buttonStyle: data.buttonStyle ?? null,
+        order: data.order,
+      },
+    });
+    return mapping as RoleMapping;
   } catch (error) {
-    logger.error("Error updating RoleMapping via API", {
+    logger.error("Error updating RoleMapping via Prisma", {
       error: error instanceof Error ? error.message : String(error),
       id,
       data,
@@ -197,9 +273,11 @@ export async function removeAllRoleMappings(
   autoRoleId: number,
 ): Promise<void> {
   try {
-    await autoRoleRepo.removeAllMappings(guildId, autoRoleId);
+    await prisma.roleMapping.deleteMany({
+      where: { autoRoleId },
+    });
   } catch (error) {
-    logger.error("Error removing all RoleMappings via API", {
+    logger.error("Error removing all RoleMappings via Prisma", {
       error: error instanceof Error ? error.message : String(error),
       autoRoleId,
     });

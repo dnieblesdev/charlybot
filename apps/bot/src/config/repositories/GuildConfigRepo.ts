@@ -1,26 +1,77 @@
-import { HttpGuildConfigAdapter } from "../../infrastructure/api/HttpGuildConfigAdapter";
+import { prisma } from "@charlybot/shared";
+import { getValkeyClient } from "../../infrastructure/valkey";
 import logger from "../../utils/logger";
 import type { IGuildConfig, Guild } from "@charlybot/shared";
 
-// Instancia del adaptador (Port implementation)
-const guildConfigRepo = new HttpGuildConfigAdapter();
+// Cache constants (inlined from deleted cacheConstants)
+const CACHE_TTL_CONFIG = 5 * 60 * 1000; // 5 minutes
+const cacheKey = (guildId: string) => `guildConfig:${guildId}`;
 
 /**
  * Obtiene la configuración de un servidor
  */
 export async function getGuildConfig(guildId: string): Promise<IGuildConfig | null> {
-  return guildConfigRepo.findById(guildId);
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
+
+  // Check distributed cache first
+  const cached = await valkey.get<IGuildConfig | null>(cacheKey);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  // Fetch from Prisma
+  const config = await prisma.guildConfig.findUnique({
+    where: { guildId },
+  });
+
+  if (!config) {
+    await valkey.set<null>(cacheKey, null, CACHE_TTL_CONFIG / 1000);
+    return null;
+  }
+
+  const result: IGuildConfig = {
+    guildId: config.guildId,
+    name: config.name ?? undefined,
+    targetChannelId: config.targetChannelId ?? undefined,
+    voiceLogChannelId: config.voiceLogChannelId ?? undefined,
+    welcomeChannelId: config.welcomeChannelId ?? undefined,
+    welcomeMessage: config.welcomeMessage ?? undefined,
+    leaveLogChannelId: config.leaveLogChannelId ?? undefined,
+    verificationChannelId: config.verificationChannelId ?? undefined,
+    verificationReviewChannel: config.verificationReviewChannel ?? undefined,
+    verifiedRoleId: config.verifiedRoleId ?? undefined,
+    messageLogChannelId: config.messageLogChannelId ?? undefined,
+  };
+
+  await valkey.set<IGuildConfig>(cacheKey, result, CACHE_TTL_CONFIG / 1000);
+  return result;
 }
 
 /**
  * Establece la configuración de un servidor
  */
-
 export async function setImagenChannel(
   guildId: string,
   targetChannelId: string,
 ): Promise<void> {
-  await guildConfigRepo.upsert(guildId, { guildId, targetChannelId });
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
+
+  // Ensure Guild exists first
+  await prisma.guild.upsert({
+    where: { guildId },
+    update: {},
+    create: { guildId },
+  });
+
+  await prisma.guildConfig.upsert({
+    where: { guildId },
+    update: { targetChannelId },
+    create: { guildId, targetChannelId },
+  });
+
+  await valkey.del(cacheKey);
   logger.info(
     `✅ Configuración guardada: Guild ${guildId} -> Canal ${targetChannelId}`,
   );
@@ -33,7 +84,22 @@ export async function setVoiceLogChannel(
   guildId: string,
   voiceLogChannelId: string,
 ): Promise<void> {
-  await guildConfigRepo.upsert(guildId, { guildId, voiceLogChannelId });
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
+
+  await prisma.guild.upsert({
+    where: { guildId },
+    update: {},
+    create: { guildId },
+  });
+
+  await prisma.guildConfig.upsert({
+    where: { guildId },
+    update: { voiceLogChannelId },
+    create: { guildId, voiceLogChannelId },
+  });
+
+  await valkey.del(cacheKey);
   logger.info(
     `✅ Canal de logs de voz configurado: Guild ${guildId} -> Canal ${voiceLogChannelId}`,
   );
@@ -46,7 +112,22 @@ export async function setWelcomeChannel(
   guildId: string,
   welcomeChannelId: string,
 ): Promise<void> {
-  await guildConfigRepo.upsert(guildId, { guildId, welcomeChannelId });
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
+
+  await prisma.guild.upsert({
+    where: { guildId },
+    update: {},
+    create: { guildId },
+  });
+
+  await prisma.guildConfig.upsert({
+    where: { guildId },
+    update: { welcomeChannelId },
+    create: { guildId, welcomeChannelId },
+  });
+
+  await valkey.del(cacheKey);
   logger.info(
     `✅ Canal de bienvenida configurado: Guild ${guildId} -> Canal ${welcomeChannelId}`,
   );
@@ -59,7 +140,22 @@ export async function setWelcomeMessage(
   guildId: string,
   welcomeMessage: string,
 ): Promise<void> {
-  await guildConfigRepo.upsert(guildId, { guildId, welcomeMessage });
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
+
+  await prisma.guild.upsert({
+    where: { guildId },
+    update: {},
+    create: { guildId },
+  });
+
+  await prisma.guildConfig.upsert({
+    where: { guildId },
+    update: { welcomeMessage },
+    create: { guildId, welcomeMessage },
+  });
+
+  await valkey.del(cacheKey);
   logger.info(
     `✅ Mensaje de bienvenida configurado: Guild ${guildId} -> Message ${welcomeMessage}`,
   );
@@ -72,7 +168,22 @@ export async function setLeaveLogChannel(
   guildId: string,
   leaveLogChannelId: string,
 ): Promise<void> {
-  await guildConfigRepo.upsert(guildId, { guildId, leaveLogChannelId });
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
+
+  await prisma.guild.upsert({
+    where: { guildId },
+    update: {},
+    create: { guildId },
+  });
+
+  await prisma.guildConfig.upsert({
+    where: { guildId },
+    update: { leaveLogChannelId },
+    create: { guildId, leaveLogChannelId },
+  });
+
+  await valkey.del(cacheKey);
   logger.info(
     `✅ Canal de logs de salida configurado: Guild ${guildId} -> Canal ${leaveLogChannelId}`,
   );
@@ -85,7 +196,22 @@ export async function setMessageLogChannel(
   guildId: string,
   messageLogChannelId: string,
 ): Promise<void> {
-  await guildConfigRepo.upsert(guildId, { guildId, messageLogChannelId });
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
+
+  await prisma.guild.upsert({
+    where: { guildId },
+    update: {},
+    create: { guildId },
+  });
+
+  await prisma.guildConfig.upsert({
+    where: { guildId },
+    update: { messageLogChannelId },
+    create: { guildId, messageLogChannelId },
+  });
+
+  await valkey.del(cacheKey);
   logger.info(
     `✅ Canal de logs de mensajes configurado: Guild ${guildId} -> Canal ${messageLogChannelId}`,
   );
@@ -95,7 +221,11 @@ export async function setMessageLogChannel(
  * Elimina la configuración de un servidor
  */
 export async function removeGuildConfig(guildId: string): Promise<void> {
-  await guildConfigRepo.delete(guildId);
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
+
+  await prisma.guildConfig.deleteMany({ where: { guildId } });
+  await valkey.del(cacheKey);
   logger.info(`🗑️ Configuración eliminada: Guild ${guildId}`);
 }
 
@@ -103,7 +233,15 @@ export async function removeGuildConfig(guildId: string): Promise<void> {
  * Elimina el registro Guild y su configuración
  */
 export async function deleteGuild(guildId: string): Promise<void> {
-  await guildConfigRepo.deleteGuild(guildId);
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
+
+  await prisma.$transaction(async (tx) => {
+    await tx.guildConfig.deleteMany({ where: { guildId } });
+    await tx.guild.deleteMany({ where: { guildId } });
+  });
+
+  await valkey.del(cacheKey);
   logger.info(`🗑️ Guild eliminado: ${guildId}`);
 }
 
@@ -114,7 +252,22 @@ export async function setVerificationChannel(
   guildId: string,
   verificationChannelId: string,
 ): Promise<void> {
-  await guildConfigRepo.upsert(guildId, { guildId, verificationChannelId });
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
+
+  await prisma.guild.upsert({
+    where: { guildId },
+    update: {},
+    create: { guildId },
+  });
+
+  await prisma.guildConfig.upsert({
+    where: { guildId },
+    update: { verificationChannelId },
+    create: { guildId, verificationChannelId },
+  });
+
+  await valkey.del(cacheKey);
   logger.info(
     `✅ Canal de verificación configurado: Guild ${guildId} -> Canal ${verificationChannelId}`,
   );
@@ -127,8 +280,22 @@ export async function setVerificationReviewChannel(
   guildId: string,
   verificationReviewChannelId: string,
 ): Promise<void> {
-  await guildConfigRepo.upsert(guildId, { guildId, verificationReviewChannelId });
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
 
+  await prisma.guild.upsert({
+    where: { guildId },
+    update: {},
+    create: { guildId },
+  });
+
+  await prisma.guildConfig.upsert({
+    where: { guildId },
+    update: { verificationReviewChannel: verificationReviewChannelId },
+    create: { guildId, verificationReviewChannel: verificationReviewChannelId },
+  });
+
+  await valkey.del(cacheKey);
   logger.info(
     `✅ Canal de revisión de verificación configurado: Guild ${guildId} -> Canal ${verificationReviewChannelId}`,
   );
@@ -141,8 +308,22 @@ export async function setVerifiedRole(
   guildId: string,
   verifiedRoleId: string,
 ): Promise<void> {
-  await guildConfigRepo.upsert(guildId, { guildId, verifiedRoleId });
+  const cacheKey = cacheKey(guildId);
+  const valkey = getValkeyClient();
 
+  await prisma.guild.upsert({
+    where: { guildId },
+    update: {},
+    create: { guildId },
+  });
+
+  await prisma.guildConfig.upsert({
+    where: { guildId },
+    update: { verifiedRoleId },
+    create: { guildId, verifiedRoleId },
+  });
+
+  await valkey.del(cacheKey);
   logger.info(
     `✅ Rol de verificado configurado: Guild ${guildId} -> Rol ${verifiedRoleId}`,
   );
@@ -152,14 +333,40 @@ export async function setVerifiedRole(
  * Obtiene todas las configuraciones
  */
 export async function getAllGuildConfigs(): Promise<IGuildConfig[]> {
-  return guildConfigRepo.findAll();
+  const configs = await prisma.guildConfig.findMany();
+  return configs.map((config): IGuildConfig => ({
+    guildId: config.guildId,
+    name: config.name ?? undefined,
+    targetChannelId: config.targetChannelId ?? undefined,
+    voiceLogChannelId: config.voiceLogChannelId ?? undefined,
+    welcomeChannelId: config.welcomeChannelId ?? undefined,
+    welcomeMessage: config.welcomeMessage ?? undefined,
+    leaveLogChannelId: config.leaveLogChannelId ?? undefined,
+    verificationChannelId: config.verificationChannelId ?? undefined,
+    verificationReviewChannel: config.verificationReviewChannel ?? undefined,
+    verifiedRoleId: config.verifiedRoleId ?? undefined,
+    messageLogChannelId: config.messageLogChannelId ?? undefined,
+  }));
 }
 
 /**
  * Obtiene la metadata de un servidor
  */
 export async function getGuild(guildId: string): Promise<Guild | null> {
-  return guildConfigRepo.findGuildById(guildId);
+  const guild = await prisma.guild.findUnique({
+    where: { guildId },
+  });
+
+  if (!guild) return null;
+
+  return {
+    guildId: guild.guildId,
+    name: guild.name ?? undefined,
+    prefix: guild.prefix ?? undefined,
+    ownerId: guild.ownerId ?? undefined,
+    ownerName: guild.ownerName ?? undefined,
+    memberCount: guild.MemberCount ?? undefined,
+  };
 }
 
 /**
@@ -169,6 +376,26 @@ export async function upsertGuild(
   guildId: string,
   data: Partial<Guild>,
 ): Promise<Guild> {
-  return guildConfigRepo.upsertGuild(guildId, data);
-}
+  // Map camelCase Discord fields to PascalCase Prisma fields
+  const prismaData: Record<string, unknown> = {};
+  if (data.name !== undefined) prismaData.name = data.name;
+  if (data.prefix !== undefined) prismaData.prefix = data.prefix;
+  if (data.ownerId !== undefined) prismaData.ownerId = data.ownerId;
+  if (data.ownerName !== undefined) prismaData.ownerName = data.ownerName;
+  if (data.memberCount !== undefined) prismaData.MemberCount = data.memberCount;
 
+  const guild = await prisma.guild.upsert({
+    where: { guildId },
+    update: prismaData,
+    create: { guildId, ...prismaData },
+  });
+
+  return {
+    guildId: guild.guildId,
+    name: guild.name ?? undefined,
+    prefix: guild.prefix ?? undefined,
+    ownerId: guild.ownerId ?? undefined,
+    ownerName: guild.ownerName ?? undefined,
+    memberCount: guild.MemberCount ?? undefined,
+  };
+}

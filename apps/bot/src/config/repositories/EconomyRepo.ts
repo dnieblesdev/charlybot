@@ -1,5 +1,16 @@
-import { HttpEconomyAdapter } from "../../infrastructure/api/HttpEconomyAdapter";
-import type { TransferResult, DepositResult, WithdrawResult } from "../../infrastructure/api/HttpEconomyAdapter";
+// Economy Repository — Direct Prisma access with distributed locks
+// Follows SDD design: Phase 7 (Economy domain — most complex)
+// All function signatures remain identical; only implementation changes.
+
+import { prisma, BOT_LOCK_TTL } from "@charlybot/shared";
+import {
+  withDistributedLock,
+  economyUserLockKey,
+  transferLockKey,
+  rouletteGameLockKey,
+  cooldownLockKey,
+} from "@charlybot/shared";
+import { getValkeyClient } from "../../infrastructure/valkey";
 import logger from "../../utils/logger";
 import type {
   IUserEconomy,
@@ -10,21 +21,45 @@ import type {
   RouletteBet,
 } from "@charlybot/shared";
 
-// Instancia del adaptador (Port implementation)
-const economyRepo = new HttpEconomyAdapter();
+// Result types for atomic operations
+export interface TransferResult {
+  success: boolean;
+  fromUser: IUserEconomy;
+  toUser: IUserEconomy;
+}
+
+export interface DepositResult {
+  success: boolean;
+  user: IUserEconomy;
+  bank: IGlobalBank;
+}
+
+export interface WithdrawResult {
+  success: boolean;
+  bank: IGlobalBank;
+  user: IUserEconomy;
+}
+
+// =============================================================================
+// User Economy CRUD
+// =============================================================================
 
 export async function getEconomyUser(
   guildId: string,
   userId: string,
 ): Promise<IUserEconomy | null> {
-  return await economyRepo.getUser(guildId, userId);
+  return await prisma.userEconomy.findUnique({
+    where: { userId_guildId: { userId, guildId } },
+  });
 }
 
 export async function createEconomyUser(
   guildId: string,
   data: IUserEconomy,
 ): Promise<IUserEconomy> {
-  return await economyRepo.createUser(guildId, data);
+  return await prisma.userEconomy.create({
+    data: { ...data, guildId },
+  });
 }
 
 export async function updateEconomyUser(
@@ -32,21 +67,33 @@ export async function updateEconomyUser(
   userId: string,
   data: Partial<IUserEconomy>,
 ): Promise<IUserEconomy> {
-  return await economyRepo.updateUser(guildId, userId, data);
+  return await prisma.userEconomy.update({
+    where: { userId_guildId: { userId, guildId } },
+    data,
+  });
 }
+
+// =============================================================================
+// Global Bank CRUD
+// =============================================================================
 
 export async function getGlobalBank(
   guildId: string,
   userId: string,
 ): Promise<IGlobalBank | null> {
-  return await economyRepo.getGlobalBank(guildId, userId);
+  // Note: API routes use /bank/:userId (no guildId in path)
+  return await prisma.globalBank.findUnique({
+    where: { userId },
+  });
 }
 
 export async function createGlobalBank(
   guildId: string,
   data: IGlobalBank,
 ): Promise<IGlobalBank> {
-  return await economyRepo.createGlobalBank(guildId, data);
+  return await prisma.globalBank.create({
+    data,
+  });
 }
 
 export async function updateGlobalBank(
@@ -54,86 +101,190 @@ export async function updateGlobalBank(
   userId: string,
   data: Partial<IGlobalBank>,
 ): Promise<IGlobalBank> {
-  return await economyRepo.updateGlobalBank(guildId, userId, data);
+  return await prisma.globalBank.update({
+    where: { userId },
+    data,
+  });
 }
+
+// =============================================================================
+// Economy Config CRUD
+// =============================================================================
 
 export async function getEconomyConfig(
   guildId: string,
 ): Promise<IEconomyConfig | null> {
-  return await economyRepo.getConfig(guildId);
+  return await prisma.economyConfig.findUnique({
+    where: { guildId },
+  });
 }
 
 export async function createEconomyConfig(
   guildId: string,
   data: IEconomyConfig,
 ): Promise<IEconomyConfig> {
-  return await economyRepo.createConfig(guildId, data);
+  return await prisma.economyConfig.create({
+    data: { ...data, guildId },
+  });
 }
 
 export async function updateEconomyConfig(
   guildId: string,
   data: Partial<IEconomyConfig>,
 ): Promise<IEconomyConfig> {
-  return await economyRepo.updateConfig(guildId, data);
+  return await prisma.economyConfig.update({
+    where: { guildId },
+    data,
+  });
 }
+
+// =============================================================================
+// Leaderboard CRUD
+// =============================================================================
 
 export async function getLeaderboard(
   guildId: string,
   limit: number = 10,
 ): Promise<Leaderboard[]> {
-  return await economyRepo.getLeaderboard(guildId, limit);
+  const data = await prisma.leaderboard.findMany({
+    where: { guildId },
+    orderBy: [{ totalMoney: "desc" }, { joinedServerAt: "asc" }],
+    take: limit,
+  });
+  return data;
 }
 
 export async function getLeaderboardEntry(
   guildId: string,
   userId: string,
 ): Promise<Leaderboard | null> {
-  return await economyRepo.getLeaderboardEntry(guildId, userId);
+  return await prisma.leaderboard.findUnique({
+    where: { userId_guildId: { userId, guildId } },
+  });
 }
 
 export async function upsertLeaderboard(
   guildId: string,
   data: Partial<Leaderboard>,
 ): Promise<Leaderboard> {
-  return await economyRepo.upsertLeaderboard(guildId, data);
+  const { userId, ...rest } = data as Leaderboard & { userId: string };
+  return await prisma.leaderboard.upsert({
+    where: { userId_guildId: { userId, guildId } },
+    update: rest,
+    create: {
+      userId,
+      guildId,
+      ...rest,
+      joinedServerAt: (rest as Partial<Leaderboard> & { joinedServerAt?: Date }).joinedServerAt || new Date(),
+    },
+  });
 }
 
 export async function getUserPosition(
   guildId: string,
   userId: string,
 ): Promise<number | null> {
-  return await economyRepo.getUserPosition(guildId, userId);
+  const userEntry = await prisma.leaderboard.findUnique({
+    where: { userId_guildId: { userId, guildId } },
+  });
+
+  if (!userEntry) return null;
+
+  const usersAhead = await prisma.leaderboard.count({
+    where: {
+      guildId,
+      OR: [
+        { totalMoney: { gt: userEntry.totalMoney } },
+        {
+          totalMoney: userEntry.totalMoney,
+          joinedServerAt: { lt: userEntry.joinedServerAt },
+        },
+      ],
+    },
+  });
+
+  return usersAhead + 1;
 }
 
 export async function removeFromLeaderboard(
   guildId: string,
   userId: string,
 ): Promise<void> {
-  await economyRepo.removeFromLeaderboard(guildId, userId);
+  await prisma.leaderboard.delete({
+    where: { userId_guildId: { userId, guildId } },
+  });
 }
 
-// --- Roulette ---
+// =============================================================================
+// Roulette CRUD
+// =============================================================================
 
 export async function createRouletteGame(
   guildId: string,
   data: Partial<RouletteGame>,
 ): Promise<RouletteGame> {
-  return await economyRepo.createRouletteGame(guildId, data);
+  return await prisma.rouletteGame.create({
+    data: { ...data, guildId } as any,
+  });
 }
 
 export async function getActiveRouletteGame(
   guildId: string,
   channelId: string,
 ): Promise<RouletteGame | null> {
-  return await economyRepo.getActiveRouletteGame(guildId, channelId);
+  return await prisma.rouletteGame.findFirst({
+    where: { channelId, status: "waiting" },
+    select: {
+      id: true,
+      channelId: true,
+      status: true,
+      winningNumber: true,
+      createdAt: true,
+      updatedAt: true,
+      bets: {
+        select: {
+          id: true,
+          userId: true,
+          guildId: true,
+          amount: true,
+          betType: true,
+          betValue: true,
+          result: true,
+          winAmount: true,
+        },
+      },
+    },
+  }) as unknown as RouletteGame | null;
 }
 
-export async function placeRouletteBet(
+export async function getRouletteGame(
   guildId: string,
   gameId: number,
-  data: Partial<RouletteBet>,
-): Promise<RouletteBet> {
-  return await economyRepo.placeRouletteBet(guildId, gameId, data);
+): Promise<RouletteGame> {
+  return await prisma.rouletteGame.findUnique({
+    where: { id: gameId },
+    select: {
+      id: true,
+      channelId: true,
+      status: true,
+      winningNumber: true,
+      createdAt: true,
+      updatedAt: true,
+      bets: {
+        select: {
+          id: true,
+          userId: true,
+          guildId: true,
+          amount: true,
+          betType: true,
+          betValue: true,
+          result: true,
+          winAmount: true,
+        },
+        take: 100,
+      },
+    },
+  }) as unknown as RouletteGame;
 }
 
 export async function updateRouletteGame(
@@ -141,14 +292,29 @@ export async function updateRouletteGame(
   gameId: number,
   data: Partial<RouletteGame>,
 ): Promise<RouletteGame> {
-  return await economyRepo.updateRouletteGame(guildId, gameId, data);
+  return await prisma.rouletteGame.update({
+    where: { id: gameId },
+    data: data as any,
+  }) as unknown as RouletteGame;
 }
 
-export async function getRouletteGame(
+export async function deleteRouletteGame(
   guildId: string,
   gameId: number,
-): Promise<RouletteGame> {
-  return await economyRepo.getRouletteGame(guildId, gameId);
+): Promise<void> {
+  // Delete bets first (foreign key)
+  await prisma.rouletteBet.deleteMany({ where: { gameId } });
+  await prisma.rouletteGame.delete({ where: { id: gameId } });
+}
+
+export async function placeRouletteBet(
+  guildId: string,
+  gameId: number,
+  data: Partial<RouletteBet>,
+): Promise<RouletteBet> {
+  return await prisma.rouletteBet.create({
+    data: { ...data, gameId, guildId } as any,
+  }) as unknown as RouletteBet;
 }
 
 export async function updateRouletteBet(
@@ -156,17 +322,15 @@ export async function updateRouletteBet(
   betId: number,
   data: Partial<RouletteBet>,
 ): Promise<RouletteBet> {
-  return await economyRepo.updateRouletteBet(guildId, betId, data);
+  return await prisma.rouletteBet.update({
+    where: { id: betId },
+    data: data as any,
+  }) as unknown as RouletteBet;
 }
 
-export async function deleteRouletteGame(
-  guildId: string,
-  gameId: number,
-): Promise<void> {
-  await economyRepo.deleteRouletteGame(guildId, gameId);
-}
-
-// --- Atomic Operations (Race Condition Fix) ---
+// =============================================================================
+// Atomic Operations — distributed locks + Prisma transactions
+// =============================================================================
 
 export async function atomicTransfer(
   fromUserId: string,
@@ -176,7 +340,66 @@ export async function atomicTransfer(
   fromUsername: string,
   toUsername: string,
 ): Promise<TransferResult> {
-  return await economyRepo.transfer(fromUserId, toUserId, guildId, amount, fromUsername, toUsername);
+  const valkey = getValkeyClient();
+  const lockKey = transferLockKey(guildId, fromUserId, toUserId);
+
+  const result = await withDistributedLock(
+    valkey,
+    'economy',
+    lockKey,
+    async () => {
+      return await prisma.$transaction(async (tx) => {
+        // Get both users
+        const [fromUser, toUser] = await Promise.all([
+          tx.userEconomy.findUnique({
+            where: { userId_guildId: { userId: fromUserId, guildId } },
+          }),
+          tx.userEconomy.findUnique({
+            where: { userId_guildId: { userId: toUserId, guildId } },
+          }),
+        ]);
+
+        if (!fromUser || !toUser) {
+          throw new Error("One or both users not found");
+        }
+
+        if (fromUser.pocket < amount) {
+          throw new Error("Insufficient funds");
+        }
+
+        // Atomic update for both users
+        const [updatedFrom, updatedTo] = await Promise.all([
+          tx.userEconomy.update({
+            where: { userId_guildId: { userId: fromUserId, guildId } },
+            data: {
+              pocket: fromUser.pocket - amount,
+              totalLost: fromUser.totalLost + amount,
+            },
+          }),
+          tx.userEconomy.update({
+            where: { userId_guildId: { userId: toUserId, guildId } },
+            data: {
+              pocket: toUser.pocket + amount,
+              totalEarned: toUser.totalEarned + amount,
+            },
+          }),
+        ]);
+
+        logger.info(
+          `Atomic transfer: ${amount} from ${fromUserId} to ${toUserId} in guild ${guildId}`,
+        );
+
+        return { fromUser: updatedFrom, toUser: updatedTo };
+      });
+    },
+    BOT_LOCK_TTL.TRANSFER,
+  );
+
+  return {
+    success: true,
+    fromUser: result.fromUser,
+    toUser: result.toUser,
+  };
 }
 
 export async function atomicDeposit(
@@ -185,7 +408,59 @@ export async function atomicDeposit(
   username: string,
   amount: number,
 ): Promise<DepositResult> {
-  return await economyRepo.deposit(userId, guildId, username, amount);
+  const valkey = getValkeyClient();
+  const lockKey = economyUserLockKey(guildId, userId);
+
+  const result = await withDistributedLock(
+    valkey,
+    'economy',
+    lockKey,
+    async () => {
+      return await prisma.$transaction(async (tx) => {
+        const user = await tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId, guildId } },
+        });
+
+        if (!user || user.pocket < amount) {
+          throw new Error("Insufficient funds in pocket");
+        }
+
+        // Get or create global bank
+        let bank = await tx.globalBank.findUnique({
+          where: { userId },
+        });
+
+        if (!bank) {
+          bank = await tx.globalBank.create({
+            data: { userId, username, bank: 0 },
+          });
+        }
+
+        // Atomic update
+        const [updatedUser, updatedBank] = await Promise.all([
+          tx.userEconomy.update({
+            where: { userId_guildId: { userId, guildId } },
+            data: { pocket: user.pocket - amount },
+          }),
+          tx.globalBank.update({
+            where: { userId },
+            data: { bank: bank.bank + amount },
+          }),
+        ]);
+
+        logger.info(`Atomic deposit: ${amount} from user ${userId} to global bank`);
+
+        return { user: updatedUser, bank: updatedBank };
+      });
+    },
+    BOT_LOCK_TTL.TRANSFER,
+  );
+
+  return {
+    success: true,
+    user: result.user,
+    bank: result.bank,
+  };
 }
 
 export async function atomicWithdraw(
@@ -194,10 +469,75 @@ export async function atomicWithdraw(
   username: string,
   amount: number,
 ): Promise<WithdrawResult> {
-  return await economyRepo.withdraw(userId, guildId, username, amount);
-}
+  const valkey = getValkeyClient();
+  const lockKey = economyUserLockKey(guildId, userId);
 
-// --- Atomic Economy Operations ---
+  const result = await withDistributedLock(
+    valkey,
+    'economy',
+    lockKey,
+    async () => {
+      return await prisma.$transaction(async (tx) => {
+        // Get global bank first
+        const bank = await tx.globalBank.findUnique({
+          where: { userId },
+        });
+
+        if (!bank || bank.bank < amount) {
+          throw new Error("Insufficient funds in bank");
+        }
+
+        // Get or create user economy
+        let user = await tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId, guildId } },
+        });
+
+        if (!user) {
+          // Get starting money from config
+          const config = await tx.economyConfig.findUnique({
+            where: { guildId },
+          });
+          const startingMoney = config?.startingMoney || 1000;
+
+          user = await tx.userEconomy.create({
+            data: {
+              userId,
+              guildId,
+              username,
+              pocket: startingMoney,
+              totalEarned: 0,
+              totalLost: 0,
+              inJail: false,
+            },
+          });
+        }
+
+        // Atomic update
+        const [updatedBank, updatedUser] = await Promise.all([
+          tx.globalBank.update({
+            where: { userId },
+            data: { bank: bank.bank - amount },
+          }),
+          tx.userEconomy.update({
+            where: { userId_guildId: { userId, guildId } },
+            data: { pocket: user.pocket + amount },
+          }),
+        ]);
+
+        logger.info(`Atomic withdraw: ${amount} from global bank to user ${userId}`);
+
+        return { bank: updatedBank, user: updatedUser };
+      });
+    },
+    BOT_LOCK_TTL.TRANSFER,
+  );
+
+  return {
+    success: true,
+    bank: result.bank,
+    user: result.user,
+  };
+}
 
 export async function atomicAddPocket(
   userId: string,
@@ -205,7 +545,70 @@ export async function atomicAddPocket(
   amount: number,
   cooldownType?: "work" | "crime" | "rob",
 ): Promise<IUserEconomy> {
-  return await economyRepo.atomicAddPocket(userId, guildId, amount, cooldownType);
+  const valkey = getValkeyClient();
+  const lockKey = economyUserLockKey(guildId, userId);
+
+  const result = await withDistributedLock(
+    valkey,
+    'economy',
+    lockKey,
+    async () => {
+      return await prisma.$transaction(async (tx) => {
+        const user = await tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId, guildId } },
+        });
+
+        if (!user) throw new Error("User not found");
+
+        // If cooldownType is provided, atomically check and claim the cooldown
+        if (cooldownType) {
+          const config = await tx.economyConfig.findUnique({ where: { guildId } });
+          const cooldownMs =
+            cooldownType === "work"
+              ? config?.workCooldown ?? 300000
+              : cooldownType === "crime"
+                ? config?.crimeCooldown ?? 900000
+                : config?.robCooldown ?? 1800000;
+
+          const lastUsed =
+            cooldownType === "work"
+              ? user.lastWork
+              : cooldownType === "crime"
+                ? user.lastCrime
+                : user.lastRob;
+
+          if (lastUsed) {
+            const elapsed = Date.now() - new Date(lastUsed).getTime();
+            if (elapsed < cooldownMs) {
+              const remaining = cooldownMs - elapsed;
+              throw new Error(`ON_COOLDOWN:${remaining}`);
+            }
+          }
+        }
+
+        // Build update data
+        const updateData: any = {
+          pocket: user.pocket + amount,
+          totalEarned: user.totalEarned + amount,
+        };
+
+        // Claim cooldown if requested
+        if (cooldownType === "work") updateData.lastWork = new Date();
+        else if (cooldownType === "crime") updateData.lastCrime = new Date();
+        else if (cooldownType === "rob") updateData.lastRob = new Date();
+
+        const updated = await tx.userEconomy.update({
+          where: { userId_guildId: { userId, guildId } },
+          data: updateData,
+        });
+
+        return updated;
+      });
+    },
+    BOT_LOCK_TTL.TRANSFER,
+  );
+
+  return result;
 }
 
 export async function atomicSubtractPocket(
@@ -214,7 +617,73 @@ export async function atomicSubtractPocket(
   amount: number,
   cooldownType?: "work" | "crime" | "rob",
 ): Promise<IUserEconomy> {
-  return await economyRepo.atomicSubtractPocket(userId, guildId, amount, cooldownType);
+  const valkey = getValkeyClient();
+  const lockKey = economyUserLockKey(guildId, userId);
+
+  const result = await withDistributedLock(
+    valkey,
+    'economy',
+    lockKey,
+    async () => {
+      return await prisma.$transaction(async (tx) => {
+        const user = await tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId, guildId } },
+        });
+
+        if (!user) throw new Error("User not found");
+
+        // Check insufficient funds
+        if (user.pocket < amount) {
+          throw new Error("INSUFFICIENT_FUNDS");
+        }
+
+        // If cooldownType is provided, atomically check and claim the cooldown
+        if (cooldownType) {
+          const config = await tx.economyConfig.findUnique({ where: { guildId } });
+          const cooldownMs =
+            cooldownType === "work"
+              ? config?.workCooldown ?? 300000
+              : cooldownType === "crime"
+                ? config?.crimeCooldown ?? 900000
+                : config?.robCooldown ?? 1800000;
+
+          const lastUsed =
+            cooldownType === "work"
+              ? user.lastWork
+              : cooldownType === "crime"
+                ? user.lastCrime
+                : user.lastRob;
+
+          if (lastUsed) {
+            const elapsed = Date.now() - new Date(lastUsed).getTime();
+            if (elapsed < cooldownMs) {
+              const remaining = cooldownMs - elapsed;
+              throw new Error(`ON_COOLDOWN:${remaining}`);
+            }
+          }
+        }
+
+        const updateData: any = {
+          pocket: user.pocket - amount,
+          totalLost: user.totalLost + amount,
+        };
+
+        if (cooldownType === "work") updateData.lastWork = new Date();
+        else if (cooldownType === "crime") updateData.lastCrime = new Date();
+        else if (cooldownType === "rob") updateData.lastRob = new Date();
+
+        const updated = await tx.userEconomy.update({
+          where: { userId_guildId: { userId, guildId } },
+          data: updateData,
+        });
+
+        return updated;
+      });
+    },
+    BOT_LOCK_TTL.TRANSFER,
+  );
+
+  return result;
 }
 
 export async function atomicClaimCooldown(
@@ -223,10 +692,54 @@ export async function atomicClaimCooldown(
   type: "work" | "crime" | "rob",
   cooldownMs: number,
 ): Promise<{ success: boolean; user: IUserEconomy }> {
-  return await economyRepo.atomicClaimCooldown(userId, guildId, type, cooldownMs);
+  const valkey = getValkeyClient();
+  const lockKey = economyUserLockKey(guildId, userId);
+
+  const result = await withDistributedLock(
+    valkey,
+    'economy',
+    lockKey,
+    async () => {
+      return await prisma.$transaction(async (tx) => {
+        const user = await tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId, guildId } },
+        });
+
+        if (!user) throw new Error("User not found");
+
+        const lastUsed =
+          type === "work" ? user.lastWork : type === "crime" ? user.lastCrime : user.lastRob;
+
+        if (lastUsed) {
+          const elapsed = Date.now() - new Date(lastUsed).getTime();
+          if (elapsed < cooldownMs) {
+            const remaining = cooldownMs - elapsed;
+            throw new Error(`ON_COOLDOWN:${remaining}`);
+          }
+        }
+
+        const updateData: any = {};
+        if (type === "work") updateData.lastWork = new Date();
+        else if (type === "crime") updateData.lastCrime = new Date();
+        else if (type === "rob") updateData.lastRob = new Date();
+
+        const updated = await tx.userEconomy.update({
+          where: { userId_guildId: { userId, guildId } },
+          data: updateData,
+        });
+
+        return updated;
+      });
+    },
+    BOT_LOCK_TTL.TRANSFER,
+  );
+
+  return { success: true, user: result };
 }
 
-// --- Atomic Roulette Operations ---
+// =============================================================================
+// Atomic Roulette Operations
+// =============================================================================
 
 export async function atomicPlaceBet(
   userId: string,
@@ -236,7 +749,43 @@ export async function atomicPlaceBet(
   betType: "color" | "number",
   betValue: string,
 ): Promise<RouletteBet> {
-  return await economyRepo.atomicPlaceBet(userId, guildId, gameId, amount, betType, betValue);
+  const valkey = getValkeyClient();
+  const lockKey = economyUserLockKey(guildId, userId);
+
+  const result = await withDistributedLock(
+    valkey,
+    'economy',
+    lockKey,
+    async () => {
+      return await prisma.$transaction(async (tx) => {
+        const user = await tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId, guildId } },
+        });
+
+        if (!user) throw new Error("User not found");
+        if (user.pocket < amount) throw new Error("INSUFFICIENT_FUNDS");
+
+        // Deduct money
+        await tx.userEconomy.update({
+          where: { userId_guildId: { userId, guildId } },
+          data: {
+            pocket: user.pocket - amount,
+            totalLost: user.totalLost + amount,
+          },
+        });
+
+        // Create bet
+        const bet = await tx.rouletteBet.create({
+          data: { gameId, userId, guildId, amount, betType, betValue },
+        });
+
+        return bet;
+      });
+    },
+    BOT_LOCK_TTL.TRANSFER,
+  );
+
+  return result as unknown as RouletteBet;
 }
 
 export async function atomicProcessRouletteResults(
@@ -245,12 +794,113 @@ export async function atomicProcessRouletteResults(
   winningNumber: number,
   winningColor: string,
 ): Promise<{ gameId: number; results: Array<{ betId: number; userId: string; won: boolean; winAmount: number }> }> {
-  return await economyRepo.atomicProcessRouletteResults(gameId, guildId, winningNumber, winningColor);
+  const valkey = getValkeyClient();
+  const lockKey = rouletteGameLockKey(guildId, gameId);
+
+  const result = await withDistributedLock(
+    valkey,
+    'economy',
+    lockKey,
+    async () => {
+      return await prisma.$transaction(async (tx) => {
+        // Get game with all bets
+        const game = await tx.rouletteGame.findUnique({
+          where: { id: gameId },
+          include: { bets: true },
+        });
+
+        if (!game) throw new Error("Game not found");
+        if (game.status !== "waiting") throw new Error("Game already processed");
+
+        // Process each bet
+        const results: any[] = [];
+        for (const bet of game.bets) {
+          const won =
+            bet.betType === "color" ? bet.betValue === winningColor : bet.betValue === String(winningNumber);
+
+          const winAmount = won ? (bet.betValue === "green" ? bet.amount * 14 : bet.amount * 2) : 0;
+
+          await tx.rouletteBet.update({
+            where: { id: bet.id },
+            data: { result: won ? "win" : "lose", winAmount },
+          });
+
+          if (won) {
+            await tx.userEconomy.update({
+              where: { userId_guildId: { userId: bet.userId, guildId } },
+              data: {
+                pocket: { increment: winAmount },
+                totalEarned: { increment: winAmount },
+              },
+            });
+          }
+
+          results.push({ betId: bet.id, userId: bet.userId, won, winAmount });
+        }
+
+        // Update game status
+        await tx.rouletteGame.update({
+          where: { id: gameId },
+          data: { status: "finished", winningNumber, winningColor, endTime: new Date() },
+        });
+
+        return { gameId, results };
+      });
+    },
+    BOT_LOCK_TTL.TRANSFER,
+  );
+
+  return result;
 }
 
 export async function atomicCancelRouletteGame(
   gameId: number,
   guildId: string,
 ): Promise<{ gameId: number; refundedBets: number }> {
-  return await economyRepo.atomicCancelRouletteGame(gameId, guildId);
+  const valkey = getValkeyClient();
+  const lockKey = rouletteGameLockKey(guildId, gameId);
+
+  const result = await withDistributedLock(
+    valkey,
+    'economy',
+    lockKey,
+    async () => {
+      return await prisma.$transaction(async (tx) => {
+        const game = await tx.rouletteGame.findUnique({
+          where: { id: gameId },
+          include: { bets: true },
+        });
+
+        if (!game) throw new Error("Game not found");
+        if (game.status !== "waiting") throw new Error("Game already processed");
+
+        // Refund all bets
+        for (const bet of game.bets) {
+          await tx.rouletteBet.update({
+            where: { id: bet.id },
+            data: { result: "REFUNDED", winAmount: 0 },
+          });
+
+          await tx.userEconomy.update({
+            where: { userId_guildId: { userId: bet.userId, guildId } },
+            data: {
+              pocket: { increment: bet.amount },
+              totalLost: { decrement: bet.amount },
+            },
+          });
+        }
+
+        // Cancel game
+        await tx.rouletteGame.update({
+          where: { id: gameId },
+          data: { status: "finished", endTime: new Date() },
+        });
+
+        return { gameId, refundedBets: game.bets.length };
+      });
+    },
+    BOT_LOCK_TTL.TRANSFER,
+  );
+
+  return result;
 }

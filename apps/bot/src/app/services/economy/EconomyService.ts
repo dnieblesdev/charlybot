@@ -4,7 +4,6 @@ import LeaderboardService from "./LeaderboardService.js";
 import { Guild } from "discord.js";
 import * as EconomyRepo from "../../../config/repositories/EconomyRepo.js";
 import { memoryCache } from "../../../infrastructure/api/MemoryCache.js";
-import { CACHE_KEYS } from "../../../infrastructure/api/cacheConstants.js";
 
 export class EconomyService {
   // Obtener o crear usuario en la economía (por servidor)

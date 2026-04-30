@@ -5,9 +5,7 @@ import {
   PermissionFlagsBits,
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
-import { HttpXPAdapter } from "../../../infrastructure/api/HttpXPAdapter.js";
-
-const xpAdapter = new HttpXPAdapter();
+import * as XPRepo from "../../../config/repositories/XPRepo.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const subcommand = interaction.options.getSubcommand();
@@ -63,11 +61,11 @@ async function setXP(interaction: ChatInputCommandInteraction) {
     const guildId = interaction.guildId;
 
     // Obtener o crear config
-    let config = await xpAdapter.getConfig(guildId);
+    let config = await XPRepo.getXPConfig(guildId);
 
     if (!config) {
       // Crear config con valores por defecto
-      config = await xpAdapter.createConfig(guildId, {
+      config = await XPRepo.createXPConfig(guildId, {
         guildId,
         xpPerMessage: xpAmount,
         enabled: true,
@@ -76,7 +74,7 @@ async function setXP(interaction: ChatInputCommandInteraction) {
       });
     } else {
       // Actualizar solo xpPerMessage
-      config = await xpAdapter.updateConfig(guildId, { xpPerMessage: xpAmount });
+      config = await XPRepo.updateXPConfig(guildId, { xpPerMessage: xpAmount });
     }
 
     const embed = new EmbedBuilder()
@@ -147,10 +145,10 @@ async function enableXP(interaction: ChatInputCommandInteraction) {
     const guildId = interaction.guildId;
 
     // Obtener o crear config
-    let config = await xpAdapter.getConfig(guildId);
+    let config = await XPRepo.getXPConfig(guildId);
 
     if (!config) {
-      config = await xpAdapter.createConfig(guildId, {
+      config = await XPRepo.createXPConfig(guildId, {
         guildId,
         xpPerMessage: 1,
         enabled: true,
@@ -158,7 +156,7 @@ async function enableXP(interaction: ChatInputCommandInteraction) {
         levelUpMessage: null,
       });
     } else {
-      config = await xpAdapter.updateConfig(guildId, { enabled: true });
+      config = await XPRepo.updateXPConfig(guildId, { enabled: true });
     }
 
     const embed = new EmbedBuilder()
@@ -225,10 +223,10 @@ async function disableXP(interaction: ChatInputCommandInteraction) {
     const guildId = interaction.guildId;
 
     // Obtener config
-    let config = await xpAdapter.getConfig(guildId);
+    let config = await XPRepo.getXPConfig(guildId);
 
     if (!config) {
-      config = await xpAdapter.createConfig(guildId, {
+      config = await XPRepo.createXPConfig(guildId, {
         guildId,
         xpPerMessage: 1,
         enabled: false,
@@ -236,7 +234,7 @@ async function disableXP(interaction: ChatInputCommandInteraction) {
         levelUpMessage: null,
       });
     } else {
-      config = await xpAdapter.updateConfig(guildId, { enabled: false });
+      config = await XPRepo.updateXPConfig(guildId, { enabled: false });
     }
 
     const embed = new EmbedBuilder()
@@ -282,7 +280,7 @@ async function showConfig(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     const guildId = interaction.guildId;
-    const config = await xpAdapter.getConfig(guildId);
+    const config = await XPRepo.getXPConfig(guildId);
 
     const embed = new EmbedBuilder()
       .setColor(0x00aaff)

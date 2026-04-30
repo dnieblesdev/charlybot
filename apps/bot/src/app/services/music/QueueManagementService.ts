@@ -815,10 +815,10 @@ export function createQueueManagementService(
  */
 export function getQueueManagementService(): QueueManagementServiceClass {
   if (!queueServiceInstance) {
-    // Import dinámico para evitar dependencia circular
-    const { HttpMusicAdapter } = require("../../../infrastructure/api/HttpMusicAdapter");
+    // Use PrismaMusicAdapter for direct DB access (no HTTP overhead)
+    const { PrismaMusicAdapter } = require("../../../config/repositories/MusicRepo");
     queueServiceInstance = new QueueManagementServiceClass(
-      new HttpMusicAdapter()
+      new PrismaMusicAdapter()
     );
   }
   return queueServiceInstance;

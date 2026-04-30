@@ -5,9 +5,7 @@ import {
   PermissionFlagsBits,
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
-import { HttpXPAdapter } from "../../../infrastructure/api/HttpXPAdapter.js";
-
-const xpAdapter = new HttpXPAdapter();
+import * as XPRepo from "../../../config/repositories/XPRepo.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const subcommand = interaction.options.getSubcommand();
@@ -74,7 +72,7 @@ async function addLevelRole(interaction: ChatInputCommandInteraction) {
     }
 
     // Crear la asociación nivel-rol
-    await xpAdapter.createLevelRole(guildId, level, role.id);
+    await XPRepo.createLevelRole(guildId, level, role.id);
 
     const embed = new EmbedBuilder()
       .setColor(0x00ff00)
@@ -137,7 +135,7 @@ async function listLevelRoles(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     const guildId = interaction.guildId;
-    const levelRoles = await xpAdapter.getLevelRoles(guildId);
+    const levelRoles = await XPRepo.getLevelRoles(guildId);
 
     if (levelRoles.length === 0) {
       const embed = new EmbedBuilder()
@@ -234,7 +232,7 @@ async function removeLevelRole(interaction: ChatInputCommandInteraction) {
     const guildId = interaction.guildId;
 
     // Verificar que existe la asociación
-    const levelRoles = await xpAdapter.getLevelRoles(guildId);
+    const levelRoles = await XPRepo.getLevelRoles(guildId);
     const existingRole = levelRoles.find((lr) => lr.level === level);
 
     if (!existingRole) {
@@ -245,7 +243,7 @@ async function removeLevelRole(interaction: ChatInputCommandInteraction) {
     }
 
     // Eliminar la asociación
-    await xpAdapter.deleteLevelRole(guildId, level);
+    await XPRepo.deleteLevelRole(guildId, level);
 
     const embed = new EmbedBuilder()
       .setColor(0xff0000)

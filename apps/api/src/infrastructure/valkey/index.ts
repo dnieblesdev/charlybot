@@ -1,8 +1,7 @@
 // Valkey provider for API - singleton lifecycle
 // Follows SDD design: Phase 5
 
-import { createValkeyClient, createValkeyFallbackWrapper, loadValkeyConfig, createValkeyKeys, type IValkeyClient, type IFallbackCache, TTL } from '@charlybot/shared';
-import { randomUUID } from 'crypto';
+import { createValkeyClient, createValkeyFallbackWrapper, loadValkeyConfig, createValkeyKeys, type IValkeyClient, type IFallbackCache, TTL, acquireDistributedLock as sharedAcquireLock, releaseDistributedLock as sharedReleaseLock, withDistributedLock as sharedWithLock, economyUserLockKey, transferLockKey, rouletteGameLockKey, cooldownLockKey, musicQueueLockKey } from '@charlybot/shared';
 import logger from '../../utils/logger';
 
 // LRU Entry with creation timestamp for eviction
@@ -200,7 +199,7 @@ export async function shutdownValkey(): Promise<void> {
 }
 
 // =============================================================================
-// Distributed Lock Helpers for API operations
+// Distributed Lock Helpers for API operations (wrappers around shared)
 // =============================================================================
 
 /**
@@ -212,27 +211,9 @@ export async function acquireDistributedLock(
   resourceId: string,
   ttlSeconds: number = TTL.LOCK_DEFAULT,
 ): Promise<string | null> {
-  try {
-    const valkey = getValkeyClient();
-    const config = loadValkeyConfig();
-    const keys = createValkeyKeys(config);
-    const lockKey = keys.lock(domain, resourceId);
-    const ownerId = randomUUID();
-
-    const acquired = await valkey.acquireLock(lockKey, ttlSeconds, ownerId);
-    if (!acquired) {
-      return null;
-    }
-
-    return ownerId;
-  } catch (err) {
-    logger.warn('Failed to acquire distributed lock', {
-      domain,
-      resourceId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
-  }
+  return sharedAcquireLock(getValkeyClient(), domain, resourceId, ttlSeconds, {
+    warn: (msg, meta) => logger.warn(msg, meta),
+  });
 }
 
 /**
@@ -244,20 +225,9 @@ export async function releaseDistributedLock(
   resourceId: string,
   ownerId: string,
 ): Promise<void> {
-  try {
-    const valkey = getValkeyClient();
-    const config = loadValkeyConfig();
-    const keys = createValkeyKeys(config);
-    const lockKey = keys.lock(domain, resourceId);
-
-    await valkey.releaseLock(lockKey, ownerId);
-  } catch (err) {
-    logger.warn('Failed to release distributed lock', {
-      domain,
-      resourceId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+  return sharedReleaseLock(getValkeyClient(), domain, resourceId, ownerId, {
+    warn: (msg, meta) => logger.warn(msg, meta),
+  });
 }
 
 /**
@@ -271,50 +241,8 @@ export async function withDistributedLock<T>(
   ttlSeconds: number = TTL.LOCK_DEFAULT,
   maxRetries: number = 3,
 ): Promise<T> {
-  const config = loadValkeyConfig();
-  const keys = createValkeyKeys(config);
-  const lockKey = keys.lock(domain, resourceId);
-  const ownerId = randomUUID();
-
-  const valkey = getValkeyClient();
-  return await valkey.withLock(lockKey, ttlSeconds, ownerId, fn, maxRetries);
+  return sharedWithLock(getValkeyClient(), domain, resourceId, fn, ttlSeconds, maxRetries);
 }
 
-// Domain-specific lock helpers for economy operations
-
-/**
- * Lock key for a user's economy operations in a guild
- */
-export function economyUserLockKey(guildId: string, userId: string): string {
-  return `economy:user:${guildId}:${userId}`;
-}
-
-/**
- * Lock key for a transfer operation between two users
- */
-export function transferLockKey(guildId: string, fromUserId: string, toUserId: string): string {
-  // Sort user IDs to ensure same key regardless of who initiates
-  const sortedUsers = [fromUserId, toUserId].sort();
-  return `economy:transfer:${guildId}:${sortedUsers[0]}:${sortedUsers[1]}`;
-}
-
-/**
- * Lock key for music queue operations in a guild
- */
-export function musicQueueLockKey(guildId: string): string {
-  return `music:queue:${guildId}`;
-}
-
-/**
- * Lock key for roulette game processing (prevents concurrent result processing)
- */
-export function rouletteGameLockKey(guildId: string, gameId: number): string {
-  return `economy:roulettegame:${guildId}:${gameId}`;
-}
-
-/**
- * Lock key for cooldown operations (prevents concurrent cooldown claims)
- */
-export function cooldownLockKey(guildId: string, userId: string, type: string): string {
-  return `economy:cooldown:${guildId}:${userId}:${type}`;
-}
+// Re-export domain-specific lock key generators from shared
+export { economyUserLockKey, transferLockKey, rouletteGameLockKey, cooldownLockKey, musicQueueLockKey } from '@charlybot/shared';

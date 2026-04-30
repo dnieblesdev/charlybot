@@ -4,12 +4,6 @@ import { rateLimitMiddleware } from "./middleware/rateLimitMiddleware";
 import logger, { sanitizeUrlPath } from "./utils/logger";
 import { prisma } from "@charlybot/shared";
 import guildRoutes from "./routes/guilds";
-import economyRoutes from "./routes/economy";
-import xpRoutes from "./routes/xp";
-import autoroleRoutes from "./routes/autoroles";
-import verificationRoutes from "./routes/verifications";
-import classRoutes from "./routes/classes";
-import musicRoutes from "./routes/music";
 import authRoutes from "./routes/auth";
 import { initializeValkey, shutdownValkey } from "./infrastructure/valkey";
 
@@ -42,12 +36,6 @@ app.use("/api/*", authMiddleware);
 app.use("/api/*", rateLimitMiddleware);
 
 app.route("/api/v1/guilds", guildRoutes);
-app.route("/api/v1/economy", economyRoutes);
-app.route("/api/v1/xp", xpRoutes);
-app.route("/api/v1/autoroles", autoroleRoutes);
-app.route("/api/v1/verifications", verificationRoutes);
-app.route("/api/v1/classes", classRoutes);
-app.route("/api/v1/music", musicRoutes);
 
 app.get("/api/v1/ping", (c) => {
   return c.json({ message: "pong", timestamp: new Date().toISOString() });

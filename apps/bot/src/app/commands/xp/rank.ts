@@ -4,15 +4,12 @@ import {
   MessageFlags,
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
-import { HttpXPAdapter } from "../../../infrastructure/api/HttpXPAdapter.js";
 import * as XPRepo from "../../../config/repositories/XPRepo";
 import {
   validateSystemEnabled,
   ERROR_MESSAGES,
   createErrorReply,
 } from "../../../utils/validation.js";
-
-const xpAdapter = new HttpXPAdapter();
 
 // Función para calcular XP necesaria para el siguiente nivel
 // Fórmula: 100 * nivel^2 (ej: nivel 1=100, nivel 2=400, nivel 3=900, etc.)
@@ -58,7 +55,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const username = targetUser.username;
 
     // Obtener datos de XP del usuario
-    let userXP = await xpAdapter.getUserXP(guildId, userId);
+    let userXP = await XPRepo.getUserXP(guildId, userId);
 
     // Si el usuario no tiene XP, mostrar que es nuevo
     if (!userXP) {

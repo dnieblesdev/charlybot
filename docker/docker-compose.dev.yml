@@ -58,8 +58,6 @@ services:
     depends_on:
       valkey:
         condition: service_healthy
-      api:
-        condition: service_started
     networks:
       - charlybot-net
     command: ["bun", "run", "--cwd", "/app/apps/bot", "dev"]

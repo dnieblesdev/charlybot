@@ -4,15 +4,12 @@ import {
   MessageFlags,
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
-import { HttpXPAdapter } from "../../../infrastructure/api/HttpXPAdapter.js";
 import * as XPRepo from "../../../config/repositories/XPRepo";
 import {
   validateSystemEnabled,
   ERROR_MESSAGES,
   createErrorReply,
 } from "../../../utils/validation.js";
-
-const xpAdapter = new HttpXPAdapter();
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -46,7 +43,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     // Obtener leaderboard
-    const leaderboard = await xpAdapter.getLeaderboard(guildId, 10);
+    const leaderboard = await XPRepo.getXPLeaderboard(guildId, 10);
 
     if (leaderboard.length === 0) {
       const embed = new EmbedBuilder()
