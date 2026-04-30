@@ -11,3 +11,4 @@ export * from './utils/truncate';
 export * from './utils/const';
 export * from './valkey';
 export * from './observability';
+export * from './errors';

@@ -4,6 +4,7 @@ import logger, { logCommand } from "../../../utils/logger.js";
 import { EconomyService } from "../../services/economy/EconomyService.js";
 import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
 import { rateLimitCommand } from "../../../infrastructure/valkey/rate-limit.js";
+import { CooldownError } from "@charlybot/shared";
 
 // Lista de trabajos posibles con sus descripciones
 const jobs = [
@@ -140,20 +141,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       earnings,
     });
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
     logger.error("Error executing work command", {
-      error: errorMsg,
+      error: error instanceof Error ? error.message : String(error),
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
 
     if (replied) {
       try {
-        if (errorMsg.includes("ON_COOLDOWN:")) {
-          const match = errorMsg.match(/ON_COOLDOWN:(\d+)/);
-          const remainingMs = match ? parseInt(match[1]) : 0;
-          const minutes = Math.ceil(remainingMs / 60000);
-          const seconds = Math.ceil((remainingMs % 60000) / 1000);
+        if (error instanceof CooldownError) {
+          const minutes = Math.ceil(error.remainingMs / 60000);
+          const seconds = Math.ceil((error.remainingMs % 60000) / 1000);
           await interaction.editReply({ content: `⏰ Necesitas descansar. Podrás trabajar de nuevo en **${minutes}m ${seconds}s**` });
         } else {
           await interaction.editReply({ content: "❌ Error al trabajar. Inténtalo de nuevo." });

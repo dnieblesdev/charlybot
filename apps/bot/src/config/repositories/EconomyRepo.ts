@@ -2,7 +2,7 @@
 // Follows SDD design: Phase 7 (Economy domain — most complex)
 // All function signatures remain identical; only implementation changes.
 
-import { prisma, BOT_LOCK_TTL } from "@charlybot/shared";
+import { prisma, BOT_LOCK_TTL, ValidationError, NotFoundError, InsufficientFundsError, CooldownError, LockContentionError } from "@charlybot/shared";
 import { randomUUID } from "crypto";
 import {
   withDistributedLock,
@@ -342,7 +342,7 @@ export async function atomicTransfer(
   toUsername: string,
 ): Promise<TransferResult> {
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+    throw new ValidationError("amount", "must be positive finite number");
   }
   const valkey = getValkeyClient();
   const lockKey = transferLockKey(guildId, fromUserId, toUserId);
@@ -364,11 +364,11 @@ export async function atomicTransfer(
         ]);
 
         if (!fromUser || !toUser) {
-          throw new Error("One or both users not found");
+          throw new NotFoundError("UserEconomy", `${fromUserId} or ${toUserId}`);
         }
 
         if (fromUser.pocket < amount) {
-          throw new Error("Insufficient funds");
+          throw new InsufficientFundsError(fromUserId, amount, fromUser.pocket);
         }
 
         // Atomic update for both users
@@ -413,7 +413,7 @@ export async function atomicDeposit(
   amount: number,
 ): Promise<DepositResult> {
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+    throw new ValidationError("amount", "must be positive finite number");
   }
   const valkey = getValkeyClient();
   // Global bank is keyed ONLY by userId, so we need a global lock.
@@ -437,7 +437,7 @@ export async function atomicDeposit(
             });
 
             if (!user || user.pocket < amount) {
-              throw new Error("Insufficient funds in pocket");
+              throw new InsufficientFundsError(userId, amount, user?.pocket ?? 0);
             }
 
             // Get or create global bank
@@ -488,7 +488,7 @@ export async function atomicWithdraw(
   amount: number,
 ): Promise<WithdrawResult> {
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+    throw new ValidationError("amount", "must be positive finite number");
   }
   const valkey = getValkeyClient();
   // Global bank is keyed ONLY by userId, so we need a global lock.
@@ -513,7 +513,7 @@ export async function atomicWithdraw(
             });
 
             if (!bank || bank.bank < amount) {
-              throw new Error("Insufficient funds in bank");
+              throw new InsufficientFundsError(userId, amount, bank?.bank ?? 0);
             }
 
             // Get or create user economy
@@ -572,7 +572,7 @@ export async function atomicAddPocket(
   cooldownType?: "work" | "crime" | "rob",
 ): Promise<IUserEconomy> {
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+    throw new ValidationError("amount", "must be positive finite number");
   }
   const valkey = getValkeyClient();
   const lockKey = economyUserLockKey(guildId, userId);
@@ -587,7 +587,7 @@ export async function atomicAddPocket(
           where: { userId_guildId: { userId, guildId } },
         });
 
-        if (!user) throw new Error("User not found");
+        if (!user) throw new NotFoundError("UserEconomy", userId);
 
         // If cooldownType is provided, atomically check and claim the cooldown
         if (cooldownType) {
@@ -610,7 +610,7 @@ export async function atomicAddPocket(
             const elapsed = Date.now() - new Date(lastUsed).getTime();
             if (elapsed < cooldownMs) {
               const remaining = cooldownMs - elapsed;
-              throw new Error(`ON_COOLDOWN:${remaining}`);
+              throw new CooldownError(userId, cooldownType, remaining);
             }
           }
         }
@@ -647,7 +647,7 @@ export async function atomicSubtractPocket(
   cooldownType?: "work" | "crime" | "rob",
 ): Promise<IUserEconomy> {
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+    throw new ValidationError("amount", "must be positive finite number");
   }
   const valkey = getValkeyClient();
   const lockKey = economyUserLockKey(guildId, userId);
@@ -662,11 +662,11 @@ export async function atomicSubtractPocket(
           where: { userId_guildId: { userId, guildId } },
         });
 
-        if (!user) throw new Error("User not found");
+        if (!user) throw new NotFoundError("UserEconomy", userId);
 
         // Check insufficient funds
         if (user.pocket < amount) {
-          throw new Error("INSUFFICIENT_FUNDS");
+          throw new InsufficientFundsError(userId, amount, user.pocket);
         }
 
         // If cooldownType is provided, atomically check and claim the cooldown
@@ -690,7 +690,7 @@ export async function atomicSubtractPocket(
             const elapsed = Date.now() - new Date(lastUsed).getTime();
             if (elapsed < cooldownMs) {
               const remaining = cooldownMs - elapsed;
-              throw new Error(`ON_COOLDOWN:${remaining}`);
+              throw new CooldownError(userId, cooldownType, remaining);
             }
           }
         }
@@ -737,7 +737,7 @@ export async function atomicClaimCooldown(
           where: { userId_guildId: { userId, guildId } },
         });
 
-        if (!user) throw new Error("User not found");
+        if (!user) throw new NotFoundError("UserEconomy", userId);
 
         const lastUsed =
           type === "work" ? user.lastWork : type === "crime" ? user.lastCrime : user.lastRob;
@@ -746,7 +746,7 @@ export async function atomicClaimCooldown(
           const elapsed = Date.now() - new Date(lastUsed).getTime();
           if (elapsed < cooldownMs) {
             const remaining = cooldownMs - elapsed;
-            throw new Error(`ON_COOLDOWN:${remaining}`);
+            throw new CooldownError(userId, type, remaining);
           }
         }
 
@@ -782,7 +782,7 @@ export async function atomicPlaceBet(
   betValue: string,
 ): Promise<RouletteBet> {
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("INVALID_AMOUNT: amount must be a positive finite number");
+    throw new ValidationError("amount", "must be positive finite number");
   }
   const valkey = getValkeyClient();
   const lockKey = economyUserLockKey(guildId, userId);
@@ -797,8 +797,8 @@ export async function atomicPlaceBet(
           where: { userId_guildId: { userId, guildId } },
         });
 
-        if (!user) throw new Error("User not found");
-        if (user.pocket < amount) throw new Error("INSUFFICIENT_FUNDS");
+        if (!user) throw new NotFoundError("UserEconomy", userId);
+        if (user.pocket < amount) throw new InsufficientFundsError(userId, amount, user.pocket);
 
         // Deduct money
         await tx.userEconomy.update({
@@ -838,7 +838,7 @@ export async function atomicProcessRouletteResults(
     include: { bets: true },
   });
 
-  if (!gameWithBets) throw new Error("Game not found");
+  if (!gameWithBets) throw new NotFoundError("RouletteGame", String(gameId));
 
   // Collect unique userIds, sort to avoid deadlocks
   const userIds = [...new Set(gameWithBets.bets.map((b) => b.userId))].sort();
@@ -857,7 +857,7 @@ export async function atomicProcessRouletteResults(
         for (const acquiredKey of acquiredUserLockKeys) {
           await valkey.releaseLock(acquiredKey, lockOwnerId);
         }
-        throw new Error("Failed to acquire user lock: lock contention");
+        throw new LockContentionError("roulette user lock");
       }
       acquiredUserLockKeys.push(lockKey);
     }
@@ -874,8 +874,8 @@ export async function atomicProcessRouletteResults(
             include: { bets: true },
           });
 
-          if (!game) throw new Error("Game not found");
-          if (game.status !== "waiting") throw new Error("Game already processed");
+          if (!game) throw new NotFoundError("RouletteGame", String(gameId));
+          if (game.status !== "waiting") throw new ValidationError("game", "already processed");
 
           // Process each bet
           const results: any[] = [];
@@ -937,7 +937,7 @@ export async function atomicCancelRouletteGame(
     include: { bets: true },
   });
 
-  if (!gameWithBets) throw new Error("Game not found");
+  if (!gameWithBets) throw new NotFoundError("RouletteGame", String(gameId));
 
   // Collect unique userIds, sort to avoid deadlocks
   const userIds = [...new Set(gameWithBets.bets.map((b) => b.userId))].sort();
@@ -956,7 +956,7 @@ export async function atomicCancelRouletteGame(
         for (const acquiredKey of acquiredUserLockKeys) {
           await valkey.releaseLock(acquiredKey, lockOwnerId);
         }
-        throw new Error("Failed to acquire user lock: lock contention");
+        throw new LockContentionError("roulette user lock");
       }
       acquiredUserLockKeys.push(lockKey);
     }
@@ -972,8 +972,8 @@ export async function atomicCancelRouletteGame(
             include: { bets: true },
           });
 
-          if (!game) throw new Error("Game not found");
-          if (game.status !== "waiting") throw new Error("Game already processed");
+          if (!game) throw new NotFoundError("RouletteGame", String(gameId));
+          if (game.status !== "waiting") throw new ValidationError("game", "already processed");
 
           // Refund all bets
           for (const bet of game.bets) {
