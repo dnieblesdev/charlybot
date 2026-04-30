@@ -68,6 +68,29 @@ export const RouletteBetSchema = z.object({
   winAmount: z.number().nullable().optional(),
 });
 
+// --- Atomic Roulette Schemas ---
+
+export const AtomicRouletteBetSchema = z.object({
+  userId: z.string(),
+  guildId: z.string(),
+  gameId: z.number(),
+  amount: z.number().positive(),
+  betType: z.enum(["color", "number"]),
+  betValue: z.string(),
+});
+
+export const RouletteProcessResultsSchema = z.object({
+  gameId: z.number(),
+  guildId: z.string(),
+  winningNumber: z.number().int().min(0).max(36),
+  winningColor: z.string(),
+});
+
+export const RouletteCancelGameSchema = z.object({
+  gameId: z.number(),
+  guildId: z.string(),
+});
+
 // --- Leaderboard Schemas ---
 export const LeaderboardUpsertSchema = z.object({
   userId: z.string(),
@@ -103,6 +126,29 @@ export const WithdrawSchema = z.object({
   amount: z.number().positive(),
 });
 
+// --- Atomic Economy Operations Schemas ---
+
+export const AddPocketSchema = z.object({
+  userId: z.string(),
+  guildId: z.string(),
+  amount: z.number().positive(),
+  cooldownType: z.enum(["work", "crime", "rob"]).optional(),
+});
+
+export const SubtractPocketSchema = z.object({
+  userId: z.string(),
+  guildId: z.string(),
+  amount: z.number().positive(),
+  cooldownType: z.enum(["work", "crime", "rob"]).optional(),
+});
+
+export const CooldownClaimSchema = z.object({
+  userId: z.string(),
+  guildId: z.string(),
+  type: z.enum(["work", "crime", "rob"]),
+  cooldownMs: z.number().positive(),
+});
+
 export type IUserEconomy = z.infer<typeof UserEconomySchema>;
 export type IGlobalBank = z.infer<typeof GlobalBankSchema>;
 export type IEconomyConfig = z.infer<typeof EconomyConfigSchema>;
@@ -112,3 +158,9 @@ export type ILeaderboardUpsert = z.infer<typeof LeaderboardUpsertSchema>;
 export type ITransfer = z.infer<typeof TransferSchema>;
 export type IDeposit = z.infer<typeof DepositSchema>;
 export type IWithdraw = z.infer<typeof WithdrawSchema>;
+export type IAddPocket = z.infer<typeof AddPocketSchema>;
+export type ISubtractPocket = z.infer<typeof SubtractPocketSchema>;
+export type ICooldownClaim = z.infer<typeof CooldownClaimSchema>;
+export type IAtomicRouletteBet = z.infer<typeof AtomicRouletteBetSchema>;
+export type IRouletteProcessResults = z.infer<typeof RouletteProcessResultsSchema>;
+export type IRouletteCancelGame = z.infer<typeof RouletteCancelGameSchema>;

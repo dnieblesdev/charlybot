@@ -50,7 +50,7 @@ export class RouletteService {
     }
   }
 
-  // Realizar una apuesta
+  // Realizar una apuesta — ATOMIC
   static async placeBet(
     gameId: number,
     userId: string,
@@ -62,34 +62,23 @@ export class RouletteService {
     guild: Guild,
   ): Promise<RouletteBet> {
     try {
-      // Validar que el usuario tenga suficiente dinero en el bolsillo
-      const user = await EconomyRepo.getEconomyUser(guildId, userId);
+      // Atomic: fund verification + deduction + bet creation in one operation
+      const bet = await EconomyRepo.atomicPlaceBet(
+        userId,
+        guildId,
+        gameId,
+        amount,
+        betType,
+        betValue,
+      );
 
-      if (!user || user.pocket < amount) {
-        throw new Error("Fondos insuficientes en el bolsillo");
-      }
-
-      // Restar el dinero del bolsillo via API
-      await EconomyRepo.updateEconomyUser(guildId, userId, {
-        pocket: user.pocket - amount,
-      });
-
-      // Actualizar leaderboard
+      // Update leaderboard (non-critical, can stay async)
       await LeaderboardService.updateLeaderboard(
         userId,
         guildId,
         username,
         guild,
       );
-
-      // Crear la apuesta via API
-      const bet = await EconomyRepo.placeRouletteBet(guildId, gameId, {
-        userId,
-        guildId,
-        amount,
-        betType,
-        betValue,
-      });
 
       logger.info(
         `User ${userId} placed bet of ${amount} on ${betType}:${betValue} in game ${gameId} via API`,
@@ -149,7 +138,7 @@ export class RouletteService {
     }
   }
 
-  // Procesar resultados y pagar ganancias
+  // Procesar resultados y pagar ganancias — ATOMIC
   static async processResults(guildId: string, gameId: number, guild: Guild) {
     try {
       const game = (await EconomyRepo.getRouletteGame(
@@ -161,84 +150,43 @@ export class RouletteService {
         throw new Error("Game not found or not spun yet");
       }
 
-      const results = [];
+      // Atomic: calculates wins/losses, updates bets, updates user pockets
+      const atomicResult = await EconomyRepo.atomicProcessRouletteResults(
+        gameId,
+        guildId,
+        game.winningNumber,
+        game.winningColor,
+      );
 
-      for (const bet of game.bets) {
-        let won = false;
-        let winAmount = 0;
+      // Update leaderboards for all affected users (non-critical, async)
+      const leaderboardUpdates = atomicResult.results.map((result) =>
+        LeaderboardService.updateLeaderboard(
+          result.userId,
+          guildId,
+          "", // username unknown here, but leaderboard can still be updated
+          guild,
+        ),
+      );
+      await Promise.all(leaderboardUpdates);
 
-        if (bet.betType === "color") {
-          if (bet.betValue === game.winningColor) {
-            won = true;
-            winAmount = bet.amount * 2;
-          }
-        } else if (bet.betType === "number") {
-          if (parseInt(bet.betValue) === game.winningNumber) {
-            won = true;
-            winAmount = bet.amount * 36;
-          }
-        }
-
-        // Actualizar la apuesta via API
-        await EconomyRepo.updateRouletteBet(guildId, bet.id, {
-          result: won ? "win" : "lose",
-          winAmount: won ? winAmount : 0,
-        });
-
-        // Si ganó, agregar el dinero al bolsillo
-        const user = await EconomyRepo.getEconomyUser(guildId, bet.userId);
-        if (!user) continue;
-
-        if (won) {
-          const updatedUser = await EconomyRepo.updateEconomyUser(
-            guildId,
-            bet.userId,
-            {
-              pocket: user.pocket + winAmount,
-              totalEarned: user.totalEarned + winAmount,
-            },
-          );
-
-          await LeaderboardService.updateLeaderboard(
-            bet.userId,
-            guildId,
-            updatedUser.username,
-            guild,
-          );
-        } else {
-          const updatedUser = await EconomyRepo.updateEconomyUser(
-            guildId,
-            bet.userId,
-            {
-              totalLost: user.totalLost + bet.amount,
-            },
-          );
-
-          await LeaderboardService.updateLeaderboard(
-            bet.userId,
-            guildId,
-            updatedUser.username,
-            guild,
-          );
-        }
-
-        results.push({
-          userId: bet.userId,
-          betType: bet.betType,
-          betValue: bet.betValue,
-          amount: bet.amount,
-          won,
-          winAmount,
-        });
-      }
-
-      // Finalizar el juego via API
+      // Finalize game status
       await EconomyRepo.updateRouletteGame(guildId, gameId, {
         status: "finished",
         endTime: new Date(),
       });
 
       logger.info(`Processed results for roulette game ${gameId} via API`);
+
+      // Format results to match original interface
+      const results = game.bets.map((bet, index) => ({
+        userId: bet.userId,
+        betType: bet.betType,
+        betValue: bet.betValue,
+        amount: bet.amount,
+        won: atomicResult.results[index]?.won ?? false,
+        winAmount: atomicResult.results[index]?.winAmount ?? 0,
+      }));
+
       return {
         winningNumber: game.winningNumber,
         winningColor: game.winningColor,
@@ -267,43 +215,37 @@ export class RouletteService {
     }
   }
 
-  // Cancelar un juego y devolver las apuestas
+  // Cancelar un juego y devolver las apuestas — ATOMIC
   static async cancelGame(guildId: string, gameId: number, guild: Guild) {
     try {
+      // Atomic: refunds all bets and deletes the game
+      const cancelResult = await EconomyRepo.atomicCancelRouletteGame(
+        gameId,
+        guildId,
+      );
+
+      // Get all bets to update leaderboards
       const game = (await EconomyRepo.getRouletteGame(
         guildId,
         gameId,
       )) as RouletteGame & { bets: RouletteBet[] };
 
-      if (!game) {
-        throw new Error("Game not found");
-      }
-
       if (game.bets) {
-        for (const bet of game.bets) {
-          const user = await EconomyRepo.getEconomyUser(guildId, bet.userId);
-          if (!user) continue;
-
-          const updatedUser = await EconomyRepo.updateEconomyUser(
-            guildId,
-            bet.userId,
-            {
-              pocket: user.pocket + bet.amount,
-            },
-          );
-
-          await LeaderboardService.updateLeaderboard(
+        // Update leaderboards for all refunded users (non-critical, async)
+        const leaderboardUpdates = game.bets.map((bet) =>
+          LeaderboardService.updateLeaderboard(
             bet.userId,
             guildId,
-            updatedUser.username,
+            bet.username || "",
             guild,
-          );
-        }
+          ),
+        );
+        await Promise.all(leaderboardUpdates);
       }
 
-      await EconomyRepo.deleteRouletteGame(guildId, gameId);
-
-      logger.info(`Cancelled roulette game ${gameId} via API`);
+      logger.info(
+        `Cancelled roulette game ${gameId} via API — ${cancelResult.refundedBets} bets refunded`,
+      );
     } catch (error) {
       logger.error("Error cancelling game via API:", error);
       throw error;

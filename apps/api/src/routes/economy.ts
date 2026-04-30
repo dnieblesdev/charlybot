@@ -12,10 +12,16 @@ import {
   TransferSchema,
   DepositSchema,
   WithdrawSchema,
+  AddPocketSchema,
+  SubtractPocketSchema,
+  CooldownClaimSchema,
+  AtomicRouletteBetSchema,
+  RouletteProcessResultsSchema,
+  RouletteCancelGameSchema,
 } from "@charlybot/shared";
 import logger from "../utils/logger";
 import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
-import { withDistributedLock, transferLockKey, economyUserLockKey } from "../infrastructure/valkey";
+import { withDistributedLock, transferLockKey, economyUserLockKey, rouletteGameLockKey } from "../infrastructure/valkey";
 
 const router = new Hono();
 
@@ -691,6 +697,370 @@ router.post("/withdraw", zValidator("json", WithdrawSchema), async (c) => {
     }
     logger.error(`Atomic withdraw failed: ${errorMessage}`, { userId, guildId, amount });
     return c.json({ error: errorMessage }, 400);
+  }
+});
+
+// POST /api/v1/economy/atomic-add-pocket - Atomically add to pocket with optional cooldown claim
+router.post("/atomic-add-pocket", zValidator("json", AddPocketSchema), async (c) => {
+  const { userId, guildId, amount, cooldownType } = c.req.valid("json");
+  const lockKey = economyUserLockKey(guildId, userId);
+
+  try {
+    const result = await withDistributedLock('economy', lockKey, async () => {
+      return await prisma.$transaction(async (tx) => {
+        const user = await tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId, guildId } },
+        });
+
+        if (!user) throw new Error("User not found");
+
+        // If cooldownType is provided, atomically check and claim the cooldown
+        if (cooldownType) {
+          const config = await tx.economyConfig.findUnique({ where: { guildId } });
+          const cooldownMs = cooldownType === 'work' ? (config?.workCooldown ?? 300000)
+            : cooldownType === 'crime' ? (config?.crimeCooldown ?? 900000)
+            : (config?.robCooldown ?? 1800000);
+
+          const lastUsed = cooldownType === 'work' ? user.lastWork
+            : cooldownType === 'crime' ? user.lastCrime
+            : user.lastRob;
+
+          if (lastUsed) {
+            const elapsed = Date.now() - new Date(lastUsed).getTime();
+            if (elapsed < cooldownMs) {
+              const remaining = cooldownMs - elapsed;
+              throw new Error(`ON_COOLDOWN:${remaining}`);
+            }
+          }
+        }
+
+        // Build update data
+        const updateData: any = {
+          pocket: user.pocket + amount,
+          totalEarned: user.totalEarned + amount,
+        };
+
+        // Claim cooldown if requested
+        if (cooldownType === 'work') updateData.lastWork = new Date();
+        else if (cooldownType === 'crime') updateData.lastCrime = new Date();
+        else if (cooldownType === 'rob') updateData.lastRob = new Date();
+
+        const updated = await tx.userEconomy.update({
+          where: { userId_guildId: { userId, guildId } },
+          data: updateData,
+        });
+
+        return updated;
+      });
+    }, BOT_LOCK_TTL.TRANSFER);
+
+    return c.json(result, 200);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Add pocket failed";
+    if (msg.startsWith('ON_COOLDOWN:')) {
+      const remaining = parseInt(msg.split(':')[1] ?? '0');
+      return c.json({ error: "On cooldown", remainingMs: remaining }, 429);
+    }
+    if (msg.includes('Failed to acquire lock')) {
+      return c.json({ error: "Concurrent operation in progress" }, 429);
+    }
+    logger.error(`Atomic add-pocket failed: ${msg}`, { userId, guildId, amount });
+    return c.json({ error: msg }, 400);
+  }
+});
+
+// POST /api/v1/economy/atomic-subtract-pocket - Atomically subtract from pocket with optional cooldown claim
+router.post("/atomic-subtract-pocket", zValidator("json", SubtractPocketSchema), async (c) => {
+  const { userId, guildId, amount, cooldownType } = c.req.valid("json");
+  const lockKey = economyUserLockKey(guildId, userId);
+
+  try {
+    const result = await withDistributedLock('economy', lockKey, async () => {
+      return await prisma.$transaction(async (tx) => {
+        const user = await tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId, guildId } },
+        });
+
+        if (!user) throw new Error("User not found");
+
+        // Check insufficient funds
+        if (user.pocket < amount) {
+          throw new Error("INSUFFICIENT_FUNDS");
+        }
+
+        // If cooldownType is provided, atomically check and claim the cooldown
+        if (cooldownType) {
+          const config = await tx.economyConfig.findUnique({ where: { guildId } });
+          const cooldownMs = cooldownType === 'work' ? (config?.workCooldown ?? 300000)
+            : cooldownType === 'crime' ? (config?.crimeCooldown ?? 900000)
+            : (config?.robCooldown ?? 1800000);
+
+          const lastUsed = cooldownType === 'work' ? user.lastWork
+            : cooldownType === 'crime' ? user.lastCrime
+            : user.lastRob;
+
+          if (lastUsed) {
+            const elapsed = Date.now() - new Date(lastUsed).getTime();
+            if (elapsed < cooldownMs) {
+              const remaining = cooldownMs - elapsed;
+              throw new Error(`ON_COOLDOWN:${remaining}`);
+            }
+          }
+        }
+
+        const updateData: any = {
+          pocket: user.pocket - amount,
+          totalLost: user.totalLost + amount,
+        };
+
+        if (cooldownType === 'work') updateData.lastWork = new Date();
+        else if (cooldownType === 'crime') updateData.lastCrime = new Date();
+        else if (cooldownType === 'rob') updateData.lastRob = new Date();
+
+        const updated = await tx.userEconomy.update({
+          where: { userId_guildId: { userId, guildId } },
+          data: updateData,
+        });
+
+        return updated;
+      });
+    }, BOT_LOCK_TTL.TRANSFER);
+
+    return c.json(result, 200);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Subtract pocket failed";
+    if (msg.startsWith('ON_COOLDOWN:')) {
+      const remaining = parseInt(msg.split(':')[1] ?? '0');
+      return c.json({ error: "On cooldown", remainingMs: remaining }, 429);
+    }
+    if (msg === 'INSUFFICIENT_FUNDS') {
+      return c.json({ error: "Insufficient funds" }, 400);
+    }
+    if (msg.includes('Failed to acquire lock')) {
+      return c.json({ error: "Concurrent operation in progress" }, 429);
+    }
+    logger.error(`Atomic subtract-pocket failed: ${msg}`, { userId, guildId, amount });
+    return c.json({ error: msg }, 400);
+  }
+});
+
+// POST /api/v1/economy/cooldown/claim - Atomically check and claim a cooldown
+router.post("/cooldown/claim", zValidator("json", CooldownClaimSchema), async (c) => {
+  const { userId, guildId, type, cooldownMs } = c.req.valid("json");
+  const lockKey = economyUserLockKey(guildId, userId);
+
+  try {
+    const result = await withDistributedLock('economy', lockKey, async () => {
+      return await prisma.$transaction(async (tx) => {
+        const user = await tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId, guildId } },
+        });
+
+        if (!user) throw new Error("User not found");
+
+        const lastUsed = type === 'work' ? user.lastWork
+          : type === 'crime' ? user.lastCrime
+          : user.lastRob;
+
+        if (lastUsed) {
+          const elapsed = Date.now() - new Date(lastUsed).getTime();
+          if (elapsed < cooldownMs) {
+            const remaining = cooldownMs - elapsed;
+            throw new Error(`ON_COOLDOWN:${remaining}`);
+          }
+        }
+
+        const updateData: any = {};
+        if (type === 'work') updateData.lastWork = new Date();
+        else if (type === 'crime') updateData.lastCrime = new Date();
+        else if (type === 'rob') updateData.lastRob = new Date();
+
+        const updated = await tx.userEconomy.update({
+          where: { userId_guildId: { userId, guildId } },
+          data: updateData,
+        });
+
+        return updated;
+      });
+    }, BOT_LOCK_TTL.TRANSFER);
+
+    return c.json({ success: true, user: result }, 200);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Cooldown claim failed";
+    if (msg.startsWith('ON_COOLDOWN:')) {
+      const remaining = parseInt(msg.split(':')[1] ?? '0');
+      return c.json({ error: "On cooldown", remainingMs: remaining }, 429);
+    }
+    if (msg.includes('Failed to acquire lock')) {
+      return c.json({ error: "Concurrent operation in progress" }, 429);
+    }
+    logger.error(`Atomic cooldown claim failed: ${msg}`, { userId, guildId, type });
+    return c.json({ error: msg }, 400);
+  }
+});
+
+// POST /api/v1/economy/roulette/atomic-place-bet - Atomically place bet with fund verification
+router.post("/roulette/atomic-place-bet", zValidator("json", AtomicRouletteBetSchema), async (c) => {
+  const { userId, guildId, gameId, amount, betType, betValue } = c.req.valid("json");
+  const lockKey = economyUserLockKey(guildId, userId);
+
+  try {
+    const result = await withDistributedLock('economy', lockKey, async () => {
+      return await prisma.$transaction(async (tx) => {
+        const user = await tx.userEconomy.findUnique({
+          where: { userId_guildId: { userId, guildId } },
+        });
+
+        if (!user) throw new Error("User not found");
+        if (user.pocket < amount) throw new Error("INSUFFICIENT_FUNDS");
+
+        // Deduct money
+        await tx.userEconomy.update({
+          where: { userId_guildId: { userId, guildId } },
+          data: {
+            pocket: user.pocket - amount,
+            totalLost: user.totalLost + amount,
+          },
+        });
+
+        // Create bet
+        const bet = await tx.rouletteBet.create({
+          data: { gameId, userId, guildId, amount, betType, betValue },
+        });
+
+        return bet;
+      });
+    }, BOT_LOCK_TTL.TRANSFER);
+
+    return c.json(result, 201);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Place bet failed";
+    if (msg === 'INSUFFICIENT_FUNDS') {
+      return c.json({ error: "Insufficient funds" }, 400);
+    }
+    if (msg.includes('Failed to acquire lock')) {
+      return c.json({ error: "Concurrent operation in progress" }, 429);
+    }
+    logger.error(`Atomic place-bet failed: ${msg}`, { userId, guildId, gameId });
+    return c.json({ error: msg }, 400);
+  }
+});
+
+// POST /api/v1/economy/roulette/atomic-process - Atomically process all bets for a game
+router.post("/roulette/atomic-process", zValidator("json", RouletteProcessResultsSchema), async (c) => {
+  const { gameId, guildId, winningNumber, winningColor } = c.req.valid("json");
+  const lockKey = rouletteGameLockKey(guildId, gameId);
+
+  try {
+    const result = await withDistributedLock('economy', lockKey, async () => {
+      return await prisma.$transaction(async (tx) => {
+        // Get game with all bets
+        const game = await tx.rouletteGame.findUnique({
+          where: { id: gameId },
+          include: { bets: true },
+        });
+
+        if (!game) throw new Error("Game not found");
+        if (game.status !== 'waiting') throw new Error("Game already processed");
+
+        // Process each bet
+        const results: any[] = [];
+        for (const bet of game.bets) {
+          const won = bet.betType === 'color'
+            ? bet.betValue === winningColor
+            : bet.betValue === String(winningNumber);
+
+          const winAmount = won ? (bet.betValue === 'green' ? bet.amount * 14 : bet.amount * 2) : 0;
+
+          await tx.rouletteBet.update({
+            where: { id: bet.id },
+            data: { result: won ? 'win' : 'lose', winAmount },
+          });
+
+          if (won) {
+            await tx.userEconomy.update({
+              where: { userId_guildId: { userId: bet.userId, guildId } },
+              data: {
+                pocket: { increment: winAmount },
+                totalEarned: { increment: winAmount },
+              },
+            });
+          }
+
+          results.push({ betId: bet.id, userId: bet.userId, won, winAmount });
+        }
+
+        // Update game status
+        await tx.rouletteGame.update({
+          where: { id: gameId },
+          data: { status: 'finished', winningNumber, winningColor, endTime: new Date() },
+        });
+
+        return { gameId, results };
+      });
+    }, BOT_LOCK_TTL.TRANSFER);
+
+    return c.json(result, 200);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Process results failed";
+    if (msg.includes('Failed to acquire lock')) {
+      return c.json({ error: "Concurrent operation in progress" }, 429);
+    }
+    logger.error(`Atomic roulette process failed: ${msg}`, { gameId, guildId });
+    return c.json({ error: msg }, 400);
+  }
+});
+
+// POST /api/v1/economy/roulette/atomic-cancel - Atomically refund all bets and cancel game
+router.post("/roulette/atomic-cancel", zValidator("json", RouletteCancelGameSchema), async (c) => {
+  const { gameId, guildId } = c.req.valid("json");
+  const lockKey = rouletteGameLockKey(guildId, gameId);
+
+  try {
+    const result = await withDistributedLock('economy', lockKey, async () => {
+      return await prisma.$transaction(async (tx) => {
+        const game = await tx.rouletteGame.findUnique({
+          where: { id: gameId },
+          include: { bets: true },
+        });
+
+        if (!game) throw new Error("Game not found");
+        if (game.status !== 'waiting') throw new Error("Game already processed");
+
+        // Refund all bets
+        for (const bet of game.bets) {
+          await tx.rouletteBet.update({
+            where: { id: bet.id },
+            data: { result: 'REFUNDED', winAmount: 0 },
+          });
+
+          await tx.userEconomy.update({
+            where: { userId_guildId: { userId: bet.userId, guildId } },
+            data: {
+              pocket: { increment: bet.amount },
+              totalLost: { decrement: bet.amount },
+            },
+          });
+        }
+
+        // Cancel game
+        await tx.rouletteGame.update({
+          where: { id: gameId },
+          data: { status: 'finished', endTime: new Date() },
+        });
+
+        return { gameId, refundedBets: game.bets.length };
+      });
+    }, BOT_LOCK_TTL.TRANSFER);
+
+    return c.json(result, 200);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Cancel game failed";
+    if (msg.includes('Failed to acquire lock')) {
+      return c.json({ error: "Concurrent operation in progress" }, 429);
+    }
+    logger.error(`Atomic roulette cancel failed: ${msg}`, { gameId, guildId });
+    return c.json({ error: msg }, 400);
   }
 });
 

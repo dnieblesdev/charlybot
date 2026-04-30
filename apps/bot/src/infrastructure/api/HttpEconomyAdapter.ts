@@ -29,6 +29,27 @@ export interface WithdrawResult {
   user: IUserEconomy;
 }
 
+export interface AtomicAddPocketResult {
+  id: number;
+  userId: string;
+  guildId: string;
+  pocket: number;
+  totalEarned: number;
+}
+
+export interface AtomicSubtractPocketResult {
+  id: number;
+  userId: string;
+  guildId: string;
+  pocket: number;
+  totalLost: number;
+}
+
+export interface CooldownClaimResult {
+  success: boolean;
+  user: IUserEconomy;
+}
+
 export class HttpEconomyAdapter
   extends HttpRepositoryAdapter
   implements IEconomyRepository
@@ -327,5 +348,87 @@ export class HttpEconomyAdapter
         },
       })
       .json<WithdrawResult>();
+  }
+
+  // --- Atomic Economy Operations ---
+
+  async atomicAddPocket(
+    userId: string,
+    guildId: string,
+    amount: number,
+    cooldownType?: "work" | "crime" | "rob",
+  ): Promise<IUserEconomy> {
+    return await this.client
+      .post("economy/atomic-add-pocket", {
+        json: { userId, guildId, amount, cooldownType },
+      })
+      .json<IUserEconomy>();
+  }
+
+  async atomicSubtractPocket(
+    userId: string,
+    guildId: string,
+    amount: number,
+    cooldownType?: "work" | "crime" | "rob",
+  ): Promise<IUserEconomy> {
+    return await this.client
+      .post("economy/atomic-subtract-pocket", {
+        json: { userId, guildId, amount, cooldownType },
+      })
+      .json<IUserEconomy>();
+  }
+
+  async atomicClaimCooldown(
+    userId: string,
+    guildId: string,
+    type: "work" | "crime" | "rob",
+    cooldownMs: number,
+  ): Promise<{ success: boolean; user: IUserEconomy }> {
+    return await this.client
+      .post("economy/cooldown/claim", {
+        json: { userId, guildId, type, cooldownMs },
+      })
+      .json<{ success: boolean; user: IUserEconomy }>();
+  }
+
+  // --- Atomic Roulette Operations ---
+
+  async atomicPlaceBet(
+    userId: string,
+    guildId: string,
+    gameId: number,
+    amount: number,
+    betType: "color" | "number",
+    betValue: string,
+  ): Promise<RouletteBet> {
+    return await this.client
+      .post("economy/roulette/atomic-place-bet", {
+        json: { userId, guildId, gameId, amount, betType, betValue },
+      })
+      .json<RouletteBet>();
+  }
+
+  async atomicProcessRouletteResults(
+    gameId: number,
+    guildId: string,
+    winningNumber: number,
+    winningColor: string,
+  ): Promise<{ gameId: number; results: Array<{ betId: number; userId: string; won: boolean; winAmount: number }> }> {
+    return await this.client
+      .post("economy/roulette/atomic-process", {
+        json: { gameId, guildId, winningNumber, winningColor },
+      })
+      .json();
+  }
+
+  async atomicCancelRouletteGame(
+    gameId: number,
+    guildId: string,
+  ): Promise<{ gameId: number; refundedBets: number }> {
+    return await this.client
+      .post("economy/roulette/atomic-cancel", {
+        json: { gameId, guildId },
+      })
+      .json();
   }
 }

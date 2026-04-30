@@ -304,3 +304,17 @@ export function transferLockKey(guildId: string, fromUserId: string, toUserId: s
 export function musicQueueLockKey(guildId: string): string {
   return `music:queue:${guildId}`;
 }
+
+/**
+ * Lock key for roulette game processing (prevents concurrent result processing)
+ */
+export function rouletteGameLockKey(guildId: string, gameId: number): string {
+  return `economy:roulettegame:${guildId}:${gameId}`;
+}
+
+/**
+ * Lock key for cooldown operations (prevents concurrent cooldown claims)
+ */
+export function cooldownLockKey(guildId: string, userId: string, type: string): string {
+  return `economy:cooldown:${guildId}:${userId}:${type}`;
+}

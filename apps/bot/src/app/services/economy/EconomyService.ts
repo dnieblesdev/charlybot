@@ -115,24 +115,25 @@ export class EconomyService {
     }
   }
 
-  // Agregar dinero al bolsillo (por servidor)
+  // Agregar dinero al bolsillo (por servidor) — ATOMIC
   static async addPocket(
     userId: string,
     guildId: string,
     amount: number,
     username: string,
     guild: Guild,
+    cooldownType?: "work" | "crime" | "rob",
   ) {
     try {
-      const user = await EconomyRepo.getEconomyUser(guildId, userId);
-      if (!user) throw new Error("User not found");
+      // Atomic: add money + optionally claim cooldown in one operation
+      const updatedUser = await EconomyRepo.atomicAddPocket(
+        userId,
+        guildId,
+        amount,
+        cooldownType,
+      );
 
-      const updatedUser = await EconomyRepo.updateEconomyUser(guildId, userId, {
-        pocket: user.pocket + amount,
-        totalEarned: user.totalEarned + amount,
-      });
-
-      // Actualizar leaderboard
+      // Update leaderboard (non-critical, can stay async)
       await LeaderboardService.updateLeaderboard(
         userId,
         guildId,
@@ -147,24 +148,25 @@ export class EconomyService {
     }
   }
 
-  // Restar dinero del bolsillo (por servidor)
+  // Restar dinero del bolsillo (por servidor) — ATOMIC
   static async subtractPocket(
     userId: string,
     guildId: string,
     amount: number,
     username: string,
     guild: Guild,
+    cooldownType?: "work" | "crime" | "rob",
   ) {
     try {
-      const user = await EconomyRepo.getEconomyUser(guildId, userId);
-      if (!user) throw new Error("User not found");
+      // Atomic: subtract money + optionally claim cooldown in one operation
+      const updatedUser = await EconomyRepo.atomicSubtractPocket(
+        userId,
+        guildId,
+        amount,
+        cooldownType,
+      );
 
-      const updatedUser = await EconomyRepo.updateEconomyUser(guildId, userId, {
-        pocket: user.pocket - amount,
-        totalLost: user.totalLost + amount,
-      });
-
-      // Actualizar leaderboard
+      // Update leaderboard
       await LeaderboardService.updateLeaderboard(
         userId,
         guildId,

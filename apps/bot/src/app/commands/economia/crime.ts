@@ -113,8 +113,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Determinar si tiene éxito
     const success = Math.random() < crime!.successRate;
 
-    // Actualizar cooldown
-    await EconomyService.updateCooldown(userId, guildId, "crime");
+    // Actualizar cooldown — REMOVED: cooldown ahora se reclama atómicamente en addPocket/subtractPocket
 
     if (success) {
       // ÉXITO: Obtener configuración del servidor
@@ -128,13 +127,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       );
       const earnings = baseEarnings * multiplier;
 
-      // Agregar dinero al bolsillo
+      // Agregar dinero al bolsillo (cooldown se reclama atómicamente)
       await EconomyService.addPocket(
         userId,
         guildId,
         earnings,
         username,
         interaction.guild!,
+        "crime",
       );
 
       // Obtener balance actualizado
@@ -236,13 +236,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           reason: "No money to pay fine",
         });
       } else {
-        // Tiene dinero en el bolsillo, paga la multa
+        // Tiene dinero en el bolsillo, paga la multa (cooldown se reclama atómicamente)
         await EconomyService.subtractPocket(
           userId,
           guildId,
           fine,
           username,
           interaction.guild!,
+          "crime",
         );
 
         // Obtener balance actualizado
@@ -292,15 +293,24 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
     }
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
     logger.error("Error executing crime command", {
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMsg,
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
 
     if (replied) {
       try {
-        await interaction.editReply({ content: "❌ Error al cometer el crimen. Inténtalo de nuevo." });
+        if (errorMsg.includes("On cooldown")) {
+          const match = errorMsg.match(/remainingMs["':\s]*(\d+)/);
+          const remainingMs = match ? parseInt(match[1]) : 0;
+          const minutes = Math.ceil(remainingMs / 60000);
+          const seconds = Math.ceil((remainingMs % 60000) / 1000);
+          await interaction.editReply({ content: `⏰ Necesitas esperar. Podrás cometer otro crimen en **${minutes}m ${seconds}s**` });
+        } else {
+          await interaction.editReply({ content: "❌ Error al cometer el crimen. Inténtalo de nuevo." });
+        }
       } catch {
         // Silently ignore if we can't edit the reply
       }

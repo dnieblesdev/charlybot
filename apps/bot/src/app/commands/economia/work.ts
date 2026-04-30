@@ -106,17 +106,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       Math.random() * (maxAmount - minAmount + 1) + minAmount,
     );
 
-    // Agregar dinero al bolsillo
+    // Agregar dinero al bolsillo (cooldown se reclama atómicamente)
     await EconomyService.addPocket(
       userId,
       guildId,
       earnings,
       username,
       interaction.guild!,
+      "work",
     );
-
-    // Actualizar cooldown
-    await EconomyService.updateCooldown(userId, guildId, "work");
 
     // Seleccionar mensaje aleatorio
     const message =
@@ -142,15 +140,24 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       earnings,
     });
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
     logger.error("Error executing work command", {
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMsg,
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
 
     if (replied) {
       try {
-        await interaction.editReply({ content: "❌ Error al trabajar. Inténtalo de nuevo." });
+        if (errorMsg.includes("On cooldown")) {
+          const match = errorMsg.match(/remainingMs["':\s]*(\d+)/);
+          const remainingMs = match ? parseInt(match[1]) : 0;
+          const minutes = Math.ceil(remainingMs / 60000);
+          const seconds = Math.ceil((remainingMs % 60000) / 1000);
+          await interaction.editReply({ content: `⏰ Necesitas descansar. Podrás trabajar de nuevo en **${minutes}m ${seconds}s**` });
+        } else {
+          await interaction.editReply({ content: "❌ Error al trabajar. Inténtalo de nuevo." });
+        }
       } catch {
         // Silently ignore if we can't edit the reply
       }

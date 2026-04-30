@@ -119,9 +119,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    // Actualizar cooldown
-    await EconomyService.updateCooldown(userId, guildId, "rob");
-
     // Determinar si el robo tiene éxito (60% de probabilidad)
     const success = Math.random() < 0.6;
 
@@ -329,13 +326,22 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
     }
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
     logger.error("Error executing rob command", {
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMsg,
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
 
-    const errorMessage = "❌ Error al intentar robar. Inténtalo de nuevo.";
+    let errorMessage = "❌ Error al intentar robar. Inténtalo de nuevo.";
+    if (errorMsg.includes("On cooldown")) {
+      const match = errorMsg.match(/remainingMs["':\s]*(\d+)/);
+      const remainingMs = match ? parseInt(match[1]) : 0;
+      const minutes = Math.ceil(remainingMs / 60000);
+      const seconds = Math.ceil((remainingMs % 60000) / 1000);
+      errorMessage = `⏰ Necesitas esperar. Podrás robar de nuevo en **${minutes}m ${seconds}s**`;
+    }
+
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {

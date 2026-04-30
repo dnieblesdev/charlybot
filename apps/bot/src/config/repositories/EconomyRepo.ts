@@ -196,3 +196,61 @@ export async function atomicWithdraw(
 ): Promise<WithdrawResult> {
   return await economyRepo.withdraw(userId, guildId, username, amount);
 }
+
+// --- Atomic Economy Operations ---
+
+export async function atomicAddPocket(
+  userId: string,
+  guildId: string,
+  amount: number,
+  cooldownType?: "work" | "crime" | "rob",
+): Promise<IUserEconomy> {
+  return await economyRepo.atomicAddPocket(userId, guildId, amount, cooldownType);
+}
+
+export async function atomicSubtractPocket(
+  userId: string,
+  guildId: string,
+  amount: number,
+  cooldownType?: "work" | "crime" | "rob",
+): Promise<IUserEconomy> {
+  return await economyRepo.atomicSubtractPocket(userId, guildId, amount, cooldownType);
+}
+
+export async function atomicClaimCooldown(
+  userId: string,
+  guildId: string,
+  type: "work" | "crime" | "rob",
+  cooldownMs: number,
+): Promise<{ success: boolean; user: IUserEconomy }> {
+  return await economyRepo.atomicClaimCooldown(userId, guildId, type, cooldownMs);
+}
+
+// --- Atomic Roulette Operations ---
+
+export async function atomicPlaceBet(
+  userId: string,
+  guildId: string,
+  gameId: number,
+  amount: number,
+  betType: "color" | "number",
+  betValue: string,
+): Promise<RouletteBet> {
+  return await economyRepo.atomicPlaceBet(userId, guildId, gameId, amount, betType, betValue);
+}
+
+export async function atomicProcessRouletteResults(
+  gameId: number,
+  guildId: string,
+  winningNumber: number,
+  winningColor: string,
+): Promise<{ gameId: number; results: Array<{ betId: number; userId: string; won: boolean; winAmount: number }> }> {
+  return await economyRepo.atomicProcessRouletteResults(gameId, guildId, winningNumber, winningColor);
+}
+
+export async function atomicCancelRouletteGame(
+  gameId: number,
+  guildId: string,
+): Promise<{ gameId: number; refundedBets: number }> {
+  return await economyRepo.atomicCancelRouletteGame(gameId, guildId);
+}
