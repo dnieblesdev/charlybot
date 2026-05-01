@@ -4,11 +4,11 @@ import {
   createTestUserEconomy,
   createTestEconomyConfig,
   cleanupEconomyData,
-  API_KEY,
   TEST_GUILD,
   generateTestId,
   isValkeyAvailable,
 } from "./setup";
+import { getAuthCookie } from "../helpers/auth";
 import app from "../../src/index";
 
 let valkeyAvailable = false;
@@ -18,8 +18,6 @@ beforeAll(async () => {
 });
 
 describe("POST /api/v1/economy/atomic-add-pocket", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -29,8 +27,9 @@ describe("POST /api/v1/economy/atomic-add-pocket", () => {
   });
 
   // Basic non-concurrent tests work even without Valkey (in-memory fallback)
-  
+
   it("A1.1: should reject zero amount", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("add-pocket-zero");
 
     await createTestUserEconomy(TEST_GUILD.ID, userId, { username: "TestUser", pocket: 1000 });
@@ -40,7 +39,7 @@ describe("POST /api/v1/economy/atomic-add-pocket", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -54,6 +53,7 @@ describe("POST /api/v1/economy/atomic-add-pocket", () => {
   });
 
   it("A1.2: should reject negative amount", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("add-pocket-negative");
 
     await createTestUserEconomy(TEST_GUILD.ID, userId, { username: "TestUser", pocket: 1000 });
@@ -63,7 +63,7 @@ describe("POST /api/v1/economy/atomic-add-pocket", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -77,6 +77,7 @@ describe("POST /api/v1/economy/atomic-add-pocket", () => {
   });
 
   it("A1.3: should handle user not found (or lock failure in fallback mode)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Note: When Valkey unavailable and fallback lock fails, we get 429 instead of 400
     // This is expected behavior - the error message still indicates the issue
     const res = await app.fetch(
@@ -84,7 +85,7 @@ describe("POST /api/v1/economy/atomic-add-pocket", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "non-existent-user",
@@ -102,8 +103,6 @@ describe("POST /api/v1/economy/atomic-add-pocket", () => {
 });
 
 describe("POST /api/v1/economy/atomic-subtract-pocket", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -113,6 +112,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket", () => {
   });
 
   it("A2.1: should reject zero amount", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("subtract-zero");
 
     await createTestUserEconomy(TEST_GUILD.ID, userId, { username: "TestUser", pocket: 1000 });
@@ -122,7 +122,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -136,6 +136,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket", () => {
   });
 
   it("A2.2: should reject negative amount", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("subtract-negative");
 
     await createTestUserEconomy(TEST_GUILD.ID, userId, { username: "TestUser", pocket: 1000 });
@@ -145,7 +146,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -159,6 +160,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket", () => {
   });
 
   it("A2.3: should handle user not found (or lock failure in fallback mode)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Note: When Valkey unavailable and fallback lock fails, we get 429 instead of 400
     // This is expected behavior - the error message still indicates the issue
     const res = await app.fetch(
@@ -166,7 +168,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "non-existent-user",
@@ -184,8 +186,6 @@ describe("POST /api/v1/economy/atomic-subtract-pocket", () => {
 });
 
 describe("POST /api/v1/economy/cooldown/claim", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -195,6 +195,7 @@ describe("POST /api/v1/economy/cooldown/claim", () => {
   });
 
   it("A3.1: should reject zero cooldownMs", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("cooldown-zero");
 
     await createTestUserEconomy(TEST_GUILD.ID, userId, { username: "TestUser", pocket: 1000 });
@@ -204,7 +205,7 @@ describe("POST /api/v1/economy/cooldown/claim", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -219,6 +220,7 @@ describe("POST /api/v1/economy/cooldown/claim", () => {
   });
 
   it("A3.2: should reject invalid type", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("cooldown-invalid-type");
 
     await createTestUserEconomy(TEST_GUILD.ID, userId, { username: "TestUser", pocket: 1000 });
@@ -228,7 +230,7 @@ describe("POST /api/v1/economy/cooldown/claim", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -243,6 +245,7 @@ describe("POST /api/v1/economy/cooldown/claim", () => {
   });
 
   it("A3.3: should handle user not found (or lock failure in fallback mode)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Note: When Valkey unavailable and fallback lock fails, we get 429 instead of 400
     // This is expected behavior - the error message still indicates the issue
     const res = await app.fetch(
@@ -250,7 +253,7 @@ describe("POST /api/v1/economy/cooldown/claim", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "non-existent-user",
@@ -270,8 +273,6 @@ describe("POST /api/v1/economy/cooldown/claim", () => {
 
 // Lock-dependent tests - only run when Valkey is available
 describe("POST /api/v1/economy/atomic-add-pocket (with locking)", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -281,6 +282,7 @@ describe("POST /api/v1/economy/atomic-add-pocket (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("A1.4: should add money atomically when lock is available", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("add-pocket-basic");
     const initialPocket = 100;
 
@@ -291,7 +293,7 @@ describe("POST /api/v1/economy/atomic-add-pocket (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -307,6 +309,7 @@ describe("POST /api/v1/economy/atomic-add-pocket (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("A1.5: should claim cooldown when cooldownType is provided", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("add-pocket-cooldown");
     const initialPocket = 100;
 
@@ -317,7 +320,7 @@ describe("POST /api/v1/economy/atomic-add-pocket (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -335,6 +338,7 @@ describe("POST /api/v1/economy/atomic-add-pocket (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("A1.6: should reject second request when on cooldown (work)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("add-pocket-oncooldown");
     const initialPocket = 1000;
 
@@ -346,7 +350,7 @@ describe("POST /api/v1/economy/atomic-add-pocket (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -364,7 +368,7 @@ describe("POST /api/v1/economy/atomic-add-pocket (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -381,8 +385,6 @@ describe("POST /api/v1/economy/atomic-add-pocket (with locking)", () => {
 });
 
 describe("POST /api/v1/economy/atomic-subtract-pocket (with locking)", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -392,6 +394,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("A2.4: should subtract money from pocket atomically", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("subtract-basic");
     const initialPocket = 500;
 
@@ -402,7 +405,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -419,6 +422,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("A2.5: should reject when insufficient funds", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("subtract-insufficient");
     const initialPocket = 100;
 
@@ -429,7 +433,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -451,6 +455,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("A2.6: should reject when exactly at funds (exact amount)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("subtract-exact");
     const initialPocket = 200;
 
@@ -461,7 +466,7 @@ describe("POST /api/v1/economy/atomic-subtract-pocket (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -476,8 +481,6 @@ describe("POST /api/v1/economy/atomic-subtract-pocket (with locking)", () => {
 });
 
 describe("POST /api/v1/economy/cooldown/claim (with locking)", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -487,6 +490,7 @@ describe("POST /api/v1/economy/cooldown/claim (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("A3.4: should claim cooldown when not on cooldown", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("cooldown-claim-basic");
 
     await createTestUserEconomy(TEST_GUILD.ID, userId, { username: "TestUser", pocket: 1000 });
@@ -496,7 +500,7 @@ describe("POST /api/v1/economy/cooldown/claim (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -513,6 +517,7 @@ describe("POST /api/v1/economy/cooldown/claim (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("A3.5: should reject claim when on cooldown", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("cooldown-claim-reject");
 
     // User with recent work (1 minute ago)
@@ -528,7 +533,7 @@ describe("POST /api/v1/economy/cooldown/claim (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -546,6 +551,7 @@ describe("POST /api/v1/economy/cooldown/claim (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("A3.6: should accept claim after cooldown expired", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("cooldown-claim-expired");
 
     // User with work 10 minutes ago (cooldown = 5 minutes)
@@ -561,7 +567,7 @@ describe("POST /api/v1/economy/cooldown/claim (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,

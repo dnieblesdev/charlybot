@@ -2,8 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import app from "../../src/index";
 import { prisma } from "@charlybot/shared";
 import { createTestGuild, createTestTipoClase, createTestClass, createTestSubclass, cleanupTestGuild, generateTestId } from "../helpers/factories";
-
-const API_KEY = "charly_secret_key";
+import { getAuthCookie } from "../../helpers/auth";
 
 describe("Classes API - GET /guild/:guildId", () => {
   const testGuildId = generateTestId("guild-classes");
@@ -26,11 +25,12 @@ describe("Classes API - GET /guild/:guildId", () => {
   });
 
   it("T4.1: should return classes for guild", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/classes/guild/${testGuildId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -46,11 +46,12 @@ describe("Classes API - GET /guild/:guildId", () => {
     const noClassGuildId = generateTestId("guild-no-classes");
     await createTestGuild(prisma, noClassGuildId);
 
+    const cookie = await getAuthCookie([noClassGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/classes/guild/${noClassGuildId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -82,11 +83,12 @@ describe("Classes API - GET /guild/:guildId/:name", () => {
   });
 
   it("T4.2: should return specific class by name", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/classes/guild/${testGuildId}/Mage`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -98,11 +100,12 @@ describe("Classes API - GET /guild/:guildId/:name", () => {
   });
 
   it("T4.2b: should return 404 for non-existent class", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/classes/guild/${testGuildId}/NonExistent`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -123,12 +126,13 @@ describe("Classes API - POST /", () => {
   });
 
   it("T4.3: should create class with valid data", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/classes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -157,12 +161,13 @@ describe("Classes API - POST /", () => {
   });
 
   it("T4.3b: should reject invalid class data", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/classes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           // Missing required fields
@@ -196,11 +201,12 @@ describe("Classes API - DELETE /guild/:guildId/:name", () => {
   });
 
   it("T4.4: should delete class by name", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/classes/guild/${testGuildId}/Rogue`, {
         method: "DELETE",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -211,11 +217,12 @@ describe("Classes API - DELETE /guild/:guildId/:name", () => {
   });
 
   it("T4.4b: should return 404 when class doesn't exist", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/classes/guild/${testGuildId}/NonExistent`, {
         method: "DELETE",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );

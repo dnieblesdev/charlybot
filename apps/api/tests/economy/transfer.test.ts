@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { prisma } from "@charlybot/shared";
-import { createTestUserEconomy, createTestEconomyConfig, cleanupEconomyData, API_KEY, TEST_GUILD, generateTestId } from "./setup";
+import { createTestUserEconomy, createTestEconomyConfig, cleanupEconomyData, TEST_GUILD, generateTestId } from "./setup";
+import { getAuthCookie } from "../helpers/auth";
 import app from "../../src/index";
 
 describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     // Create test config for the guild
     await createTestEconomyConfig(TEST_GUILD.ID);
@@ -16,6 +15,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
   });
 
   it("S1.5: should successfully transfer money between users", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const senderId = generateTestId("sender");
     const receiverId = generateTestId("receiver");
     const amount = 500;
@@ -36,7 +36,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           fromUserId: senderId,
@@ -72,6 +72,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
   });
 
   it("S1.7: should fail transfer with insufficient funds", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const senderId = generateTestId("sender-poor");
     const receiverId = generateTestId("receiver");
     const amount = 1000;
@@ -92,7 +93,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           fromUserId: senderId,
@@ -112,6 +113,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
   });
 
   it("S1.6: should fail transfer when receiver does not exist", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const senderId = generateTestId("sender-no-receiver");
     const nonExistentReceiverId = generateTestId("non-existent-receiver");
     const amount = 100;
@@ -128,7 +130,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           fromUserId: senderId,
@@ -148,6 +150,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
   });
 
   it("S1.8: should fail transfer with zero amount (Zod validation)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const senderId = generateTestId("sender-zero");
     const receiverId = generateTestId("receiver-zero");
 
@@ -167,7 +170,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           fromUserId: senderId,
@@ -185,6 +188,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
   });
 
   it("S1.8b: should fail transfer with negative amount (Zod validation)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const senderId = generateTestId("sender-negative");
     const receiverId = generateTestId("receiver-negative");
 
@@ -204,7 +208,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           fromUserId: senderId,
@@ -221,7 +225,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
     expect(res.status).toBe(400);
   });
 
-  it("S1.11: should return 401 when no API key is provided", async () => {
+  it("S1.11: should return 401 when no JWT cookie is provided", async () => {
     const senderId = generateTestId("sender-no-auth");
     const receiverId = generateTestId("receiver-no-auth");
 
@@ -235,13 +239,13 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
       pocket: 100,
     });
 
-    // Act: transfer WITHOUT X-API-Key header
+    // Act: transfer WITHOUT cookie
     const res = await app.fetch(
       new Request("/api/v1/economy/transfer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // No X-API-Key header
+          // No cookie
         },
         body: JSON.stringify({
           fromUserId: senderId,
@@ -278,7 +282,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": "wrong-api-key",
+          Cookie: "accessToken=invalid-token",
         },
         body: JSON.stringify({
           fromUserId: senderId,
@@ -296,6 +300,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
   });
 
   it("S1.6 variant: should fail transfer when sender does not exist", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const nonExistentSenderId = generateTestId("non-existent-sender");
     const receiverId = generateTestId("receiver-no-sender");
     const amount = 100;
@@ -312,7 +317,7 @@ describe("POST /api/v1/economy/transfer - Atomic Transfer", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           fromUserId: nonExistentSenderId,

@@ -2,8 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import app from "../../src/index";
 import { prisma } from "@charlybot/shared";
 import { createTestGuild, createTestAutorole, cleanupTestGuild, generateTestId } from "../helpers/factories";
-
-const API_KEY = "charly_secret_key";
+import { getAuthCookie } from "../../helpers/auth";
 
 describe("Autoroles API - GET /guild/:guildId", () => {
   const testGuildId = generateTestId("guild-autorole");
@@ -28,11 +27,12 @@ describe("Autoroles API - GET /guild/:guildId", () => {
   });
 
   it("T5.1: should return autoroles for guild", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/autoroles/guild/${testGuildId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -49,11 +49,12 @@ describe("Autoroles API - GET /guild/:guildId", () => {
     const noAutoroleGuildId = generateTestId("guild-no-autorole");
     await createTestGuild(prisma, noAutoroleGuildId);
 
+    const cookie = await getAuthCookie([noAutoroleGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/autoroles/guild/${noAutoroleGuildId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -87,11 +88,12 @@ describe("Autoroles API - GET /message/:guildId/:messageId", () => {
   });
 
   it("T5.2: should return autorole by messageId", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/autoroles/message/${testGuildId}/msg-specific`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -102,11 +104,12 @@ describe("Autoroles API - GET /message/:guildId/:messageId", () => {
   });
 
   it("T5.2b: should return 404 for non-existent messageId", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/autoroles/message/${testGuildId}/non-existent`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -127,12 +130,13 @@ describe("Autoroles API - POST /", () => {
   });
 
   it("T5.3: should create autorole with valid data", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/autoroles`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -155,12 +159,13 @@ describe("Autoroles API - POST /", () => {
   });
 
   it("T5.3b: should reject invalid autorole data", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/autoroles`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           // Missing required fields
@@ -196,12 +201,13 @@ describe("Autoroles API - PATCH /:id", () => {
   });
 
   it("T5.4: should update autorole", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/autoroles/${autoroleId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           channelId: "channel-updated",
@@ -238,11 +244,12 @@ describe("Autoroles API - DELETE /:id", () => {
   });
 
   it("T5.5: should delete autorole", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/autoroles/${autoroleId}`, {
         method: "DELETE",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -256,7 +263,7 @@ describe("Autoroles API - DELETE /:id", () => {
       new Request(`/api/v1/autoroles/message/${testGuildId}/msg-delete`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -285,12 +292,13 @@ describe("Autoroles API - POST /:id/mappings", () => {
   });
 
   it("T5.6: should add mapping to autorole", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/autoroles/${autoroleId}/mappings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           roleId: "new-role",
@@ -341,12 +349,13 @@ describe("Autoroles API - PATCH /mappings/:mappingId", () => {
   });
 
   it("T5.7: should update mapping", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/autoroles/mappings/${mappingId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           order: 5,
@@ -388,11 +397,12 @@ describe("Autoroles API - DELETE /mappings/:mappingId", () => {
   });
 
   it("T5.8: should delete mapping", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/autoroles/mappings/${mappingId}`, {
         method: "DELETE",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );

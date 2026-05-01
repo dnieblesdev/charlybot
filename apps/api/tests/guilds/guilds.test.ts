@@ -2,8 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import app from "../../src/index";
 import { prisma } from "@charlybot/shared";
 import { createTestGuild, createTestGuildConfig, cleanupTestGuild, generateTestId, TEST_GUILD_ID } from "../helpers/factories";
-
-const API_KEY = "charly_secret_key";
+import { createTestToken, getAuthCookie } from "../helpers/auth";
 
 describe("Guilds API - PATCH /:id", () => {
   const testGuildId = generateTestId("guild");
@@ -17,12 +16,13 @@ describe("Guilds API - PATCH /:id", () => {
   });
 
   it("T1.1: should update guild metadata with valid payload", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/guilds/${testGuildId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           name: "Updated Guild Name",
@@ -39,13 +39,14 @@ describe("Guilds API - PATCH /:id", () => {
 
   it("T1.2: should create guild if it doesn't exist", async () => {
     const newGuildId = generateTestId("new-guild");
+    const cookie = await getAuthCookie([newGuildId]);
 
     const response = await app.fetch(
       new Request(`/api/v1/guilds/${newGuildId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           name: "New Guild",
@@ -79,11 +80,12 @@ describe("Guilds API - GET /:id/config", () => {
   });
 
   it("T1.2: should return guild config when it exists", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/guilds/${testGuildId}/config`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -96,13 +98,14 @@ describe("Guilds API - GET /:id/config", () => {
   });
 
   it("T1.2c: should return persisted messageLogChannelId", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     // First set messageLogChannelId via PATCH
     await app.fetch(
       new Request(`/api/v1/guilds/${testGuildId}/config`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           messageLogChannelId: "123456789",
@@ -115,7 +118,7 @@ describe("Guilds API - GET /:id/config", () => {
       new Request(`/api/v1/guilds/${testGuildId}/config`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -128,12 +131,13 @@ describe("Guilds API - GET /:id/config", () => {
   it("T1.2b: should return 404 when config doesn't exist", async () => {
     const noConfigGuildId = generateTestId("guild-no-config");
     await createTestGuild(prisma, noConfigGuildId);
+    const cookie = await getAuthCookie([noConfigGuildId]);
 
     const response = await app.fetch(
       new Request(`/api/v1/guilds/${noConfigGuildId}/config`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -159,12 +163,13 @@ describe("Guilds API - PATCH /:id/config", () => {
   });
 
   it("T1.3: should update guild config with valid payload", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/guilds/${testGuildId}/config`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           welcomeChannelId: "welcome-channel-456",
@@ -183,13 +188,14 @@ describe("Guilds API - PATCH /:id/config", () => {
   it("T1.3b: should create config if it doesn't exist", async () => {
     const newGuildId = generateTestId("guild-new");
     await createTestGuild(prisma, newGuildId);
+    const cookie = await getAuthCookie([newGuildId]);
 
     const response = await app.fetch(
       new Request(`/api/v1/guilds/${newGuildId}/config`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           verificationChannelId: "verif-channel",
@@ -207,12 +213,13 @@ describe("Guilds API - PATCH /:id/config", () => {
   });
 
   it("T1.3d: should persist messageLogChannelId via PATCH", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/guilds/${testGuildId}/config`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           messageLogChannelId: "123456789",
@@ -227,12 +234,13 @@ describe("Guilds API - PATCH /:id/config", () => {
   });
 
   it("T1.3c: should reject invalid payload", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/guilds/${testGuildId}/config`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           // Invalid: non-existent field
@@ -249,7 +257,7 @@ describe("Guilds API - PATCH /:id/config", () => {
 });
 
 describe("Guilds API - Authentication", () => {
-  it("should return 401 without API key", async () => {
+  it("should return 401 without JWT cookie", async () => {
     const response = await app.fetch(
       new Request(`/api/v1/guilds/test/config`, {
         method: "GET",
@@ -259,12 +267,12 @@ describe("Guilds API - Authentication", () => {
     expect(response.status).toBe(401);
   });
 
-  it("should return 401 with invalid API key", async () => {
+  it("should return 401 with invalid JWT cookie", async () => {
     const response = await app.fetch(
       new Request(`/api/v1/guilds/test/config`, {
         method: "GET",
         headers: {
-          "X-API-Key": "invalid-key",
+          Cookie: "accessToken=invalid-token",
         },
       })
     );

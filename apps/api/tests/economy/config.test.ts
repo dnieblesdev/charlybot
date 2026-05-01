@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { prisma } from "@charlybot/shared";
-import { createTestEconomyConfig, cleanupEconomyData, API_KEY, TEST_GUILD, generateTestId } from "./setup";
+import { createTestEconomyConfig, cleanupEconomyData, TEST_GUILD, generateTestId } from "./setup";
+import { getAuthCookie } from "../helpers/auth";
 import app from "../../src/index";
 
 describe("GET /api/v1/economy/config/:guildId", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     // Config is created in beforeEach
   });
@@ -15,6 +14,7 @@ describe("GET /api/v1/economy/config/:guildId", () => {
   });
 
   it("S4.1: should return config when config exists", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Setup: create config
     await createTestEconomyConfig(TEST_GUILD.ID, { startingMoney: 2000 });
 
@@ -22,7 +22,7 @@ describe("GET /api/v1/economy/config/:guildId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/config/${TEST_GUILD.ID}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -34,13 +34,14 @@ describe("GET /api/v1/economy/config/:guildId", () => {
   });
 
   it("S4.2: should return 404 when config does not exist", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const nonExistentGuildId = generateTestId("non-existent-guild");
 
     // Act: GET non-existent config
     const res = await app.fetch(
       new Request(`/api/v1/economy/config/${nonExistentGuildId}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -52,8 +53,6 @@ describe("GET /api/v1/economy/config/:guildId", () => {
 });
 
 describe("POST /api/v1/economy/config", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     // Config is created in beforeEach
   });
@@ -63,6 +62,7 @@ describe("POST /api/v1/economy/config", () => {
   });
 
   it("S4.3: should create new economy config", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const newGuildId = generateTestId("new-guild-config");
 
     // Act: POST new config
@@ -71,7 +71,7 @@ describe("POST /api/v1/economy/config", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: newGuildId,
@@ -91,13 +91,14 @@ describe("POST /api/v1/economy/config", () => {
   });
 
   it("S4.4: should return 400 when required fields are missing", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Act: POST without guildId
     const res = await app.fetch(
       new Request("/api/v1/economy/config", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           startingMoney: 1500,
@@ -111,8 +112,6 @@ describe("POST /api/v1/economy/config", () => {
 });
 
 describe("PATCH /api/v1/economy/config/:guildId", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     // Config is created in beforeEach
   });
@@ -122,6 +121,7 @@ describe("PATCH /api/v1/economy/config/:guildId", () => {
   });
 
   it("S4.5: should update config when config exists", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Setup: create config
     await createTestEconomyConfig(TEST_GUILD.ID, { startingMoney: 1000 });
 
@@ -131,7 +131,7 @@ describe("PATCH /api/v1/economy/config/:guildId", () => {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           startingMoney: 2500,
@@ -146,6 +146,7 @@ describe("PATCH /api/v1/economy/config/:guildId", () => {
   });
 
   it("S4.6: should return 500 when updating non-existent config", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const nonExistentGuildId = generateTestId("non-existent-config-patch");
 
     // Act: PATCH non-existent config
@@ -154,7 +155,7 @@ describe("PATCH /api/v1/economy/config/:guildId", () => {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           startingMoney: 1500,
@@ -168,8 +169,6 @@ describe("PATCH /api/v1/economy/config/:guildId", () => {
 });
 
 describe("Config API - Authentication", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     // Config is created in beforeEach
   });
@@ -178,8 +177,8 @@ describe("Config API - Authentication", () => {
     await cleanupEconomyData([TEST_GUILD.ID], []);
   });
 
-  it("S7.6: should return 401 when no API key is provided for GET", async () => {
-    // Act: GET without X-API-Key header
+  it("S7.6: should return 401 when no JWT cookie is provided for GET", async () => {
+    // Act: GET without cookie
     const res = await app.fetch(
       new Request(`/api/v1/economy/config/${TEST_GUILD.ID}`, {
         method: "GET",

@@ -2,7 +2,7 @@ import { prisma, MAX_QUEUE_SIZE } from "@charlybot/shared";
 import logger from "../../utils/logger";
 import type { IMusicQueue, IMusicQueueItem, IGuildMusicConfig } from "@charlybot/shared";
 import type { IMusicRepository } from "../../domain/ports/IMusicRepository";
-import { withDistributedLock, musicQueueLockKey } from "@charlybot/shared/valkey";
+import { withDistributedLock, musicQueueLockKey } from "@charlybot/shared";
 import { getValkeyClient } from "../../infrastructure/valkey/index.ts";
 
 /**

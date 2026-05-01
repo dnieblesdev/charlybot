@@ -1,17 +1,18 @@
 /**
  * Economy test infrastructure - factories and helpers for HTTP integration tests.
- * Follows the guilds.test.ts pattern: app.fetch() + X-API-Key header.
+ * Follows the guilds.test.ts pattern: app.fetch() + JWT cookie auth.
  */
 
 import { prisma } from "@charlybot/shared";
 import { generateTestId as _generateTestId } from "../helpers/factories";
 import app from "../../src/index";
+import { getAuthCookie as _getAuthCookie } from "../helpers/auth";
 
 // Re-export generateTestId for convenience
 export const generateTestId = _generateTestId;
 
-// Re-export API_KEY from setup for convenience
-export const API_KEY = "charly_secret_key";
+// Re-export JWT auth helper for convenience
+export const getAuthCookie = _getAuthCookie;
 
 /**
  * Default test guild for economy tests.
@@ -296,18 +297,21 @@ export async function cleanupGuildEconomyConfig(guildId: string) {
 
 /**
  * Helper to make authenticated HTTP requests to the economy API.
- * Normalizes URL and adds X-API-Key header automatically.
+ * Normalizes URL and adds JWT cookie automatically.
+ * @param guildId - Optional guild ID for JWT token guild access. Defaults to TEST_GUILD.ID.
  */
 export async function request(
   method: string,
   path: string,
   body?: unknown,
-  headers?: Record<string, string>
+  headers?: Record<string, string>,
+  guildId?: string
 ) {
   const url = path.startsWith("/") ? path : `/${path}`;
+  const cookie = await getAuthCookie([guildId ?? TEST_GUILD.ID]);
   
   const requestHeaders: Record<string, string> = {
-    "X-API-Key": API_KEY,
+    Cookie: cookie,
     ...headers,
   };
 

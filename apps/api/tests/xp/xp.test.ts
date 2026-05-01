@@ -9,8 +9,7 @@ import {
   cleanupXPData,
   generateTestId,
 } from "../helpers/factories";
-
-const API_KEY = "charly_secret_key";
+import { getAuthCookie } from "../../helpers/auth";
 
 describe("Leaderboard API", () => {
   const testGuildId = generateTestId("leaderboard");
@@ -25,9 +24,10 @@ describe("Leaderboard API", () => {
   });
 
   it("T5.1: should return empty leaderboard when no users", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/leaderboard/${testGuildId}`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -44,9 +44,10 @@ describe("Leaderboard API", () => {
     await createTestUserXP(prisma, "user-b", testGuildId, { xp: 300, username: "UserB" });
     await createTestUserXP(prisma, "user-c", testGuildId, { xp: 200, username: "UserC" });
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/leaderboard/${testGuildId}`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -68,9 +69,10 @@ describe("Leaderboard API", () => {
     await createTestUserXP(prisma, "user-mid", testGuildId, { xp: 100, lastMessageAt: newer });
     await createTestUserXP(prisma, "user-new", testGuildId, { xp: 100, lastMessageAt: newest });
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/leaderboard/${testGuildId}`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -87,9 +89,10 @@ describe("Leaderboard API", () => {
       await createTestUserXP(prisma, `user-${i}`, testGuildId, { xp: i * 10 });
     }
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/leaderboard/${testGuildId}`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -107,9 +110,10 @@ describe("Leaderboard API", () => {
       await createTestUserXP(prisma, `user-${i}`, testGuildId, { xp: i * 10 });
     }
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/leaderboard/${testGuildId}?page=2&limit=10`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -124,9 +128,10 @@ describe("Leaderboard API", () => {
   it("T5.6: should clamp page=0 to page=1", async () => {
     await createTestUserXP(prisma, "user-1", testGuildId, { xp: 50 });
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/leaderboard/${testGuildId}?page=0`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -138,9 +143,10 @@ describe("Leaderboard API", () => {
   it("T5.7: should clamp limit=0 to limit=1", async () => {
     await createTestUserXP(prisma, "user-1", testGuildId, { xp: 50 });
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/leaderboard/${testGuildId}?limit=0`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -152,9 +158,10 @@ describe("Leaderboard API", () => {
   it("T5.8: should clamp limit=999 to limit=100", async () => {
     await createTestUserXP(prisma, "user-1", testGuildId, { xp: 50 });
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/leaderboard/${testGuildId}?limit=999`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -163,7 +170,7 @@ describe("Leaderboard API", () => {
     expect(body.limit).toBe(100); // clamped to 100
   });
 
-  it("T5.9: should return 401 without API key", async () => {
+  it("T5.9: should return 401 without JWT cookie", async () => {
     const res = await app.fetch(
       new Request(`/api/v1/xp/leaderboard/${testGuildId}`, {})
     );
@@ -191,9 +198,10 @@ describe("User XP API - GET", () => {
       username: "TestUser",
     });
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/${testGuildId}/user-123`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -207,9 +215,10 @@ describe("User XP API - GET", () => {
   });
 
   it("T6.2: should return 404 when user XP does not exist", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/${testGuildId}/non-existent-user`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -218,7 +227,7 @@ describe("User XP API - GET", () => {
     expect(body.error).toBe("User XP not found");
   });
 
-  it("T6.3: should return 401 without API key", async () => {
+  it("T6.3: should return 401 without JWT cookie", async () => {
     const res = await app.fetch(
       new Request(`/api/v1/xp/${testGuildId}/user-123`, {})
     );
@@ -240,12 +249,13 @@ describe("User XP API - Upsert POST /", () => {
   });
 
   it("T7.1: should upsert user XP - create new (username not in schema, stored as null)", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "new-user",
@@ -273,12 +283,13 @@ describe("User XP API - Upsert POST /", () => {
       username: "OldName",
     });
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "existing-user",
@@ -300,12 +311,13 @@ describe("User XP API - Upsert POST /", () => {
   });
 
   it("T7.3: should return 400 when userId is missing", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -318,12 +330,13 @@ describe("User XP API - Upsert POST /", () => {
   });
 
   it("T7.4: should return 400 when guildId is missing", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "user-123",
@@ -337,12 +350,13 @@ describe("User XP API - Upsert POST /", () => {
 
   it("T7.5: should allow missing username (upsert without username)", async () => {
     // Bug verification: username is optional in schema, upsert works without it
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "user-no-name",
@@ -360,12 +374,13 @@ describe("User XP API - Upsert POST /", () => {
   });
 
   it("T7.6: should return 400 for invalid xp type", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "user-123",
@@ -394,12 +409,13 @@ describe("XP Increment API", () => {
   it("T8.1: should increment XP atomically for existing user", async () => {
     await createTestUserXP(prisma, "user-inc", testGuildId, { xp: 100, nivel: 3 });
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/increment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "user-inc",
@@ -421,12 +437,13 @@ describe("XP Increment API", () => {
   });
 
   it("T8.2: should upsert on first increment (create if not exists)", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/increment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "brand-new-user",
@@ -448,12 +465,13 @@ describe("XP Increment API", () => {
   });
 
   it("T8.3: should return 400 when required fields missing", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/increment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "user-123",
@@ -467,12 +485,13 @@ describe("XP Increment API", () => {
   });
 
   it("T8.4: should return 400 for negative xpIncrement", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/increment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "user-123",
@@ -489,12 +508,13 @@ describe("XP Increment API", () => {
 
   it("T8.5: should return 400 for xpIncrement=0 (min 1)", async () => {
     // Bug verification: xpIncrement: 0 should return 400 per Zod min(1)
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/increment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "user-123",
@@ -509,7 +529,7 @@ describe("XP Increment API", () => {
     expect(res.status).toBe(400);
   });
 
-  it("T8.6: should return 401 without API key", async () => {
+  it("T8.6: should return 401 without JWT cookie", async () => {
     const res = await app.fetch(
       new Request("/api/v1/xp/increment", {
         method: "POST",
@@ -532,12 +552,13 @@ describe("XP Increment API", () => {
   it("T8.7: should handle missing username in increment gracefully", async () => {
     await createTestUserXP(prisma, "user-no-name", testGuildId, { xp: 50, username: "OldName" });
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/increment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "user-no-name",
@@ -572,9 +593,10 @@ describe("XP Config API - GET /config/:guildId", () => {
   it("T9.1: should return 200 with config data when config exists", async () => {
     await createTestXPConfig(prisma, testGuildId, { xpPerMessage: 5 });
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/config/${testGuildId}`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -586,9 +608,10 @@ describe("XP Config API - GET /config/:guildId", () => {
   });
 
   it("T9.2: should return 404 when no config exists", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/config/${testGuildId}`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -597,7 +620,7 @@ describe("XP Config API - GET /config/:guildId", () => {
     expect(body.error).toBe("XP config not found");
   });
 
-  it("T9.3: should return 401 without API key", async () => {
+  it("T9.3: should return 401 without JWT cookie", async () => {
     const res = await app.fetch(
       new Request(`/api/v1/xp/config/${testGuildId}`, {})
     );
@@ -619,12 +642,13 @@ describe("XP Config API - POST /config", () => {
   });
 
   it("T10.1: should return 201 when creating valid config", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/config", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -642,12 +666,13 @@ describe("XP Config API - POST /config", () => {
   });
 
   it("T10.2: should return 400 when guildId is missing", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/config", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           xpPerMessage: 5,
@@ -660,12 +685,13 @@ describe("XP Config API - POST /config", () => {
   });
 
   it("T10.3: should return 400 when xpPerMessage <= 0", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/config", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -679,12 +705,13 @@ describe("XP Config API - POST /config", () => {
   });
 
   it("T10.4: should return 400 when xpPerMessage is negative", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/config", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -697,7 +724,7 @@ describe("XP Config API - POST /config", () => {
     expect(res.status).toBe(400);
   });
 
-  it("T10.5: should return 401 without API key", async () => {
+  it("T10.5: should return 401 without JWT cookie", async () => {
     const res = await app.fetch(
       new Request("/api/v1/xp/config", {
         method: "POST",
@@ -730,12 +757,13 @@ describe("XP Config API - PATCH /config/:guildId", () => {
   it("T11.1: should return 200 when updating existing config", async () => {
     await createTestXPConfig(prisma, testGuildId, { xpPerMessage: 1 });
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/config/${testGuildId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           xpPerMessage: 10,
@@ -750,12 +778,13 @@ describe("XP Config API - PATCH /config/:guildId", () => {
 
   it("T11.2: should return 500 when config does not exist (P2025 bug)", async () => {
     // Known bug: PATCH on non-existent record throws Prisma error instead of graceful 404
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/config/${testGuildId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           xpPerMessage: 10,
@@ -766,7 +795,7 @@ describe("XP Config API - PATCH /config/:guildId", () => {
     expect(res.status).toBe(500);
   });
 
-  it("T11.3: should return 401 without API key", async () => {
+  it("T11.3: should return 401 without JWT cookie", async () => {
     const res = await app.fetch(
       new Request(`/api/v1/xp/config/${testGuildId}`, {
         method: "PATCH",
@@ -798,10 +827,11 @@ describe("XP Config API - DELETE /config/:guildId", () => {
   it("T12.1: should return 200 when deleting existing config", async () => {
     await createTestXPConfig(prisma, testGuildId);
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/config/${testGuildId}`, {
         method: "DELETE",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -809,10 +839,11 @@ describe("XP Config API - DELETE /config/:guildId", () => {
   });
 
   it("T12.2: should return 404 when config does not exist", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/config/${testGuildId}`, {
         method: "DELETE",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -821,7 +852,7 @@ describe("XP Config API - DELETE /config/:guildId", () => {
     expect(body.error).toBe("XP config not found");
   });
 
-  it("T12.3: should return 401 without API key", async () => {
+  it("T12.3: should return 401 without JWT cookie", async () => {
     const res = await app.fetch(
       new Request(`/api/v1/xp/config/${testGuildId}`, {
         method: "DELETE",
@@ -849,9 +880,10 @@ describe("Level Roles API - GET /level-roles/:guildId", () => {
     await createTestLevelRole(prisma, testGuildId, 1, "role-low");
     await createTestLevelRole(prisma, testGuildId, 5, "role-mid");
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/level-roles/${testGuildId}`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -864,9 +896,10 @@ describe("Level Roles API - GET /level-roles/:guildId", () => {
   });
 
   it("T13.2: should return 200 with empty array when no roles", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/level-roles/${testGuildId}`, {
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -875,7 +908,7 @@ describe("Level Roles API - GET /level-roles/:guildId", () => {
     expect(body).toEqual([]);
   });
 
-  it("T13.3: should return 401 without API key", async () => {
+  it("T13.3: should return 401 without JWT cookie", async () => {
     const res = await app.fetch(
       new Request(`/api/v1/xp/level-roles/${testGuildId}`, {})
     );
@@ -897,12 +930,13 @@ describe("Level Roles API - POST /level-roles", () => {
   });
 
   it("T14.1: should return 201 when creating valid level role", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/level-roles", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -920,12 +954,13 @@ describe("Level Roles API - POST /level-roles", () => {
   });
 
   it("T14.2: should return 400 when required fields missing", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/level-roles", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -938,12 +973,13 @@ describe("Level Roles API - POST /level-roles", () => {
   });
 
   it("T14.3: should return 400 when level = 0 (min 1)", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/level-roles", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -957,12 +993,13 @@ describe("Level Roles API - POST /level-roles", () => {
   });
 
   it("T14.4: should return 400 when level is negative", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/level-roles", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -980,12 +1017,13 @@ describe("Level Roles API - POST /level-roles", () => {
     await createTestLevelRole(prisma, testGuildId, 10, "role-first");
 
     // Try to create duplicate level
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request("/api/v1/xp/level-roles", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -999,7 +1037,7 @@ describe("Level Roles API - POST /level-roles", () => {
     expect(res.status).toBe(500);
   });
 
-  it("T14.6: should return 401 without API key", async () => {
+  it("T14.6: should return 401 without JWT cookie", async () => {
     const res = await app.fetch(
       new Request("/api/v1/xp/level-roles", {
         method: "POST",
@@ -1033,10 +1071,11 @@ describe("Level Roles API - DELETE /level-roles/:guildId/:level", () => {
   it("T15.1: should return 200 when deleting existing level role", async () => {
     await createTestLevelRole(prisma, testGuildId, 10, "role-123");
 
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/level-roles/${testGuildId}/10`, {
         method: "DELETE",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -1046,10 +1085,11 @@ describe("Level Roles API - DELETE /level-roles/:guildId/:level", () => {
   });
 
   it("T15.2: should return 404 when level role does not exist", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/level-roles/${testGuildId}/999`, {
         method: "DELETE",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -1060,10 +1100,11 @@ describe("Level Roles API - DELETE /level-roles/:guildId/:level", () => {
 
 it("T15.3: should return 500 for NaN level (Prisma validation error)", async () => {
     // NaN from parseInt("abc") → PrismaClientValidationError (missing required field)
+    const cookie = await getAuthCookie([testGuildId]);
     const res = await app.fetch(
       new Request(`/api/v1/xp/level-roles/${testGuildId}/abc`, {
         method: "DELETE",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -1071,7 +1112,7 @@ it("T15.3: should return 500 for NaN level (Prisma validation error)", async () 
     expect(res.status).toBe(500);
   });
 
-  it("T15.4: should return 401 without API key", async () => {
+  it("T15.4: should return 401 without JWT cookie", async () => {
     const res = await app.fetch(
       new Request(`/api/v1/xp/level-roles/${testGuildId}/10`, {
         method: "DELETE",

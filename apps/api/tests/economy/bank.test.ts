@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { prisma } from "@charlybot/shared";
-import { createTestBank, createTestUserEconomy, createTestEconomyConfig, cleanupEconomyData, API_KEY, TEST_GUILD, generateTestId } from "./setup";
+import { createTestBank, createTestUserEconomy, createTestEconomyConfig, cleanupEconomyData, TEST_GUILD, generateTestId } from "./setup";
+import { getAuthCookie } from "../helpers/auth";
 import app from "../../src/index";
 
 describe("GET /api/v1/economy/bank/:userId", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -15,6 +14,7 @@ describe("GET /api/v1/economy/bank/:userId", () => {
   });
 
   it("S3.1: should return bank when bank record exists", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("bank-get");
     const username = "BankUser";
 
@@ -25,7 +25,7 @@ describe("GET /api/v1/economy/bank/:userId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/bank/${userId}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -38,13 +38,14 @@ describe("GET /api/v1/economy/bank/:userId", () => {
   });
 
   it("S3.2: should return 404 when bank does not exist", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const nonExistentUserId = generateTestId("non-existent-bank");
 
     // Act: GET non-existent bank
     const res = await app.fetch(
       new Request(`/api/v1/economy/bank/${nonExistentUserId}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -56,8 +57,6 @@ describe("GET /api/v1/economy/bank/:userId", () => {
 });
 
 describe("POST /api/v1/economy/bank", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -67,6 +66,7 @@ describe("POST /api/v1/economy/bank", () => {
   });
 
   it("S3.3: should create new bank record", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("bank-create");
     const username = "NewBankUser";
 
@@ -76,7 +76,7 @@ describe("POST /api/v1/economy/bank", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -94,13 +94,14 @@ describe("POST /api/v1/economy/bank", () => {
   });
 
   it("S3.4: should return 400 when required fields are missing", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Act: POST without userId
     const res = await app.fetch(
       new Request("/api/v1/economy/bank", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           username: "Test",
@@ -115,8 +116,6 @@ describe("POST /api/v1/economy/bank", () => {
 });
 
 describe("PATCH /api/v1/economy/bank/:userId", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -126,6 +125,7 @@ describe("PATCH /api/v1/economy/bank/:userId", () => {
   });
 
   it("S3.5: should update bank when bank exists", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("bank-patch");
     const username = "BankUser";
 
@@ -138,7 +138,7 @@ describe("PATCH /api/v1/economy/bank/:userId", () => {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           bank: 8000,
@@ -153,6 +153,7 @@ describe("PATCH /api/v1/economy/bank/:userId", () => {
   });
 
   it("S3.6: should return 500 when updating non-existent bank", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const nonExistentUserId = generateTestId("non-existent-bank-patch");
 
     // Act: PATCH non-existent bank
@@ -161,7 +162,7 @@ describe("PATCH /api/v1/economy/bank/:userId", () => {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           bank: 1000,
@@ -175,8 +176,6 @@ describe("PATCH /api/v1/economy/bank/:userId", () => {
 });
 
 describe("Bank API - Authentication", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -185,10 +184,10 @@ describe("Bank API - Authentication", () => {
     await cleanupEconomyData([TEST_GUILD.ID], []);
   });
 
-  it("S7.5: should return 401 when no API key is provided for GET", async () => {
+  it("S7.5: should return 401 when no JWT cookie is provided for GET", async () => {
     const userId = generateTestId("bank-no-auth");
 
-    // Act: GET without X-API-Key header
+    // Act: GET without cookie
     const res = await app.fetch(
       new Request(`/api/v1/economy/bank/${userId}`, {
         method: "GET",
@@ -199,10 +198,10 @@ describe("Bank API - Authentication", () => {
     expect(res.status).toBe(401);
   });
 
-  it("should return 401 when no API key is provided for POST", async () => {
+  it("should return 401 when no JWT cookie is provided for POST", async () => {
     const userId = generateTestId("bank-post-no-auth");
 
-    // Act: POST without X-API-Key header
+    // Act: POST without cookie
     const res = await app.fetch(
       new Request("/api/v1/economy/bank", {
         method: "POST",

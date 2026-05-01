@@ -6,10 +6,10 @@ import {
   createTestRouletteGame,
   createTestRouletteBet,
   cleanupEconomyData,
-  API_KEY,
   TEST_GUILD,
   generateTestId,
 } from "./setup";
+import { getAuthCookie } from "../helpers/auth";
 import app from "../../src/index";
 
 describe("POST /api/v1/economy/roulette/game", () => {
@@ -22,10 +22,11 @@ describe("POST /api/v1/economy/roulette/game", () => {
   });
 
   it("R1.1: should create a new roulette game with 201", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/game", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({ guildId: TEST_GUILD.ID, channelId: "roulette-channel-1" }),
       })
     );
@@ -38,10 +39,11 @@ describe("POST /api/v1/economy/roulette/game", () => {
   });
 
   it("R1.2: should return 400 when required fields are missing", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/game", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({ guildId: TEST_GUILD.ID }),
         // channelId is missing
       })
@@ -50,7 +52,7 @@ describe("POST /api/v1/economy/roulette/game", () => {
     expect(res.status).toBe(400);
   });
 
-  it("R1.3: should return 401 when no API key is provided", async () => {
+  it("R1.3: should return 401 when no JWT cookie is provided", async () => {
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/game", {
         method: "POST",
@@ -73,13 +75,14 @@ describe("GET /api/v1/economy/roulette/game/:channelId/active", () => {
   });
 
   it("R2.1: should return active game with 200", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Setup: create a waiting game
     const game = await createTestRouletteGame(TEST_GUILD.ID, "active-channel-1", { status: "waiting" });
 
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.channelId}/active`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -91,10 +94,11 @@ describe("GET /api/v1/economy/roulette/game/:channelId/active", () => {
   });
 
   it("R2.2: should return 404 when no active game exists", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/game/non-existent-channel/active", {
         method: "GET",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -103,7 +107,7 @@ describe("GET /api/v1/economy/roulette/game/:channelId/active", () => {
     expect(body.error).toBe("No active game");
   });
 
-  it("R2.3: should return 401 when no API key is provided", async () => {
+  it("R2.3: should return 401 when no JWT cookie is provided", async () => {
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/game/some-channel/active", {
         method: "GET",
@@ -124,6 +128,7 @@ describe("POST /api/v1/economy/roulette/game/:gameId/bet", () => {
   });
 
   it("R3.1: should place a bet successfully with 201", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("roulette-bet-user");
     // Create user economy (required for FK)
     await createTestUserEconomy(TEST_GUILD.ID, userId, { pocket: 5000 });
@@ -133,7 +138,7 @@ describe("POST /api/v1/economy/roulette/game/:gameId/bet", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}/bet`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({
           userId,
           guildId: TEST_GUILD.ID,
@@ -153,12 +158,13 @@ describe("POST /api/v1/economy/roulette/game/:gameId/bet", () => {
   });
 
   it("R3.2: should return 400 when required fields are missing", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "bet-channel-2", { status: "waiting" });
 
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}/bet`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({
           userId: "some-user",
           guildId: TEST_GUILD.ID,
@@ -173,6 +179,7 @@ describe("POST /api/v1/economy/roulette/game/:gameId/bet", () => {
   });
 
   it("R3.3: should return 400 when betType is invalid", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("roulette-invalid-type-user");
     await createTestUserEconomy(TEST_GUILD.ID, userId);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "bet-channel-3", { status: "waiting" });
@@ -180,7 +187,7 @@ describe("POST /api/v1/economy/roulette/game/:gameId/bet", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}/bet`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({
           userId,
           guildId: TEST_GUILD.ID,
@@ -195,13 +202,14 @@ describe("POST /api/v1/economy/roulette/game/:gameId/bet", () => {
   });
 
   it("R3.4: should return 500 when gameId is invalid (non-existent)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("roulette-no-game-user");
     await createTestUserEconomy(TEST_GUILD.ID, userId);
 
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/game/99999/bet", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({
           userId,
           guildId: TEST_GUILD.ID,
@@ -216,6 +224,7 @@ describe("POST /api/v1/economy/roulette/game/:gameId/bet", () => {
   });
 
   it("R3.5: [KNOWN GAP] no balance validation - can bet without sufficient funds", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("roulette-no-money-user");
     // Create user with 0 pocket money
     await createTestUserEconomy(TEST_GUILD.ID, userId, { pocket: 0 });
@@ -224,7 +233,7 @@ describe("POST /api/v1/economy/roulette/game/:gameId/bet", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}/bet`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({
           userId,
           guildId: TEST_GUILD.ID,
@@ -241,6 +250,7 @@ describe("POST /api/v1/economy/roulette/game/:gameId/bet", () => {
   });
 
   it("R3.6: [KNOWN GAP] no game state validation - can bet on finished games", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("roulette-finished-game-user");
     await createTestUserEconomy(TEST_GUILD.ID, userId, { pocket: 5000 });
     // Create a finished game
@@ -249,7 +259,7 @@ describe("POST /api/v1/economy/roulette/game/:gameId/bet", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}/bet`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({
           userId,
           guildId: TEST_GUILD.ID,
@@ -276,12 +286,13 @@ describe("PATCH /api/v1/economy/roulette/game/:gameId", () => {
   });
 
   it("R4.1: should update game state successfully with 200", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "update-channel-1", { status: "waiting" });
 
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({ status: "spinning" }),
       })
     );
@@ -293,6 +304,7 @@ describe("PATCH /api/v1/economy/roulette/game/:gameId", () => {
   });
 
   it("R4.2: should update game with winning number and color", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "update-channel-2", { status: "spinning" });
 
     // NOTE: RouletteGamePatchSchema has 'result' (phantom, not in Prisma) instead of 'winningColor'
@@ -301,7 +313,7 @@ describe("PATCH /api/v1/economy/roulette/game/:gameId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({
           status: "finished",
           winningNumber: 17,
@@ -319,10 +331,11 @@ describe("PATCH /api/v1/economy/roulette/game/:gameId", () => {
   });
 
   it("R4.3: should return 500 when game is not found", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/game/99999", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({ status: "spinning" }),
       })
     );
@@ -331,12 +344,13 @@ describe("PATCH /api/v1/economy/roulette/game/:gameId", () => {
   });
 
   it("R4.4: should return 400 when status is invalid", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "update-channel-3", { status: "waiting" });
 
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({ status: "invalid-status" }),
       })
     );
@@ -345,12 +359,13 @@ describe("PATCH /api/v1/economy/roulette/game/:gameId", () => {
   });
 
   it("R4.5: [KNOWN GAP] no state transition validation - can go from waiting to finished directly", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "invalid-transition-channel", { status: "waiting" });
 
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({
           status: "finished", // Should require: waiting -> spinning -> finished
           winningNumber: 7,
@@ -374,6 +389,7 @@ describe("GET /api/v1/economy/roulette/game/:gameId", () => {
   });
 
   it("R5.1: should return game with bets with 200", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId1 = generateTestId("game-view-user-1");
     const userId2 = generateTestId("game-view-user-2");
     await createTestUserEconomy(TEST_GUILD.ID, userId1);
@@ -386,7 +402,7 @@ describe("GET /api/v1/economy/roulette/game/:gameId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -398,10 +414,11 @@ describe("GET /api/v1/economy/roulette/game/:gameId", () => {
   });
 
   it("R5.2: should return 404 when game is not found", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/game/99999", {
         method: "GET",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -410,7 +427,7 @@ describe("GET /api/v1/economy/roulette/game/:gameId", () => {
     expect(body.error).toBe("Not found");
   });
 
-  it("R5.3: should return 401 when no API key is provided", async () => {
+  it("R5.3: should return 401 when no JWT cookie is provided", async () => {
     const game = await createTestRouletteGame(TEST_GUILD.ID, "view-channel-no-auth", { status: "waiting" });
 
     const res = await app.fetch(
@@ -423,6 +440,7 @@ describe("GET /api/v1/economy/roulette/game/:gameId", () => {
   });
 
   it("R5.4: [KNOWN GAP] bet list capped at 100 with silent truncation", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "view-channel-100-bets", { status: "waiting" });
 
     // Create 150 bets
@@ -435,7 +453,7 @@ describe("GET /api/v1/economy/roulette/game/:gameId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -457,6 +475,7 @@ describe("PATCH /api/v1/economy/roulette/bet/:betId", () => {
   });
 
   it("R6.1: should resolve bet successfully with 200", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("resolve-bet-user");
     await createTestUserEconomy(TEST_GUILD.ID, userId);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "resolve-channel-1", { status: "spinning" });
@@ -465,7 +484,7 @@ describe("PATCH /api/v1/economy/roulette/bet/:betId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/bet/${bet.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({ result: "win", winAmount: 200 }),
       })
     );
@@ -478,6 +497,7 @@ describe("PATCH /api/v1/economy/roulette/bet/:betId", () => {
   });
 
   it("R6.2: should resolve bet as lose with 200", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("lose-bet-user");
     await createTestUserEconomy(TEST_GUILD.ID, userId);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "resolve-channel-2", { status: "spinning" });
@@ -486,7 +506,7 @@ describe("PATCH /api/v1/economy/roulette/bet/:betId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/bet/${bet.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({ result: "lose", winAmount: 0 }),
       })
     );
@@ -498,10 +518,11 @@ describe("PATCH /api/v1/economy/roulette/bet/:betId", () => {
   });
 
   it("R6.3: should return 500 when bet is not found", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/bet/99999", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({ result: "win", winAmount: 100 }),
       })
     );
@@ -510,6 +531,7 @@ describe("PATCH /api/v1/economy/roulette/bet/:betId", () => {
   });
 
   it("R6.4: should return 400 when result is invalid", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("invalid-result-user");
     await createTestUserEconomy(TEST_GUILD.ID, userId);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "invalid-result-channel", { status: "spinning" });
@@ -518,7 +540,7 @@ describe("PATCH /api/v1/economy/roulette/bet/:betId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/bet/${bet.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        headers: { "Content-Type": "application/json", Cookie: cookie },
         body: JSON.stringify({ result: "invalid-result" }),
       })
     );
@@ -537,6 +559,7 @@ describe("DELETE /api/v1/economy/roulette/game/:gameId", () => {
   });
 
   it("R7.1: should delete game and cascade bets with 200", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId1 = generateTestId("delete-game-user-1");
     const userId2 = generateTestId("delete-game-user-2");
     await createTestUserEconomy(TEST_GUILD.ID, userId1);
@@ -549,7 +572,7 @@ describe("DELETE /api/v1/economy/roulette/game/:gameId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}`, {
         method: "DELETE",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -567,17 +590,18 @@ describe("DELETE /api/v1/economy/roulette/game/:gameId", () => {
   });
 
   it("R7.2: should return 500 when game is not found", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/game/99999", {
         method: "DELETE",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 
     expect(res.status).toBe(500);
   });
 
-  it("R7.3: should return 401 when no API key is provided", async () => {
+  it("R7.3: should return 401 when no JWT cookie is provided", async () => {
     const game = await createTestRouletteGame(TEST_GUILD.ID, "delete-channel-no-auth", { status: "waiting" });
 
     const res = await app.fetch(
@@ -590,6 +614,7 @@ describe("DELETE /api/v1/economy/roulette/game/:gameId", () => {
   });
 
   it("R7.4: [KNOWN GAP] no transaction wrapper - potential for orphan bets on partial failure", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("orphan-bet-user");
     await createTestUserEconomy(TEST_GUILD.ID, userId);
 
@@ -605,7 +630,7 @@ describe("DELETE /api/v1/economy/roulette/game/:gameId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/roulette/game/${game.id}`, {
         method: "DELETE",
-        headers: { "X-API-Key": API_KEY },
+        headers: { Cookie: cookie },
       })
     );
 

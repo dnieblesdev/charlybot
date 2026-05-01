@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
 import { prisma } from "@charlybot/shared";
-import { createTestUserEconomy, createTestBank, createTestEconomyConfig, cleanupEconomyData, API_KEY, TEST_GUILD, generateTestId, isValkeyAvailable } from "./setup";
+import { createTestUserEconomy, createTestBank, createTestEconomyConfig, cleanupEconomyData, TEST_GUILD, generateTestId, isValkeyAvailable } from "./setup";
+import { getAuthCookie } from "../helpers/auth";
 import app from "../../src/index";
 
 describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
-  const API_KEY_VALID = API_KEY;
   let valkeyAvailable = false;
 
   beforeAll(async () => {
@@ -20,6 +20,7 @@ describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
   });
 
   it("S6.1: concurrent transfers should be handled correctly (in-memory lock)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const senderId = generateTestId("race-sender");
     const receiverId = generateTestId("race-receiver");
     const amount = 100;
@@ -43,7 +44,7 @@ describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "X-API-Key": API_KEY_VALID,
+              Cookie: cookie,
             },
             body: JSON.stringify({
               fromUserId: senderId,
@@ -82,6 +83,7 @@ describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
   });
 
   it("S6.2: concurrent deposit+withdraw should maintain consistency", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("race-user");
     const initialPocket = 500;
     const initialBank = 500;
@@ -105,7 +107,7 @@ describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "X-API-Key": API_KEY_VALID,
+                Cookie: cookie,
               },
               body: JSON.stringify({
                 userId,
@@ -122,7 +124,7 @@ describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "X-API-Key": API_KEY_VALID,
+                Cookie: cookie,
               },
               body: JSON.stringify({
                 userId,
@@ -152,13 +154,14 @@ describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
     expect(finalUser?.pocket ?? 0).toBeGreaterThanOrEqual(0);
     expect(finalBank?.bank ?? 0).toBeGreaterThanOrEqual(0);
 
-// Pocket + Bank should equal initial total
+    // Pocket + Bank should equal initial total
     const finalTotal = (finalUser?.pocket ?? 0) + (finalBank?.bank ?? 0);
     const initialTotal = initialPocket + initialBank;
     expect(finalTotal).toBe(initialTotal);
   });
 
   it.skipIf(!valkeyAvailable)("S6.3: distributed lock should prevent double-spending with Valkey", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const senderId = generateTestId("race-sender-lock");
     const receiverId = generateTestId("race-receiver-lock");
     const amount = 100;
@@ -181,7 +184,7 @@ describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-API-Key": API_KEY_VALID,
+            Cookie: cookie,
           },
           body: JSON.stringify({
             fromUserId: senderId,
@@ -212,6 +215,7 @@ describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("S6.4: distributed lock should serialize deposit operations", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("race-user-lock");
     const initialPocket = 500;
     const amount = 100;
@@ -231,7 +235,7 @@ describe("POST /api/v1/economy/transfer - Race Conditions (HTTP)", () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-API-Key": API_KEY_VALID,
+            Cookie: cookie,
           },
           body: JSON.stringify({
             userId,

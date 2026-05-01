@@ -5,10 +5,10 @@ import {
   createTestEconomyConfig,
   createTestRouletteGame,
   cleanupEconomyData,
-  API_KEY,
   TEST_GUILD,
   generateTestId,
   isValkeyAvailable,
+  getAuthCookie,
 } from "./setup";
 import app from "../../src/index";
 
@@ -19,8 +19,6 @@ beforeAll(async () => {
 });
 
 describe("POST /api/v1/economy/roulette/atomic-place-bet", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -30,6 +28,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet", () => {
   });
 
   it("R1.1: should reject zero amount", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("bet-zero-amount");
     await createTestUserEconomy(TEST_GUILD.ID, userId, { pocket: 1000 });
     const game = await createTestRouletteGame(TEST_GUILD.ID, "bet-channel-1", { status: "waiting" });
@@ -39,7 +38,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -56,6 +55,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet", () => {
   });
 
   it("R1.2: should reject negative amount", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("bet-negative-amount");
     await createTestUserEconomy(TEST_GUILD.ID, userId, { pocket: 1000 });
     const game = await createTestRouletteGame(TEST_GUILD.ID, "bet-channel-2", { status: "waiting" });
@@ -65,7 +65,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -82,6 +82,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet", () => {
   });
 
   it("R1.3: should reject invalid betType", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("bet-invalid-type");
     await createTestUserEconomy(TEST_GUILD.ID, userId, { pocket: 1000 });
     const game = await createTestRouletteGame(TEST_GUILD.ID, "bet-channel-3", { status: "waiting" });
@@ -91,7 +92,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -108,6 +109,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet", () => {
   });
 
   it("R1.4: should handle non-existent game (or lock failure in fallback mode)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Note: When Valkey unavailable and fallback lock fails, we get 429 instead of 400
     const userId = generateTestId("bet-no-game");
     await createTestUserEconomy(TEST_GUILD.ID, userId, { pocket: 1000 });
@@ -117,7 +119,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -136,8 +138,6 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet", () => {
 });
 
 describe("POST /api/v1/economy/roulette/atomic-place-bet (with locking)", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -147,6 +147,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet (with locking)", () => 
   });
 
   it.skipIf(!valkeyAvailable)("R1.5: should place bet and deduct funds atomically", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("bet-basic");
     const initialPocket = 500;
     const betAmount = 100;
@@ -159,7 +160,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet (with locking)", () => 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -186,6 +187,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet (with locking)", () => 
   });
 
   it.skipIf(!valkeyAvailable)("R1.6: should reject when insufficient funds", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("bet-insufficient");
     const initialPocket = 50;
 
@@ -197,7 +199,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet (with locking)", () => 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -222,6 +224,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet (with locking)", () => 
   });
 
   it.skipIf(!valkeyAvailable)("R1.7: should reject bet on finished game", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("bet-finished-game");
     const initialPocket = 500;
 
@@ -233,7 +236,7 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet (with locking)", () => 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -253,8 +256,6 @@ describe("POST /api/v1/economy/roulette/atomic-place-bet (with locking)", () => 
 });
 
 describe("POST /api/v1/economy/roulette/atomic-process", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -264,6 +265,7 @@ describe("POST /api/v1/economy/roulette/atomic-process", () => {
   });
 
   it("R2.1: should reject missing winningNumber", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "process-channel-1", { status: "waiting" });
 
     const res = await app.fetch(
@@ -271,7 +273,7 @@ describe("POST /api/v1/economy/roulette/atomic-process", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: game.id,
@@ -286,6 +288,7 @@ describe("POST /api/v1/economy/roulette/atomic-process", () => {
   });
 
   it("R2.2: should reject invalid winningNumber (negative)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "process-channel-2", { status: "waiting" });
 
     const res = await app.fetch(
@@ -293,7 +296,7 @@ describe("POST /api/v1/economy/roulette/atomic-process", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: game.id,
@@ -308,6 +311,7 @@ describe("POST /api/v1/economy/roulette/atomic-process", () => {
   });
 
   it("R2.3: should reject invalid winningNumber (>36)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const game = await createTestRouletteGame(TEST_GUILD.ID, "process-channel-3", { status: "waiting" });
 
     const res = await app.fetch(
@@ -315,7 +319,7 @@ describe("POST /api/v1/economy/roulette/atomic-process", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: game.id,
@@ -330,13 +334,14 @@ describe("POST /api/v1/economy/roulette/atomic-process", () => {
   });
 
   it("R2.4: should handle non-existent game (or lock failure in fallback mode)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Note: When Valkey unavailable and fallback lock fails, we get 429 instead of 400
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/atomic-process", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: 99999,
@@ -353,8 +358,6 @@ describe("POST /api/v1/economy/roulette/atomic-process", () => {
 });
 
 describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -364,6 +367,7 @@ describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("R2.5: should process bets and pay winners", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("process-bets-user");
     const initialPocket = 500;
 
@@ -376,7 +380,7 @@ describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -395,7 +399,7 @@ describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: game.id,
@@ -421,6 +425,7 @@ describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("R2.6: should mark losing bets correctly", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("process-losing-user");
     const initialPocket = 500;
 
@@ -433,7 +438,7 @@ describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -452,7 +457,7 @@ describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: game.id,
@@ -475,6 +480,7 @@ describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("R2.7: should reject processing already processed game", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("process-twice-user");
     const initialPocket = 500;
 
@@ -487,7 +493,7 @@ describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -506,7 +512,7 @@ describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: game.id,
@@ -523,7 +529,7 @@ describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: game.id,
@@ -541,8 +547,6 @@ describe("POST /api/v1/economy/roulette/atomic-process (with locking)", () => {
 });
 
 describe("POST /api/v1/economy/roulette/atomic-cancel", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -552,13 +556,14 @@ describe("POST /api/v1/economy/roulette/atomic-cancel", () => {
   });
 
   it("R3.1: should handle non-existent game (or lock failure in fallback mode)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Note: When Valkey unavailable and fallback lock fails, we get 429 instead of 400
     const res = await app.fetch(
       new Request("/api/v1/economy/roulette/atomic-cancel", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: 99999,
@@ -573,8 +578,6 @@ describe("POST /api/v1/economy/roulette/atomic-cancel", () => {
 });
 
 describe("POST /api/v1/economy/roulette/atomic-cancel (with locking)", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -584,6 +587,7 @@ describe("POST /api/v1/economy/roulette/atomic-cancel (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("R3.2: should refund all bets and cancel game", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("cancel-bets-user");
     const initialPocket = 500;
 
@@ -596,7 +600,7 @@ describe("POST /api/v1/economy/roulette/atomic-cancel (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -615,7 +619,7 @@ describe("POST /api/v1/economy/roulette/atomic-cancel (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: game.id,
@@ -637,6 +641,7 @@ describe("POST /api/v1/economy/roulette/atomic-cancel (with locking)", () => {
   });
 
   it.skipIf(!valkeyAvailable)("R3.3: should reject cancel of already processed game", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("cancel-twice-user");
     const initialPocket = 500;
 
@@ -649,7 +654,7 @@ describe("POST /api/v1/economy/roulette/atomic-cancel (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -668,7 +673,7 @@ describe("POST /api/v1/economy/roulette/atomic-cancel (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: game.id,
@@ -685,7 +690,7 @@ describe("POST /api/v1/economy/roulette/atomic-cancel (with locking)", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           gameId: game.id,

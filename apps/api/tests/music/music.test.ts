@@ -2,8 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import app from "../../src/index";
 import { prisma } from "@charlybot/shared";
 import { createTestGuild, createTestMusicQueue, createTestMusicQueueItem, createTestMusicConfig, cleanupTestGuild, generateTestId } from "../helpers/factories";
-
-const API_KEY = "charly_secret_key";
+import { getAuthCookie } from "../../helpers/auth";
 
 describe("Music API - GET /queues/:guildId", () => {
   const testGuildId = generateTestId("guild-music");
@@ -18,11 +17,12 @@ describe("Music API - GET /queues/:guildId", () => {
   });
 
   it("T3.1: should return music queue for guild", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/music/queues/${testGuildId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -37,11 +37,12 @@ describe("Music API - GET /queues/:guildId", () => {
     const noQueueGuildId = generateTestId("guild-no-queue");
     await createTestGuild(prisma, noQueueGuildId);
 
+    const cookie = await getAuthCookie([noQueueGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/music/queues/${noQueueGuildId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -65,12 +66,13 @@ describe("Music API - POST /queues/:guildId/items", () => {
   });
 
   it("T3.2: should add item to queue", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/music/queues/${testGuildId}/items`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           title: "Test Song",
@@ -97,12 +99,13 @@ describe("Music API - POST /queues/:guildId/items", () => {
   });
 
   it("T3.2b: should reject invalid item data", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/music/queues/${testGuildId}/items`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           // Missing required fields
@@ -148,11 +151,12 @@ describe("Music API - DELETE /queues/:guildId/items/:position", () => {
   });
 
   it("T3.3: should remove item from queue by position", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/music/queues/${testGuildId}/items/0`, {
         method: "DELETE",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -169,11 +173,12 @@ describe("Music API - DELETE /queues/:guildId/items/:position", () => {
   });
 
   it("T3.3b: should return 404 for invalid position", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/music/queues/${testGuildId}/items/999`, {
         method: "DELETE",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -205,11 +210,12 @@ describe("Music API - DELETE /queues/:guildId/items (clear queue)", () => {
   });
 
   it("T3.4: should clear all items from queue", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/music/queues/${testGuildId}/items`, {
         method: "DELETE",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -237,12 +243,13 @@ describe("Music API - PUT /queues/:guildId/settings", () => {
   });
 
   it("T3.5: should update queue settings", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/music/queues/${testGuildId}/settings`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           volume: 75,
@@ -277,11 +284,12 @@ describe("Music API - GET /config/:guildId", () => {
   });
 
   it("T3.6: should return music config", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/music/config/${testGuildId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -296,11 +304,12 @@ describe("Music API - GET /config/:guildId", () => {
     const noConfigGuildId = generateTestId("guild-no-config");
     await createTestGuild(prisma, noConfigGuildId);
 
+    const cookie = await getAuthCookie([noConfigGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/music/config/${noConfigGuildId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -323,12 +332,13 @@ describe("Music API - PUT /config/:guildId", () => {
   });
 
   it("T3.7: should create/update music config", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/music/config/${testGuildId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           defaultVolume: 80,

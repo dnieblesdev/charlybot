@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { prisma } from "@charlybot/shared";
-import { createTestUserEconomy, createTestBank, createTestEconomyConfig, cleanupEconomyData, API_KEY, TEST_GUILD, generateTestId } from "./setup";
+import { createTestUserEconomy, createTestBank, createTestEconomyConfig, cleanupEconomyData, TEST_GUILD, generateTestId } from "./setup";
+import { getAuthCookie } from "../helpers/auth";
 import app from "../../src/index";
 
 describe("POST /api/v1/economy/withdraw - Atomic Withdraw", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     // Create test config for the guild
     await createTestEconomyConfig(TEST_GUILD.ID);
@@ -16,6 +15,7 @@ describe("POST /api/v1/economy/withdraw - Atomic Withdraw", () => {
   });
 
   it("S1.3: should successfully withdraw money from global bank (happy path)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("withdrawer");
     const username = "Withdrawer";
     const withdrawAmount = 300;
@@ -33,7 +33,7 @@ describe("POST /api/v1/economy/withdraw - Atomic Withdraw", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -63,6 +63,7 @@ describe("POST /api/v1/economy/withdraw - Atomic Withdraw", () => {
   });
 
   it("S1.4: should fail withdraw with insufficient funds in bank", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("poor-withdrawer");
     const username = "PoorWithdrawer";
     const withdrawAmount = 500;
@@ -80,7 +81,7 @@ describe("POST /api/v1/economy/withdraw - Atomic Withdraw", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -98,6 +99,7 @@ describe("POST /api/v1/economy/withdraw - Atomic Withdraw", () => {
   });
 
   it("S1.3b: should create new user economy and credit starting money plus withdrawn amount", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("new-user-withdraw");
     const username = "NewUserWithdraw";
     const withdrawAmount = 500;
@@ -112,7 +114,7 @@ describe("POST /api/v1/economy/withdraw - Atomic Withdraw", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -161,7 +163,7 @@ describe("POST /api/v1/economy/withdraw - Atomic Withdraw", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": "wrong-api-key",
+          Cookie: "accessToken=invalid-token",
         },
         body: JSON.stringify({
           userId,
@@ -178,8 +180,6 @@ describe("POST /api/v1/economy/withdraw - Atomic Withdraw", () => {
 });
 
 describe("POST /api/v1/economy/withdraw - Zod Validation", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -189,6 +189,7 @@ describe("POST /api/v1/economy/withdraw - Zod Validation", () => {
   });
 
   it("S1.2 (validation): should return 400 when amount is missing", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("withdrawer-missing-amount");
 
     // Act: withdraw with missing amount field
@@ -197,7 +198,7 @@ describe("POST /api/v1/economy/withdraw - Zod Validation", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -213,6 +214,7 @@ describe("POST /api/v1/economy/withdraw - Zod Validation", () => {
   });
 
   it("S1.2 (validation): should return 400 when amount is zero or negative", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("withdrawer-zero-amount");
 
     // Act: withdraw with amount = 0
@@ -221,7 +223,7 @@ describe("POST /api/v1/economy/withdraw - Zod Validation", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -241,7 +243,7 @@ describe("POST /api/v1/economy/withdraw - Zod Validation", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,

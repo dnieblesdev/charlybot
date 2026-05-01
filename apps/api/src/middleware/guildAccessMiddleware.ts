@@ -4,7 +4,7 @@ import { getSession } from '../auth/sessionStore';
 import logger from '../utils/logger';
 
 // Static path segments that should never be treated as guildId
-const KNOWN_STATIC = new Set(['api', 'v1', 'guilds', 'economy', 'xp', 'music', 'autoroles', 'verifications', 'classes', 'auth', 'config', 'leaderboard', 'level-roles', 'queues', 'user', 'bank', 'roulette', 'game', 'bet', 'transfer', 'deposit', 'withdraw', 'increment', 'items', 'settings', 'position', 'upsert', 'health']);
+const KNOWN_STATIC = new Set(['api', 'v1', 'guilds', 'economy', 'xp', 'music', 'autoroles', 'verifications', 'classes', 'auth', 'config', 'leaderboard', 'level-roles', 'queues', 'user', 'bank', 'roulette', 'game', 'bet', 'transfer', 'deposit', 'withdraw', 'increment', 'items', 'settings', 'position', 'upsert', 'health', 'pending', 'mappings', 'guild', 'users', 'overview']);
 
 /**
  * Extract guildId from URL path.
@@ -37,17 +37,16 @@ function extractGuildId(path: string): string | null {
  *
  * Checks if guildId is in c.get("jwt").guilds
  * Falls back to Valkey session if JWT guild list is stale
- * Returns 403 if access denied, 400 if no guildId param, 401 if no JWT
+ * Returns 403 if access denied. Passes through silently when no guildId is in the URL
+ * (routes like /roulette/game/:id don't carry guildId in path — validated elsewhere).
  */
 export const guildAccessMiddleware = async (c: Context, next: Next) => {
   const guildId = extractGuildId(new URL(c.req.url).pathname);
 
+  // No guild ID in URL — route doesn't need guild validation, pass through
   if (!guildId) {
-    logger.warn('[guildAccessMiddleware] Could not extract guildId', {
-      path: new URL(c.req.url).pathname,
-    });
-    c.status(400);
-    return c.json({ error: 'Guild ID required' }, 400);
+    await next();
+    return;
   }
 
   const jwt = c.get('jwt') as JwtPayload | undefined;

@@ -6,6 +6,12 @@ import { createMetricsRegistry } from "@charlybot/shared";
 import { prisma } from "@charlybot/shared";
 import guildRoutes from "./routes/guilds";
 import authRoutes from "./routes/auth";
+import economyRoutes from "./routes/economy.routes";
+import xpRoutes from "./routes/xp.routes";
+import musicRoutes from "./routes/music.routes";
+import verificationsRoutes from "./routes/verifications.routes";
+import autorolesRoutes from "./routes/autoroles.routes";
+import classesRoutes from "./routes/classes.routes";
 import { initializeValkey, shutdownValkey } from "./infrastructure/valkey";
 
 const app = new Hono();
@@ -44,6 +50,12 @@ app.use("/api/*", authMiddleware);
 app.use("/api/*", rateLimitMiddleware);
 
 app.route("/api/v1/guilds", guildRoutes);
+app.route("/api/v1/economy", economyRoutes);
+app.route("/api/v1/xp", xpRoutes);
+app.route("/api/v1/music", musicRoutes);
+app.route("/api/v1/verifications", verificationsRoutes);
+app.route("/api/v1/autoroles", autorolesRoutes);
+app.route("/api/v1/classes", classesRoutes);
 
 app.get("/api/v1/ping", (c) => {
   return c.json({ message: "pong", timestamp: new Date().toISOString() });

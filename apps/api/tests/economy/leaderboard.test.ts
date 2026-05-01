@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { prisma } from "@charlybot/shared";
-import { createTestLeaderboardEntry, createTestEconomyConfig, cleanupEconomyData, API_KEY, TEST_GUILD, generateTestId } from "./setup";
+import { createTestLeaderboardEntry, createTestEconomyConfig, cleanupEconomyData, TEST_GUILD, generateTestId } from "./setup";
+import { getAuthCookie } from "../helpers/auth";
 import app from "../../src/index";
 
 describe("GET /api/v1/economy/leaderboard/:guildId", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -15,6 +14,7 @@ describe("GET /api/v1/economy/leaderboard/:guildId", () => {
   });
 
   it("S5.1: should return paginated leaderboard with data", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Setup: create 3 leaderboard entries
     const userId1 = generateTestId("leaderboard-user-1");
     const userId2 = generateTestId("leaderboard-user-2");
@@ -28,7 +28,7 @@ describe("GET /api/v1/economy/leaderboard/:guildId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/leaderboard/${TEST_GUILD.ID}?page=1&limit=10`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -44,11 +44,12 @@ describe("GET /api/v1/economy/leaderboard/:guildId", () => {
   });
 
   it("S5.2: should return empty array when no entries exist", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Act: GET leaderboard with no entries
     const res = await app.fetch(
       new Request(`/api/v1/economy/leaderboard/${TEST_GUILD.ID}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -59,8 +60,8 @@ describe("GET /api/v1/economy/leaderboard/:guildId", () => {
     expect(body.total).toBe(0);
   });
 
-  it("S5.3: should return 401 when no API key is provided", async () => {
-    // Act: GET without X-API-Key header
+  it("S5.3: should return 401 when no JWT cookie is provided", async () => {
+    // Act: GET without cookie
     const res = await app.fetch(
       new Request(`/api/v1/economy/leaderboard/${TEST_GUILD.ID}`, {
         method: "GET",
@@ -73,8 +74,6 @@ describe("GET /api/v1/economy/leaderboard/:guildId", () => {
 });
 
 describe("GET /api/v1/economy/leaderboard/:guildId/user/:userId", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -84,6 +83,7 @@ describe("GET /api/v1/economy/leaderboard/:guildId/user/:userId", () => {
   });
 
   it("S5.4: should return leaderboard entry for user", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("leaderboard-get-user");
 
     // Setup: create leaderboard entry
@@ -93,7 +93,7 @@ describe("GET /api/v1/economy/leaderboard/:guildId/user/:userId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/leaderboard/${TEST_GUILD.ID}/user/${userId}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -105,13 +105,14 @@ describe("GET /api/v1/economy/leaderboard/:guildId/user/:userId", () => {
   });
 
   it("S5.5: should return 404 when user has no entry", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const nonExistentUserId = generateTestId("leaderboard-no-user");
 
     // Act: GET leaderboard for non-existent user
     const res = await app.fetch(
       new Request(`/api/v1/economy/leaderboard/${TEST_GUILD.ID}/user/${nonExistentUserId}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -123,8 +124,6 @@ describe("GET /api/v1/economy/leaderboard/:guildId/user/:userId", () => {
 });
 
 describe("POST /api/v1/economy/leaderboard/upsert", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -134,13 +133,14 @@ describe("POST /api/v1/economy/leaderboard/upsert", () => {
   });
 
   it("S5.8: should return 400 when required fields are missing", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Act: POST upsert without score
     const res = await app.fetch(
       new Request("/api/v1/economy/leaderboard/upsert", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "some-user",
@@ -157,6 +157,7 @@ describe("POST /api/v1/economy/leaderboard/upsert", () => {
   });
 
   it("S5.6/S5.7 note: upsert endpoint blocked by guildAccessMiddleware", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // NOTE: The route /leaderboard/upsert has guildAccessMiddleware applied via
     // router.use("/leaderboard/:guildId", ...) which catches ALL /leaderboard/* paths.
     // The middleware cannot extract guildId from "/leaderboard/upsert" (upsert is static)
@@ -171,7 +172,7 @@ describe("POST /api/v1/economy/leaderboard/upsert", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -190,8 +191,6 @@ describe("POST /api/v1/economy/leaderboard/upsert", () => {
 });
 
 describe("GET /api/v1/economy/leaderboard/:guildId/position/:userId", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -201,6 +200,7 @@ describe("GET /api/v1/economy/leaderboard/:guildId/position/:userId", () => {
   });
 
   it("S5.9: should return position for user with entry", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("leaderboard-position-user");
 
     // Setup: create leaderboard entry
@@ -210,7 +210,7 @@ describe("GET /api/v1/economy/leaderboard/:guildId/position/:userId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/leaderboard/${TEST_GUILD.ID}/position/${userId}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -222,13 +222,14 @@ describe("GET /api/v1/economy/leaderboard/:guildId/position/:userId", () => {
   });
 
   it("S5.10: should return 200 with position: null when user has no entry", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const nonExistentUserId = generateTestId("leaderboard-position-none");
 
     // Act: GET position for non-existent user
     const res = await app.fetch(
       new Request(`/api/v1/economy/leaderboard/${TEST_GUILD.ID}/position/${nonExistentUserId}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -240,8 +241,6 @@ describe("GET /api/v1/economy/leaderboard/:guildId/position/:userId", () => {
 });
 
 describe("DELETE /api/v1/economy/leaderboard/:guildId/:userId", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -251,6 +250,7 @@ describe("DELETE /api/v1/economy/leaderboard/:guildId/:userId", () => {
   });
 
   it("S5.11: should delete leaderboard entry successfully", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("leaderboard-delete-user");
 
     // Setup: create leaderboard entry
@@ -260,7 +260,7 @@ describe("DELETE /api/v1/economy/leaderboard/:guildId/:userId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/leaderboard/${TEST_GUILD.ID}/${userId}`, {
         method: "DELETE",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -271,13 +271,14 @@ describe("DELETE /api/v1/economy/leaderboard/:guildId/:userId", () => {
   });
 
   it("S5.12: should return 500 when deleting non-existent entry", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const nonExistentUserId = generateTestId("leaderboard-delete-none");
 
     // Act: DELETE non-existent entry
     const res = await app.fetch(
       new Request(`/api/v1/economy/leaderboard/${TEST_GUILD.ID}/${nonExistentUserId}`, {
         method: "DELETE",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 

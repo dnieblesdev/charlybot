@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
 import { prisma } from "@charlybot/shared";
-import { createTestUserEconomy, createTestBank, createTestEconomyConfig, cleanupEconomyData, API_KEY, TEST_GUILD, generateTestId } from "./setup";
+import { createTestUserEconomy, createTestBank, createTestEconomyConfig, cleanupEconomyData, TEST_GUILD, generateTestId } from "./setup";
+import { getAuthCookie } from "../helpers/auth";
 import app from "../../src/index";
 
 describe("POST /api/v1/economy/deposit - Atomic Deposit", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     // Create test config for the guild
     await createTestEconomyConfig(TEST_GUILD.ID);
@@ -16,6 +15,7 @@ describe("POST /api/v1/economy/deposit - Atomic Deposit", () => {
   });
 
   it("S1.1: should successfully deposit money to global bank (happy path)", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("depositor");
     const username = "Depositor";
     const depositAmount = 500;
@@ -33,7 +33,7 @@ describe("POST /api/v1/economy/deposit - Atomic Deposit", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -63,6 +63,7 @@ describe("POST /api/v1/economy/deposit - Atomic Deposit", () => {
   });
 
   it("S1.2: should fail deposit with insufficient funds in pocket", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("poor-depositor");
     const username = "PoorDepositor";
     const depositAmount = 500;
@@ -79,7 +80,7 @@ describe("POST /api/v1/economy/deposit - Atomic Deposit", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -97,6 +98,7 @@ describe("POST /api/v1/economy/deposit - Atomic Deposit", () => {
   });
 
   it("S1.1b: should create new bank if it doesn't exist when depositing", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("new-depositor");
     const username = "NewDepositor";
     const depositAmount = 300;
@@ -114,7 +116,7 @@ describe("POST /api/v1/economy/deposit - Atomic Deposit", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -145,7 +147,7 @@ describe("POST /api/v1/economy/deposit - Atomic Deposit", () => {
     expect(newBank?.bank).toBe(300);
   });
 
-  it("S1.9: should return 401 when no API key is provided", async () => {
+  it("S1.9: should return 401 when no JWT cookie is provided", async () => {
     const userId = generateTestId("depositor-no-auth");
     const username = "DepositorNoAuth";
 
@@ -155,13 +157,13 @@ describe("POST /api/v1/economy/deposit - Atomic Deposit", () => {
       pocket: 1000,
     });
 
-    // Act: deposit WITHOUT X-API-Key header
+    // Act: deposit WITHOUT cookie
     const res = await app.fetch(
       new Request("/api/v1/economy/deposit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // No X-API-Key header
+          // No cookie
         },
         body: JSON.stringify({
           userId,
@@ -186,13 +188,13 @@ describe("POST /api/v1/economy/deposit - Atomic Deposit", () => {
       pocket: 1000,
     });
 
-    // Act: deposit with wrong API key
+    // Act: deposit with wrong API key (this should also fail auth)
     const res = await app.fetch(
       new Request("/api/v1/economy/deposit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": "wrong-api-key",
+          Cookie: "accessToken=invalid-token",
         },
         body: JSON.stringify({
           userId,
@@ -209,8 +211,6 @@ describe("POST /api/v1/economy/deposit - Atomic Deposit", () => {
 });
 
 describe("POST /api/v1/economy/deposit - Zod Validation", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -220,6 +220,7 @@ describe("POST /api/v1/economy/deposit - Zod Validation", () => {
   });
 
   it("S1.2 (validation): should return 400 when amount is missing", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("depositor-missing-amount");
 
     // Act: deposit with missing amount field
@@ -228,7 +229,7 @@ describe("POST /api/v1/economy/deposit - Zod Validation", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -244,6 +245,7 @@ describe("POST /api/v1/economy/deposit - Zod Validation", () => {
   });
 
   it("S1.2 (validation): should return 400 when amount is zero or negative", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("depositor-zero-amount");
 
     // Act: deposit with amount = 0
@@ -252,7 +254,7 @@ describe("POST /api/v1/economy/deposit - Zod Validation", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -272,7 +274,7 @@ describe("POST /api/v1/economy/deposit - Zod Validation", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,

@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { prisma } from "@charlybot/shared";
-import { createTestUserEconomy, createTestEconomyConfig, cleanupEconomyData, API_KEY, TEST_GUILD, generateTestId } from "./setup";
+import { createTestUserEconomy, createTestEconomyConfig, cleanupEconomyData, TEST_GUILD, generateTestId } from "./setup";
+import { getAuthCookie } from "../helpers/auth";
 import app from "../../src/index";
 
 describe("GET /api/v1/economy/user/:guildId/:userId", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -15,6 +14,7 @@ describe("GET /api/v1/economy/user/:guildId/:userId", () => {
   });
 
   it("S2.1: should return user economy when user exists", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("user-economy-get");
     const username = "TestUser";
 
@@ -25,7 +25,7 @@ describe("GET /api/v1/economy/user/:guildId/:userId", () => {
     const res = await app.fetch(
       new Request(`/api/v1/economy/user/${TEST_GUILD.ID}/${userId}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -39,13 +39,14 @@ describe("GET /api/v1/economy/user/:guildId/:userId", () => {
   });
 
   it("S2.2: should return 404 when user does not exist", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const nonExistentUserId = generateTestId("non-existent-user");
 
     // Act: GET non-existent user economy
     const res = await app.fetch(
       new Request(`/api/v1/economy/user/${TEST_GUILD.ID}/${nonExistentUserId}`, {
         method: "GET",
-        headers: { "X-API-Key": API_KEY_VALID },
+        headers: { Cookie: cookie },
       })
     );
 
@@ -55,10 +56,10 @@ describe("GET /api/v1/economy/user/:guildId/:userId", () => {
     expect(body.error).toBe("User economy not found");
   });
 
-  it("S2.3: should return 401 when no API key is provided", async () => {
+  it("S2.3: should return 401 when no JWT cookie is provided", async () => {
     const userId = generateTestId("user-economy-no-auth");
 
-    // Act: GET without X-API-Key header
+    // Act: GET without cookie
     const res = await app.fetch(
       new Request(`/api/v1/economy/user/${TEST_GUILD.ID}/${userId}`, {
         method: "GET",
@@ -71,8 +72,6 @@ describe("GET /api/v1/economy/user/:guildId/:userId", () => {
 });
 
 describe("POST /api/v1/economy/user", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -82,6 +81,7 @@ describe("POST /api/v1/economy/user", () => {
   });
 
   it("S2.4: should create new user economy", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("user-economy-create");
     const username = "NewUser";
 
@@ -91,7 +91,7 @@ describe("POST /api/v1/economy/user", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId,
@@ -111,13 +111,14 @@ describe("POST /api/v1/economy/user", () => {
   });
 
   it("S2.5: should return 400 when required fields are missing", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Act: POST without guildId
     const res = await app.fetch(
       new Request("/api/v1/economy/user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "some-user",
@@ -131,13 +132,14 @@ describe("POST /api/v1/economy/user", () => {
   });
 
   it("S2.6: should return 400 when data types are invalid", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     // Act: POST with invalid pocket type
     const res = await app.fetch(
       new Request("/api/v1/economy/user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           userId: "some-user",
@@ -154,8 +156,6 @@ describe("POST /api/v1/economy/user", () => {
 });
 
 describe("PATCH /api/v1/economy/user/:guildId/:userId", () => {
-  const API_KEY_VALID = API_KEY;
-
   beforeEach(async () => {
     await createTestEconomyConfig(TEST_GUILD.ID);
   });
@@ -165,6 +165,7 @@ describe("PATCH /api/v1/economy/user/:guildId/:userId", () => {
   });
 
   it("S2.7: should update user economy when user exists", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("user-economy-patch");
     const username = "TestUser";
 
@@ -177,7 +178,7 @@ describe("PATCH /api/v1/economy/user/:guildId/:userId", () => {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           pocket: 1500,
@@ -192,6 +193,7 @@ describe("PATCH /api/v1/economy/user/:guildId/:userId", () => {
   });
 
   it("S2.8: should return 500 when updating non-existent user", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const nonExistentUserId = generateTestId("non-existent-patch");
 
     // Act: PATCH non-existent user
@@ -200,7 +202,7 @@ describe("PATCH /api/v1/economy/user/:guildId/:userId", () => {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           pocket: 1000,
@@ -213,6 +215,7 @@ describe("PATCH /api/v1/economy/user/:guildId/:userId", () => {
   });
 
   it("S2.9: should return 400 when patch data has wrong type for pocket", async () => {
+    const cookie = await getAuthCookie([TEST_GUILD.ID]);
     const userId = generateTestId("user-economy-patch-invalid");
 
     // Setup: create user economy
@@ -224,7 +227,7 @@ describe("PATCH /api/v1/economy/user/:guildId/:userId", () => {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY_VALID,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           pocket: "not-a-number",

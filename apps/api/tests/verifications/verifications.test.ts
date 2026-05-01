@@ -2,8 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import app from "../../src/index";
 import { prisma } from "@charlybot/shared";
 import { createTestGuild, cleanupTestGuild, createTestVerification, generateTestId } from "../helpers/factories";
-
-const API_KEY = "charly_secret_key";
+import { getAuthCookie } from "../../helpers/auth";
 
 describe("Verifications API - POST /", () => {
   const testGuildId = generateTestId("guild-verif");
@@ -17,12 +16,13 @@ describe("Verifications API - POST /", () => {
   });
 
   it("T2.1: should create verification with valid data", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/verifications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           guildId: testGuildId,
@@ -41,12 +41,13 @@ describe("Verifications API - POST /", () => {
   });
 
   it("T2.1b: should reject invalid verification data", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/verifications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           // Missing required fields
@@ -96,11 +97,12 @@ describe("Verifications API - GET /pending/:guildId", () => {
   });
 
   it("T2.2: should return only pending verifications for a guild", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/verifications/pending/${testGuildId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -116,11 +118,12 @@ describe("Verifications API - GET /pending/:guildId", () => {
     const newGuildId = generateTestId("guild-empty");
     await createTestGuild(prisma, newGuildId);
 
+    const cookie = await getAuthCookie([newGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/verifications/pending/${newGuildId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -154,11 +157,12 @@ describe("Verifications API - GET /:id", () => {
   });
 
   it("T2.2c: should return verification by id", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/verifications/${testVerifId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -171,11 +175,12 @@ describe("Verifications API - GET /:id", () => {
   });
 
   it("T2.2d: should return 404 for non-existent verification", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/verifications/non-existent-id`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -205,12 +210,13 @@ describe("Verifications API - PATCH /:id", () => {
   });
 
   it("T2.3: should approve verification", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/verifications/${testVerifId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           status: "approved",
@@ -226,12 +232,13 @@ describe("Verifications API - PATCH /:id", () => {
   });
 
   it("T2.4: should reject verification", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/verifications/${testVerifId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
         body: JSON.stringify({
           status: "rejected",
@@ -267,11 +274,12 @@ describe("Verifications API - DELETE /:id", () => {
   });
 
   it("T2.5: should delete verification", async () => {
+    const cookie = await getAuthCookie([testGuildId]);
     const response = await app.fetch(
       new Request(`/api/v1/verifications/${testVerifId}`, {
         method: "DELETE",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: cookie,
         },
       })
     );
@@ -279,11 +287,12 @@ describe("Verifications API - DELETE /:id", () => {
     expect(response.status).toBe(200);
 
     // Verify it's deleted
+    const getCookie = await getAuthCookie([testGuildId]);
     const getResponse = await app.fetch(
       new Request(`/api/v1/verifications/${testVerifId}`, {
         method: "GET",
         headers: {
-          "X-API-Key": API_KEY,
+          Cookie: getCookie,
         },
       })
     );
