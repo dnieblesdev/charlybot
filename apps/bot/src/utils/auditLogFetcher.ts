@@ -2,7 +2,7 @@
 // Fetches Discord audit logs and correlates with deleted messages
 
 import { AuditLogEvent, type Guild } from 'discord.js';
-import logger from '../../utils/logger';
+import logger from './logger';
 
 /** Result of audit log correlation */
 export interface AuditLogCorrelation {

@@ -3,7 +3,7 @@ import type { Message, PartialMessage } from "discord.js";
 import { getGuildConfig } from "../../config/repositories/GuildConfigRepo.ts";
 import logger from "../../utils/logger.ts";
 import { buildMessageDeleteEmbed } from "../../utils/messageAuditEmbeds.ts";
-import { findMessageDeleteExecutor } from "./auditLogFetcher.ts";
+import { findMessageDeleteExecutor } from "../../utils/auditLogFetcher.ts";
 import { wasProcessed, markProcessed, setLastEntryId } from "../../infrastructure/valkey/auditCache.ts";
 
 /**
