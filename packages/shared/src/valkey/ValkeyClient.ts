@@ -74,7 +74,7 @@ this.redis = new Redis({
       port: this.config.port,
       password: this.config.password,
       connectTimeout: this.config.connectTimeoutMs ?? 5000,
-      commandTimeout: this.config.commandTimeoutMs ?? 2000,
+      commandTimeout: this.config.commandTimeoutMs ?? 10000,
       // ioredis handles retries via retryStrategy; we control max retry delay ourselves
       retryStrategy: (retries) => {
         if (retries >= RETRY_CONFIG.maxRetries) {

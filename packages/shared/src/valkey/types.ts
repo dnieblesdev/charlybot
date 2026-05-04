@@ -22,7 +22,7 @@ export const DEFAULT_VALKEY_CONFIG: Omit<Required<ValkeyConfig>, 'password'> = {
   host: 'localhost',
   port: 6379,
   connectTimeoutMs: 5000,
-  commandTimeoutMs: 2000,
+  commandTimeoutMs: 10000,
   maxRetries: 3,
   prefix: 'cb',
   env: 'development',

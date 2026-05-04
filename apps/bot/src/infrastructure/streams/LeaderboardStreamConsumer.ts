@@ -16,6 +16,7 @@ import LeaderboardService from '../../app/services/economy/LeaderboardService';
 
 let isRunning = false;
 let intervalId: ReturnType<typeof setInterval> | null = null;
+let loopInFlight = false;
 
 const consumerId = createLeaderboardConsumerId();
 const config = loadValkeyConfig();
@@ -23,9 +24,14 @@ const keys = createLeaderboardStreamKeys(config.env ?? 'development');
 
 async function processLoop(): Promise<void> {
   if (!isRunning) return;
+  if (loopInFlight) return;
+  loopInFlight = true;
 
   const valkey = getValkeyClient();
-  if (!valkey.isConnected()) return;
+  if (!valkey.isConnected()) {
+    loopInFlight = false;
+    return;
+  }
 
   try {
     // Create consumer group (idempotent)
@@ -77,6 +83,8 @@ async function processLoop(): Promise<void> {
         error: error instanceof Error ? error.message : String(error),
       });
     }
+  } finally {
+    loopInFlight = false;
   }
 }
 
