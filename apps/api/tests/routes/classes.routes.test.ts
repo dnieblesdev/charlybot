@@ -39,7 +39,8 @@ describe("Classes API - POST /api/v1/classes", () => {
 
   beforeEach(async () => {
     await createTestGuild(prisma, testGuildId);
-    await createTestTipoClase(prisma, testGuildId, "role-healer", "Healer");
+    // Create the tipoClase first so the FK constraint is satisfied
+    await createTestTipoClase(prisma, testGuildId, "role-dps", "DPS");
   });
 
   afterEach(async () => {

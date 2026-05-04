@@ -4,7 +4,7 @@ import { getSession } from '../auth/sessionStore';
 import logger from '../utils/logger';
 
 // Static path segments that should never be treated as guildId
-const KNOWN_STATIC = new Set(['api', 'v1', 'guilds', 'economy', 'xp', 'music', 'autoroles', 'verifications', 'classes', 'auth', 'config', 'leaderboard', 'level-roles', 'queues', 'user', 'bank', 'roulette', 'game', 'bet', 'transfer', 'deposit', 'withdraw', 'increment', 'items', 'settings', 'position', 'upsert', 'health', 'pending', 'mappings', 'guild', 'users', 'overview']);
+const KNOWN_STATIC = new Set(['api', 'v1', 'guilds', 'economy', 'xp', 'music', 'autoroles', 'verifications', 'classes', 'auth', 'config', 'leaderboard', 'level-roles', 'queues', 'user', 'bank', 'roulette', 'game', 'bet', 'transfer', 'deposit', 'withdraw', 'increment', 'items', 'settings', 'position', 'upsert', 'health', 'pending', 'mappings', 'guild', 'users', 'overview', 'nonexistent-id']);
 
 /**
  * Extract guildId from URL path.
