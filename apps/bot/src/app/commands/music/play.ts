@@ -48,6 +48,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    // ACK the interaction ASAP — BEFORE heavy operations (join, resolve, stream).
+    // Discord expires unacknowledged interactions after 3 seconds.
     await interaction.deferReply();
 
     const query = interaction.options.getString("query", true);
@@ -170,15 +172,37 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       guildId: interaction.guildId,
     });
 
+    // If the interaction token is already dead (expired or already used),
+    // Discord returns "Unknown interaction" — we can't respond to the user.
+    const isUnknownInteraction =
+      error instanceof Error && error.message === "Unknown interaction";
+
+    if (isUnknownInteraction) {
+      logger.warn("Interaction token expired — cannot send error reply", {
+        userId: interaction.user.id,
+        guildId: interaction.guildId,
+      });
+      return;
+    }
+
     const errorMessage =
       error instanceof Error
         ? `❌ ${error.message}`
         : "❌ Error al reproducir la canción.";
 
-    if (interaction.deferred || interaction.replied) {
-      await interaction.editReply({ content: errorMessage });
-    } else {
-      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
+    try {
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ content: errorMessage });
+      } else {
+        await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
+      }
+    } catch (replyError) {
+      logger.error("Failed to send error reply to user", {
+        error: replyError instanceof Error ? replyError.message : String(replyError),
+        commandName: "music play",
+        userId: interaction.user.id,
+        guildId: interaction.guildId,
+      });
     }
   }
 }

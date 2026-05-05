@@ -218,11 +218,16 @@ export default {
             await interaction.reply(replyOptions);
           }
         } catch (replyError) {
+          // "Unknown interaction" means the token is dead — just log, don't rethrow
+          const isUnknownInteraction =
+            replyError instanceof Error && replyError.message === "Unknown interaction";
+
           logger.error("Failed to send error reply to user", {
             error: replyError instanceof Error ? replyError.message : String(replyError),
             commandName: interaction.commandName,
             userId: interaction.user.id,
             guildId: interaction.guildId,
+            interactionExpired: isUnknownInteraction,
           });
         }
       }
