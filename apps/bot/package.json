@@ -15,7 +15,10 @@
     "test-playlist-performance": "bun run debug/test-playlist-performance.ts",
     "migrate-json": "bun run ../../scripts/migracion-json-prisma.ts",
     "build": "bun build src/index.ts --outdir dist --target node",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@charlybot/shared": "workspace:*",
@@ -33,5 +36,9 @@
     "sodium-native": "^5.0.10",
     "winston": "3.18.3",
     "yt-dlp-wrap": "^2.3.12"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.5",
+    "vitest": "^4.1.5"
   }
 }

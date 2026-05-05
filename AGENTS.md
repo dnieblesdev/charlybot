@@ -65,6 +65,7 @@ bun run db:restore
 ### Don’t
 
 - No corras builds/tests ni comandos destructivos salvo pedido explícito.
+  - **Excepción bot tests**: en `apps/bot/`, podés correr `bun run test` (vitest) para ejecutar tests unitarios.
 - No edites código generado de Prisma (`packages/shared/src/generated/prisma/*`).
 - En Discord.js v14: **NUNCA** uses `ephemeral: true`; usá `flags: [MessageFlags.Ephemeral]`.
 

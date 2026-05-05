@@ -207,6 +207,78 @@ Nota: los scripts de administración de comandos viven en `scripts/` (raíz) y s
 - `src/container.ts` (vacío)
 - `src/infrastructure/storage/index.ts` (hoy no se usa; el bot consume la API)
 
+## Tests
+
+El bot usa **vitest** como test runner con pool `forks` para aislamiento determinista. La configuración vive en `vitest.config.ts` y el setup global en `tests/setup.ts`.
+
+### Ejecutar tests
+
+```bash
+# desde apps/bot/
+bun test              # run once
+bun run test:watch    # watch mode
+bun run test:coverage # con coverage report (v8)
+```
+
+### Estructura de archivos
+
+```
+apps/bot/
+  tests/
+    setup.ts              # setup global: mock @charlybot/shared/prisma
+    smoke.test.ts          # smoke test (verifica que vitest corre)
+    economy/               # tests de lógica pura de ruleta
+      roulette.test.ts
+      config.test.ts
+      service.test.ts
+    commands/economia/
+      balance.test.ts
+  src/
+    __mocks__/
+      discord.ts           # createMockChatInputCommandInteraction()
+      repo.ts              # createMockEconomyRepo(), createMockConfigRepo()
+```
+
+### Mock factories
+
+**`createMockChatInputCommandInteraction(overrides?)`**
+Crea un mock de `ChatInputCommandInteraction` con `reply()`, `editReply()`, `deferReply()`, `followUp()` como `vi.fn()`. Overridea `userId`, `guildId`, y `options.*` según necesidad.
+
+```ts
+const interaction = createMockChatInputCommandInteraction({
+  userId: "my-user",
+  guildId: "my-guild",
+  options: { subcommand: "balance" },
+});
+await interaction.deferReply();
+await interaction.editReply({ content: "result" });
+```
+
+**`createMockEconomyRepo(overrides?)`**
+Crea un mock de todo el namespace `EconomyRepo` con cada función como `vi.fn()`. Comportamiento por defecto: `getEconomyUser` → `null`, `createEconomyUser` → usuario por defecto con pocket=1000. Overridea funciones específicas en cada test.
+
+```ts
+const repo = createMockEconomyRepo({
+  getEconomyUser: vi.fn(() => Promise.resolve({ pocket: 5000 })),
+});
+```
+
+### Patrón de test por capa
+
+| Capa | Qué testear | Mock |
+|------|-------------|------|
+| Lógica pura (RouletteService) | Función directa, sin mocks | Ninguno |
+| Config defaults | Servicio con repo mockeado | `vi.mock(".../EconomyRepo")` |
+| Service con mocks | Servicio, repo y LeaderboardService mockeados | `vi.mock()` por namespace |
+| Command handler | `execute(interaction)` con interaction mock | `createMockChatInputCommandInteraction` |
+
+### Reglas importantes
+
+- **No usar base de datos real** — todos los tests usan mocks de `EconomyRepo` y `vi.mock("@charlybot/shared")` para reemplazar `prisma`.
+- **No `ephemeral: true`** — en tests de commands, si necesitás respuesta ephemeral, usar `flags: [MessageFlags.Ephemeral]`.
+- **`vi.clearAllMocks()`** — se llama automáticamente en `afterEach` del setup global.
+- **`import type`** — usar `import type` para tipos que solo se usan como tipos (requerido por `verbatimModuleSyntax`).
+
 ## Skills Disponibles
 
 - `skills/discord-command/SKILL.md`: guía para crear comandos slash respetando el patrón del repo.
