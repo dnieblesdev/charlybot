@@ -1,5 +1,19 @@
 # @charlybot/shared
 
+## 2.6.0
+
+### Minor Changes
+
+- Add observability module: structured logger, metrics registry (prom-client), alerts, OTel tracing
+- Add typed application errors: AppError, NotFoundError, ValidationError, UnauthorizedError, ForbiddenError
+- Move Valkey distributed lock utilities from API to shared (withDistributedLock, economyUserLockKey)
+- Add async leaderboard stream utilities (producer, consumer, DLQ)
+- Add Valkey commandTimeoutMs default increase (2000ms → 10000ms) to support blocking stream commands
+
+### Patch Changes
+
+- Fix ValkeyClient fallback for commandTimeoutMs (2000 → 10000)
+
 ## 2.5.3
 
 ### Patch Changes

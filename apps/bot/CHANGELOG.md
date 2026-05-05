@@ -1,5 +1,25 @@
 # @charlybot/bot
 
+## 2.10.0
+
+### Minor Changes
+
+- Eliminate HTTP adapter layer — bot now uses Prisma directly via @charlybot/shared
+- Delete 11 HTTP adapter files (~1,089 lines) from infrastructure/api/
+- Rewrite 7 domain repos to direct Prisma: Verification, AutoRole, Classes, GuildConfig, XP, Music, Economy
+- Add observability: structured logging, metrics, alerts
+- Add typed application errors (AppError hierarchy)
+- Add async leaderboard stream consumer with Valkey streams
+
+### Patch Changes
+
+- Fix LeaderboardStreamConsumer: add loopInFlight re-entrancy guard to prevent XREADGROUP BLOCK pile-up
+- Fix auditLogFetcher: move from events/ to utils/ (was causing invalid event warning on startup)
+- Fix MusicRepo Valkey import path
+
+- Updated dependencies
+  - @charlybot/shared@2.6.0
+
 ## 2.9.2
 
 ### Patch Changes

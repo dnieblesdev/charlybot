@@ -1,5 +1,31 @@
 # @charlybot/api
 
+## 2.7.0
+
+### Minor Changes
+
+- Eliminate HTTP layer between bot and database (unify-bot-api-monolith)
+- Add 6 new dashboard API routes with JWT auth (19 endpoints total):
+  - economy: leaderboard, config CRUD
+  - xp: leaderboard, level-roles, user data
+  - music: queue, config CRUD
+  - verifications: pending list, approve/reject
+  - autoroles: CRUD + mappings
+  - classes: CRUD
+- Simplify authMiddleware to JWT-only (remove X-API-Key path)
+- Add observability: structured logging, metrics, alerts
+- Add typed application errors (AppError hierarchy)
+
+### Patch Changes
+
+- Fix TS strict errors across 19 files
+- Clean up 15 old test files for deleted routes
+- Fix classes.routes POST FK constraint (test setup)
+- Fix verifications.routes PATCH guildAccessMiddleware
+
+- Updated dependencies
+  - @charlybot/shared@2.6.0
+
 ## 2.6.4
 
 ### Patch Changes

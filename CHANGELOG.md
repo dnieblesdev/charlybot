@@ -1,5 +1,28 @@
 # charlybot
 
+## 2026-05-04
+
+### @charlybot/shared (2.6.0)
+- Add observability module: structured logger, metrics registry (prom-client), alerts, OTel tracing
+- Add typed application errors: AppError, NotFoundError, ValidationError, UnauthorizedError, ForbiddenError
+- Move Valkey distributed lock utilities from API to shared
+- Add async leaderboard stream utilities (producer, consumer, DLQ)
+- Increase Valkey commandTimeoutMs default (2s → 10s) for blocking stream commands
+
+### @charlybot/api (2.7.0)
+- Eliminate HTTP layer between bot and database (unify-bot-api-monolith)
+- Add 6 new dashboard API routes with JWT auth (19 endpoints)
+- Simplify authMiddleware to JWT-only (remove X-API-Key)
+- Add observability: structured logging, metrics, alerts
+- Fix TS strict errors, clean up old test files, fix 2 route bugs
+
+### @charlybot/bot (2.10.0)
+- Eliminate HTTP adapter layer — bot uses Prisma directly via @charlybot/shared
+- Delete 11 HTTP adapter files (~1,089 lines), rewrite 7 domain repos
+- Add observability: structured logging, metrics, alerts
+- Fix LeaderboardStreamConsumer re-entrancy guard (Valkey blocking command pile-up)
+- Fix auditLogFetcher: move from events/ to utils/
+
 ## 2026-04-25
 
 ### @charlybot/shared (2.5.3)
