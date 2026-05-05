@@ -12,25 +12,25 @@ import { NavbarSection } from './features/navbar/navbar.section';
   template: `
     <app-navbar-section />
 
-    <main class="bg-bg-base pt-16">
+    <main class="page-main">
       <app-hero-section class="fade-in-up" />
 
       @defer (on viewport) {
         <app-features-section animate.enter="fade-in-up" />
       } @placeholder {
-        <div class="min-h-[800px]"></div>
+        <div class="placeholder-features"></div>
       }
 
       @defer (on viewport) {
         <app-pricing-section animate.enter="fade-in-up" />
       } @placeholder {
-        <div class="min-h-[600px]"></div>
+        <div class="placeholder-pricing"></div>
       }
 
       @defer (on viewport) {
         <app-footer-section animate.enter="fade-in-up" />
       } @placeholder {
-        <div class="h-64"></div>
+        <div class="placeholder-footer"></div>
       }
     </main>
   `,
@@ -41,6 +41,18 @@ import { NavbarSection } from './features/navbar/navbar.section';
 
     main {
       scroll-behavior: smooth;
+    }
+
+    .placeholder-features {
+      min-height: 800px;
+    }
+
+    .placeholder-pricing {
+      min-height: 600px;
+    }
+
+    .placeholder-footer {
+      height: 256px;
     }
   `]
 })

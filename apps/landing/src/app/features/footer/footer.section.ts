@@ -7,44 +7,44 @@ import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <footer class="py-16 px-4 bg-bg-base border-t border-border">
-      <div class="max-w-6xl mx-auto">
+    <footer class="footer">
+      <div class="container">
         <!-- CTA Section -->
-        <div class="text-center mb-12">
-          <h2 class="text-2xl md:text-3xl font-bold text-text-primary mb-4">
+        <div class="footer-cta">
+          <h2 class="heading-subsection">
             ¿Listo para mejorar tu servidor?
           </h2>
-          <p class="text-text-secondary mb-6">
+          <p class="footer-subtitle">
             Únete a miles de servidores que ya usan CharlyBot.
           </p>
           <a [href]="discordOAuthUrl"
-             class="btn-primary px-8 py-4 text-lg">
+             class="btn-primary btn-primary-lg">
             Agregar al Servidor
           </a>
         </div>
 
         <!-- Links -->
-        <div class="flex flex-wrap justify-center gap-6 md:gap-12 mb-12">
+        <div class="footer-links">
           <a href="https://discord.gg" target="_blank" rel="noopener noreferrer"
-             class="text-text-secondary hover:text-text-primary transition-colors">
+             class="footer-link">
             Discord de soporte
           </a>
           <a href="https://github.com" target="_blank" rel="noopener noreferrer"
-             class="text-text-secondary hover:text-text-primary transition-colors">
+             class="footer-link">
             GitHub
           </a>
           <a href="#"
-             class="text-text-secondary hover:text-text-primary transition-colors">
+             class="footer-link">
             Términos
           </a>
           <a href="#"
-             class="text-text-secondary hover:text-text-primary transition-colors">
+             class="footer-link">
             Privacidad
           </a>
         </div>
 
         <!-- Copyright -->
-        <div class="text-center text-text-secondary text-sm">
+        <div class="footer-copyright">
           © 2026 CharlyBot — Todos los derechos reservados.
         </div>
       </div>
@@ -53,6 +53,52 @@ import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
   styles: [`
     :host {
       display: block;
+    }
+
+    .footer {
+      padding: 4rem 1rem;
+      background: var(--color-bg-base);
+      border-top: 1px solid var(--color-border);
+    }
+
+    .footer-subtitle {
+      color: var(--color-text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .footer-cta {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    @media (min-width: 768px) {
+      .footer-links {
+        gap: 3rem;
+      }
+    }
+
+    .footer-link {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition: color var(--transition-base);
+    }
+
+    .footer-link:hover {
+      color: var(--color-text-primary);
+    }
+
+    .footer-copyright {
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
     }
   `]
 })

@@ -14,31 +14,30 @@ interface Feature {
   standalone: true,
   imports: [CommonModule, LucideAngularModule],
   template: `
-    <section class="py-24 px-4 bg-bg-base" id="features">
-      <div class="max-w-6xl mx-auto">
-        <h2 class="text-3xl md:text-4xl font-bold text-center text-text-primary mb-4">
+    <section class="section" id="features">
+      <div class="container">
+        <h2 class="heading-section">
           Todo lo que necesitas para tu servidor
         </h2>
-        <p class="text-text-secondary text-center max-w-2xl mx-auto mb-16">
+        <p class="text-body">
           CharlyBot ofrece un conjunto completo de herramientas para hacer crecer y gestionar tu comunidad de Discord.
         </p>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid-3">
           @for (feature of features; track feature.name) {
-            <div class="bg-bg-surface border border-border rounded-xl p-6 hover:border-accent transition-colors">
-              <div class="flex items-start gap-4">
-                <div class="p-3 bg-bg-elevated rounded-lg">
+            <div class="feature-card">
+              <div class="feature-icon-row">
+                <div class="feature-icon-wrapper">
                   <lucide-icon [img]="feature.icon" [size]="24" class="text-accent"></lucide-icon>
                 </div>
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <h3 class="text-lg font-semibold text-text-primary">{{ feature.name }}</h3>
-                    <span [class]="feature.tier === 'Premium' ? 'bg-warning/20 text-warning' : 'bg-success/20 text-success'"
-                          class="text-xs px-2 py-0.5 rounded font-medium">
+                <div class="feature-content">
+                  <div class="feature-header">
+                    <h3 class="feature-name">{{ feature.name }}</h3>
+                    <span [class]="feature.tier === 'Premium' ? 'feature-badge feature-badge--premium' : 'feature-badge feature-badge--free'">
                       {{ feature.tier }}
                     </span>
                   </div>
-                  <p class="text-text-secondary text-sm">{{ feature.description }}</p>
+                  <p class="feature-description">{{ feature.description }}</p>
                 </div>
               </div>
             </div>
@@ -50,6 +49,43 @@ interface Feature {
   styles: [`
     :host {
       display: block;
+    }
+
+    .feature-icon-wrapper {
+      padding: 0.75rem;
+      background: var(--color-bg-elevated);
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+    }
+
+    .feature-icon-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .feature-content {
+      flex: 1;
+    }
+
+    .feature-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-name {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0;
+    }
+
+    .feature-description {
+      color: var(--color-text-secondary);
+      font-size: 0.875rem;
+      margin: 0;
     }
   `]
 })

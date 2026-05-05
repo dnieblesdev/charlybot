@@ -18,43 +18,41 @@ interface PricingTier {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="py-24 px-4 bg-bg-surface" id="pricing">
-      <div class="max-w-6xl mx-auto">
-        <h2 class="text-3xl md:text-4xl font-bold text-center text-text-primary mb-4">
+    <section class="section-alt" id="pricing">
+      <div class="container">
+        <h2 class="heading-section">
           Planes simples y transparentes
         </h2>
-        <p class="text-text-secondary text-center max-w-2xl mx-auto mb-16">
+        <p class="text-body">
           Elige el plan que mejor se adapte a tu servidor. Sin compromisos.
         </p>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="grid-3">
           @for (tier of tiers; track tier.name) {
-            <div [class]="getCardClass(tier)"
-                 class="rounded-2xl p-8 flex flex-col">
+            <div [class]="getCardClass(tier)">
               @if (tier.badge) {
-                <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span [class]="getBadgeClass(tier)"
-                        class="text-xs font-semibold px-3 py-1 rounded-full">
+                <div class="pricing-badge-wrapper">
+                  <span [class]="getBadgeClass(tier)">
                     {{ tier.badge }}
                   </span>
                 </div>
               }
 
-              <div class="text-center mb-6">
+              <div class="pricing-card-header">
                 <h3 [class]="getTierNameClass(tier)"
-                    class="text-xl font-bold mb-2">{{ tier.name }}</h3>
+                    class="pricing-tier-name">{{ tier.name }}</h3>
                 <div [class]="getPriceClass(tier)"
-                     class="text-4xl font-bold">{{ tier.price }}</div>
+                     class="pricing-price">{{ tier.price }}</div>
                 @if (tier.price !== 'Gratis') {
-                  <div class="text-text-secondary text-sm mt-1">por mes</div>
+                  <div class="pricing-period">por mes</div>
                 }
-                <p class="text-text-secondary text-sm mt-4">{{ tier.description }}</p>
+                <p class="text-secondary text-small pricing-description">{{ tier.description }}</p>
               </div>
 
-              <ul class="space-y-3 mb-8 flex-1">
+              <ul class="pricing-feature-list">
                 @for (feature of tier.features; track feature) {
-                  <li class="flex items-start gap-2 text-text-secondary text-sm">
-                    <span class="text-success mt-0.5">✓</span>
+                  <li class="pricing-feature-item">
+                    <span class="pricing-check">✓</span>
                     {{ feature }}
                   </li>
                 }
@@ -75,6 +73,42 @@ interface PricingTier {
   styles: [`
     :host {
       display: block;
+    }
+
+    .pricing-badge-wrapper {
+      position: absolute;
+      top: -0.75rem;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .pricing-period {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .pricing-card-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .pricing-feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      color: var(--color-text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .pricing-check {
+      color: var(--color-success);
+      margin-top: 0.125rem;
+      flex-shrink: 0;
+    }
+
+    .pricing-description {
+      margin-top: 1rem;
     }
   `]
 })
@@ -137,48 +171,48 @@ export class PricingSection {
 
   getCardClass(tier: PricingTier): string {
     if (tier.name === 'Premium') {
-      return 'glass-card border-2 border-accent-premium relative';
+      return 'glass-card pricing-card pricing-card--premium';
     }
     if (tier.name === 'Free') {
-      return 'glass-card border border-accent-free';
+      return 'glass-card pricing-card pricing-card--free';
     }
-    return 'glass-card border border-accent-premium';
+    return 'glass-card pricing-card pricing-card--pro';
   }
 
   getBadgeClass(tier: PricingTier): string {
     if (tier.name === 'Premium') {
-      return 'bg-accent-premium text-white';
+      return 'pricing-badge pricing-badge--premium';
     }
-    return 'bg-accent-free text-white';
+    return 'pricing-badge pricing-badge--free';
   }
 
   getTierNameClass(tier: PricingTier): string {
     if (tier.name === 'Premium') {
-      return 'text-accent-premium';
+      return 'pricing-tier-name pricing-tier-name--premium';
     }
     if (tier.name === 'Free') {
-      return 'text-accent-free';
+      return 'pricing-tier-name pricing-tier-name--free';
     }
-    return 'text-accent-premium';
+    return 'pricing-tier-name pricing-tier-name--pro';
   }
 
   getPriceClass(tier: PricingTier): string {
     if (tier.name === 'Premium') {
-      return 'text-accent-premium';
+      return 'pricing-price pricing-price--premium';
     }
     if (tier.name === 'Free') {
-      return 'text-accent-free';
+      return 'pricing-price pricing-price--free';
     }
-    return 'text-accent-premium';
+    return 'pricing-price pricing-price--pro';
   }
 
   getButtonClass(tier: PricingTier): string {
     if (tier.name === 'Premium') {
-      return 'block w-full py-3 bg-gradient-to-r from-accent-premium-gradient-from to-accent-premium-gradient-to hover:opacity-90 text-white text-center font-semibold rounded-lg transition-opacity';
+      return 'btn-premium';
     }
     if (tier.name === 'Free') {
-      return 'btn-primary block w-full py-3';
+      return 'btn-primary btn-block';
     }
-    return 'block w-full py-3 bg-accent-premium hover:bg-accent-premium-hover text-white text-center font-semibold rounded-lg transition-colors';
+    return 'btn-pro';
   }
 }

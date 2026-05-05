@@ -6,14 +6,14 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-bg-base/90 backdrop-blur-md border-b border-border">
-      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+    <nav class="navbar">
+      <div class="navbar-inner">
         <!-- Brand -->
-        <span class="text-xl font-bold text-accent">CharlyBot</span>
+        <span class="navbar-brand">CharlyBot</span>
 
         <!-- CTA -->
         <a href="/dashboard/"
-           class="btn-secondary text-sm">
+           class="btn-secondary">
           Iniciar sesión
         </a>
       </div>
