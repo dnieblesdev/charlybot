@@ -27,8 +27,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const stopped = musicService.stop(interaction.guildId);
 
+    await interaction.deferReply();
+
     if (stopped) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "⏹️ Música detenida y cola limpiada.",
       });
 
@@ -37,9 +39,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         guildId: interaction.guildId,
       });
     } else {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No se pudo detener la música.",
-        flags: [MessageFlags.Ephemeral],
       });
     }
   } catch (error) {
@@ -51,8 +52,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al detener la música.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }

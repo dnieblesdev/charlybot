@@ -28,6 +28,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const mode = interaction.options.getString("mode", true) as LoopMode;
 
+    await interaction.deferReply();
+
     const success = musicService.setLoop(interaction.guildId, mode);
 
     if (success) {
@@ -52,7 +54,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           message = "Modo desconocido";
       }
 
-      await interaction.reply({
+      await interaction.editReply({
         content: `${icon} ${message}`,
       });
 
@@ -62,9 +64,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         mode,
       });
     } else {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No se pudo cambiar el modo de repetición.",
-        flags: [MessageFlags.Ephemeral],
       });
     }
   } catch (error) {
@@ -75,11 +76,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       guildId: interaction.guildId,
     });
 
-    const errorMessage = "❌ Error al cambiar el modo de repetición.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: "❌ Error al cambiar el modo de repetición." });
     } else {
-      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
+      await interaction.reply({ content: "❌ Error al cambiar el modo de repetición.", flags: [MessageFlags.Ephemeral] });
     }
   }
 }

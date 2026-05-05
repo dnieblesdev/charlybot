@@ -46,6 +46,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     const start = (page - 1) * songsPerPage;
     const end = start + songsPerPage;
     const songsToShow = queue.songs.slice(start, end);
@@ -122,7 +124,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       embed.setFooter({ text: footerText.join(" | ") });
     }
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
 
     logger.info("Queue command executed successfully", {
       userId: interaction.user.id,
@@ -139,8 +141,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al mostrar la cola.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }

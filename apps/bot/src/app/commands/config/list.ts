@@ -25,15 +25,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     const configs = await getAllGuildConfigs();
 
     if (configs.length === 0) {
       logger.info("List configs executed - no configs found", {
         userId: interaction.user.id,
       });
-      await interaction.reply({
+      await interaction.editReply({
         content: "📋 No hay configuraciones guardadas.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -58,9 +59,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       totalConfigs: configs.length,
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       embeds: [embed],
-      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error executing list-configs command", {
@@ -70,8 +70,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al listar las configuraciones.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }

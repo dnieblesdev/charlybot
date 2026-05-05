@@ -35,8 +35,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const resumed = musicService.resume(interaction.guildId);
 
+    await interaction.deferReply();
+
     if (resumed) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "▶️ Reproducción reanudada.",
       });
 
@@ -45,9 +47,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         guildId: interaction.guildId,
       });
     } else {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No se pudo reanudar la reproducción.",
-        flags: [MessageFlags.Ephemeral],
       });
     }
   } catch (error) {
@@ -59,8 +60,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al reanudar la reproducción.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }

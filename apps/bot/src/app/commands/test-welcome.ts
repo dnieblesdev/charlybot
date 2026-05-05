@@ -35,19 +35,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
     const config = await getGuildConfig(interaction.guild.id);
     const welcomeChannelId = config?.welcomeChannelId;
 
     // Validar que el canal de bienvenida esté configurado
     if (!validateChannelConfigured(welcomeChannelId, "bienvenida", "set-welcome")) {
-      await interaction.reply(createErrorReply(ERROR_MESSAGES.CHANNEL_NOT_CONFIGURED("bienvenida", "set-welcome")));
+      await interaction.editReply(createErrorReply(ERROR_MESSAGES.CHANNEL_NOT_CONFIGURED("bienvenida", "set-welcome")));
       return;
     }
 
     if (!config?.welcomeMessage) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No hay mensaje de bienvenida configurado. Usa `/set-welcome` para configurar el mensaje.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -56,9 +56,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       welcomeChannelId!,
     );
     if (!channel) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No pude encontrar el canal configurado.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -72,9 +71,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Enviar al canal configurado
     await (channel as any).send({ content: preview });
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `✅ Mensaje de bienvenida enviado de prueba a <#${welcomeChannelId}>.`,
-      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error executing test-welcome command", {
@@ -82,11 +80,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
-    if (!interaction.replied) {
-      await interaction.reply({
-        content: "❌ Error ejecutando test-welcome.",
-        flags: [MessageFlags.Ephemeral],
-      });
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: "❌ Error ejecutando test-welcome." });
+    } else {
+      await interaction.reply({ content: "❌ Error ejecutando test-welcome.", flags: [MessageFlags.Ephemeral] });
     }
   }
 }

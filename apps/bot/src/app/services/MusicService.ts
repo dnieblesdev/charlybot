@@ -441,21 +441,8 @@ class MusicService {
    * Elimina una canción de la cola
    * Delega a QueueManagementService
    */
-  removeSong(guildId: string, index: number): Song | null {
-    try {
-      // QueueManagementService.remove es async, pero para backward compatibility
-      // usamos el método síncrono o manejamos la promise
-      // Por ahora retornamos null y el comando debería actualizarse
-      logger.warn("removeSong es async en QueueManagementService, método sincrono no disponible");
-      return null;
-    } catch (error) {
-      logger.error("Error removing song via facade", {
-        guildId,
-        index,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return null;
-    }
+  async removeSong(guildId: string, index: number): Promise<Song | null> {
+    return this.removeSongAsync(guildId, index);
   }
 
   /**

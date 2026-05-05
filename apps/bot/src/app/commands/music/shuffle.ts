@@ -33,10 +33,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     const shuffled = musicService.shuffle(interaction.guildId);
 
     if (shuffled) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `🔀 Se mezclaron **${queue.songs.length}** canciones en la cola.`,
       });
 
@@ -46,9 +48,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         songCount: queue.songs.length,
       });
     } else {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No se pudo mezclar la cola.",
-        flags: [MessageFlags.Ephemeral],
       });
     }
   } catch (error) {
@@ -59,11 +60,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       guildId: interaction.guildId,
     });
 
-    const errorMessage = "❌ Error al mezclar la cola.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: "❌ Error al mezclar la cola." });
     } else {
-      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
+      await interaction.reply({ content: "❌ Error al mezclar la cola.", flags: [MessageFlags.Ephemeral] });
     }
   }
 }

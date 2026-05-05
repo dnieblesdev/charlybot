@@ -21,6 +21,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     const channel = interaction.options.getChannel("canal", true);
 
     await setLeaveLogChannel(interaction.guild.id, channel.id);
@@ -31,9 +33,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       channelId: channel.id,
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `✅ Canal de logs de salida configurado: <#${channel.id}>.`,
-      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error executing set-leave-log-channel command", {
@@ -41,11 +42,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
-    if (!interaction.replied) {
-      await interaction.reply({
-        content: "❌ Error configurando canal de logs de salida.",
-        flags: [MessageFlags.Ephemeral],
-      });
+    const errorMessage = "❌ Error configurando canal de logs de salida.";
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
+    } else {
+      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
   }
 }

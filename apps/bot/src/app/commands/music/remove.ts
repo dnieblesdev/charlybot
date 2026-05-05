@@ -44,7 +44,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    const removed = musicService.removeSong(interaction.guildId, position);
+    await interaction.deferReply();
+
+    const removed = await musicService.removeSong(interaction.guildId, position);
 
     if (removed) {
       // Obtener el nickname del usuario en el servidor (display name)
@@ -75,7 +77,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           },
         );
 
-      await interaction.reply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [embed] });
 
       logger.info("Remove command executed successfully", {
         userId: interaction.user.id,
@@ -84,9 +86,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         songTitle: removed.title,
       });
     } else {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No se pudo eliminar la canción.",
-        flags: [MessageFlags.Ephemeral],
       });
     }
   } catch (error) {
@@ -98,8 +99,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al eliminar la canción.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }

@@ -27,13 +27,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const volume = interaction.options.getInteger("level", true);
 
+    await interaction.deferReply();
+
     const success = musicService.setVolume(interaction.guildId, volume);
 
     if (success) {
       const volumeIcon =
         volume === 0 ? "🔇" : volume < 50 ? "🔈" : volume < 100 ? "🔉" : "🔊";
 
-      await interaction.reply({
+      await interaction.editReply({
         content: `${volumeIcon} Volumen ajustado a **${volume}%**`,
       });
 
@@ -43,9 +45,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         volume,
       });
     } else {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No se pudo ajustar el volumen.",
-        flags: [MessageFlags.Ephemeral],
       });
     }
   } catch (error) {
@@ -56,11 +57,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       guildId: interaction.guildId,
     });
 
-    const errorMessage = "❌ Error al ajustar el volumen.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: "❌ Error al ajustar el volumen." });
     } else {
-      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
+      await interaction.reply({ content: "❌ Error al ajustar el volumen.", flags: [MessageFlags.Ephemeral] });
     }
   }
 }

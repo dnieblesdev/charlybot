@@ -33,6 +33,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     const song = queue.currentSong;
     const statusIcon = queue.isPaused ? "⏸️" : "▶️";
     const statusText = queue.isPaused ? "Pausado" : "Reproduciendo";
@@ -102,7 +104,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
     }
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
 
     logger.info("Nowplaying command executed successfully", {
       userId: interaction.user.id,
@@ -118,8 +120,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al mostrar la canción actual.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }

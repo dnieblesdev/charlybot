@@ -18,13 +18,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     const config = await getGuildConfig(interaction.guild.id);
 
     if (!config) {
-      await interaction.reply({
+      await interaction.editReply({
         content:
           "❌ No hay configuración establecida. Usa `/set-image-channel` o `/set-voice-log` para configurar.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -78,9 +79,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       hasVoiceLogChannel: !!config.voiceLogChannelId,
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       embeds: [embed],
-      ephemeral: !isPublic,
     });
   } catch (error) {
     logger.error("Error executing show-config command", {
@@ -90,8 +90,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al mostrar la configuración.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }

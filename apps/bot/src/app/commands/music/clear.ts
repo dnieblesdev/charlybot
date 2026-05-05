@@ -33,9 +33,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    const count = musicService.clearSongs(interaction.guildId);
+    await interaction.deferReply();
 
-    await interaction.reply({
+    const count = await musicService.clearSongs(interaction.guildId);
+
+    await interaction.editReply({
       content: `🗑️ Se limpiaron **${count}** canción(es) de la cola.`,
     });
 
@@ -52,11 +54,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       guildId: interaction.guildId,
     });
 
-    const errorMessage = "❌ Error al limpiar la cola.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: "❌ Error al limpiar la cola." });
     } else {
-      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
+      await interaction.reply({ content: "❌ Error al limpiar la cola.", flags: [MessageFlags.Ephemeral] });
     }
   }
 }

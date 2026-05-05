@@ -22,6 +22,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     const channel = interaction.options.getChannel("canal", true);
 
     await setVoiceLogChannel(interaction.guild.id, channel.id);
@@ -32,9 +34,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       channelId: channel.id,
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `✅ Canal de logs de voz configurado: Los mensajes se enviarán a <#${channel.id}>`,
-      flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
     logger.error("Error executing set-voice-log command", {
@@ -44,8 +45,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al configurar el canal de logs de voz.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }

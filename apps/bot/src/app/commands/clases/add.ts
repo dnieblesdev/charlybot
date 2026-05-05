@@ -16,6 +16,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     const className = interaction.options.getString("nombre", true);
+    await interaction.deferReply();
     const classRole = interaction.options.getRole("rol-clase", true);
     const type = interaction.options.getString("tipo", true) as
       | "Healer"
@@ -30,9 +31,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Verificar si la clase ya existe
     const exists = await classExists(interaction.guild.id, className);
     if (exists) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `❌ La clase **${className}** ya existe. Usa \`/remove-class\` primero si quieres reemplazarla.`,
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -67,7 +67,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       type,
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       content:
         `✅ **Clase añadida exitosamente:**\n\n` +
         `📌 **Clase:** ${className} (${classRole})\n` +
@@ -76,7 +76,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         `   • ${subclass1Name} (${subclass1Role})\n` +
         `   • ${subclass2Name} (${subclass2Role})\n\n` +
         `Los usuarios ahora podrán seleccionar esta clase al verificarse.`,
-      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error ejecutando add-class", {

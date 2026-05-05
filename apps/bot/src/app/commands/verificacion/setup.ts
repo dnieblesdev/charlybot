@@ -44,6 +44,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     // Guardar la configuración
     await setVerificationChannel(interaction.guild.id, verificationChannel.id);
     await setVerificationReviewChannel(interaction.guild.id, logChannel.id);
@@ -57,7 +59,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       verifiedRoleId: verifiedRole.id,
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       content:
         `✅ **Sistema de verificación configurado exitosamente:**\n\n` +
         `📝 Canal de verificación: ${verificationChannel}\n` +
@@ -65,7 +67,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         `✅ Rol de verificado: ${verifiedRole}\n\n` +
         `**Nota:** La verificación es automática. Los usuarios recibirán el rol inmediatamente al registrarse.\n\n` +
         `Usa el comando \`/verificacion panel\` para enviar el panel de verificación al canal configurado.`,
-      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error ejecutando setup-verification", {

@@ -31,24 +31,25 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     // Obtener la configuración del servidor
     const config = await getGuildConfig(interaction.guild.id);
 
     // Validar que el sistema de verificación esté configurado
     if (!validateChannelConfigured(config?.verificationChannelId, "verificación", "verificacion setup")) {
-      await interaction.reply(createErrorReply(ERROR_MESSAGES.VERIFICATION_NOT_CONFIGURED()));
+      await interaction.editReply(createErrorReply(ERROR_MESSAGES.VERIFICATION_NOT_CONFIGURED()));
       return;
     }
 
     if (!config?.verifiedRoleId) {
-      await interaction.reply(createErrorReply(ERROR_MESSAGES.CHANNEL_NOT_CONFIGURED("verificación (rol)", "verificacion setup")));
+      await interaction.editReply(createErrorReply(ERROR_MESSAGES.CHANNEL_NOT_CONFIGURED("verificación (rol)", "verificacion setup")));
       return;
     }
 
     if (!config?.verificationReviewChannelId) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No hay canal de revisión configurado. Usa `/verificacion setup` para configurar.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -60,9 +61,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     ) as TextChannel;
 
     if (!verificationChannel) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No puedo encontrar el canal de verificación configurado.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -103,9 +103,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       channelId: verificationChannel.id,
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `✅ Panel de verificación enviado a ${verificationChannel}`,
-      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error enviando panel de verificación", {

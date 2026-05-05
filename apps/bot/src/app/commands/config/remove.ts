@@ -36,6 +36,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     const config = await getGuildConfig(interaction.guild.id);
 
     if (!config) {
@@ -43,9 +45,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         userId: interaction.user.id,
         guildId: interaction.guild.id,
       });
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No hay configuración para eliminar.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -57,9 +58,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       guildId: interaction.guild.id,
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `✅ Configuración eliminada exitosamente.\n🔒 Acción realizada por ${interaction.user.username}`,
-      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error executing remove-config command", {
@@ -69,8 +69,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al eliminar la configuración.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }

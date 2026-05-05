@@ -20,13 +20,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     const className = interaction.options.getString("nombre", true);
+    await interaction.deferReply();
 
     // Verificar si la clase existe
     const exists = await classExists(interaction.guild.id, className);
     if (!exists) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `❌ La clase **${className}** no existe.\n\nUsa \`/list-classes\` para ver las clases configuradas.`,
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -39,9 +39,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       className,
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `✅ La clase **${className}** ha sido eliminada del sistema.`,
-      flags: [MessageFlags.Ephemeral],
     });
   } catch (error) {
     logger.error("Error ejecutando remove-class", {

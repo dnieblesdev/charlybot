@@ -33,11 +33,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     const nowPlaying = await musicService.skip(interaction.guildId);
 
     if (nowPlaying) {
-      await interaction.reply({
-        content: `⏭️ Canción saltada.\n🎵 **Reproduciendo ahora:** ${nowPlaying.title}`,
+      await interaction.editReply({
+        content: "⏭️ Canción saltada.\n🎵 **Reproduciendo ahora:** " + nowPlaying.title,
       });
 
       logger.info("Skip command executed successfully", {
@@ -46,9 +48,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         nowPlaying: nowPlaying.title,
       });
     } else {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No se pudo saltar la canción.",
-        flags: [MessageFlags.Ephemeral],
       });
     }
   } catch (error) {
@@ -60,8 +61,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al saltar la canción.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }

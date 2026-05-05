@@ -19,6 +19,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    await interaction.deferReply();
+
     const channel = interaction.options.getChannel("canal");
 
     if (channel) {
@@ -30,9 +32,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         channelId: channel.id,
       });
 
-      await interaction.reply({
+      await interaction.editReply({
         content: `✅ Canal de logs de mensajes configurado: Los mensajes editados/eliminados se enviarán a <#${channel.id}>`,
-        flags: MessageFlags.Ephemeral,
       });
     } else {
       // Clear the message log channel
@@ -43,9 +44,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         guildId: interaction.guild.id,
       });
 
-      await interaction.reply({
+      await interaction.editReply({
         content: "✅ Canal de logs de mensajes eliminado.",
-        flags: MessageFlags.Ephemeral,
       });
     }
   } catch (error) {
@@ -56,8 +56,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al configurar el canal de logs de mensajes.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }

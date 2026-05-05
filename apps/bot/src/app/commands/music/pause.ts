@@ -19,7 +19,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     if (!queue || !queue.connection) {
       await interaction.reply({
-        content: "❌ No hay música reproduciéndose.",
+        content: "❌ No hay música reproduciándose.",
         flags: [MessageFlags.Ephemeral],
       });
       return;
@@ -35,7 +35,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     if (!queue.isPlaying) {
       await interaction.reply({
-        content: "❌ No hay música reproduciéndose.",
+        content: "❌ No hay música reproduciándose.",
         flags: [MessageFlags.Ephemeral],
       });
       return;
@@ -43,8 +43,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const paused = musicService.pause(interaction.guildId);
 
+    await interaction.deferReply();
+
     if (paused) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "⏸️ Música pausada.",
       });
 
@@ -53,9 +55,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         guildId: interaction.guildId,
       });
     } else {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No se pudo pausar la música.",
-        flags: [MessageFlags.Ephemeral],
       });
     }
   } catch (error) {
@@ -67,8 +68,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const errorMessage = "❌ Error al pausar la música.";
-    if (interaction.replied) {
-      return;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content: errorMessage });
     } else {
       await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
     }
