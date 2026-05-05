@@ -1,5 +1,14 @@
 # @charlybot/bot
 
+## 2.11.0
+
+### Minor Changes
+
+- Add vitest test infrastructure with 54 tests across 5 test files
+- Add mock factories for ChatInputCommandInteraction and EconomyRepo
+- Add economy test suite: pure logic (RouletteService), service mocks (EconomyService), command handler (balance)
+- Document test conventions in AGENTS.md
+
 ## 2.10.0
 
 ### Minor Changes

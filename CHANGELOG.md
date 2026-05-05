@@ -1,5 +1,18 @@
 # charlybot
 
+## 2026-05-05
+
+### @charlybot/bot (2.11.0)
+- Add vitest test infrastructure with 54 tests (roulette, config, economy service, balance command)
+- Add mock factories for Discord.js interactions and EconomyRepo
+- Document test conventions in AGENTS.md
+
+### landing (0.2.0)
+- Visual refresh: purple theme, animated rain effect, card spotlight
+- New button styles (.btn-gradient, .btn-ghost)
+- Brand dot indicator in navbar
+- Improved hero background gradient
+
 ## 2026-05-04
 
 ### @charlybot/shared (2.6.0)

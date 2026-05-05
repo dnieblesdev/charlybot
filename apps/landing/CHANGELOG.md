@@ -1,5 +1,16 @@
 # landing
 
+## 0.2.0
+
+### Minor Changes
+
+- Visual refresh: switch accent color from cyan to purple (#8b5cf6)
+- Add animated rain effect with 45 purple drops
+- Add card spotlight effect following mouse position
+- Add brand dot indicator in navbar
+- Add .btn-gradient and .btn-ghost button styles
+- Improve hero background gradient contrast
+
 ## 0.1.1
 
 ### Patch Changes
