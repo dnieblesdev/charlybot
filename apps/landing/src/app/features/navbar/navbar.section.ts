@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
 
         <!-- CTA -->
         <a href="/dashboard/"
-           class="bg-discord hover:bg-discord/80 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+           class="btn-secondary text-sm">
           Iniciar sesión
         </a>
       </div>

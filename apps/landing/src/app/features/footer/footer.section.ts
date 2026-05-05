@@ -18,7 +18,7 @@ import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
             Únete a miles de servidores que ya usan CharlyBot.
           </p>
           <a [href]="discordOAuthUrl"
-             class="inline-block px-8 py-4 bg-discord text-white text-lg font-semibold rounded-lg hover:opacity-90 transition-opacity">
+             class="btn-primary px-8 py-4 text-lg">
             Agregar al Servidor
           </a>
         </div>

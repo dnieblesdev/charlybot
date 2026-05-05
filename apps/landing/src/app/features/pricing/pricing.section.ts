@@ -29,21 +29,22 @@ interface PricingTier {
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           @for (tier of tiers; track tier.name) {
-            <div [class]="tier.highlighted
-              ? 'bg-bg-base border-2 border-accent shadow-lg shadow-accent/20 relative'
-              : 'bg-bg-base border border-border'"
+            <div [class]="getCardClass(tier)"
                  class="rounded-2xl p-8 flex flex-col">
               @if (tier.badge) {
                 <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span class="bg-accent text-white text-xs font-semibold px-3 py-1 rounded-full">
+                  <span [class]="getBadgeClass(tier)"
+                        class="text-xs font-semibold px-3 py-1 rounded-full">
                     {{ tier.badge }}
                   </span>
                 </div>
               }
 
               <div class="text-center mb-6">
-                <h3 class="text-xl font-bold text-text-primary mb-2">{{ tier.name }}</h3>
-                <div class="text-4xl font-bold text-text-primary">{{ tier.price }}</div>
+                <h3 [class]="getTierNameClass(tier)"
+                    class="text-xl font-bold mb-2">{{ tier.name }}</h3>
+                <div [class]="getPriceClass(tier)"
+                     class="text-4xl font-bold">{{ tier.price }}</div>
                 @if (tier.price !== 'Gratis') {
                   <div class="text-text-secondary text-sm mt-1">por mes</div>
                 }
@@ -60,9 +61,7 @@ interface PricingTier {
               </ul>
 
               <a [href]="tier.ctaHref"
-                 [class]="tier.highlighted
-                   ? 'block w-full py-3 bg-accent hover:bg-accent-hover text-white text-center font-semibold rounded-lg transition-colors'
-                   : 'block w-full py-3 bg-bg-elevated hover:bg-border text-text-primary text-center font-semibold rounded-lg transition-colors'"
+                 [class]="getButtonClass(tier)"
                  [attr.target]="tier.ctaHref.startsWith('http') ? '_blank' : null"
                  [rel]="tier.ctaHref.startsWith('http') ? 'noopener noreferrer' : null">
                 {{ tier.cta }}
@@ -135,4 +134,51 @@ export class PricingSection {
       highlighted: false
     }
   ];
+
+  getCardClass(tier: PricingTier): string {
+    if (tier.name === 'Premium') {
+      return 'glass-card border-2 border-accent-premium relative';
+    }
+    if (tier.name === 'Free') {
+      return 'glass-card border border-accent-free';
+    }
+    return 'glass-card border border-accent-premium';
+  }
+
+  getBadgeClass(tier: PricingTier): string {
+    if (tier.name === 'Premium') {
+      return 'bg-accent-premium text-white';
+    }
+    return 'bg-accent-free text-white';
+  }
+
+  getTierNameClass(tier: PricingTier): string {
+    if (tier.name === 'Premium') {
+      return 'text-accent-premium';
+    }
+    if (tier.name === 'Free') {
+      return 'text-accent-free';
+    }
+    return 'text-accent-premium';
+  }
+
+  getPriceClass(tier: PricingTier): string {
+    if (tier.name === 'Premium') {
+      return 'text-accent-premium';
+    }
+    if (tier.name === 'Free') {
+      return 'text-accent-free';
+    }
+    return 'text-accent-premium';
+  }
+
+  getButtonClass(tier: PricingTier): string {
+    if (tier.name === 'Premium') {
+      return 'block w-full py-3 bg-gradient-to-r from-accent-premium-gradient-from to-accent-premium-gradient-to hover:opacity-90 text-white text-center font-semibold rounded-lg transition-opacity';
+    }
+    if (tier.name === 'Free') {
+      return 'btn-primary block w-full py-3';
+    }
+    return 'block w-full py-3 bg-accent-premium hover:bg-accent-premium-hover text-white text-center font-semibold rounded-lg transition-colors';
+  }
 }

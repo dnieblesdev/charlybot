@@ -11,7 +11,7 @@ import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
       <!-- Mobile Sticky CTA -->
       <div class="fixed bottom-0 left-0 right-0 p-4 pb-[env(safe-area-inset-bottom)] bg-bg-base/95 backdrop-blur-sm border-t border-border md:hidden z-50">
         <a [href]="discordOAuthUrl"
-           class="block w-full py-4 bg-discord text-white text-center font-semibold rounded-lg hover:opacity-90 transition-opacity">
+           class="btn-primary block w-full py-4">
           Agregar al Servidor
         </a>
       </div>
@@ -26,7 +26,7 @@ import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
 
         <!-- Desktop CTA -->
         <a [href]="discordOAuthUrl"
-           class="hidden md:inline-block mt-8 px-8 py-4 bg-discord text-white text-lg font-semibold rounded-lg hover:opacity-90 transition-opacity">
+           class="hidden md:inline-block mt-8 btn-primary px-8 py-4 text-lg">
           Agregar al Servidor
         </a>
 
