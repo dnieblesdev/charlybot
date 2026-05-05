@@ -25,7 +25,7 @@ interface Feature {
 
         <div class="grid-3">
           @for (feature of features; track feature.name) {
-            <div class="feature-card">
+            <div class="feature-card card-spotlight glass-card-hover">
               <div class="feature-icon-row">
                 <div class="feature-icon-wrapper">
                   <lucide-icon [img]="feature.icon" [size]="24" class="text-accent"></lucide-icon>

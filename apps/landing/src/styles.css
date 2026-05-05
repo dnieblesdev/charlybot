@@ -8,21 +8,21 @@
    ---------------------------------------------------------- */
 :root {
   /* Colors */
-  --color-bg-base: #0B091A;
-  --color-bg-surface: rgba(255, 255, 255, 0.03);
+  --color-bg-base: #060914;
+  --color-bg-surface: rgba(255, 255, 255, 0.04);
   --color-bg-elevated: rgba(255, 255, 255, 0.06);
   --color-border: rgba(255, 255, 255, 0.08);
-  --color-text-primary: #FFFFFF;
+  --color-text-primary: #e5e7eb;
   --color-text-secondary: #9CA3AF;
-  --color-accent: #22D3EE;
-  --color-accent-hover: #06B6D4;
-  --color-accent-free: #22D3EE;
-  --color-accent-free-hover: #06B6D4;
-  --color-accent-premium: #E879F9;
-  --color-accent-premium-hover: #D946EF;
-  --color-accent-premium-gradient-from: #D8B4FE;
-  --color-accent-premium-gradient-to: #C084FC;
-  --color-glass-bg: rgba(255, 255, 255, 0.03);
+  --color-accent: #8b5cf6;
+  --color-accent-hover: #7c3aed;
+  --color-accent-free: #8b5cf6;
+  --color-accent-free-hover: #7c3aed;
+  --color-accent-premium: #a78bfa;
+  --color-accent-premium-hover: #8b5cf6;
+  --color-accent-premium-gradient-from: #8b5cf6;
+  --color-accent-premium-gradient-to: #a78bfa;
+  --color-glass-bg: rgba(255, 255, 255, 0.04);
   --color-glass-border: rgba(255, 255, 255, 0.08);
   --color-glass-shadow: rgba(139, 92, 246, 0.15);
   --color-discord: #5865F2;
@@ -199,19 +199,19 @@ html {
 .btn-primary {
   display: inline-block;
   padding: 0.75rem 2rem;
-  background-color: var(--color-accent-free);
-  color: white;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-premium));
+  color: #0b1020;
   font-weight: 600;
+  border: none;
   border-radius: var(--radius-sm);
-  transition: background-color var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
   text-align: center;
   text-decoration: none;
 }
 
 .btn-primary:hover {
-  background-color: var(--color-accent-free-hover);
   transform: scale(1.02);
-  box-shadow: 0 0 20px rgba(34, 211, 238, 0.25);
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.35);
 }
 
 .btn-primary:focus-visible {
@@ -543,6 +543,103 @@ html {
     opacity: 0;
     transform: translateY(24px);
   }
+}
+
+/* ----------------------------------------------------------
+   Rain Effect
+   ---------------------------------------------------------- */
+.rain-drop {
+  position: fixed;
+  width: 3px;
+  height: 16px;
+  background: linear-gradient(to bottom, rgba(139, 92, 246, 0.7), transparent);
+  border-radius: 999px;
+  opacity: 0.25;
+  animation: rain linear infinite;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+@keyframes rain {
+  0% { transform: translateY(-10vh); }
+  100% { transform: translateY(110vh); }
+}
+
+/* ----------------------------------------------------------
+   Spotlight Card Effect
+   ---------------------------------------------------------- */
+.card-spotlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-spotlight::before {
+  content: "";
+  position: absolute;
+  top: var(--y, 50%);
+  left: var(--x, 50%);
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.25), transparent 60%);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: 0.3s;
+  pointer-events: none;
+}
+
+.card-spotlight:hover::before {
+  opacity: 1;
+}
+
+/* ----------------------------------------------------------
+   Button Gradient (from reference)
+   ---------------------------------------------------------- */
+.btn-gradient {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-premium));
+  color: #0b1020;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-gradient:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.35);
+}
+
+.btn-gradient:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.btn-gradient-lg {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+}
+
+.btn-ghost {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  background: transparent;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* ----------------------------------------------------------

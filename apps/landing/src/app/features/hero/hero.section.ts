@@ -56,7 +56,7 @@ import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
       align-items: center;
       justify-content: center;
       padding: 4rem 1rem;
-      background: linear-gradient(to bottom, var(--color-bg-base), var(--color-bg-surface));
+      background: var(--color-bg-base);
       position: relative;
     }
 
@@ -65,8 +65,8 @@ import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse at 20% 50%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(232, 121, 249, 0.06) 0%, transparent 50%);
+        radial-gradient(ellipse at 20% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(167, 139, 250, 0.06) 0%, transparent 50%);
       pointer-events: none;
     }
 
