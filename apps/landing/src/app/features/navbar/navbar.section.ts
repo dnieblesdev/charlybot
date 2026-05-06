@@ -14,6 +14,13 @@ import { CommonModule } from '@angular/common';
           CharlyBot
         </span>
 
+        <!-- Nav links -->
+        <div class="navbar-links">
+          <a href="#features" class="navbar-link">Funciones</a>
+          <a href="#comandos" class="navbar-link">Comandos</a>
+          <a href="#pricing" class="navbar-link">Planes</a>
+        </div>
+
         <!-- CTA -->
         <a href="/dashboard/"
            class="btn-secondary">
