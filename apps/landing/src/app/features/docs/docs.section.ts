@@ -2,14 +2,14 @@ import { Component, signal, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { LucideAngularModule, Music, Shield, Coins, Wrench, Gamepad2 } from 'lucide-angular';
 
-interface CommandParam {
+export interface CommandParam {
   name: string;
   type: string;
   required: boolean;
   description: string;
 }
 
-interface Command {
+export interface Command {
   name: string;
   description: string;
   adminOnly: boolean;
@@ -17,13 +17,13 @@ interface Command {
   expectedOutput: string;
 }
 
-interface ModuleCard {
+export interface ModuleCard {
   icon?: string;
   title: string;
   description: string;
 }
 
-interface CommandModule {
+export interface CommandModule {
   icon: any;
   name: string;
   subtitle: string;
@@ -128,7 +128,7 @@ interface CommandModule {
 
                 <div class="command-block__output">
                   <span class="command-block__output-label">Respuesta</span>
-                  <code>{{ cmd.expectedOutput }}</code>
+                  <pre>{{ cmd.expectedOutput }}</pre>
                 </div>
               </div>
             }
@@ -402,7 +402,7 @@ interface CommandModule {
       letter-spacing: 0.05em;
     }
 
-    .command-block__output code {
+    .command-block__output pre {
       display: block;
       padding: 0.5rem 0.75rem;
       background: rgba(0, 0, 0, 0.3);
@@ -413,6 +413,7 @@ interface CommandModule {
       font-size: 0.8125rem;
       white-space: pre-wrap;
       line-height: 1.6;
+      margin: 0;
     }
 
     /* Cards */
