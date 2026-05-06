@@ -2,6 +2,7 @@ import { Component, AfterViewInit, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HeroSection } from './features/hero/hero.section';
 import { FeaturesSection } from './features/features/features.section';
+import { DocsSection } from './features/docs/docs.section';
 import { PricingSection } from './features/pricing/pricing.section';
 import { FooterSection } from './features/footer/footer.section';
 import { NavbarSection } from './features/navbar/navbar.section';
@@ -9,7 +10,7 @@ import { NavbarSection } from './features/navbar/navbar.section';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [HeroSection, FeaturesSection, PricingSection, FooterSection, NavbarSection],
+  imports: [HeroSection, FeaturesSection, DocsSection, PricingSection, FooterSection, NavbarSection],
   template: `
     <app-navbar-section />
 
@@ -20,6 +21,12 @@ import { NavbarSection } from './features/navbar/navbar.section';
         <app-features-section animate.enter="fade-in-up" />
       } @placeholder {
         <div class="placeholder-features"></div>
+      }
+
+      @defer (on viewport) {
+        <app-docs-section />
+      } @placeholder {
+        <div class="placeholder-docs"></div>
       }
 
       @defer (on viewport) {
@@ -46,6 +53,10 @@ import { NavbarSection } from './features/navbar/navbar.section';
 
     .placeholder-features {
       min-height: 800px;
+    }
+
+    .placeholder-docs {
+      min-height: 900px;
     }
 
     .placeholder-pricing {

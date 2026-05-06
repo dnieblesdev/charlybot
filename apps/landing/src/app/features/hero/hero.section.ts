@@ -1,6 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
+
+interface HeroStat {
+  value: string;
+  label: string;
+  target: number;
+  prefix: string;
+  suffix: string;
+  hasKFormat: boolean;
+}
 
 @Component({
   selector: 'app-hero-section',
@@ -17,28 +26,34 @@ import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
       </div>
 
       <div class="hero-content">
-        <h1 class="heading-display">
-          CharlyBot — El bot todo en uno que tu servidor de Discord necesita
-        </h1>
-        <p class="text-body hero-subtitle">
-          Tu servidor crece, las cosas se complican. CharlyBot te da las herramientas para gestionar todo desde un solo lugar.
-        </p>
+        <!-- Left Column: Info -->
+        <div class="hero-left">
+          <h1 class="heading-display">
+            CharlyBot: El bot todo en uno para tu servidor
+          </h1>
+          <p class="text-body hero-subtitle">
+            Moderación, música, economía y más — todo en un solo bot. Sin complicaciones, tu comunidad crece mejor.
+          </p>
+          <a [href]="discordOAuthUrl"
+             class="btn-primary btn-primary-lg hero-desktop-cta">
+            Agregar al Servidor
+          </a>
+        </div>
 
-        <!-- Desktop CTA -->
-        <a [href]="discordOAuthUrl"
-           class="btn-primary btn-primary-lg hero-desktop-cta">
-          Agregar al Servidor
-        </a>
-
-        <!-- Bot Visual Mockup -->
-        <div class="hero-mockup">
-          <div class="hero-mockup-inner">
-            <div class="hero-mockup-icon">
-              <div class="hero-bot-icon">
-                <span class="hero-bot-emoji">🤖</span>
+        <!-- Right Column: Stats -->
+        <div class="hero-right">
+          <div class="hero-stats">
+            @for (stat of stats; track stat.label; let i = $index) {
+              <div class="hero-stat glass-card" #statCard>
+                <span class="hero-stat__number"
+                      [attr.data-target]="stat.target"
+                      [attr.data-prefix]="stat.prefix"
+                      [attr.data-suffix]="stat.suffix">
+                  {{ stat.prefix }}{{ stat.value }}{{ stat.suffix }}
+                </span>
+                <span class="hero-stat__label">{{ stat.label }}</span>
               </div>
-            </div>
-            <span class="text-secondary hero-mockup-label">[ CharlyBot en acción — mockup ]</span>
+            }
           </div>
         </div>
       </div>
@@ -50,12 +65,7 @@ import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
     }
 
     .hero-section {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 4rem 1rem;
+      padding: 6rem 1rem 4rem;
       background: var(--color-bg-base);
       position: relative;
     }
@@ -101,16 +111,53 @@ import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
     }
 
     .hero-content {
-      max-width: 56rem;
+      max-width: var(--max-width-container);
       margin: 0 auto;
-      text-align: center;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 3rem;
+      align-items: center;
       position: relative;
       z-index: 1;
+    }
+
+    @media (min-width: 768px) {
+      .hero-content {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .hero-left {
+      text-align: left;
+    }
+
+    @media (max-width: 767px) {
+      .hero-left {
+        text-align: center;
+      }
+    }
+
+    .hero-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .hero-subtitle {
       margin-top: 1.5rem;
       margin-bottom: 0;
+      text-align: left;
+      margin-left: 0;
+      margin-right: 0;
+      max-width: none;
+    }
+
+    @media (max-width: 767px) {
+      .hero-subtitle {
+        text-align: center;
+        margin-left: auto;
+        margin-right: auto;
+      }
     }
 
     @media (min-width: 768px) {
@@ -130,50 +177,117 @@ import { DISCORD_OAUTH_URL } from '../shared/discord-oauth.config';
       }
     }
 
-    .hero-mockup {
-      margin-top: 3rem;
+    .hero-stats {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
       width: 100%;
-      max-width: 48rem;
-      margin-left: auto;
-      margin-right: auto;
-      height: 16rem;
-      background: var(--color-bg-surface);
-      border-radius: 0.75rem;
-      border: 1px solid var(--color-border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
-    .hero-mockup-inner {
+    @media (min-width: 480px) {
+      .hero-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 768px) {
+      .hero-stats {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .hero-stat {
       text-align: center;
+      padding: 1.5rem;
     }
 
-    .hero-mockup-icon {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 1rem;
+    .hero-stat__number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--color-accent);
+      display: block;
     }
 
-    .hero-bot-icon {
-      width: 4rem;
-      height: 4rem;
-      border-radius: 9999px;
-      background: rgba(88, 101, 242, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .hero-bot-emoji {
-      font-size: 1.875rem;
-    }
-
-    .hero-mockup-label {
-      font-size: 1.25rem;
+    .hero-stat__label {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      margin-top: 0.25rem;
     }
   `]
 })
-export class HeroSection {
+export class HeroSection implements AfterViewInit {
+  @ViewChildren('statCard') statCards!: QueryList<ElementRef<HTMLDivElement>>;
+
   discordOAuthUrl = DISCORD_OAUTH_URL;
+
+  stats: HeroStat[] = [
+    { value: '500', label: 'servidores activos', target: 500, prefix: '+', suffix: '', hasKFormat: false },
+    { value: '50k', label: 'usuarios', target: 50000, prefix: '+', suffix: '', hasKFormat: true },
+    { value: '99.9', label: 'uptime', target: 999, prefix: '', suffix: '%', hasKFormat: false }
+  ];
+
+  ngAfterViewInit(): void {
+    if (typeof window === 'undefined') return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    this.statCards.forEach((cardRef, index) => {
+      const el = cardRef.nativeElement;
+      const numberEl = el.querySelector('.hero-stat__number') as HTMLElement;
+      if (!numberEl) return;
+
+      const target = parseFloat(numberEl.getAttribute('data-target') || '0');
+      const prefix = numberEl.getAttribute('data-prefix') || '';
+      const suffix = numberEl.getAttribute('data-suffix') || '';
+      const stat = this.stats[index];
+      const hasKFormat = stat ? stat.hasKFormat : false;
+
+      if (prefersReducedMotion) {
+        numberEl.textContent = prefix + this.formatNumber(target, suffix, hasKFormat) + suffix;
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              this.animateCounter(numberEl, target, prefix, suffix, hasKFormat);
+              observer.disconnect();
+            }
+          });
+        },
+        { threshold: 0.5 }
+      );
+
+      observer.observe(el);
+    });
+  }
+
+  private animateCounter(el: HTMLElement, target: number, prefix: string, suffix: string, hasKFormat: boolean): void {
+    const duration = 2000;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(eased * target);
+      el.textContent = prefix + this.formatNumber(current, suffix, hasKFormat) + suffix;
+
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      }
+    };
+
+    requestAnimationFrame(tick);
+  }
+
+  private formatNumber(value: number, suffix: string, hasKFormat: boolean): string {
+    if (hasKFormat) {
+      return value >= 1000 ? Math.round(value / 1000) + 'k' : value.toString();
+    }
+    if (suffix === '%') {
+      return (value / 10).toFixed(1);
+    }
+    return value >= 1000 ? Math.round(value / 1000) + 'k' : value.toString();
+  }
 }

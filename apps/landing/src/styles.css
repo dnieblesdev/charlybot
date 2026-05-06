@@ -29,6 +29,8 @@
   --color-success: #10B981;
   --color-error: #EF4444;
   --color-warning: #F59E0B;
+  --color-accent-pink: #ec4899;
+  --color-accent-blue: #3b82f6;
 
   /* Typography */
   --font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
