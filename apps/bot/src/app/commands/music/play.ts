@@ -1,17 +1,18 @@
-import { MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
 import { ChannelType, EmbedBuilder } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.ts";
 import musicService from "../../services/MusicService.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+  // CRITICAL: Acknowledge interaction IMMEDIATELY to beat Discord's 3-second window
+  await interaction.deferReply();
+
   try {
     logCommand(interaction.user.id, interaction.guildId || "DM", "play");
 
     if (!interaction.guildId || !interaction.guild) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ Este comando solo puede usarse en un servidor.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -20,9 +21,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ Debes estar en un canal de voz para usar este comando.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -31,26 +31,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       voiceChannel.type !== ChannelType.GuildVoice &&
       voiceChannel.type !== ChannelType.GuildStageVoice
     ) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ Debes estar en un canal de voz válido.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
 
     const permissions = voiceChannel.permissionsFor(interaction.client.user);
     if (!permissions?.has("Connect") || !permissions?.has("Speak")) {
-      await interaction.reply({
+      await interaction.editReply({
         content:
           "❌ No tengo permisos para conectarme o hablar en ese canal de voz.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
-
-    // ACK the interaction ASAP — BEFORE heavy operations (join, resolve, stream).
-    // Discord expires unacknowledged interactions after 3 seconds.
-    await interaction.deferReply();
 
     const query = interaction.options.getString("query", true);
     const textChannel = interaction.channel;
@@ -194,7 +188,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ content: errorMessage });
       } else {
-        await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
+        await interaction.reply({ content: errorMessage });
       }
     } catch (replyError) {
       logger.error("Failed to send error reply to user", {

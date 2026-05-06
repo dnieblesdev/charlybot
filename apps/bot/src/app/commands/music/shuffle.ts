@@ -1,16 +1,17 @@
-import { MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.ts";
 import musicService from "../../services/MusicService.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+  // CRITICAL: Acknowledge interaction IMMEDIATELY to beat Discord's 3-second window
+  await interaction.deferReply();
+
   try {
     logCommand(interaction.user.id, interaction.guildId || "DM", "shuffle");
 
     if (!interaction.guildId || !interaction.guild) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ Este comando solo puede usarse en un servidor.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -18,22 +19,18 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const queue = musicService.getQueue(interaction.guildId);
 
     if (!queue || !queue.connection) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No hay música en la cola.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
 
     if (queue.songs.length < 2) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No hay suficientes canciones en la cola para mezclar.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
-
-    await interaction.deferReply();
 
     const shuffled = musicService.shuffle(interaction.guildId);
 
@@ -63,7 +60,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: "❌ Error al mezclar la cola." });
     } else {
-      await interaction.reply({ content: "❌ Error al mezclar la cola.", flags: [MessageFlags.Ephemeral] });
+      await interaction.reply({ content: "❌ Error al mezclar la cola." });
     }
   }
 }

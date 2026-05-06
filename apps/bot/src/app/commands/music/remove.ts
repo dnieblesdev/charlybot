@@ -1,17 +1,18 @@
-import { MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { EmbedBuilder } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.ts";
 import musicService from "../../services/MusicService.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+  // CRITICAL: Acknowledge interaction IMMEDIATELY to beat Discord's 3-second window
+  await interaction.deferReply();
+
   try {
     logCommand(interaction.user.id, interaction.guildId || "DM", "remove");
 
     if (!interaction.guildId || !interaction.guild) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ Este comando solo puede usarse en un servidor.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -19,17 +20,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const queue = musicService.getQueue(interaction.guildId);
 
     if (!queue || !queue.connection) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ No hay música en la cola.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
 
     if (queue.songs.length === 0) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ La cola está vacía.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -37,14 +36,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const position = interaction.options.getInteger("position", true);
 
     if (position > queue.songs.length) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `❌ Posición inválida. La cola tiene ${queue.songs.length} canción(es).`,
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
-
-    await interaction.deferReply();
 
     const removed = await musicService.removeSong(interaction.guildId, position);
 
@@ -102,7 +98,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
+      await interaction.reply({ content: errorMessage });
     }
   }
 }

@@ -1,17 +1,19 @@
 import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
-import { ChannelType, MessageFlags } from "discord.js";
+import { ChannelType } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.ts";
 import musicService from "../../services/MusicService.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+  // CRITICAL: Acknowledge interaction IMMEDIATELY to beat Discord's 3-second window
+  await interaction.deferReply();
+
   try {
     logCommand(interaction.user.id, interaction.guildId || "DM", "join");
 
     // Verificar que el comando se ejecute en un servidor
     if (!interaction.guildId || !interaction.guild) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ Este comando solo puede usarse en un servidor.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -21,9 +23,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ Debes estar en un canal de voz para usar este comando.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -33,9 +34,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       voiceChannel.type !== ChannelType.GuildVoice &&
       voiceChannel.type !== ChannelType.GuildStageVoice
     ) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "❌ Debes estar en un canal de voz válido.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -43,15 +43,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Verificar permisos del bot
     const permissions = voiceChannel.permissionsFor(interaction.client.user);
     if (!permissions?.has("Connect") || !permissions?.has("Speak")) {
-      await interaction.reply({
+      await interaction.editReply({
         content:
           "❌ No tengo permisos para conectarme o hablar en ese canal de voz.",
-        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
-
-    await interaction.deferReply();
 
     // Obtener el canal de texto actual
     const textChannel = interaction.channel;
@@ -91,7 +88,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: errorMessage });
     } else {
-      await interaction.reply({ content: errorMessage, flags: [MessageFlags.Ephemeral] });
+      await interaction.reply({ content: errorMessage });
     }
   }
 }
