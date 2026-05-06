@@ -95,7 +95,7 @@ interface CommandModule {
                   <button class="command-copy-btn"
                           (click)="copyCommand(cmd.name)"
                           [attr.aria-label]="'Copiar ' + cmd.name">
-                    Copiar
+                    {{ copiedCommand() === cmd.name ? '✓ Copiado' : 'Copiar' }}
                   </button>
                 </div>
                 <p class="command-block__desc">{{ cmd.description }}</p>
@@ -411,6 +411,8 @@ interface CommandModule {
       color: var(--color-text-secondary);
       font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
       font-size: 0.8125rem;
+      white-space: pre-wrap;
+      line-height: 1.6;
     }
 
     /* Cards */
@@ -460,6 +462,7 @@ export class DocsSection {
   readonly shieldIcon = Shield;
 
   readonly selectedModule = signal<CommandModule>({} as CommandModule);
+  readonly copiedCommand = signal<string | null>(null);
 
   modules: CommandModule[] = [
     {
@@ -551,6 +554,16 @@ export class DocsSection {
             { name: 'duración', type: 'string', required: true, description: 'Duración (ej: 10m, 1h, 1d)' }
           ],
           expectedOutput: '🔇 @usuario ha sido silenciado por 1 hora.'
+        },
+        {
+          name: '/kick',
+          description: 'Expulsa a un usuario del servidor. Puede volver a unirse con una nueva invitación.',
+          adminOnly: true,
+          params: [
+            { name: 'usuario', type: 'user', required: true, description: 'Usuario a expulsar' },
+            { name: 'razón', type: 'string', required: false, description: 'Motivo de la expulsión' }
+          ],
+          expectedOutput: '👢 @usuario ha sido expulsado. Razón: Comportamiento inadecuado'
         }
       ],
       cards: [
@@ -610,6 +623,16 @@ export class DocsSection {
           adminOnly: false,
           params: [],
           expectedOutput: '👷 Trabajaste como Programador y ganaste 350 monedas. Tu balance: 12,300 monedas.'
+        },
+        {
+          name: '/give-coins',
+          description: 'Otorga monedas a un usuario. Solo disponible para administradores.',
+          adminOnly: true,
+          params: [
+            { name: 'usuario', type: 'user', required: true, description: 'Usuario que recibe las monedas' },
+            { name: 'cantidad', type: 'number', required: true, description: 'Cantidad de monedas a otorgar' }
+          ],
+          expectedOutput: '🎁 @admin otorgó 1000 monedas a @usuario.'
         }
       ]
     },
@@ -688,6 +711,15 @@ export class DocsSection {
           adminOnly: false,
           params: [],
           expectedOutput: '🧙 @usuario — Clase: Mago Nv.15\nATK: 42 | DEF: 28 | MAG: 65\nHabilidades: Bola de Fuego, Teleport'
+        },
+        {
+          name: '/achievements',
+          description: 'Muestra tus logros desbloqueados. También podés consultar los de otro usuario.',
+          adminOnly: false,
+          params: [
+            { name: 'usuario', type: 'user', required: false, description: 'Usuario a consultar (opcional, por defecto vos)' }
+          ],
+          expectedOutput: '🏅 Logros de @usuario (12/30):\n✅ Primer duelo\n✅ Racha de 7 días\n🔒 Coleccionista (falta 1 ítem)'
         }
       ],
       cards: [
@@ -720,7 +752,10 @@ export class DocsSection {
 
   copyCommand(name: string): void {
     if (this.isBrowser) {
-      navigator.clipboard.writeText(name).catch(() => {});
+      navigator.clipboard.writeText(name).then(() => {
+        this.copiedCommand.set(name);
+        setTimeout(() => this.copiedCommand.set(null), 2000);
+      }).catch(() => {});
     }
   }
 }
