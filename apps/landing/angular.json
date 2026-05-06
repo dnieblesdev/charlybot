@@ -83,6 +83,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "allowedHosts": ["charlybot.local"]
+          },
           "configurations": {
             "production": {
               "buildTarget": "landing:build:production"
