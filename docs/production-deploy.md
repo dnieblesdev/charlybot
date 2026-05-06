@@ -1,12 +1,12 @@
-# CharlyBot — Production Deployment Guide
+# CharlyBot — Guía de Despliegue en Producción
 
-Production deployment reference for CharlyBot monorepo. Covers single-server Docker Compose部署 with all services, Valkey configuration, health checks, scaling, backup, and security.
+Referencia de despliegue en producción para el monorepo CharlyBot. Cubre Docker Compose en un solo servidor con todos los servicios, configuración de Valkey, health checks, escalado, backup y seguridad.
 
 ---
 
-## 1. Overview
+## 1. Visión General
 
-CharlyBot is a Discord bot platform with supporting web infrastructure:
+CharlyBot es una plataforma de bot de Discord con infraestructura web de soporte:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -16,47 +16,47 @@ CharlyBot is a Discord bot platform with supporting web infrastructure:
 │       → /api/*     → API (Hono + Bun)                          │
 │       → /api/health → Liveness probe                            │
 └─────────────────────────────────────────────────────────────────┘
-                              │
-           ┌──────────────────┼──────────────────┐
-           ▼                  ▼                  ▼
-    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-    │   Valkey    │    │    API      │    │    Bot      │
-    │  (Redis)    │◄───┤  (Hono)     │◄───┤ (Discord)  │
-    │  :6379      │    │  :3000      │    │             │
-    └─────────────┘    └──────┬──────┘    └─────────────┘
-                              │
-                         ┌────▼────┐
-                         │ SQLite  │
-                         │  DB     │
-                         └─────────┘
+                               │
+            ┌──────────────────┼──────────────────┐
+            ▼                  ▼                  ▼
+     ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+     │   Valkey    │    │    API      │    │    Bot      │
+     │  (Redis)    │◄───┤  (Hono)     │◄───┤ (Discord)  │
+     │  :6379      │    │  :3000      │    │             │
+     └─────────────┘    └──────┬──────┘    └─────────────┘
+                               │
+                          ┌────▼────┐
+                          │ SQLite  │
+                          │  DB     │
+                          └─────────┘
 ```
 
-### Services
+### Servicios
 
-| Service | Role | Port | Tech |
+| Servicio | Rol | Puerto | Tecnología |
 |---|---|---|---|
 | `valkey` | Cache, pub/sub, streams, rate limiting, locks | 6379 | Valkey 8 |
-| `api` | REST API for bot data operations | 3000 | Hono + Bun |
-| `bot` | Discord bot (slash commands, events) | — | Discord.js v14 |
-| `landing` | Marketing site with SSR | 4200 | Angular 17 SSR |
-| `dashboard` | Admin dashboard SPA | 4201 | Angular 17 SPA |
-| `proxy` | Nginx reverse proxy | 80 | nginx:alpine |
+| `api` | API REST para operaciones de datos del bot | 3000 | Hono + Bun |
+| `bot` | Bot de Discord (slash commands, eventos) | — | Discord.js v14 |
+| `landing` | Sitio de marketing con SSR | 4200 | Angular 17 SSR |
+| `dashboard` | SPA de administración | 4201 | Angular 17 SPA |
+| `proxy` | Proxy reverso Nginx | 80 | nginx:alpine |
 
-### Architecture Notes
+### Notas de Arquitectura
 
-- **Bot → API via HTTP**: The bot does NOT connect to the database directly. All data operations go through the API (`apps/bot/src/infrastructure/api/*` adapters).
-- **API ↔ Valkey**: The API uses Valkey for caching, distributed locks, rate limiting, and music queue streams. Valkey is the shared state layer for horizontally scaling the API.
-- **API ↔ SQLite**: The API persists data to SQLite via Prisma + LibSQL adapter.
-- **Bot state**: The bot does not share state with the API — it only consumes the API. This means only ONE bot instance can run (Discord gateway limitation). The API can be scaled horizontally because it's stateless.
-- **Fallback**: Both bot and API have in-memory fallback if Valkey is unavailable.
+- **Bot → API via HTTP**: El bot NO se conecta a la base de datos directamente. Todas las operaciones de datos van a través de la API (`apps/bot/src/infrastructure/api/*` adapters).
+- **API ↔ Valkey**: La API usa Valkey para caching, distributed locks, rate limiting, y streams de cola de música. Valkey es la capa de estado compartido para escalar la API horizontalmente.
+- **API ↔ SQLite**: La API persiste datos a SQLite via Prisma + LibSQL adapter.
+- **Estado del Bot**: El bot no comparte estado con la API — solo consume la API. Esto significa que solo UNA instancia del bot puede ejecutarse (limitación del Discord gateway). La API puede escalar horizontalmente porque es stateless.
+- **Fallback**: Tanto el bot como la API tienen fallback en memoria si Valkey no está disponible.
 
 ---
 
-## 2. Prerequisites
+## 2. Prerrequisitos
 
 ### Software
 
-| Requirement | Minimum | Recommended |
+| Requisito | Mínimo | Recomendado |
 |---|---|---|
 | Docker | 24.0 | 25.x |
 | Docker Compose | 2.20 | 2.30+ ( Compose V2 ) |
@@ -64,102 +64,102 @@ CharlyBot is a Discord bot platform with supporting web infrastructure:
 | RAM | 4 GB | 8+ GB |
 | Disk | 10 GB | 20+ GB SSD |
 
-### Domain & SSL
+### Dominio & SSL
 
-- A domain name pointing to the server's public IP (A record).
-- SSL certificates for the domain. Options:
-  - **Recommended**: Let's Encrypt via Certbot (`certbot --nginx`)
-  - Bring your own wildcard cert and configure Nginx with `ssl_certificate`, `ssl_certificate_key`, and `ssl_protocols TLSv1.2 TLSv1.3`
-  - For internal-only deployments, a self-signed cert works but requires browser exceptions.
+- Un nombre de dominio apuntando a la IP pública del servidor (registro A).
+- Certificados SSL para el dominio. Opciones:
+  - **Recomendado**: Let's Encrypt via Certbot (`certbot --nginx`)
+  - Trae tu propio wildcard cert y configura Nginx con `ssl_certificate`, `ssl_certificate_key`, y `ssl_protocols TLSv1.2 TLSv1.3`
+  - Para despliegues internos únicamente, un cert self-signed funciona pero requiere excepciones en el navegador.
 
 ### Firewall
 
-Open ports:
+Abrir puertos:
 
-| Port | Purpose |
+| Puerto | Propósito |
 |---|---|
-| 80 | HTTP (redirect to HTTPS) |
-| 443 | HTTPS (Nginx → all services) |
-| 22 | SSH (restrict to your IP) |
+| 80 | HTTP (redirección a HTTPS) |
+| 443 | HTTPS (Nginx → todos los servicios) |
+| 22 | SSH (restringir a tu IP) |
 
-All internal service-to-service communication stays within the `charlybot-net` Docker network and does not expose ports to the host.
+Toda la comunicación interna entre servicios permanece dentro de la red Docker `charlybot-net` y no expone puertos al host.
 
 ---
 
-## 3. Environment Variables
+## 3. Variables de Entorno
 
 ### Bot (`apps/bot`)
 
-| Variable | Required | Description | Example |
+| Variable | Requerida | Descripción | Ejemplo |
 |---|---|---|---|
-| `DISCORD_TOKEN` | ✅ | Bot token from Discord Developer Portal | ` Bot token ` |
-| `CLIENT_ID` | ✅ | Application ID (for slash command registration) | `695823543069311116` |
-| `GUILD_ID` | | Primary server ID (for command registration scripts) | `346081045055012877` |
-| `GUILD_ID2` | | Secondary server ID | `494918316318523392` |
-| `GUILD_ID3` | | Tertiary server ID | `1457753108183781398` |
-| `OWNER_ID` | | Bot owner Discord ID | `254755729808949249` |
-| `API_URL` | ✅ | Internal API URL (Docker service name) | `http://api:3000` |
-| `API_KEY` | ✅ | API authentication key | `charly_secret_key` |
-| `SPOTIFY_CLIENT_ID` | | Spotify app client ID | — |
-| `SPOTIFY_CLIENT_SECRET` | | Spotify app client secret | — |
+| `DISCORD_TOKEN` | ✅ | Token del bot desde Discord Developer Portal | ` Bot token ` |
+| `CLIENT_ID` | ✅ | Application ID (para registro de slash commands) | `695823543069311116` |
+| `GUILD_ID` | | ID del servidor primario (para scripts de registro de comandos) | `346081045055012877` |
+| `GUILD_ID2` | | ID del servidor secundario | `494918316318523392` |
+| `GUILD_ID3` | | ID del servidor terciario | `1457753108183781398` |
+| `OWNER_ID` | | ID de Discord del dueño del bot | `254755729808949249` |
+| `API_URL` | ✅ | URL interna de la API (nombre del servicio Docker) | `http://api:3000` |
+| `API_KEY` | ✅ | Clave de autenticación de la API | `charly_secret_key` |
+| `SPOTIFY_CLIENT_ID` | | Client ID de la app de Spotify | — |
+| `SPOTIFY_CLIENT_SECRET` | | Client secret de la app de Spotify | — |
 | `SPOTIFY_REFRESH_TOKEN` | | Spotify refresh token | — |
-| `VALKEY_HOST` | | Valkey host (default: `valkey`) | `valkey` |
-| `VALKEY_PORT` | | Valkey port (default: `6379`) | `6379` |
-| `VALKEY_PASSWORD` | | Valkey auth password | *(strong password)* |
-| `VALKEY_PREFIX` | | Key prefix for all Valkey keys (default: `cb`) | `cb` |
-| `LOG_LEVEL` | | Log verbosity: `debug\|info\|warn\|error` | `info` |
+| `VALKEY_HOST` | | Host de Valkey (default: `valkey`) | `valkey` |
+| `VALKEY_PORT` | | Puerto de Valkey (default: `6379`) | `6379` |
+| `VALKEY_PASSWORD` | | Contraseña de auth de Valkey | *(strong password)* |
+| `VALKEY_PREFIX` | | Prefijo de clave para todas las keys de Valkey (default: `cb`) | `cb` |
+| `LOG_LEVEL` | | Verbosidad del log: `debug\|info\|warn\|error` | `info` |
 
 ### API (`apps/api`)
 
-| Variable | Required | Description | Example |
+| Variable | Requerida | Descripción | Ejemplo |
 |---|---|---|---|
-| `API_KEY` | ✅ | Authentication key (checked at import time — missing = crash) | `charly_secret_key` |
-| `PORT` | | HTTP port (default: `3000`) | `3000` |
-| `DATABASE_URL` | | SQLite path. Default: `file:/app/packages/shared/dev.db` | `file:/app/packages/shared/dev.db` |
-| `VALKEY_HOST` | | Valkey host (default: `valkey`) | `valkey` |
-| `VALKEY_PORT` | | Valkey port (default: `6379`) | `6379` |
-| `VALKEY_PREFIX` | | Key prefix (default: `cb`) | `cb` |
-| `LOG_LEVEL` | | Log verbosity: `debug\|info\|warn\|error` (default: `info`) | `info` |
+| `API_KEY` | ✅ | Clave de autenticación (verificada al iniciar — si falta = crash) | `charly_secret_key` |
+| `PORT` | | Puerto HTTP (default: `3000`) | `3000` |
+| `DATABASE_URL` | | Ruta de SQLite. Default: `file:/app/packages/shared/dev.db` | `file:/app/packages/shared/dev.db` |
+| `VALKEY_HOST` | | Host de Valkey (default: `valkey`) | `valkey` |
+| `VALKEY_PORT` | | Puerto de Valkey (default: `6379`) | `6379` |
+| `VALKEY_PREFIX` | | Prefijo de clave (default: `cb`) | `cb` |
+| `LOG_LEVEL` | | Verbosidad del log: `debug\|info\|warn\|error` (default: `info`) | `info` |
 
 ### Dashboard (`apps/dashboard`)
 
-Dashboard runs as a static SPA served by Nginx. No runtime environment variables are required — all API calls are proxied through Nginx at `/api/v1/*`.
+El dashboard se ejecuta como SPA estático servida por Nginx. No se requieren variables de entorno en runtime — todas las llamadas a la API se proxean a través de Nginx en `/api/v1/*`.
 
-If the dashboard needs to know the API URL at build time, set `NG_APP_API_URL` as a build argument in the Dockerfile.
+Si el dashboard necesita saber la URL de la API en build time, configura `NG_APP_API_URL` como build argument en el Dockerfile.
 
 ### Landing (`apps/landing`)
 
-| Variable | Required | Description | Example |
+| Variable | Requerida | Descripción | Ejemplo |
 |---|---|---|---|
-| `PORT` | | SSR port (default: `4200`) | `4200` |
-| `NGINX_PORT` | | Internal Nginx port (default: `80`) | `80` |
-| `SSL_PORT` | | Internal SSL port (default: `443`) | `443` |
+| `PORT` | | Puerto SSR (default: `4200`) | `4200` |
+| `NGINX_PORT` | | Puerto interno de Nginx (default: `80`) | `80` |
+| `SSL_PORT` | | Puerto interno SSL (default: `443`) | `443` |
 
 ### Discord OAuth2 (API + Dashboard)
 
-| Variable | Required | Description | Example |
+| Variable | Requerida | Descripción | Ejemplo |
 |---|---|---|---|
-| `DISCORD_CLIENT_ID` | ✅ (if using OAuth) | Discord OAuth2 app client ID | — |
-| `DISCORD_CLIENT_SECRET` | ✅ (if using OAuth) | Discord OAuth2 app client secret | — |
-| `DISCORD_REDIRECT_URI` | ✅ (if using OAuth) | OAuth callback URL | `https://charlybot.example.com/api/v1/auth/callback` |
-| `JWT_SECRET` | ✅ (if using auth) | JWT signing secret. Min 32 chars. Generate: `openssl rand -base64 32` | — |
+| `DISCORD_CLIENT_ID` | ✅ (si usa OAuth) | Client ID de la app Discord OAuth2 | — |
+| `DISCORD_CLIENT_SECRET` | ✅ (si usa OAuth) | Client secret de Discord OAuth2 | — |
+| `DISCORD_REDIRECT_URI` | ✅ (si usa OAuth) | URL de callback de OAuth | `https://charlybot.example.com/api/v1/auth/callback` |
+| `JWT_SECRET` | ✅ (si usa auth) | Secret para firmar JWT. Mín 32 chars. Generar: `openssl rand -base64 32` | — |
 
 ---
 
-## 4. Valkey Production Config
+## 4. Configuración de Valkey en Producción
 
-Valkey is used for: caching, pub/sub (music streams), distributed locks (economy operations), rate limiting middleware, and session/cache fallback.
+Valkey se usa para: caching, pub/sub (streams de música), distributed locks (operaciones de economía), middleware de rate limiting, y fallback de sesión/cache.
 
-### Memory Sizing
+### Dimensionamiento de Memoria
 
-| User Scale | Max Memory | Notes |
+| Escala de Usuarios | Memoria Máxima | Notas |
 |---|---|---|
-| < 1,000 users | 256 MB | Sufficient for cache + streams |
-| 1,000 – 10,000 | 512 MB | Comfortable headroom |
-| 10,000 – 50,000 | 1 GB | Music queues + heavy cache |
-| 50,000+ | 2 GB | Monitor `valkey_memory_used_bytes` |
+| < 1,000 usuarios | 256 MB | Suficiente para cache + streams |
+| 1,000 – 10,000 | 512 MB | Margen comfortable |
+| 10,000 – 50,000 | 1 GB | Colas de música + cache pesado |
+| 50,000+ | 2 GB | Monitorear `valkey_memory_used_bytes` |
 
-Set via Docker Compose:
+Configurar via Docker Compose:
 
 ```yaml
 valkey:
@@ -173,9 +173,9 @@ valkey:
       ${VALKEY_PASSWORD:+--requirepass "$VALKEY_PASSWORD"}
 ```
 
-### Persistence
+### Persistencia
 
-Enable both **RDB snapshots** and **AOF log** for durability:
+Habilitar ambos **RDB snapshots** y **AOF log** para durabilidad:
 
 ```yaml
 valkey:
@@ -186,30 +186,30 @@ valkey:
       valkey-server
       --maxmemory 512mb
       --maxmemory-policy allkeys-lru
-      --save 900 1      # RDB: every 15 min if at least 1 key changed
-      --save 300 10     # RDB: every 5 min if at least 10 keys changed
-      --save 60 10000   # RDB: every 1 min if at least 10000 keys changed
+      --save 900 1      # RDB: cada 15 min si al menos 1 key cambió
+      --save 300 10     # RDB: cada 5 min si al menos 10 keys cambiaron
+      --save 60 10000   # RDB: cada 1 min si al menos 10000 keys cambiaron
       --appendonly yes
       --appendfsync everysec
       ${VALKEY_PASSWORD:+--requirepass "$VALKEY_PASSWORD"}
 ```
 
-### Authentication
+### Autenticación
 
-Set a strong password and pass it via Docker secret (never in plain text):
+Configurar una contraseña fuerte y pasarla via Docker secret (nunca en texto plano):
 
 ```bash
-# Generate a strong random password
+# Generar una contraseña aleatoria fuerte
 openssl rand -base64 48 | tr -d '/+=' | head -c 32
 ```
 
-Configure in `docker/.env.valkey`:
+Configurar en `docker/.env.valkey`:
 
 ```env
 VALKEY_PASSWORD=your_strong_random_password_here_min_32_chars
 ```
 
-Then reference in `docker-compose.yml`:
+Luego referenciar en `docker-compose.yml`:
 
 ```yaml
 valkey:
@@ -219,9 +219,9 @@ valkey:
     - valkey_password
 ```
 
-### TLS (Optional)
+### TLS (Opcional)
 
-Enable TLS only if Valkey port is exposed outside the Docker network (not recommended — Valkey should only be accessible within `charlybot-net`).
+Habilitar TLS solo si el puerto de Valkey está expuesto fuera de la red Docker (no recomendado — Valkey solo debería ser accesible dentro de `charlybot-net`).
 
 ```yaml
 valkey:
@@ -236,22 +236,22 @@ valkey:
       --tls-ca-cert-file /certs/ca.crt
 ```
 
-For most deployments, TLS is unnecessary since all Valkey clients run in the same Docker network.
+Para la mayoría de los despliegues, TLS es innecesario ya que todos los clientes de Valkey corren en la misma red Docker.
 
-### Eviction Policy
+### Política de Evicción
 
-`allkeys-lru` is recommended for CharlyBot:
+`allkeys-lru` es recomendado para CharlyBot:
 
-- On memory pressure, Valkey evicts the **least recently used keys** across all keyspaces.
-- This prevents the cache from consuming all memory and protects the rate limiting and lock keys.
-- **Do NOT use** `noeviction` — it will cause Valkey to error on `SET` when memory is full, breaking the entire application.
-- Music queue streams (`music:stream:*`) should have explicit TTLs set (see `TTL` constants in `packages/shared/src/valkey/`).
+- Con presión de memoria, Valkey expulsa las keys **menos usadas recientemente** en todos los keyspaces.
+- Esto previene que el cache consuma toda la memoria y protege las keys de rate limiting y locks.
+- **NO USAR** `noeviction` — causará que Valkey erro en `SET` cuando la memoria esté llena, rompiendo toda la aplicación.
+- Los streams de cola de música (`music:stream:*`) deben tener TTLs explícitos configurados (ver constantes `TTL` en `packages/shared/src/valkey/`).
 
 ---
 
-## 5. Docker Compose Production
+## 5. Docker Compose en Producción
 
-### Full Production `docker-compose.yml`
+### `docker-compose.yml` Completo de Producción
 
 ```yaml
 # docker/docker-compose.yml
@@ -421,9 +421,9 @@ volumes:
   valkey-data:
 ```
 
-### Environment Files Setup
+### Configuración de Archivos de Entorno
 
-Create these files from the examples:
+Crear estos archivos desde los ejemplos:
 
 ```bash
 cd docker
@@ -434,13 +434,13 @@ cp .env.dashboard.example .env.dashboard
 cp .env.docker.example .env.docker   # Shared vars (Valkey prefix, etc.)
 ```
 
-For production, add `VALKEY_PASSWORD` to `.env.docker`:
+Para producción, agregar `VALKEY_PASSWORD` a `.env.docker`:
 
 ```env
 VALKEY_PASSWORD=your_strong_random_password_here_min_32_chars
 ```
 
-### Starting the Stack
+### Iniciando el Stack
 
 ```bash
 # Pull latest images and start
@@ -456,9 +456,9 @@ docker compose -f docker/docker-compose.yml restart bot
 docker compose -f docker/docker-compose.yml down
 ```
 
-### SSL Setup (Nginx)
+### Configuración de SSL (Nginx)
 
-If using Let's Encrypt, first obtain the certificate, then mount it:
+Si usas Let's Encrypt, primero obten el certificado, luego móntalo:
 
 ```bash
 # After certbot obtains the cert
@@ -467,7 +467,7 @@ cp /etc/letsencrypt/live/charlybot.example.com/fullchain.pem docker/nginx/ssl/ce
 cp /etc/letsencrypt/live/charlybot.example.com/privkey.pem docker/nginx/ssl/key.pem
 ```
 
-Or configure Nginx with your own certs in `docker/nginx/nginx.conf`:
+O configura Nginx con tus propios certs en `docker/nginx/nginx.conf`:
 
 ```nginx
 server {
@@ -487,9 +487,9 @@ server {
 
 ## 6. Health Checks
 
-### API Health Endpoint — `/api/v1/health`
+### Endpoint de Salud de la API — `/api/v1/health`
 
-**Auth required.** Returns 200 if all systems operational, 503 if degraded.
+**Auth requerida.** Retorna 200 si todos los sistemas están operativos, 503 si está degradado.
 
 ```json
 // GET /api/v1/health
@@ -503,14 +503,14 @@ server {
 }
 ```
 
-**Status meanings:**
+**Significados de status:**
 
-| `status` | Meaning |
+| `status` | Significado |
 |---|---|
-| `ok` | All checks passed (200) |
-| `degraded` | One or more checks failed (503) — Valkey fallback active or DB slow |
+| `ok` | Todos los checks pasaron (200) |
+| `degraded` | Uno o más checks fallaron (503) — Fallback de Valkey activo o DB lenta |
 
-Public liveness probe at `GET /health` (no auth, no DB check):
+Probe de liveness público en `GET /health` (sin auth, sin check de DB):
 
 ```json
 {
@@ -520,21 +520,21 @@ Public liveness probe at `GET /health` (no auth, no DB check):
 }
 ```
 
-### Docker Health Checks
+### Health Checks de Docker
 
-| Service | Check | Interval | Timeout |
+| Servicio | Check | Intervalo | Timeout |
 |---|---|---|---|
 | `valkey` | `valkey-cli ping` | 10s | 3s |
 | `api` | HTTP `GET /health` | 10s | 3s |
-| `bot` | Process check (`pgrep`) | 30s | 5s |
+| `bot` | Check de proceso (`pgrep`) | 30s | 5s |
 | `landing` | HTTP `GET /health` | 10s | 3s |
 | `dashboard` | HTTP `GET /health` | 30s | 3s |
 
-### Monitoring Integration
+### Integración de Monitoreo
 
-#### Prometheus (Optional)
+#### Prometheus (Opcional)
 
-If you want Prometheus metrics, instrument the API with `prom-client`:
+Si quieres métricas de Prometheus, instrumenta la API con `prom-client`:
 
 ```ts
 // apps/api/src/metrics.ts
@@ -553,37 +553,37 @@ export const httpRequestDuration = new Histogram({
 });
 ```
 
-Then expose a `GET /metrics` endpoint and scrape with Prometheus.
+Luego expone un endpoint `GET /metrics` y haz scrape con Prometheus.
 
-#### Uptime Monitoring
+#### Monitoreo de Uptime
 
-Point your uptime monitor to:
+Apunta tu monitor de uptime a:
 
 ```
-https://charlybot.example.com/api/v1/health   # Auth required
-# OR
-https://charlybot.example.com/health           # Public liveness (no DB check)
+https://charlybot.example.com/api/v1/health   # Auth requerida
+# O
+https://charlybot.example.com/health           # Liveness público (sin check de DB)
 ```
 
-Use the public `/health` for liveness probes (does DB check internally). Use `/api/v1/health` for readiness — it returns 503 when degraded so your load balancer won't route traffic to a sick instance.
+Usa `/health` público para liveness probes (hace check de DB internamente). Usa `/api/v1/health` para readiness — retorna 503 cuando está degradado para que tu load balancer no envíe tráfico a una instancia enferma.
 
 ---
 
-## 7. Scaling
+## 7. Escalado
 
-### Single Server Deployment
+### Despliegue en Servidor Único
 
-The Docker Compose file above runs all services on one host. This handles:
+El archivo Docker Compose de arriba ejecuta todos los servicios en un host. Esto maneja:
 
-- Up to ~10,000 concurrent Discord users
-- Up to ~1,000 simultaneous music streams
-- Normal API traffic
+- Hasta ~10,000 usuarios concurrentes de Discord
+- Hasta ~1,000 streams de música simultáneos
+- Tráfico normal de API
 
-### Multiple API Instances
+### Múltiples Instancias de API
 
-The API is **stateless** — all shared state is in Valkey. To scale horizontally:
+La API es **stateless** — todo el estado compartido está en Valkey. Para escalar horizontalmente:
 
-1. Add `deploy.replicas: N` to the API service in `docker-compose.yml`:
+1. Agregar `deploy.replicas: N` al servicio de API en `docker-compose.yml`:
 
 ```yaml
 api:
@@ -591,47 +591,47 @@ api:
     replicas: 3
 ```
 
-2. Valkey is the shared state layer — locks, caches, and rate limiting all work correctly across instances.
-3. The bot communicates with the API via `API_URL` — it will hit whichever API instance Docker's DNS resolves. Round-robin load balancing happens automatically.
+2. Valkey es la capa de estado compartido — locks, caches, y rate limiting funcionan correctamente entre instancias.
+3. El bot se comunica con la API via `API_URL` — golpeará la instancia de API que Docker's DNS resuelva. El balanceo de round-robin sucede automáticamente.
 
-**Limitation**: SQLite is a file-based database and does NOT support concurrent writes from multiple processes. For multi-instance API deployments, you MUST migrate to PostgreSQL:
+**Limitación**: SQLite es una base de datos basada en archivos y NO soporta escrituras concurrentes de múltiples procesos. Para despliegues de API multi-instancia, DEBES migrar a PostgreSQL:
 
 ```
-# 1. Export SQLite data
+# 1. Exportar datos de SQLite
 sqlite3 dev.db ".dump" > dump.sql
 
-# 2. Set PostgreSQL URL in .env.api
+# 2. Configurar URL de PostgreSQL en .env.api
 DATABASE_URL=postgresql://user:pass@host:5432/charlybot
 
-# 3. Update Prisma schema (packages/shared/prisma/schema.prisma)
-#    Change provider from "sqlite" to "postgresql"
+# 3. Actualizar schema de Prisma (packages/shared/prisma/schema.prisma)
+#    Cambiar provider de "sqlite" a "postgresql"
 
-# 4. Run migrations
+# 4. Correr migraciones
 bun run db:migrate
 
-# 5. Import data
+# 5. Importar datos
 psql charlybot < dump.sql
 ```
 
-The Prisma schema at `packages/shared/prisma/schema.prisma` uses `sqlite` provider. Switching to `postgresql` requires updating the provider and running `bunx prisma db push` or `bun run db:migrate`.
+El schema de Prisma en `packages/shared/prisma/schema.prisma` usa provider `sqlite`. Cambiar a `postgresql` requiere actualizar el provider y correr `bunx prisma db push` o `bun run db:migrate`.
 
-### Bot — Single Instance Only
+### Bot — Solo Una Instancia
 
-**The Discord gateway requires exactly ONE bot connection per bot token.** Do NOT run multiple bot instances. The bot is designed as a singleton service.
+**El Discord gateway requiere exactamente UNA conexión de bot por token de bot.** NO ejecutar múltiples instancias del bot. El bot está diseñado como un servicio singleton.
 
-If you need high availability for the bot, use Discord's **guild subscriptions** to distribute sharding across multiple bot processes (advanced — requires `DISCORD_SHARDING_MODE: auto` and significant architecture changes). This is not covered in this guide.
+Si necesitas alta disponibilidad para el bot, usa **guild subscriptions** de Discord para distribuir sharding entre múltiples procesos de bot (avanzado — requiere `DISCORD_SHARDING_MODE: auto` y cambios de arquitectura significativos). Esto no está cubierto en esta guía.
 
-### Valkey — Single Instance Recommended for Single Server
+### Valkey — Instancia Única Recomendada para Servidor Único
 
-Valkey in the current setup runs as a single instance. For single-server deployments, this is fine. If you need Valkey HA across multiple servers, consider Valkey Cluster (data sharding) or a managed Redis/Valkey service (Upstash, Redis Cloud).
+Valkey en la configuración actual corre como instancia única. Para despliegues de servidor único, esto está bien. Si necesitas Valkey HA entre múltiples servidores, considera Valkey Cluster (data sharding) o un servicio manejado de Redis/Valkey (Upstash, Redis Cloud).
 
 ---
 
-## 8. Backup & Recovery
+## 8. Backup y Recuperación
 
-### SQLite Database Backup
+### Backup de Base de Datos SQLite
 
-The project includes a backup script at `scripts/db/backup.ts`:
+El proyecto incluye un script de backup en `scripts/db/backup.ts`:
 
 ```bash
 # Create a daily backup (stored in packages/shared/prisma/backups/)
@@ -647,7 +647,7 @@ bun run db:backup:list
 bun run db:backup:latest
 ```
 
-**Production backup strategy:**
+**Estrategia de backup en producción:**
 
 ```bash
 # Add to crontab - run daily at 3 AM
@@ -657,7 +657,7 @@ bun run db:backup:latest
 0 3 * * * cd /path/to/charlybot && bun run db:backup create daily && find packages/shared/prisma/backups -name "*_daily_*.db" -mtime +30 -delete
 ```
 
-### Restore from Backup
+### Restaurar desde Backup
 
 ```bash
 # Stop services
@@ -673,16 +673,16 @@ cp /path/to/latest_backup.db packages/shared/dev.db
 docker compose -f docker/docker-compose.yml start api bot
 ```
 
-Or use the restore script:
+O usar el script de restore:
 
 ```bash
 bun run db:restore            # Interactive restore
 bun run db:restore:latest     # Restore from latest backup
 ```
 
-### Valkey RDB Snapshots
+### Snapshots RDB de Valkey
 
-Valkey persists data to Docker volume `valkey-data`. To backup:
+Valkey persiste datos al volumen Docker `valkey-data`. Para hacer backup:
 
 ```bash
 # Trigger a background save (non-blocking)
@@ -692,7 +692,7 @@ docker exec charlybot-valkey-1 valkey-cli SAVE
 docker cp charlybot-valkey-1:/data/dump.rdb /backup/valkey-$(date +%Y%m%d).rdb
 ```
 
-Or mount a host directory for automatic RDB persistence:
+O montar un directorio del host para persistencia RDB automática:
 
 ```yaml
 valkey:
@@ -701,7 +701,7 @@ valkey:
     - /host/backup/path:/backups  # For manual snapshot copies
 ```
 
-### Docker Volume Backup
+### Backup de Volumen Docker
 
 ```bash
 # Backup Valkey volume
@@ -719,115 +719,115 @@ docker run --rm \
 
 ---
 
-## 9. Security Checklist
+## 9. Lista de Verificación de Seguridad
 
-### Before Going Live
+### Antes de Salir a Producción
 
-- [ ] **Change all default passwords**
-  - `API_KEY` — generate with `openssl rand -base64 32`
-  - `JWT_SECRET` — minimum 32 characters, use `openssl rand -base64 48`
-  - `VALKEY_PASSWORD` — strong random, minimum 24 chars
-  - `DISCORD_CLIENT_SECRET` — from Discord Developer Portal
+- [ ] **Cambiar todas las contraseñas por defecto**
+  - `API_KEY` — generar con `openssl rand -base64 32`
+  - `JWT_SECRET` — mínimo 32 caracteres, usar `openssl rand -base64 48`
+  - `VALKEY_PASSWORD` — aleatoria y fuerte, mínimo 24 chars
+  - `DISCORD_CLIENT_SECRET` — del Discord Developer Portal
 
-- [ ] **Rotate secrets regularly**
-  - Schedule quarterly rotation for `API_KEY` and `JWT_SECRET`
-  - Bot token rotation requires disabling the old bot in Discord Developer Portal and creating a new one (coordinate downtime)
+- [ ] **Rotar secrets regularmente**
+  - Programar rotación trimestral para `API_KEY` y `JWT_SECRET`
+  - La rotación del token del bot requiere deshabilitar el bot viejo en Discord Developer Portal y crear uno nuevo (coordinar downtime)
 
-- [ ] **Verify rate limiting**
-  - Test that `/api/*` endpoints respond with `429 Too Many Requests` after exceeding the rate limit
-  - Check logs for rate limit hits: `logger.warn("Rate limit exceeded", { ... })`
+- [ ] **Verificar rate limiting**
+  - Testear que los endpoints `/api/*` respondan con `429 Too Many Requests` después de exceder el rate limit
+  - Revisar logs para hits de rate limit: `logger.warn("Rate limit exceeded", { ... })`
 
-- [ ] **TLS for all external connections**
-  - Redirect HTTP to HTTPS in Nginx
-  - All Discord OAuth redirects must use `https://`
-  - Spotify redirects must use `https://`
+- [ ] **TLS para todas las conexiones externas**
+  - Redirigir HTTP a HTTPS en Nginx
+  - Todos los redirects de Discord OAuth deben usar `https://`
+  - Los redirects de Spotify deben usar `https://`
 
-- [ ] **Valkey password**
-  - Set `VALKEY_PASSWORD` — never expose Valkey port outside `charlybot-net`
-  - If Valkey must be accessed from a different host, enable TLS
+- [ ] **Contraseña de Valkey**
+  - Configurar `VALKEY_PASSWORD` — nunca exponer puerto de Valkey fuera de `charlybot-net`
+  - Si Valkey debe ser accedido desde un host diferente, habilitar TLS
 
-- [ ] **API_KEY in transit**
-  - All API calls between bot and API happen inside the Docker network — no extra config needed
-  - If exposing API outside Docker, add HTTPS
+- [ ] **API_KEY en tránsito**
+  - Todas las llamadas a la API entre bot y API suceden dentro de la red Docker — no se necesita config extra
+  - Si se expone la API fuera de Docker, agregar HTTPS
 
-- [ ] **CSP headers (Dashboard)**
-  - Angular's built-in CSP is for development. For production, add CSP headers in Nginx:
+- [ ] **Headers CSP (Dashboard)**
+  - El CSP built-in de Angular es para desarrollo. Para producción, agregar headers CSP en Nginx:
 
 ```nginx
 add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:;" always;
 ```
 
-- [ ] **Hide error details**
-  - Set `LOG_LEVEL=warn` or `LOG_LEVEL=error` in production to prevent stack traces from leaking in responses
-  - API returns consistent JSON error shapes — no raw error messages
+- [ ] **Ocultar detalles de errores**
+  - Configurar `LOG_LEVEL=warn` o `LOG_LEVEL=error` en producción para prevenir que stack traces se filtren en las respuestas
+  - La API retorna errores JSON consistentes — sin mensajes de error crudos
 
-- [ ] **Discord bot token**
-  - Never commit `DISCORD_TOKEN` — use `.env.bot` which is in `.gitignore`
-  - Rotate if suspected compromise via Discord Developer Portal
+- [ ] **Token del bot de Discord**
+  - Nunca commitear `DISCORD_TOKEN` — usar `.env.bot` que está en `.gitignore`
+  - Rotar si se sospecha compromiso via Discord Developer Portal
 
-- [ ] **Spotify credentials**
-  - `SPOTIFY_CLIENT_SECRET` is sensitive — same rules as bot token
+- [ ] **Credenciales de Spotify**
+  - `SPOTIFY_CLIENT_SECRET` es sensible — mismas reglas que el token del bot
 
 ---
 
-## 10. Troubleshooting
+## 10. Solución de Problemas
 
-### Bot Won't Connect
+### El Bot No Se Conecta
 
 ```
 Error: Invalid token
 ```
 
-- `DISCORD_TOKEN` is wrong or expired. Regenerate at [Discord Developer Portal](https://discord.com/developers/applications).
-- Token was regenerated — update `.env.bot` and restart:
+- `DISCORD_TOKEN` está mal o expiró. Regenerar en [Discord Developer Portal](https://discord.com/developers/applications).
+- El token fue regenerado — actualizar `.env.bot` y reiniciar:
 
 ```bash
 docker compose -f docker/docker-compose.yml restart bot
 ```
 
-### API Returns 500 on Database Operations
+### La API Retorna 500 en Operaciones de Base de Datos
 
 ```
 Error: Database error: unable to open database file
 ```
 
-- `DATABASE_URL` path is wrong inside the container. Verify:
-  - Dev: `file:./dev.db` (relative to `packages/shared/`)
+- La ruta de `DATABASE_URL` está mal dentro del contenedor. Verificar:
+  - Dev: `file:./dev.db` (relativo a `packages/shared/`)
   - Docker: `file:/app/packages/shared/dev.db`
-- Permissions issue — ensure the volume mount is not read-only for the API service.
+- Problema de permisos — asegurar que el mount del volumen no es read-only para el servicio de API.
 
-### Valkey Connection Failures
+### Fallas de Conexión de Valkey
 
-Valkey failures are **non-fatal** — both the API and bot have in-memory fallback. You'll see warnings in logs:
+Las fallas de Valkey son **no fatales** — tanto la API como el bot tienen fallback en memoria. Verás warnings en los logs:
 
 ```
 WARN  Failed to connect to Valkey, using fallback only
 ```
 
-- Check Valkey container is running: `docker compose -f docker/docker-compose.yml ps valkey`
-- Check Valkey logs: `docker compose -f docker/docker-compose.yml logs valkey`
-- Verify `VALKEY_HOST` matches the service name (`valkey`)
-- Test connectivity from API container:
+- Verificar que el contenedor de Valkey está corriendo: `docker compose -f docker/docker-compose.yml ps valkey`
+- Verificar logs de Valkey: `docker compose -f docker/docker-compose.yml logs valkey`
+- Verificar que `VALKEY_HOST` coincide con el nombre del servicio (`valkey`)
+- Testear conectividad desde el contenedor de la API:
 
 ```bash
 docker exec charlybot-api-1 sh -c "nc -zv valkey 6379"
 ```
 
-### Bot Responds with "An error occurred" but API is Fine
+### El Bot Responde con "An error occurred" pero la API Está Bien
 
-- `API_KEY` mismatch between `.env.bot` and `.env.api`. Both must use the same value.
-- `API_URL` is wrong — the bot DNS-resolves `api` to the API container IP. Verify `API_URL=http://api:3000`.
+- `API_KEY` no coincide entre `.env.bot` y `.env.api`. Ambos deben usar el mismo valor.
+- `API_URL` está mal — el bot DNS-resuelve `api` a la IP del contenedor de la API. Verificar `API_URL=http://api:3000`.
 
-### High Memory Usage
+### Alto Uso de Memoria
 
-- Reduce Valkey `maxmemory` if approaching host RAM limit
-- Add memory limits in `deploy.resources.limits.memory` for all services
-- Check for memory leaks in bot: `docker stats charlybot-bot-1 --no-stream`
-- Spotify stream memory: each active music stream consumes RAM. Set `MAX_QUEUE_SIZE` in the bot to limit concurrent streams.
+- Reducir `maxmemory` de Valkey si se acerca al límite de RAM del host
+- Agregar límites de memoria en `deploy.resources.limits.memory` para todos los servicios
+- Buscar memory leaks en el bot: `docker stats charlybot-bot-1 --no-stream`
+- Memoria de stream de Spotify: cada stream de música activo consume RAM. Configurar `MAX_QUEUE_SIZE` en el bot para limitar streams concurrentes.
 
 ### Nginx 502 Bad Gateway
 
-One of the backends is not responding. Check:
+Uno de los backends no está respondiendo. Verificar:
 
 ```bash
 # Verify all backends are healthy
@@ -841,16 +841,16 @@ docker exec charlybot-proxy-1 wget -q -O- http://api:3000/health
 
 ### Logs
 
-| Service | Command |
+| Servicio | Comando |
 |---|---|
-| All services | `docker compose -f docker/docker-compose.yml logs -f` |
-| Bot only | `docker compose -f docker/docker-compose.yml logs -f bot` |
-| API only | `docker compose -f docker/docker-compose.yml logs -f api` |
-| Valkey only | `docker compose -f docker/docker-compose.yml logs -f valkey` |
+| Todos los servicios | `docker compose -f docker/docker-compose.yml logs -f` |
+| Solo Bot | `docker compose -f docker/docker-compose.yml logs -f bot` |
+| Solo API | `docker compose -f docker/docker-compose.yml logs -f api` |
+| Solo Valkey | `docker compose -f docker/docker-compose.yml logs -f valkey` |
 | Nginx | `docker compose -f docker/docker-compose.yml logs -f proxy` |
-| Rotate logs | `docker compose -f docker/docker-compose.yml logs --tail=100` |
+| Rotar logs | `docker compose -f docker/docker-compose.yml logs --tail=100` |
 
-Inside containers, logs use Winston at `LOG_LEVEL`:
+Dentro de los contenedores, los logs usan Winston con `LOG_LEVEL`:
 
 ```bash
 # Set debug logging temporarily
@@ -858,47 +858,47 @@ docker compose -f docker/docker-compose.yml exec api sh
 # Then edit env or restart
 ```
 
-### Debug Mode
+### Modo Debug
 
-Enable verbose logging per service:
+Habilitar logging verboso por servicio:
 
 ```bash
 # In .env.api or .env.bot
 LOG_LEVEL=debug
 ```
 
-Then restart:
+Luego reiniciar:
 
 ```bash
 docker compose -f docker/docker-compose.yml restart api bot
 ```
 
-### Common Error Codes
+### Códigos de Error Comunes
 
-| Code | Meaning |
+| Código | Significado |
 |---|---|
-| `401` | `X-API-Key` header missing or wrong |
-| `403` | Bot owner only command (check `OWNER_ID`) |
-| `429` | Rate limit hit — wait and retry |
-| `500` | Internal error — check API logs |
-| `503` | `/api/v1/health` degraded — DB or Valkey issue |
+| `401` | Header `X-API-Key` faltante o incorrecto |
+| `403` | Comando solo para dueño del bot (verificar `OWNER_ID`) |
+| `429` | Rate limit excedido — esperar y reintentar |
+| `500` | Error interno — revisar logs de la API |
+| `503` | `/api/v1/health` degradado — problema de DB o Valkey |
 
 ---
 
-## Appendix: Quick Reference
+## Appendix: Referencia Rápida
 
-### Ports
+### Puertos
 
-| External Port | Service | Internal Endpoint |
+| Puerto Externo | Servicio | Endpoint Interno |
 |---|---|---|
 | 80 | Nginx | HTTP |
 | 443 | Nginx | HTTPS |
-| 3000 | API | Inside Docker only |
-| 4200 | Landing | Inside Docker only |
-| 4201 | Dashboard | Inside Docker only |
-| 6379 | Valkey | Inside Docker only |
+| 3000 | API | Solo dentro de Docker |
+| 4200 | Landing | Solo dentro de Docker |
+| 4201 | Dashboard | Solo dentro de Docker |
+| 6379 | Valkey | Solo dentro de Docker |
 
-### Key Commands
+### Comandos Clave
 
 ```bash
 # Start
@@ -926,16 +926,18 @@ bun run db:restore latest
 bun run rc
 ```
 
-### File Locations
+### Ubicación de Archivos
 
-| File | Purpose |
+| Archivo | Propósito |
 |---|---|
-| `docker/docker-compose.yml` | Production orchestrator |
-| `docker/docker-compose.dev.yml` | Development with hot reload |
-| `docker/nginx/nginx.conf` | Reverse proxy routing |
-| `docker/.env.*.example` | Env var templates |
-| `packages/shared/prisma/schema.prisma` | Database schema |
-| `packages/shared/prisma/backups/` | Backup storage |
-| `apps/api/src/index.ts` | API entry point |
-| `apps/bot/src/index.ts` | Bot entry point |
-| `packages/shared/src/valkey/` | Valkey shared utilities |
+| `docker/docker-compose.yml` | Orquestador de producción |
+| `docker/docker-compose.dev.yml` | Desarrollo con hot reload |
+| `docker/nginx/nginx.conf` | Routing del proxy reverso |
+| `docker/.env.*.example` | Templates de vars de entorno |
+| `packages/shared/prisma/schema.prisma` | Schema de la base de datos |
+| `packages/shared/prisma/backups/` | Almacenamiento de backups |
+| `apps/api/src/index.ts` | Entry point de la API |
+| `apps/bot/src/index.ts` | Entry point del Bot |
+| `packages/shared/src/valkey/` | Utilidades compartidas de Valkey |
+
+(End of file - total 941 lines)

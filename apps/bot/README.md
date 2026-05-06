@@ -1,150 +1,160 @@
-# 🤖 Charlybot
+# 🤖 CharlyBot
 
-Bot de Discord multifuncional con sistema de música, logs y verificación de usuarios.
+Bot de Discord multifuncional con sistemas de música, economía, verificación, logs, auto roles y más.
 
 ## 🚀 Inicio Rápido
 
-### Instalación
-
 ```bash
 bun install
+bun run dev          # Inicia el bot
+bun run rc           # Registra slash commands
+bun run cc           # Limpia slash commands
+bun run lc           # Lista comandos registrados
 ```
 
-### Ejecución
+## ✨ Sistemas
+
+### 🎵 Música
+Reproducción de YouTube y Spotify con cola, loops, shuffle, control de volumen.
+
+| Comando | Acción |
+|---|---|
+| `/music play <query>` | Reproduce una canción o playlist |
+| `/music skip` | Salta a la siguiente |
+| `/music playlist [page]` | Muestra la cola |
+| `/music nowplaying` | Canción actual |
+| `/music pause` / `resume` | Pausa / reanuda |
+| `/music stop` | Detiene y limpia la cola |
+| `/music loop <mode>` | none / song / queue |
+| `/music shuffle` | Mezcla la cola |
+| `/music volume <0-200>` | Ajusta volumen |
+| `/music remove <posición>` | Quita canción de la cola |
+| `/music clear` | Limpia la cola |
+| `/music join` / `leave` | Entra / sale del canal |
+
+### 💰 Economía
+Wallet por servidor, banco global, trabajo, crimen, ruleta, robos, leaderboard.
+
+| Comando | Acción |
+|---|---|
+| `/economia balance` | Ver wallet y banco |
+| `/economia deposit` / `retirar` | Mover dinero al banco |
+| `/economia work` | Trabajar (cooldown) |
+| `/economia crime` | Actividad criminal (riesgo) |
+| `/economia rob <@user>` | Robar a otro usuario |
+| `/economia ruleta <cantidad>` | Apostar en la ruleta |
+| `/economia bail` | Pagar fianza si estás en jail |
+| `/economia leaderboard` | Top usuarios del servidor |
+
+### 🔐 Verificación
+Panel con botón → modal de registro → revisión de moderador → asignación de rol.
+
+| Comando | Acción |
+|---|---|
+| `/setup-verification` | Configura el sistema |
+| `/send-verification-panel` | Envía el panel interactivo |
+| `/list-pending-verifications` | Solicitudes pendientes |
+
+### 🏷️ AutoRole
+Asignación de roles por botón o select menu en mensajes configurables.
+
+| Comando | Acción |
+|---|---|
+| `/autorole setup` | Crear panel de auto roles |
+| `/autorole listar` | Ver roles configurados |
+| `/autorole editar` | Modificar un rol |
+| `/autorole remover` | Eliminar un rol |
+
+### 📊 Clases
+Sistema de roles jerárquicos (tipo → clase → subclase).
+
+| Comando | Acción |
+|---|---|
+| `/addClass` | Agregar clase al sistema |
+| `/listClasses` | Listar clases configuradas |
+| `/removeClass` | Eliminar clase |
+
+### ⚙️ Configuración
+Configuración por servidor (canales de log, bienvenida, verificación).
+
+| Comando | Acción |
+|---|---|
+| `/set-welcome` | Canal de bienvenida |
+| `/set-voice-log-channel` | Canal de logs de voz |
+| `/set-message-log` | Canal de logs de mensajes |
+| `/set-image-channel` | Canal de imágenes |
+| `/show-config` | Ver configuración actual |
+| `/config remove` | Eliminar una configuración |
+| `/config list` | Listar todas |
+
+### 📝 Logs
+Eventos automáticos: entrada/salida de miembros, cambios en canales de voz, mensajes.
+
+## 🛠️ Stack
+
+| Capa | Tecnología |
+|---|---|
+| Runtime | Bun |
+| Framework | Discord.js v14 |
+| Lenguaje | TypeScript (ESM) |
+| Audio | `@discordjs/voice`, `play-dl`, `yt-dlp` |
+| Cache / PubSub | Valkey (ioredis) |
+| Logs | Winston |
+| Monitoreo | Prometheus metrics |
+
+## 📁 Estructura
+
+```
+src/
+  index.ts                      ← Entry point
+  app/
+    core/                       ← DiscordClient, bootstrap
+    commands/                   ← Slash commands (carpeta por comando)
+    events/                     ← Event handlers (interactionCreate, voz, logs)
+    interactions/               ← customIds, handlers de botones/modales/selects
+    services/                   ← Lógica de negocio (MusicService, etc.)
+  infrastructure/
+    api/                        ← Cliente HTTP + adapters hacia apps/api
+    valkey/                     ← Cliente Valkey, idempotencia, rate-limit
+    streams/                    ← Consumidores de streams (música, leaderboard)
+    monitoring/                 ← Health server, métricas
+    cache/                      ← MemoryCache (fallback)
+  config/
+    repositories/               ← Boundary de acceso a datos
+  utils/
+    logger.ts                   ← Winston logger
+  types/
+```
+
+## 🐳 Docker
 
 ```bash
-# Modo desarrollo
-bun run dev
+# Desarrollo
+docker compose -f docker/docker-compose.dev.yml up bot
 
-# Registrar comandos
-bun run rc
-
-# Limpiar comandos
-bun run cc
-
-# Listar comandos registrados
-bun run lc
+# Producción
+docker compose -f docker/docker-compose.yml up -d bot
 ```
 
-## ✨ Características
+## 🔧 Variables de Entorno
 
-### 🎵 Sistema de Música
-- Reproducción de música desde YouTube, Spotify y más
-- Cola de reproducción
-- Controles: play, pause, skip, queue, shuffle, loop
-- Soporte para playlists
+| Variable | Requerida | Descripción |
+|---|---|---|
+| `DISCORD_TOKEN` | ✅ | Token del bot |
+| `CLIENT_ID` | ✅ | Application ID |
+| `API_URL` | ✅ | URL de la API (default: `http://localhost:3000`) |
+| `API_KEY` | ✅ | Clave de autenticación de la API |
+| `VALKEY_HOST` | | Host de Valkey (default: `localhost`) |
+| `VALKEY_PORT` | | Puerto de Valkey (default: `6379`) |
+| `SPOTIFY_CLIENT_ID` | | ID de app Spotify |
+| `SPOTIFY_CLIENT_SECRET` | | Secret de app Spotify |
+| `SPOTIFY_REFRESH_TOKEN` | | Refresh token Spotify |
+| `LOG_LEVEL` | | Nivel de logs (default: `info`) |
 
-### 🔐 Sistema de Verificación
-- Panel de verificación con botones interactivos
-- Formularios modales para registro de usuarios
-- Revisión manual por moderadores
-- Asignación automática de roles
-- Cambio automático de apodos según nombre en el juego
-- Notificaciones por DM
-
-**📖 Guía Rápida:** [QUICK_START_VERIFICATION.md](QUICK_START_VERIFICATION.md)  
-**📚 Documentación Completa:** [VERIFICATION_SYSTEM.md](VERIFICATION_SYSTEM.md)
-
-### 📊 Sistema de Logs
-- Logs de entrada/salida de usuarios
-- Logs de cambios en canales de voz
-- Logs de mensajes y eventos
-
-### 🖼️ Gestión de Imágenes
-- Subida de imágenes a canales específicos
-- Validación automática de archivos
-
-## 📋 Comandos Principales
-
-### Verificación
-- `/setup-verification` - Configura el sistema de verificación
-- `/send-verification-panel` - Envía el panel de verificación
-- `/list-pending-verifications` - Lista solicitudes pendientes
-
-### Música
-- `/play` - Reproduce música
-- `/pause` / `/resume` - Pausa/reanuda reproducción
-- `/skip` - Salta a la siguiente canción
-- `/queue` - Muestra la cola de reproducción
-- `/nowplaying` - Muestra la canción actual
-
-### Configuración
-- `/set-welcome` - Configura mensajes de bienvenida
-- `/set-image-channel` - Configura canal de imágenes
-- `/set-voice-log-channel` - Configura logs de voz
-- `/show-config` - Muestra la configuración actual
-
-## 🛠️ Tecnologías
-
-- **Runtime:** Bun
-- **Framework:** Discord.js v14
-- **Lenguaje:** TypeScript
-- **Audio:** @discordjs/voice, play-dl, yt-dlp-wrap
-- **Cache/PubSub:** Valkey (ioredis) — streams para música, cache, pub/sub
-- **Logs:** Winston
-
-## 🐳 Ejecución con Docker
+## 🧪 Tests
 
 ```bash
-# Requiere tener Docker + Docker Compose instalado
-docker compose -f ../docker/docker-compose.dev.yml up bot
+bun test               # Vitest con pool forks
+bun run test:watch     # Watch mode
+bun run test:coverage  # Coverage report (v8)
 ```
-
-O单体:
-
-```bash
-# Con Valkey manual
-docker run -d -p 6379:6379 valkey/valkey:8.0
-cd apps/bot && bun run dev
-```
-
-## 📁 Estructura del Proyecto
-
-```
-charlybot/
-├── src/
-│   ├── app/
-│   │   ├── commands/         # Comandos del bot
-│   │   ├── events/           # Manejadores de eventos
-│   │   └── services/         # Lógica de negocio
-│   ├── config/
-│   │   └── repositories/     # Almacenamiento de datos
-│   ├── infrastructure/       # Servicios de infraestructura
-│   └── utils/               # Utilidades
-├── data/                    # Base de datos JSON
-└── logs/                    # Archivos de logs
-```
-
-## 🔧 Configuración
-
-1. Crea un archivo `.env` con:
-```env
-DISCORD_TOKEN=tu_token_aqui
-CLIENT_ID=tu_client_id
-GUILD_ID=tu_guild_id_opcional
-```
-
-2. Registra los comandos:
-```bash
-bun run rc
-```
-
-3. Inicia el bot:
-```bash
-bun run dev
-```
-
-## 📖 Documentación
-
-- [Sistema de Verificación - Guía Rápida](QUICK_START_VERIFICATION.md)
-- [Sistema de Verificación - Documentación Completa](VERIFICATION_SYSTEM.md)
-- [Comandos de Música](MUSIC_COMMANDS.md)
-- [Sistema de Logs de Voz](VOICE_LOGS.md)
-
-## 🤝 Contribuir
-
-Este proyecto está en desarrollo activo. Si encuentras errores, revisa los logs en la carpeta `logs/`.
-
-## 📝 Licencia
-
-Este proyecto fue creado usando Bun v1.2.21. [Bun](https://bun.com) es un runtime de JavaScript rápido y todo en uno.
