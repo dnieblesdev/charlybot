@@ -1,6 +1,6 @@
 # AGENTS.md — Charly API (`apps/api`)
 
-Contexto para agentes de IA trabajando en la API. Leelo completo antes de generar cambios.
+Context for AI agents working on the API. Read this in full before making changes.
 
 ## Scope Rule
 
@@ -35,7 +35,7 @@ Contexto para agentes de IA trabajando en la API. Leelo completo antes de genera
 
 - Runtime: **Bun** (`bun --hot`).
 - Framework: **Hono**.
-- Validación: **zod** + `@hono/zod-validator`.
+- Validation: **zod** + `@hono/zod-validator`.
 - Logs: **Winston** (`src/utils/logger.ts`).
 - DB: Prisma via `@charlybot/shared` (LibSQL adapter). Default: `packages/shared/dev.db`.
 - Auth: `X-API-Key` header required for all `/api/*` routes.
@@ -52,13 +52,13 @@ Contexto para agentes de IA trabajando en la API. Leelo completo antes de genera
 | Metrics | prom-client via `createMetricsRegistry()` |
 | DB | Prisma (LibSQL adapter) via `@charlybot/shared` |
 
-## Comandos
+## Commands
 
 ```bash
-# desde apps/api
+# from apps/api
 bun run dev
 
-# desde la raíz
+# from root
 bun run dev:api
 ```
 
@@ -67,15 +67,15 @@ bun run dev:api
 `src/index.ts`:
 
 - `new Hono()`.
-- Middleware de logging global (`app.use("*", ...)`).
-- `GET /health` público (incluye check simple a DB con `prisma.$queryRaw`).
-- `GET /metrics` público (Prometheus scrape endpoint).
-- Protege `/api/*` con `authMiddleware`.
-- Monta routers bajo `/api/v1/...`.
-- `GET /api/v1/health` autenticado con DB + Valkey checks.
-- Exporta `default { port, fetch }` (server de Bun).
+- Global logging middleware (`app.use("*", ...)`).
+- `GET /health` public (includes simple DB check with `prisma.$queryRaw`).
+- `GET /metrics` public (Prometheus scrape endpoint).
+- Protects `/api/*` with `authMiddleware`.
+- Mounts routers under `/api/v1/...`.
+- `GET /api/v1/health` authenticated with DB + Valkey checks.
+- Exports `default { port, fetch }` (Bun server).
 
-## Estructura
+## Structure
 
 ```
 src/
@@ -83,15 +83,15 @@ src/
   routes/
     guilds.ts
     economy.ts
-    economy.routes.ts        ← alternativa/split
+    economy.routes.ts        ← alternative/split
     xp.ts
     autoroles.ts
     verifications.ts
     classes.ts
     music.ts
-    auth.ts                  ← público (no auth middleware)
+    auth.ts                  ← public (no auth middleware)
   middleware/
-    authMiddleware.ts        ← valida X-API-Key
+    authMiddleware.ts        ← validates X-API-Key
     rateLimitMiddleware.ts
   infrastructure/
     valkey/
@@ -101,39 +101,39 @@ src/
   utils/
     logger.ts                ← Winston
 tests/
-  setup.ts                   ← API_KEY seteada por defecto
-  (tests por feature)
+  setup.ts                   ← API_KEY set by default
+  (tests per feature)
 ```
 
 ## Auth
 
 `src/middleware/authMiddleware.ts`:
 
-- Lee `process.env.API_KEY` al importar el archivo y **lanza error** si no existe.
-- Valida el header `X-API-Key`.
+- Reads `process.env.API_KEY` at import time and **throws** if not set.
+- Validates the `X-API-Key` header.
 
-Implicancia: en tests/scripts, seteá `API_KEY` antes de importar `src/index.ts`.
-En tests ya existe `tests/setup.ts` con un default.
+Implication: in tests/scripts, set `API_KEY` before importing `src/index.ts`.
+Tests already have `tests/setup.ts` with a default.
 
 ## DB (Prisma)
 
 - Import: `import { prisma } from "@charlybot/shared"`.
 - Config: `packages/shared/src/prisma.ts`.
-- Default: `packages/shared/dev.db` si `DATABASE_URL` no está.
+- Default: `packages/shared/dev.db` if `DATABASE_URL` is not set.
 
-**Importante**: Tanto la API como el bot usan Prisma directamente desde `@charlybot/shared`.
+**Important**: Both the API and the bot use Prisma directly from `@charlybot/shared`.
 
 ## Valkey
 
-`src/infrastructure/valkey/index.ts` inicializa cliente Valkey usando utilidades de `@charlybot/shared`.
-Tiene fallback in-memory por si Valkey no conecta.
+`src/infrastructure/valkey/index.ts` initializes the Valkey client using utilities from `@charlybot/shared`.
+It has an in-memory fallback in case Valkey doesn't connect.
 
 ## Observability / Metrics
 
 ### `/metrics` endpoint
 
 ```typescript
-// En src/index.ts (línea 40)
+// In src/index.ts (line 40)
 const { register: apiRegister } = createMetricsRegistry();
 app.get("/metrics", async (c) => {
   c.header("Content-Type", apiRegister.contentType);
@@ -154,50 +154,50 @@ Authenticated health check that tests DB and Valkey connectivity:
 // Returns 503 if either DB or Valkey is down
 ```
 
-## Variables De Entorno (mínimas)
+## Environment Variables (minimum)
 
-- `API_KEY` (requerida — falla al importar si no está)
+- `API_KEY` (required — fails at import if not set)
 - `PORT` (default 3000)
 - `LOG_LEVEL` (default "info")
-- `DATABASE_URL` (opcional — default `file:packages/shared/dev.db`)
-- `OTEL_ENABLED` (opcional — habilita OpenTelemetry tracing)
+- `DATABASE_URL` (optional — default `file:packages/shared/dev.db`)
+- `OTEL_ENABLED` (optional — enables OpenTelemetry tracing)
 - `VALKEY_HOST`, `VALKEY_PORT`, `VALKEY_PASSWORD`, `VALKEY_PREFIX`, `VALKEY_MAX_RETRIES`
 
 ## Tests
 
-### Estructura
+### Structure
 
 ```
 apps/api/
   tests/
-    setup.ts         ← API_KEY = "test-key" por defecto
+    setup.ts         ← API_KEY = "test-key" by default
     guilds/
       index.test.ts
     economy/
       balance.test.ts
 ```
 
-### Regla sobre tests
+### Test Rule
 
-**NUNCA corras tests sin permiso explícito del usuario.**
+**NEVER run tests without explicit user permission.**
 
-Los tests de API:
-- Modifican estado de la base de datos (usan Prisma directamente)
-- Pueden afectar servicios en ejecución
-- Requieren `API_KEY` configurada
+API tests:
+- Modify database state (they use Prisma directly)
+- May affect running services
+- Require `API_KEY` configured
 
-Si necesitás correr tests, preguntá primero.
+If you need to run tests, ask first.
 
 
 ## Auto-Invoke Skills
 
 | Action | Skill |
 |--------|-------|
-| Crear rutas o middleware Hono | `hono` |
-| Crear schemas de validación Zod | `zod` |
-| Trabajar con modelos Prisma | `prisma-client-api` |
-| Escribir tests en API | `vitest` |
-| Escribir TypeScript | `typescript` |
+| Create Hono routes or middleware | `hono` |
+| Create Zod validation schemas | `zod` |
+| Work with Prisma models | `prisma-client-api` |
+| Write tests in API | `vitest` |
+| Write TypeScript | `typescript` |
 
 ## QA Checklist
 

@@ -1,6 +1,6 @@
 # AGENTS.md — CharlyBot Bot (`apps/bot`)
 
-Contexto para agentes de IA que trabajen en el bot. Leelo completo antes de generar cualquier cambio.
+Context for AI agents working on the bot. Read this in full before making any changes.
 
 ## Scope Rule
 
@@ -53,49 +53,49 @@ Contexto para agentes de IA que trabajen en el bot. Leelo completo antes de gene
 | HTTP Client | Custom ApiClient (`src/infrastructure/api/ApiClient.ts`) |
 | Metrics | Express + prom-client (exposed at `/metrics`) |
 
-## Qué Es Este Proyecto
+## What Is This Project
 
-Bot de Discord multifuncional con sistemas de música, economía, verificación, AutoRole, y más. El bot usa Prisma directamente desde `@charlybot/shared`. Los datos se acceden vía repositories en `src/config/repositories/`. La API (`apps/api`) sigue existiendo pero el bot no depende de ella para persistencia.
+Multi-feature Discord bot with music, economy, verification, AutoRole, and more systems. The bot uses Prisma directly from `@charlybot/shared`. Data is accessed via repositories in `src/config/repositories/`. The API (`apps/api`) still exists but the bot does not depend on it for persistence.
 
-## Sistemas Del Bot
+## Bot Systems
 
-| Sistema | Qué hace | Comandos principales |
+| System | What it does | Main commands |
 |---|---|---|
-| Música | Reproduce YouTube/Spotify vía `play-dl` + `yt-dlp` con cola, loops, shuffle | `/play`, `/skip`, `/queue`, `/nowplaying`, `/pause`, `/resume`, `/stop`, `/loop`, `/shuffle`, `/volume`, `/join`, `/leave` |
-| Verificación | Panel con botón → modal de registro → revisión de moderador → asignación de rol | `/setup-verification`, `/send-verification-panel`, `/list-pending-verifications` |
-| AutoRole | Asignación de roles por reacción o botón en mensajes configurables | `/autorole setup/listar/editar/remover` |
-| Economía | Wallet por servidor, banco global, trabajo, crimen, robo, ruleta, leaderboard | `/work`, `/crime`, `/rob`, `/balance`, `/deposit`, `/retirar`, `/ruleta`, `/leaderboard`, `/bail` |
-| Config | Configuración por servidor (canales de log, bienvenida, verificación, etc.) | `/set-welcome`, `/set-voice-log-channel`, `/set-image-channel`, `/show-config` |
-| Logs | Eventos de voz, entrada/salida de miembros, mensajes | Automático vía events |
-| Clases | Sistema de roles jerárquicos (tipo → clase → subclase) | `/addClass`, `/listClasses`, `/removeClass` |
+| Music | Plays YouTube/Spotify via `play-dl` + `yt-dlp` with queue, loops, shuffle | `/play`, `/skip`, `/queue`, `/nowplaying`, `/pause`, `/resume`, `/stop`, `/loop`, `/shuffle`, `/volume`, `/join`, `/leave` |
+| Verification | Panel with button → registration modal → moderator review → role assignment | `/setup-verification`, `/send-verification-panel`, `/list-pending-verifications` |
+| AutoRole | Role assignment by reaction or button on configurable messages | `/autorole setup/list/edit/remove` |
+| Economy | Per-server wallet, global bank, work, crime, rob, roulette, leaderboard | `/economia balance`, `/economia deposit`, `/economia retirar`, `/economia work`, `/economia crime`, `/economia rob`, `/economia ruleta`, `/economia leaderboard`, `/economia bail` |
+| Config | Per-server configuration (log channels, welcome, verification, etc.) | `/set-welcome`, `/set-voice-log-channel`, `/set-image-channel`, `/show-config` |
+| Logs | Voice events, member join/leave, messages | Automatic via events |
+| Classes | Hierarchical role system (type → class → subclass) | `/addClass`, `/listClasses`, `/removeClass` |
 
-## Estructura (Real)
+## Structure (Actual)
 
 ```
 src/
-  index.ts                     ← importa app/core/index.ts
+  index.ts                     ← imports app/core/index.ts
   app/
     core/
-      DiscordClient.ts         ← wrapper de discord.js Client
-      index.ts                 ← bootstrap: ffmpeg/Spotify, Valkey/streams, arranque
-    loader.ts                  ← carga dinámica de commands y events
-    commands/                  ← slash commands (carpetas con index.ts)
-    events/                    ← event handlers (router en interactionCreate.ts)
+      DiscordClient.ts         ← discord.js Client wrapper
+      index.ts                 ← bootstrap: ffmpeg/Spotify, Valkey/streams, startup
+    loader.ts                  ← dynamic loader for commands and events
+    commands/                  ← slash commands (folders with index.ts)
+    events/                    ← event handlers (router in interactionCreate.ts)
     interactions/
       customIds.ts             ← CUSTOM_IDS, FEATURES, parseCustomId()
       handlers/
-    services/                  ← lógica de negocio
+    services/                  ← business logic
   infrastructure/
-    api/                       ← client HTTP + adapters hacia apps/api
-    valkey/                    ← lifecycle Valkey (wrapper con fallback)
-    streams/                   ← streams de música (Valkey)
+    api/                       ← HTTP client + adapters toward apps/api
+    valkey/                    ← Valkey lifecycle (wrapper with fallback)
+    streams/                   ← music streams (Valkey)
     monitoring/
-      health.ts                ← Express server para /metrics (prom-client)
-    storage/                   ← HOY NO SE USA (ver deuda técnica)
+      health.ts                ← Express server for /metrics (prom-client)
+    storage/                   ← NOT IN USE (see technical debt)
   config/
-    repositories/              ← boundary de acceso a datos (via API adapters)
+    repositories/              ← data access boundary (via API adapters)
   utils/
-    logger.ts                  ← Winston logger (usar siempre)
+    logger.ts                  ← Winston logger (always use)
   types/
 ```
 
@@ -110,58 +110,58 @@ The bot exposes a `/metrics` endpoint via an internal Express server (`src/infra
 
 This is separate from the main Discord client lifecycle. It's used for observability (Prometheus scraping). The bot's own metrics (event counts, command latency, error rates) are registered via `createMetricsRegistry()` from `@charlybot/shared`.
 
-## Patrón Estándar Para Comandos (OBLIGATORIO)
+## Standard Command Pattern (REQUIRED)
 
-Todo comando nuevo debe seguir la estructura de `src/app/commands/autorole/`:
+Every new command must follow the structure of `src/app/commands/autorole/`:
 
 ```
-src/app/commands/<nombre-del-comando>/
+src/app/commands/<command-name>/
   index.ts          ← SlashCommandBuilder + export { data, execute } + router
-  <subcomando1>.ts  ← export async function execute(interaction)
-  <subcomando2>.ts
+  <subcommand1>.ts  ← export async function execute(interaction)
+  <subcommand2>.ts
 ```
 
-### `index.ts` (estructura mínima)
+### `index.ts` (minimal structure)
 
 ```ts
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { execute as subcomando1 } from "./subcomando1";
+import { execute as subcommand1 } from "./subcommand1";
 
 export const data = new SlashCommandBuilder()
-  .setName("nombre")
-  .setDescription("Descripción")
-  .addSubcommand((sub) => sub.setName("subcomando1").setDescription("Hace X"));
+  .setName("name")
+  .setDescription("Description")
+  .addSubcommand((sub) => sub.setName("subcommand1").setDescription("Does X"));
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const subcommand = interaction.options.getSubcommand();
   switch (subcommand) {
-    case "subcomando1":
-      await subcomando1(interaction);
+    case "subcommand1":
+      await subcommand1(interaction);
       break;
   }
 }
 ```
 
-### Reglas de comandos
+### Command rules
 
-- `data` y `execute` son exports nombrados obligatorios (el loader los detecta así).
-- Si el comando expone `init(client)`, se llama al arrancar (útil para recuperar estado).
-- Para respuestas privadas: siempre `flags: [MessageFlags.Ephemeral]`.
-- **NUNCA** `ephemeral: true`.
-- Para tareas largas: `await interaction.deferReply(...)`.
+- `data` and `execute` are mandatory named exports (the loader detects them this way).
+- If the command exposes `init(client)`, it is called at startup (useful for recovering state).
+- For private replies: always `flags: [MessageFlags.Ephemeral]`.
+- **NEVER** `ephemeral: true`.
+- For long tasks: `await interaction.deferReply(...)`.
 
-## Manejo de Interacciones (botones, modales, selects)
+## Interaction Handling (buttons, modals, selects)
 
-Router central: `src/app/events/interactionCreate.ts`.
+Central router: `src/app/events/interactionCreate.ts`.
 
-### Convención de `customId`
+### `customId` convention
 
-Formato: `feature:action[:payload]`
+Format: `feature:action[:payload]`
 
-- `:` es el único separador estructural.
-- `_` puede existir dentro del payload pero no como separador.
+- `:` is the only structural separator.
+- `_` can exist inside the payload but not as a separator.
 
-Regla: **NUNCA** hardcodear strings. Siempre usar `CUSTOM_IDS.*` de `src/app/interactions/customIds.ts`.
+Rule: **NEVER** hardcode strings. Always use `CUSTOM_IDS.*` from `src/app/interactions/customIds.ts`.
 
 ```ts
 import { CUSTOM_IDS, parseCustomId } from "../../interactions/customIds";
@@ -171,98 +171,98 @@ new ButtonBuilder().setCustomId(CUSTOM_IDS.verification.APPROVE(userId));
 const { feature, action, payload } = parseCustomId(interaction.customId);
 ```
 
-Para agregar una feature nueva con interacciones:
+To add a new feature with interactions:
 
-1. Agregar constantes en `src/app/interactions/customIds.ts`.
-2. Crear `src/app/interactions/handlers/<feature>.handler.ts`.
-3. Registrar el handler en `src/app/events/interactionCreate.ts`.
+1. Add constants in `src/app/interactions/customIds.ts`.
+2. Create `src/app/interactions/handlers/<feature>.handler.ts`.
+3. Register the handler in `src/app/events/interactionCreate.ts`.
 
-## Datos y Repositories
+## Data and Repositories
 
-El bot accede a Prisma directamente desde `@charlybot/shared`.
+The bot accesses Prisma directly from `@charlybot/shared`.
 
-- Client Prisma: `import { prisma } from "@charlybot/shared"`.
-- Repositories: `src/config/repositories/*.ts` (boundary de acceso a datos para el resto del bot).
+- Prisma client: `import { prisma } from "@charlybot/shared"`.
+- Repositories: `src/config/repositories/*.ts` (data access boundary for the rest of the bot).
 
-Regla: commands/services NO deberían importar `prisma` directamente; usá repositories.
+Rule: commands/services should NOT import `prisma` directly; use repositories.
 
 ## Logger
 
-Siempre usar Winston (`src/utils/logger.ts` o `@charlybot/shared`) en vez de `console.log`.
+Always use Winston (`src/utils/logger.ts` or `@charlybot/shared`) instead of `console.log`.
 
 ```ts
 import logger from "../../utils/logger";
-// o desde shared:
+// or from shared:
 import { createLogger } from "@charlybot/shared";
 
-logger.info("Mensaje informativo", { ctx: "algo" });
-logger.warn("Advertencia");
+logger.info("Informative message", { ctx: "something" });
+logger.warn("Warning");
 logger.error("Error", { error: err instanceof Error ? err.message : String(err) });
 ```
 
 ## Valkey
 
-El bot usa Valkey con fallback en memoria.
+The bot uses Valkey with in-memory fallback.
 
 - Lifecycle: `src/infrastructure/valkey/index.ts`.
-- Streams de música: `src/infrastructure/streams/*`.
+- Music streams: `src/infrastructure/streams/*`.
 
-Variables típicas: `VALKEY_HOST`, `VALKEY_PORT`, `VALKEY_PASSWORD`, `VALKEY_PREFIX`, `VALKEY_MAX_RETRIES`.
+Typical variables: `VALKEY_HOST`, `VALKEY_PORT`, `VALKEY_PASSWORD`, `VALKEY_PREFIX`, `VALKEY_MAX_RETRIES`.
 
 ## Docker Dev
 
-`docker/docker-compose.dev.yml` levanta `valkey`, `api` y `bot`.
+`docker/docker-compose.dev.yml` brings up `valkey`, `api` and `bot`.
 
-## Variables de Entorno (mínimas)
+## Environment Variables (minimum)
 
-- `DISCORD_TOKEN` (requerida)
-- `CLIENT_ID` (requerida para scripts)
-- `GUILD_ID`/`GUILD_ID2`/`GUILD_ID3` (opcionales; usados por scripts de registro)
+- `DISCORD_TOKEN` (required)
+- `CLIENT_ID` (required for scripts)
+- `GUILD_ID`/`GUILD_ID2`/`GUILD_ID3` (optional; used by registration scripts)
 - `API_URL` (default: `http://localhost:3000`)
 - `API_KEY` (default: `dev-key`)
 - `LOG_LEVEL`
 - `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REFRESH_TOKEN`
 - `VALKEY_*`
 
-## Scripts Útiles
+## Useful Scripts
 
 ```bash
-bun run dev          # Inicia el bot (apps/bot)
-bun run rc           # Registra slash commands (scripts/registerCommands.ts)
-bun run cc           # Limpia slash commands
-bun run lc           # Lista slash commands registrados
+bun run dev          # Start the bot (apps/bot)
+bun run rc           # Register slash commands (scripts/registerCommands.ts)
+bun run cc           # Clear slash commands
+bun run lc           # List registered slash commands
 ```
 
-Nota: los scripts de administración de comandos viven en `scripts/` (raíz) y se ejecutan con Bun.
+Note: Command administration scripts live in `scripts/` (root) and are run with Bun.
 
-## Deuda Técnica (No Extender)
+## Technical Debt (Do Not Extend)
 
-- `src/adapters/StorageAdapter.ts` (vacío)
-- `src/adapters/AudioAdapter.ts` (vacío)
-- `src/container.ts` (vacío)
-- `src/infrastructure/storage/index.ts` (hoy no se usa; el bot consume la API)
+- `src/adapters/StorageAdapter.ts` (empty)
+- `src/adapters/AudioAdapter.ts` (empty)
+- `src/container.ts` (empty)
+- `src/infrastructure/storage/index.ts` (not currently used; the bot consumes the API)
 
 ## Tests
 
-El bot usa **vitest** como test runner con pool `forks` para aislamiento determinista. La configuración vive en `vitest.config.ts` y el setup global en `tests/setup.ts`.
+The bot uses **vitest** as the test runner with pool `forks` for deterministic isolation. The config lives in `vitest.config.ts` and global setup in `tests/setup.ts`.
 
-### Ejecutar tests
+### Run tests
 
 ```bash
-# desde apps/bot/
+# from apps/bot/
 bun test              # run once
 bun run test:watch    # watch mode
-bun run test:coverage # con coverage report (v8)
+bun run test:coverage # with coverage report (v8)
 ```
 
-### Estructura de archivos
+### File structure
 
 ```
 apps/bot/
   tests/
-    setup.ts              # setup global: mock @charlybot/shared/prisma
-    smoke.test.ts          # smoke test (verifica que vitest corre)
-    economy/               # tests de lógica pura de ruleta
+    setup.ts              # global setup: mock @charlybot/shared/prisma
+    smoke.test.ts         # smoke test (verifies vitest runs)
+    economy/              # pure roulette logic tests
       roulette.test.ts
       config.test.ts
       service.test.ts
@@ -270,14 +270,14 @@ apps/bot/
       balance.test.ts
   src/
     __mocks__/
-      discord.ts           # createMockChatInputCommandInteraction()
-      repo.ts              # createMockEconomyRepo(), createMockConfigRepo()
+      discord.ts          # createMockChatInputCommandInteraction()
+      repo.ts             # createMockEconomyRepo(), createMockConfigRepo()
 ```
 
 ### Mock factories
 
 **`createMockChatInputCommandInteraction(overrides?)`**
-Crea un mock de `ChatInputCommandInteraction` con `reply()`, `editReply()`, `deferReply()`, `followUp()` como `vi.fn()`. Overridea `userId`, `guildId`, y `options.*` según necesidad.
+Creates a mock of `ChatInputCommandInteraction` with `reply()`, `editReply()`, `deferReply()`, `followUp()` as `vi.fn()`. Overrides `userId`, `guildId`, and `options.*` as needed.
 
 ```ts
 const interaction = createMockChatInputCommandInteraction({
@@ -290,7 +290,7 @@ await interaction.editReply({ content: "result" });
 ```
 
 **`createMockEconomyRepo(overrides?)`**
-Crea un mock de todo el namespace `EconomyRepo` con cada función como `vi.fn()`. Comportamiento por defecto: `getEconomyUser` → `null`, `createEconomyUser` → usuario por defecto con pocket=1000. Overridea funciones específicas en cada test.
+Creates a mock of the entire `EconomyRepo` namespace with each function as `vi.fn()`. Default behavior: `getEconomyUser` → `null`, `createEconomyUser` → default user with pocket=1000. Override specific functions in each test.
 
 ```ts
 const repo = createMockEconomyRepo({
@@ -298,32 +298,32 @@ const repo = createMockEconomyRepo({
 });
 ```
 
-### Patrón de test por capa
+### Test pattern by layer
 
-| Capa | Qué testear | Mock |
-|------|-------------|------|
-| Lógica pura (RouletteService) | Función directa, sin mocks | Ninguno |
-| Config defaults | Servicio con repo mockeado | `vi.mock(".../EconomyRepo")` |
-| Service con mocks | Servicio, repo y LeaderboardService mockeados | `vi.mock()` por namespace |
-| Command handler | `execute(interaction)` con interaction mock | `createMockChatInputCommandInteraction` |
+| Layer | What to test | Mock |
+|-------|-------------|------|
+| Pure logic (RouletteService) | Direct function, no mocks | None |
+| Config defaults | Service with mocked repo | `vi.mock(".../EconomyRepo")` |
+| Service with mocks | Service, repo and LeaderboardService mocked | `vi.mock()` per namespace |
+| Command handler | `execute(interaction)` with interaction mock | `createMockChatInputCommandInteraction` |
 
-### Reglas importantes
+### Important rules
 
-- **No usar base de datos real** — todos los tests usan mocks de `EconomyRepo` y `vi.mock("@charlybot/shared")` para reemplazar `prisma`.
-- **No `ephemeral: true`** — en tests de commands, si necesitás respuesta ephemeral, usar `flags: [MessageFlags.Ephemeral]`.
-- **`vi.clearAllMocks()`** — se llama automáticamente en `afterEach` del setup global.
-- **`import type`** — usar `import type` para tipos que solo se usan como tipos (requerido por `verbatimModuleSyntax`).
+- **Do not use real database** — all tests use mocks of `EconomyRepo` and `vi.mock("@charlybot/shared")` to replace `prisma`.
+- **No `ephemeral: true`** — in command tests, if you need an ephemeral reply, use `flags: [MessageFlags.Ephemeral]`.
+- **`vi.clearAllMocks()`** — called automatically in `afterEach` in global setup.
+- **`import type`** — use `import type` for types only used as types (required by `verbatimModuleSyntax`).
 
 ## Auto-Invoke Skills
 
 | Action | Skill |
 |--------|-------|
-| Crear comandos slash | `discord-command` |
-| Agregar subcomandos | `discord-command` |
-| Versionar o release | `changeset-workflow` |
-| Escribir tests en bot | `vitest` |
-| Trabajar con modelos Prisma | `prisma-client-api` |
-| Escribir TypeScript | `typescript` |
+| Create slash commands | `discord-command` |
+| Add subcommands | `discord-command` |
+| Version or release | `changeset-workflow` |
+| Write tests in bot | `vitest` |
+| Work with Prisma models | `prisma-client-api` |
+| Write TypeScript | `typescript` |
 
 ## QA Checklist
 

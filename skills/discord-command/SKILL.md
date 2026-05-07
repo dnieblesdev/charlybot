@@ -1,9 +1,9 @@
 ---
 name: discord-command
 description: >
-  Crea comandos slash para CharlyBot siguiendo la convención de carpeta con index.ts
-  y subcomandos separados, usando el patrón de autorole/ como referencia.
-  Trigger: Cuando el usuario pide crear un comando slash nuevo en CharlyBot.
+  Creates slash commands for CharlyBot following the folder convention with index.ts
+  and separate subcommands, using the autorole/ pattern as reference.
+  Trigger: When the user asks to create a new slash command in CharlyBot.
 metadata:
   author: charlybot
   version: "1.0"
@@ -16,26 +16,26 @@ metadata:
 
 ## When to Use
 
-- Usuario pide crear un nuevo comando slash (`/algo`)
-- Usuario pide agregar subcomandos a un comando existente
-- Cualquier feature nueva que requiera interacción vía chat en Discord
+- User asks to create a new slash command (`/something`)
+- User asks to add subcommands to an existing command
+- Any new feature that requires interaction via chat in Discord
 
 ## Critical Patterns
 
-### Estructura OBLIGATORIA de carpetas
+### REQUIRED folder structure
 
 ```
-apps/bot/src/app/commands/<nombre>/
+apps/bot/src/app/commands/<name>/
 ├── index.ts          ← SlashCommandBuilder + router switch
-├── <subcomando1>.ts  ← lógica del subcomando
-├── <subcomando2>.ts
+├── <subcommand1>.ts  ← subcommand logic
+├── <subcommand2>.ts
 └── ...
 ```
 
-**NUNCA** crear un comando como archivo plano (`apps/bot/src/app/commands/micomando.ts`).
-Eso es el patrón legacy. Siempre usar carpeta.
+**NEVER** create a command as a flat file (`apps/bot/src/app/commands/mycommand.ts`).
+That is the legacy pattern. Always use a folder.
 
-### index.ts — estructura fija
+### index.ts — fixed structure
 
 ```typescript
 import {
@@ -44,158 +44,158 @@ import {
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
-import { execute as subcomando1 } from "./subcomando1";
-import { execute as subcomando2 } from "./subcomando2";
+import { execute as subcommand1 } from "./subcommand1";
+import { execute as subcommand2 } from "./subcommand2";
 
 export const data = new SlashCommandBuilder()
-  .setName("nombre")
-  .setDescription("Descripción del comando")
-  // Permisos (omitir si es para todos los usuarios)
+  .setName("name")
+  .setDescription("Command description")
+  // Permissions (omit if for all users)
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addSubcommand((sub) =>
-    sub.setName("subcomando1").setDescription("Hace X")
+    sub.setName("subcommand1").setDescription("Does X")
   )
   .addSubcommand((sub) =>
-    sub.setName("subcomando2").setDescription("Hace Y")
+    sub.setName("subcommand2").setDescription("Does Y")
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const subcommand = interaction.options.getSubcommand();
   switch (subcommand) {
-    case "subcomando1":
-      await subcomando1(interaction);
+    case "subcommand1":
+      await subcommand1(interaction);
       break;
-    case "subcomando2":
-      await subcomando2(interaction);
+    case "subcommand2":
+      await subcommand2(interaction);
       break;
     default:
-      await interaction.reply({ content: "Comando no reconocido.", flags: [MessageFlags.Ephemeral] });
+      await interaction.reply({ content: "Unrecognized command.", flags: [MessageFlags.Ephemeral] });
   }
 }
 ```
 
-### Subcomando — estructura fija
+### Subcommand — fixed structure
 
 ```typescript
 import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import logger from "../../../utils/logger";
-// importar repository si necesita DB:
-// import * as MiRepo from "../../../config/repositories/MiRepo";
+// import repository if it needs DB:
+// import * as MyRepo from "../../../config/repositories/MyRepo";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  // Siempre defer antes de operaciones async largas
+  // Always defer before long async operations
   await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
   try {
-    // lógica aquí
+    // logic here
 
-    await interaction.editReply({ content: "✅ Hecho." });
+    await interaction.editReply({ content: "✅ Done." });
   } catch (error) {
-    logger.error("Error en subcomando1", {
+    logger.error("Error in subcommand1", {
       error: error instanceof Error ? error.message : String(error),
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
-    await interaction.editReply({ content: "❌ Ocurrió un error." });
+    await interaction.editReply({ content: "❌ An error occurred." });
   }
 }
 ```
 
-## Reglas de respuestas privadas (efímeras)
+## Ephemeral (private) reply rules
 
-**Siempre** usar `flags: [MessageFlags.Ephemeral]`. Importar `MessageFlags` desde `discord.js`.
-**NUNCA** usar `ephemeral: true` — está deprecado en Discord.js v14 moderno.
+**Always** use `flags: [MessageFlags.Ephemeral]`. Import `MessageFlags` from `discord.js`.
+**NEVER** use `ephemeral: true` — it is deprecated in modern Discord.js v14.
 
 ```typescript
-// ✅ Correcto — reply directo
-await interaction.reply({ content: "Solo vos lo ves.", flags: [MessageFlags.Ephemeral] });
+// ✅ Correct — direct reply
+await interaction.reply({ content: "Only you can see this.", flags: [MessageFlags.Ephemeral] });
 
-// ✅ Correcto — defer efímero
+// ✅ Correct — ephemeral defer
 await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
-// ❌ Incorrecto — deprecado
+// ❌ Wrong — deprecated
 await interaction.reply({ content: "...", ephemeral: true });
 await interaction.deferReply({ ephemeral: true });
 ```
 
-## Reglas de customId
+## customId rules
 
-**NUNCA** hardcodear strings de customId. Siempre usar `CUSTOM_IDS.*` de `apps/bot/src/app/interactions/customIds.ts`.
+**NEVER** hardcode customId strings. Always use `CUSTOM_IDS.*` from `apps/bot/src/app/interactions/customIds.ts`.
 
-**Formato:** `feature:action[:payload]` con `:` como separador estructural.
+**Format:** `feature:action[:payload]` with `:` as the structural separator.
 
 ```typescript
 import { CUSTOM_IDS, parseCustomId } from "../../interactions/customIds";
 
-// ✅ Correcto — crear botón
+// ✅ Correct — create button
 new ButtonBuilder()
   .setCustomId(CUSTOM_IDS.verification.APPROVE(userId))
 
-// ✅ Correcto — parsear en handler
+// ✅ Correct — parse in handler
 const { action, payload } = parseCustomId(interaction.customId);
 
-// ❌ Incorrecto — string hardcodeado
+// ❌ Wrong — hardcoded string
 new ButtonBuilder().setCustomId(`verification_approve_${userId}`)
 ```
 
-Si el comando nuevo genera botones/modales/selects:
-1. Agregar constantes en `src/app/interactions/customIds.ts`
-2. Crear `src/app/interactions/handlers/<feature>.handler.ts`
-3. Agregar `case FEATURES.<FEATURE>:` al switch en `interactionCreate.ts`
+If the new command generates buttons/modals/selects:
+1. Add constants in `src/app/interactions/customIds.ts`
+2. Create `src/app/interactions/handlers/<feature>.handler.ts`
+3. Add `case FEATURES.<FEATURE>:` to the switch in `interactionCreate.ts`
 
-## Reglas de DB
+## DB rules
 
-- **NUNCA** importar `prisma` directamente en commands o services
-- Siempre ir a través de un repository en `apps/bot/src/config/repositories/`
-- Si la feature necesita un modelo nuevo: schema → migrate → repository → usar en el subcomando
+- **NEVER** import `prisma` directly in commands or services
+- Always go through a repository in `apps/bot/src/config/repositories/`
+- If the feature needs a new model: schema → migrate → repository → use in the subcommand
 
 ```typescript
-// ✅ Correcto
-import * as MiRepo from "../../../config/repositories/MiRepo";
+// ✅ Correct
+import * as MyRepo from "../../../config/repositories/MyRepo";
 
-// ❌ Incorrecto
+// ❌ Wrong
 import { prisma } from "../../../infrastructure/storage";
 ```
 
-## Reglas de botones / modales / selects
+## Button / modal / select rules
 
-Si el comando genera botones, modales o select menus:
+If the command generates buttons, modals, or select menus:
 
-1. Agregar constantes en `src/app/interactions/customIds.ts`
-2. Crear `src/app/interactions/handlers/<feature>.handler.ts`
-3. Agregar `case FEATURES.<FEATURE>:` al switch en `interactionCreate.ts`
+1. Add constants in `src/app/interactions/customIds.ts`
+2. Create `src/app/interactions/handlers/<feature>.handler.ts`
+3. Add `case FEATURES.<FEATURE>:` to the switch in `interactionCreate.ts`
 
 ```typescript
-// En interactionCreate.ts, dentro del switch de features:
-case FEATURES.MI_FEATURE:
-  await miFeatureHandler.handleButton(interaction);
+// In interactionCreate.ts, inside the features switch:
+case FEATURES.MY_FEATURE:
+  await myFeatureHandler.handleButton(interaction);
   break;
 ```
 
-## Reglas de logger
+## Logger rules
 
 ```typescript
 import logger from "../../../utils/logger";
 
-// NUNCA console.log — siempre logger
-logger.info("Mensaje", { userId: interaction.user.id, guildId: interaction.guildId });
+// NEVER console.log — always logger
+logger.info("Message", { userId: interaction.user.id, guildId: interaction.guildId });
 logger.error("Error", { error: error instanceof Error ? error.message : String(error) });
 ```
 
-## Checklist antes de terminar
+## Checklist before finishing
 
-- [ ] Carpeta `apps/bot/src/app/commands/<nombre>/` creada con `index.ts`
-- [ ] Exports nombrados `data` y `execute` en `index.ts`
-- [ ] Un archivo por subcomando
-- [ ] `deferReply` antes de cualquier operación async
-- [ ] Usar logger, nunca `console.log`
-- [ ] Si tiene DB: repository creado en `apps/bot/src/config/repositories/`
-- [ ] Si tiene botones/modales: handler registrado en `interactionCreate.ts`
-- [ ] Permisos definidos en `SlashCommandBuilder` si aplica
+- [ ] Folder `apps/bot/src/app/commands/<name>/` created with `index.ts`
+- [ ] Named exports `data` and `execute` in `index.ts`
+- [ ] One file per subcommand
+- [ ] `deferReply` before any async operation
+- [ ] Use logger, never `console.log`
+- [ ] If it has DB: repository created in `apps/bot/src/config/repositories/`
+- [ ] If it has buttons/modals: handler registered in `interactionCreate.ts`
+- [ ] Permissions defined in `SlashCommandBuilder` if applicable
 
 ## Resources
 
-- **Referencia de proyecto**: [AGENTS.md](../../apps/bot/AGENTS.md)
-- **Ejemplo real**: [apps/bot/src/app/commands/autorole/](../../apps/bot/src/app/commands/autorole/)
+- **Project reference**: [AGENTS.md](../../apps/bot/AGENTS.md)
+- **Real example**: [apps/bot/src/app/commands/autorole/](../../apps/bot/src/app/commands/autorole/)
 - **Template index.ts**: [assets/index-template.ts](assets/index-template.ts)
-- **Template subcomando**: [assets/subcommand-template.ts](assets/subcommand-template.ts)
+- **Template subcommand**: [assets/subcommand-template.ts](assets/subcommand-template.ts)

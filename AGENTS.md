@@ -1,13 +1,13 @@
 # AGENTS.md — CharlyBot (monorepo)
 
-Contexto para agentes de IA trabajando en este monorepo. Leelo completo antes de generar cambios.
+Context for AI agents working on this monorepo. Read this in full before making changes.
 
 ## TL;DR
 
-- Monorepo con **Bun + TypeScript (ESM)**.
-- Apps: `apps/bot` (Discord.js v14) y `apps/api` (Hono).
-- Paquete compartido: `packages/shared` (Prisma + Zod schemas + observability).
-- Persistencia: Prisma (LibSQL/SQLite) via `@charlybot/shared`. Bot y API usan Prisma directamente.
+- Monorepo with **Bun + TypeScript (ESM)**.
+- Apps: `apps/bot` (Discord.js v14) and `apps/api` (Hono).
+- Shared package: `packages/shared` (Prisma + Zod schemas + observability).
+- Persistence: Prisma (LibSQL/SQLite) via `@charlybot/shared`. Bot and API use Prisma directly.
 
 ## Start Here
 
@@ -19,7 +19,7 @@ Contexto para agentes de IA trabajando en este monorepo. Leelo completo antes de
 - Working on `packages/shared/`? → Read `packages/shared/AGENTS.md` first.
 - Cross-cutting concerns (git, releases, general patterns)? → This file.
 
-## Estructura
+## Structure
 
 ```
 apps/
@@ -39,11 +39,11 @@ docker/
 skills/        ← repo-specific skills (also see <available_skills> in system prompt)
 ```
 
-## Comandos Rápidos
+## Quick Commands
 
 ```bash
 bun install
-bun run dev          # API + Bot en paralelo
+bun run dev          # API + Bot in parallel
 bun run dev:api
 bun run dev:bot
 bun run rc           # register slash commands
@@ -55,34 +55,34 @@ bun run db:push
 bun run db:restore
 ```
 
-## Reglas Transversales
+## Cross-Cutting Rules
 
-- **Logger**: Usá Winston (`logger` o `createLogger()`), nunca `console.log`.
-- **No Prisma generado**: No edités archivos en `packages/shared/src/generated/prisma/`.
-- **Test policy**: NUNCA corras tests salvo que el usuario lo pida explícitamente.
-  - **EXCEPTION**: en `apps/bot/`, podés correr `bun run test` (vitest) cuando editás comandos.
-- **No destructivos**: No corras build/test ni comandos destructivos salvo pedido explícito.
+- **Logger**: Use Winston (`logger` or `createLogger()`), never `console.log`.
+- **No generated Prisma**: Do not edit files in `packages/shared/src/generated/prisma/`.
+- **Test policy**: NEVER run tests unless the user explicitly requests it.
+  - **EXCEPTION**: in `apps/bot/`, you may run `bun run test` (vitest) when editing commands.
+- **No destructives**: Do not run build/test or destructive commands unless explicitly requested.
 
-## Skills Disponibles
+## Available Skills
 
-### Skills Específicas de CharlyBot
-
-| Skill | Scope | Trigger | URL |
-|-------|-------|---------|-----|
-| `discord-command` | bot | Crear comandos slash, agregar subcomandos | [SKILL.md](skills/discord-command/SKILL.md) |
-| `changeset-workflow` | root, bot, api, shared | Versionar, release, changeset add/version | [SKILL.md](skills/changeset-workflow/SKILL.md) |
-
-### Skills del Repo
+### CharlyBot-Specific Skills
 
 | Skill | Scope | Trigger | URL |
 |-------|-------|---------|-----|
-| `hono` | api | Rutas Hono, middleware, entry point | [SKILL.md](skills/hono/SKILL.md) |
-| `zod` | api, shared | Schemas Zod, validación | [SKILL.md](skills/zod/SKILL.md) |
-| `prisma-client-api` | api, bot, shared | Modelos Prisma, queries, operaciones DB | [SKILL.md](skills/prisma-client-api/SKILL.md) |
-| `vitest` | bot, api | Tests con vitest | [SKILL.md](skills/vitest/SKILL.md) |
-| `typescript-advanced-types` | bot, api, shared | Código TypeScript, tipos, utilidades | [SKILL.md](skills/typescript-advanced-types/SKILL.md) |
-| `bun` | todos | Runtime, package manager, bundler | [SKILL.md](skills/bun/SKILL.md) |
-| `pr_review` | root | Revisar PRs e Issues | [SKILL.md](skills/pr_review/SKILL.md) |
+| `discord-command` | bot | Create slash commands, add subcommands | [SKILL.md](skills/discord-command/SKILL.md) |
+| `changeset-workflow` | root, bot, api, shared | Version, release, changeset add/version | [SKILL.md](skills/changeset-workflow/SKILL.md) |
+
+### Repo Skills
+
+| Skill | Scope | Trigger | URL |
+|-------|-------|---------|-----|
+| `hono` | api | Hono routes, middleware, entry point | [SKILL.md](skills/hono/SKILL.md) |
+| `zod` | api, shared | Zod schemas, validation | [SKILL.md](skills/zod/SKILL.md) |
+| `prisma-client-api` | api, bot, shared | Prisma models, queries, DB operations | [SKILL.md](skills/prisma-client-api/SKILL.md) |
+| `vitest` | bot, api | Tests with vitest | [SKILL.md](skills/vitest/SKILL.md) |
+| `typescript-advanced-types` | bot, api, shared | TypeScript code, types, utilities | [SKILL.md](skills/typescript-advanced-types/SKILL.md) |
+| `bun` | all | Runtime, package manager, bundler | [SKILL.md](skills/bun/SKILL.md) |
+| `pr_review` | root | Review PRs and Issues | [SKILL.md](skills/pr_review/SKILL.md) |
 | `vite` | landing, dashboard | Vite config, plugins, SSR | [SKILL.md](skills/vite/SKILL.md) |
 | `angular-developer` | dashboard | Angular components, signals, forms, routing | [SKILL.md](skills/angular-developer/SKILL.md) |
 | `tailwind-css-patterns` | landing, dashboard | Tailwind CSS styling, responsive | [SKILL.md](skills/tailwind-css-patterns/SKILL.md) |
@@ -99,43 +99,43 @@ bun run db:restore
 
 ## Auto-Invoke Skills
 
-Cuando hagas estas acciones, cargá el skill correspondiente PRIMERO:
+When you perform these actions, load the corresponding skill FIRST:
 
 | Action | Skill |
 |--------|-------|
-| Crear comandos slash de Discord | `discord-command` |
-| Versionar o preparar release | `changeset-workflow` |
-| Hacer review de PRs | `pr_review` |
-| Escribir tests | `vitest` |
-| Trabajar con modelos Prisma | `prisma-client-api` |
-| Usar Prisma CLI (generate, migrate, push) | `prisma-cli` |
-| Configurar provider de base de datos Prisma | `prisma-database-setup` |
-| Trabajar con Prisma Postgres | `prisma-postgres` |
-| Crear schemas Zod | `zod` |
-| Escribir rutas Hono | `hono` |
-| Escribir TypeScript, tipos, utilidades | `typescript-advanced-types` |
-| Trabajar con Bun, instalar paquetes | `bun` |
-| Trabajar en el dashboard (Angular) | `angular-developer` |
-| Arquitectura Angular, estructura de proyectos | `reference-core` |
-| Usar Angular compiler-cli (ngtsc) | `reference-compiler-cli` |
-| Trabajar con Angular Signal Forms | `reference-signal-forms` |
-| Estilizar con Tailwind CSS | `tailwind-css-patterns` |
-| Diseñar UI components | `frontend-design` |
-| Configurar Vite, plugins, SSR | `vite` |
-| Optimizar SEO, structured data | `seo` |
-| Auditar accesibilidad (WCAG 2.2) | `accessibility` |
+| Create Discord slash commands | `discord-command` |
+| Version or prepare release | `changeset-workflow` |
+| Review PRs | `pr_review` |
+| Write tests | `vitest` |
+| Work with Prisma models | `prisma-client-api` |
+| Use Prisma CLI (generate, migrate, push) | `prisma-cli` |
+| Configure Prisma database provider | `prisma-database-setup` |
+| Work with Prisma Postgres | `prisma-postgres` |
+| Create Zod schemas | `zod` |
+| Write Hono routes | `hono` |
+| Write TypeScript, types, utilities | `typescript-advanced-types` |
+| Work with Bun, install packages | `bun` |
+| Work on the dashboard (Angular) | `angular-developer` |
+| Angular architecture, project structure | `reference-core` |
+| Use Angular compiler-cli (ngtsc) | `reference-compiler-cli` |
+| Work with Angular Signal Forms | `reference-signal-forms` |
+| Style with Tailwind CSS | `tailwind-css-patterns` |
+| Design UI components | `frontend-design` |
+| Configure Vite, plugins, SSR | `vite` |
+| Optimize SEO, structured data | `seo` |
+| Audit accessibility (WCAG 2.2) | `accessibility` |
 
-## Convenciones Git / PR
+## Git / PR Conventions
 
 - Conventional commits: `fix(scope):`, `feat(scope):`, `chore:`.
 - Branch naming: `feat/<description>`, `fix/<description>`, `chore/<description>`.
-- NUNCA hacer commit de archivos que contengan secretos (`.env`, credenciales.json).
-- Solo `master` se pushpea a remote. `develop` queda local/CI.
+- NEVER commit files that contain secrets (`.env`, credentials.json).
+- Only `master` is pushed to remote. `develop` stays local/CI.
 
-## Docs por Componente
+## Docs per Component
 
-| Componente | Archivo |
-|------------|---------|
+| Component | File |
+|------------|-------|
 | Bot | `apps/bot/AGENTS.md` |
 | API | `apps/api/AGENTS.md` |
 | Shared | `packages/shared/AGENTS.md` |

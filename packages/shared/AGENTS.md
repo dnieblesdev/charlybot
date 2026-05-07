@@ -1,6 +1,6 @@
 # AGENTS.md — CharlyBot Shared (`packages/shared`)
 
-Contexto para agentes de IA trabajando en el paquete compartido. Leelo completo antes de generar cambios.
+Context for AI agents working on the shared package. Read this in full before making changes.
 
 ## Scope Rule
 
@@ -146,7 +146,7 @@ alert.send("Error summary", errorContext);
 | `types.ts` | Shared Valkey types (ValkeyConfig, StreamMessage) |
 | `config.ts` | `getValkeyConfig()` from env vars with defaults |
 | `constants.ts` | Default key prefixes and TTL values |
-| `redis-keys.ts` | Key builder functions (避免 hardcoded strings) |
+| `redis-keys.ts` | Key builder functions (avoid hardcoded strings) |
 | `ValkeyClient.ts` | Main ioredis client wrapper |
 | `ValkeyFallbackWrapper.ts` | In-memory fallback when Valkey is unavailable |
 | `locks.ts` | Distributed lock utilities |
@@ -187,9 +187,9 @@ throw new NotFoundError("EconomyUser", userId);
 
 | Action | Skill |
 |--------|-------|
-| Crear/modificar schemas Zod | `zod` |
-| Trabajar con schema Prisma | `prisma-client-api` |
-| Escribir TypeScript, tipos, utilidades | `typescript` |
+| Create/modify Zod schemas | `zod` |
+| Work with Prisma schema | `prisma-client-api` |
+| Write TypeScript, types, utilities | `typescript` |
 
 ## QA Checklist
 
