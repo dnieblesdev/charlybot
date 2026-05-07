@@ -1,18 +1,23 @@
 ---
 name: monorepo-versioning
 description: >
-  Versiona workspaces del monorepo sin usar Changesets, calculando paquetes
-  afectados, bumps semánticos, actualizaciones de dependencias internas,
-  changelogs por workspace y release final con commit y tag git.
-  Trigger: Cuando el usuario pide versionar, preparar release, bump de versiones,
-  o reemplazar el flujo de Changesets en CharlyBot.
-license: Apache-2.0
+  DEPRECATED — replaced by changeset-workflow.
+  This skill is kept for reference only.
 metadata:
-  author: gentleman-programming
-  version: "1.0"
+  scope: []
+  auto_invoke: []
+  deprecated: true
 ---
 
-## When to Use
+> ⚠️ **DEPRECATED** — This skill has been replaced by `skills/changeset-workflow/SKILL.md`.
+> Use `changeset-workflow` for all versioning and release operations.
+> This file is kept for reference only.
+>
+> **Note**: The "PROHIBIDO usar Changesets" guidance below is now **superseded**.
+> `@changesets/cli` via `changeset-workflow` is the **approved** release process for this repo.
+> Only use this file for changelog patterns, tagging conventions, and workspace detection logic.
+
+---
 
 - Usuario pide preparar un release del monorepo
 - Usuario pide bump de versiones en workspaces

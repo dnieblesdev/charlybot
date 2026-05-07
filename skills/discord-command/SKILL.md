@@ -7,6 +7,11 @@ description: >
 metadata:
   author: charlybot
   version: "1.0"
+  scope: [bot]
+  auto_invoke:
+    - "Creating a slash command"
+    - "Adding subcommands to an existing command"
+    - "Building Discord bot interactions (buttons, modals, selects)"
 ---
 
 ## When to Use
@@ -190,7 +195,7 @@ logger.error("Error", { error: error instanceof Error ? error.message : String(e
 
 ## Resources
 
-- **Referencia de proyecto**: [agents.md](../../apps/bot/agents.md)
+- **Referencia de proyecto**: [AGENTS.md](../../apps/bot/AGENTS.md)
 - **Ejemplo real**: [apps/bot/src/app/commands/autorole/](../../apps/bot/src/app/commands/autorole/)
 - **Template index.ts**: [assets/index-template.ts](assets/index-template.ts)
 - **Template subcomando**: [assets/subcommand-template.ts](assets/subcommand-template.ts)

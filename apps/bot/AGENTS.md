@@ -2,23 +2,60 @@
 
 Contexto para agentes de IA que trabajen en el bot. Leelo completo antes de generar cualquier cambio.
 
+## Scope Rule
+
+- Used 2+ workspaces → `packages/shared/`
+- Used only in bot → `apps/bot/src/`
+- Used only in api → `apps/api/src/`
+
+## CRITICAL RULES
+
+### ALWAYS
+
+| # | Rule | Why |
+|---|------|-----|
+| 1 | Use `flags: [MessageFlags.Ephemeral]` for private replies | `ephemeral: true` is deprecated in Discord.js v14 |
+| 2 | Use `CUSTOM_IDS.*` from `src/app/interactions/customIds.ts` | Avoids hardcoded strings and ensures consistency across handlers |
+| 3 | Call `deferReply()` before long async operations | Prevents Discord interaction timeout |
+| 4 | Use `logger` (Winston) instead of `console.log` | Structured logs with levels, persists to file |
+| 5 | Use `createLogger()` from `@charlybot/shared` | Consistent with API logging format |
+| 6 | Follow folder pattern for new commands (`commands/<name>/index.ts`) | Convention used by the loader to discover commands |
+| 7 | Import from `src/config/repositories/` for data access | Enforces boundary between data access and business logic |
+
+### NEVER
+
+| # | Rule | Consequence |
+|---|------|-------------|
+| 1 | Use `ephemeral: true` | Deprecated in Discord.js v14, silently fails |
+| 2 | Hardcode `customId` strings | Breaks interaction parsing consistency |
+| 3 | Import `prisma` outside of repositories | Keep data access in `src/config/repositories/`; services/commands go through repos |
+| 4 | Create flat-file commands (e.g., `commands/micommand.ts`) | Loader requires folder structure with `index.ts` |
+| 5 | Forget `deferReply()` before async | Interaction times out, user sees "loading" forever |
+
 ## TL;DR
 
 - Stack: **TypeScript + Bun + Discord.js v14**.
-- Entry real: `src/index.ts` (importa `src/app/core/index.ts`).
-- Comandos nuevos: carpeta + `index.ts` + subcomandos (patrón `src/app/commands/autorole/`).
-- Interacciones: `customId` SIEMPRE via `CUSTOM_IDS.*` (no strings hardcodeadas).
-- Respuestas privadas: `flags: [MessageFlags.Ephemeral]` (NUNCA `ephemeral: true`).
-- Persistencia: el bot consume la **API HTTP** (adapters en `src/infrastructure/api/*`).
+- Entry: `src/index.ts` imports `src/app/core/index.ts`.
+- Commands new: folder + `index.ts` + subcommands (pattern `src/app/commands/autorole/`).
+- Interactions: `customId` ALWAYS via `CUSTOM_IDS.*` (no hardcoded strings).
+- Private replies: `flags: [MessageFlags.Ephemeral]` (NEVER `ephemeral: true`).
+- Persistence: bot uses **Prisma directly** via `@charlybot/shared` (repositories in `src/config/repositories/`).
+
+## Tech Stack
+
+| | |
+|---|---|
+| Runtime | Bun |
+| Language | TypeScript (ESM) |
+| Discord | Discord.js v14 |
+| Logger | Winston via `@charlybot/shared` |
+| Tests | vitest (pool: forks) |
+| HTTP Client | Custom ApiClient (`src/infrastructure/api/ApiClient.ts`) |
+| Metrics | Express + prom-client (exposed at `/metrics`) |
 
 ## Qué Es Este Proyecto
 
-Bot de Discord multifuncional.
-
-- Runtime: Bun
-- Lenguaje: TypeScript (ESM)
-- Discord: Discord.js v14
-- Logs: Winston (`src/utils/logger.ts`)
+Bot de Discord multifuncional con sistemas de música, economía, verificación, AutoRole, y más. El bot usa Prisma directamente desde `@charlybot/shared`. Los datos se acceden vía repositories en `src/config/repositories/`. La API (`apps/api`) sigue existiendo pero el bot no depende de ella para persistencia.
 
 ## Sistemas Del Bot
 
@@ -42,8 +79,8 @@ src/
       DiscordClient.ts         ← wrapper de discord.js Client
       index.ts                 ← bootstrap: ffmpeg/Spotify, Valkey/streams, arranque
     loader.ts                  ← carga dinámica de commands y events
-    commands/                  ← slash commands
-    events/                    ← event handlers (router de interacciones en interactionCreate.ts)
+    commands/                  ← slash commands (carpetas con index.ts)
+    events/                    ← event handlers (router en interactionCreate.ts)
     interactions/
       customIds.ts             ← CUSTOM_IDS, FEATURES, parseCustomId()
       handlers/
@@ -52,29 +89,26 @@ src/
     api/                       ← client HTTP + adapters hacia apps/api
     valkey/                    ← lifecycle Valkey (wrapper con fallback)
     streams/                   ← streams de música (Valkey)
-    storage/                   ← hoy no se usa (ver deuda técnica)
+    monitoring/
+      health.ts                ← Express server para /metrics (prom-client)
+    storage/                   ← HOY NO SE USA (ver deuda técnica)
   config/
-    repositories/              ← boundary de acceso a datos (hoy via API adapters)
+    repositories/              ← boundary de acceso a datos (via API adapters)
   utils/
     logger.ts                  ← Winston logger (usar siempre)
   types/
 ```
 
-## Do / Don’t (Agentes)
+## Express Metrics Server
 
-### Do
+The bot exposes a `/metrics` endpoint via an internal Express server (`src/infrastructure/monitoring/health.ts`).
 
-- Usá el patrón de comandos por carpeta (ver abajo).
-- Antes de operaciones async largas, hacé `await interaction.deferReply(...)`.
-- Usá `CUSTOM_IDS.*` + `parseCustomId()` para interacciones.
-- Usá `logger` (Winston) en vez de `console.log`.
+```typescript
+// GET /metrics → prom-client scrape endpoint
+// GET /health → { ok: true, uptime: number }
+```
 
-### Don’t
-
-- **NUNCA** uses `ephemeral: true` (deprecado). Usá `flags: [MessageFlags.Ephemeral]`.
-- No hardcodees strings de `customId`.
-- No agregues comandos legacy como archivo plano en `src/app/commands/*.ts`.
-- No intentes conectar Prisma desde el bot (en el código actual, el bot habla con la API).
+This is separate from the main Discord client lifecycle. It's used for observability (Prometheus scraping). The bot's own metrics (event counts, command latency, error rates) are registered via `createMetricsRegistry()` from `@charlybot/shared`.
 
 ## Patrón Estándar Para Comandos (OBLIGATORIO)
 
@@ -145,20 +179,21 @@ Para agregar una feature nueva con interacciones:
 
 ## Datos y Repositories
 
-En el código actual, el bot persiste/consulta datos via HTTP hacia `apps/api`.
+El bot accede a Prisma directamente desde `@charlybot/shared`.
 
-- Client HTTP: `src/infrastructure/api/ApiClient.ts` (`API_URL` + `API_KEY`).
-- Adapters HTTP: `src/infrastructure/api/*Adapter.ts`.
-- Repositories: `src/config/repositories/*.ts` (API boundary para el resto del bot).
+- Client Prisma: `import { prisma } from "@charlybot/shared"`.
+- Repositories: `src/config/repositories/*.ts` (boundary de acceso a datos para el resto del bot).
 
-Regla: commands/services NO deberían hablar con la API directamente; usá repositories.
+Regla: commands/services NO deberían importar `prisma` directamente; usá repositories.
 
 ## Logger
 
-Siempre usar Winston (`src/utils/logger.ts`) en vez de `console.log`.
+Siempre usar Winston (`src/utils/logger.ts` o `@charlybot/shared`) en vez de `console.log`.
 
 ```ts
 import logger from "../../utils/logger";
+// o desde shared:
+import { createLogger } from "@charlybot/shared";
 
 logger.info("Mensaje informativo", { ctx: "algo" });
 logger.warn("Advertencia");
@@ -183,8 +218,8 @@ Variables típicas: `VALKEY_HOST`, `VALKEY_PORT`, `VALKEY_PASSWORD`, `VALKEY_PRE
 - `DISCORD_TOKEN` (requerida)
 - `CLIENT_ID` (requerida para scripts)
 - `GUILD_ID`/`GUILD_ID2`/`GUILD_ID3` (opcionales; usados por scripts de registro)
-- `API_URL` (default en código: `http://localhost:3000`)
-- `API_KEY` (default en código: `dev-key`)
+- `API_URL` (default: `http://localhost:3000`)
+- `API_KEY` (default: `dev-key`)
 - `LOG_LEVEL`
 - `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REFRESH_TOKEN`
 - `VALKEY_*`
@@ -279,6 +314,27 @@ const repo = createMockEconomyRepo({
 - **`vi.clearAllMocks()`** — se llama automáticamente en `afterEach` del setup global.
 - **`import type`** — usar `import type` para tipos que solo se usan como tipos (requerido por `verbatimModuleSyntax`).
 
-## Skills Disponibles
+## Auto-Invoke Skills
 
-- `skills/discord-command/SKILL.md`: guía para crear comandos slash respetando el patrón del repo.
+| Action | Skill |
+|--------|-------|
+| Crear comandos slash | `discord-command` |
+| Agregar subcomandos | `discord-command` |
+| Versionar o release | `changeset-workflow` |
+| Escribir tests en bot | `vitest` |
+| Trabajar con modelos Prisma | `prisma-client-api` |
+| Escribir TypeScript | `typescript` |
+
+## QA Checklist
+
+- [ ] Logger used instead of `console.log`
+- [ ] `flags: [MessageFlags.Ephemeral]` used (not `ephemeral: true`)
+- [ ] `CUSTOM_IDS.*` used for all customId (no hardcoded strings)
+- [ ] `deferReply()` called before async operations
+- [ ] New commands created as folders with `index.ts` (not flat files)
+- [ ] Repository used for data access (Prisma only via repositories, not in services/commands)
+- [ ] Tests pass: `bun run test`
+- [ ] ESM imports used (no `require()`)
+- [ ] No hardcoded strings for interaction identifiers
+
+
