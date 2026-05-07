@@ -19,6 +19,19 @@ Context for AI agents working on this monorepo. Read this in full before making 
 - Working on `packages/shared/`? → Read `packages/shared/AGENTS.md` first.
 - Cross-cutting concerns (git, releases, general patterns)? → This file.
 
+## Design System
+
+This project follows the `DESIGN.md` specification — a design system document that AI agents read to generate consistent UI across the monorepo.
+
+**Before writing ANY UI code** (styles, components, layouts, Tailwind classes), read `DESIGN.md` at the repository root. It defines the canonical colors, typography, spacing, shapes, and component patterns shared by `apps/landing/` and `apps/dashboard/`.
+
+| App | CSS Strategy | DESIGN.md Section |
+|-----|-------------|-------------------|
+| `apps/landing/` | Pure CSS — semantic classes in `src/styles.css` | Components — Landing |
+| `apps/dashboard/` | Tailwind CSS 4 — `@theme` tokens in `src/styles.css` | Components — Dashboard |
+
+The `DESIGN.md` YAML front matter contains machine-readable design tokens. The markdown body contains human-readable rationale and component composition rules.
+
 ## Structure
 
 ```

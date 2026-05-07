@@ -194,6 +194,9 @@ app.use((req, res, next) => {
 
 ## CSS / UI Rules
 
+> **Canonical design tokens are defined in the root `DESIGN.md`.**
+> The CSS custom properties in `src/styles.css` are the Landing-specific implementation of those tokens. When adding new visual elements, consult `DESIGN.md` first, then use the existing semantic CSS classes. Do not invent new classes if an existing one covers the same intent.
+
 ### Design Tokens (`:root`)
 
 All design tokens are CSS custom properties in `:root`:
