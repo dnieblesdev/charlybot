@@ -6,6 +6,7 @@ import { DocsSection } from './features/docs/docs.section';
 import { PricingSection } from './features/pricing/pricing.section';
 import { FooterSection } from './features/footer/footer.section';
 import { NavbarSection } from './features/navbar/navbar.section';
+import { AuthService } from './auth/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -71,7 +72,10 @@ import { NavbarSection } from './features/navbar/navbar.section';
 export class App implements AfterViewInit {
   private isBrowser: boolean;
 
-  constructor(@Inject(PLATFORM_ID) platformId: Object) {
+  constructor(
+    @Inject(PLATFORM_ID) platformId: Object,
+    private authService: AuthService
+  ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
