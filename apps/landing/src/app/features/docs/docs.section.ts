@@ -472,267 +472,475 @@ export class DocsSection {
       subtitle: 'Reproducí música en tu servidor desde YouTube y Spotify',
       commands: [
         {
-          name: '/play',
-          description: 'Reproduce una canción desde YouTube o Spotify. Busca automáticamente si no se proporciona una URL exacta.',
+          name: '/music play',
+          description: 'Reproduce una canción o playlist de YouTube/Spotify por nombre o URL.',
           adminOnly: false,
           params: [
-            { name: 'canción', type: 'string', required: true, description: 'Nombre de la canción o URL de YouTube/Spotify' }
+            { name: 'query', type: 'string', required: true, description: 'URL o nombre de la canción/playlist' }
           ],
           expectedOutput: '🎵 Reproduciendo ahora: [Nombre de la canción] • Solicitado por @usuario'
         },
         {
-          name: '/skip',
-          description: 'Salta la canción actual y pasa a la siguiente en la cola.',
+          name: '/music skip',
+          description: 'Salta a la siguiente canción en la cola.',
           adminOnly: false,
           params: [],
           expectedOutput: '⏭️ Canción saltada. Ahora suena: [Siguiente canción]'
         },
         {
-          name: '/queue',
-          description: 'Muestra las canciones en la cola de reproducción actual.',
+          name: '/music playlist',
+          description: 'Muestra la cola de reproducción actual con paginación.',
           adminOnly: false,
-          params: [],
+          params: [
+            { name: 'page', type: 'integer', required: false, description: 'Número de página a mostrar' }
+          ],
           expectedOutput: '📋 Cola de reproducción (5/20):\n1. Canción A\n2. Canción B\n...'
         },
         {
-          name: '/pause',
+          name: '/music nowplaying',
+          description: 'Muestra la canción que se está reproduciendo actualmente.',
+          adminOnly: false,
+          params: [],
+          expectedOutput: '🎶 Ahora suena: [Nombre de la canción] — 2:34 / 4:12'
+        },
+        {
+          name: '/music pause',
           description: 'Pausa la reproducción actual.',
           adminOnly: false,
           params: [],
-          expectedOutput: '⏸️ Reproducción pausada. Usá /resume para continuar.'
+          expectedOutput: '⏸️ Reproducción pausada.'
         },
         {
-          name: '/volume',
-          description: 'Ajusta el volumen del reproductor entre 0 y 100.',
+          name: '/music resume',
+          description: 'Reanuda la reproducción pausada.',
+          adminOnly: false,
+          params: [],
+          expectedOutput: '▶️ Reproducción reanuda.'
+        },
+        {
+          name: '/music stop',
+          description: 'Detiene la reproducción y limpia la cola.',
+          adminOnly: false,
+          params: [],
+          expectedOutput: '⏹️ Reproducción detenida y cola limpiada.'
+        },
+        {
+          name: '/music loop',
+          description: 'Configura el modo de repetición: desactivar, repetir canción o repetir cola.',
           adminOnly: false,
           params: [
-            { name: 'nivel', type: 'number', required: true, description: 'Volumen deseado (0-100)' }
+            { name: 'mode', type: 'string', required: true, description: 'Modo: Desactivar, Repetir canción, Repetir cola' }
+          ],
+          expectedOutput: '🔁 Modo de repetición: Repetir canción'
+        },
+        {
+          name: '/music shuffle',
+          description: 'Mezcla aleatoriamente la cola de reproducción.',
+          adminOnly: false,
+          params: [],
+          expectedOutput: '🔀 Cola mezclada aleatoriamente.'
+        },
+        {
+          name: '/music volume',
+          description: 'Ajusta el volumen de la reproducción (0-200%).',
+          adminOnly: false,
+          params: [
+            { name: 'level', type: 'integer', required: true, description: 'Nivel de volumen (0-200)' }
           ],
           expectedOutput: '🔊 Volumen ajustado a 75%'
-        }
-      ]
-    },
-    {
-      icon: Shield,
-      name: 'Moderación',
-      subtitle: 'Mantené tu servidor seguro y ordenado',
-      commands: [
-        {
-          name: '/warn',
-          description: 'Envía una advertencia a un usuario. Se registra en los logs del servidor.',
-          adminOnly: true,
-          params: [
-            { name: 'usuario', type: 'user', required: true, description: 'Usuario a advertir' },
-            { name: 'razón', type: 'string', required: false, description: 'Motivo de la advertencia' }
-          ],
-          expectedOutput: '⚠️ @usuario ha sido advertido. Razón: Lenguaje inapropiado'
         },
         {
-          name: '/clear',
-          description: 'Elimina una cantidad específica de mensajes del canal actual.',
-          adminOnly: true,
+          name: '/music remove',
+          description: 'Elimina una canción específica de la cola.',
+          adminOnly: false,
           params: [
-            { name: 'cantidad', type: 'number', required: true, description: 'Número de mensajes a borrar (1-100)' }
+            { name: 'position', type: 'integer', required: true, description: 'Posición de la canción en la cola' }
           ],
-          expectedOutput: '🧹 42 mensajes eliminados del canal.'
+          expectedOutput: '🗑️ Canción eliminada de la cola.'
         },
         {
-          name: '/ban',
-          description: 'Banea permanentemente a un usuario del servidor.',
-          adminOnly: true,
-          params: [
-            { name: 'usuario', type: 'user', required: true, description: 'Usuario a banear' },
-            { name: 'razón', type: 'string', required: false, description: 'Motivo del ban' }
-          ],
-          expectedOutput: '🔨 @usuario ha sido baneado del servidor. Razón: Spam repetido'
+          name: '/music clear',
+          description: 'Limpia la cola sin detener la canción actual.',
+          adminOnly: false,
+          params: [],
+          expectedOutput: '🧹 Cola limpiada.'
         },
         {
-          name: '/timeout',
-          description: 'Aísla temporalmente a un usuario impidiéndole interactuar.',
-          adminOnly: true,
-          params: [
-            { name: 'usuario', type: 'user', required: true, description: 'Usuario a aislar' },
-            { name: 'duración', type: 'string', required: true, description: 'Duración (ej: 10m, 1h, 1d)' }
-          ],
-          expectedOutput: '🔇 @usuario ha sido silenciado por 1 hora.'
+          name: '/music join',
+          description: 'Une el bot a tu canal de voz actual.',
+          adminOnly: false,
+          params: [],
+          expectedOutput: '🎧 uniendome al canal de voz...'
         },
         {
-          name: '/kick',
-          description: 'Expulsa a un usuario del servidor. Puede volver a unirse con una nueva invitación.',
-          adminOnly: true,
-          params: [
-            { name: 'usuario', type: 'user', required: true, description: 'Usuario a expulsar' },
-            { name: 'razón', type: 'string', required: false, description: 'Motivo de la expulsión' }
-          ],
-          expectedOutput: '👢 @usuario ha sido expulsado. Razón: Comportamiento inadecuado'
-        }
-      ],
-      cards: [
-        {
-          icon: '📊',
-          title: 'Logs Automáticos',
-          description: 'CharlyBot registra automáticamente mensajes eliminados, ediciones, entradas, salidas y cambios de roles. Todo queda documentado en el canal de logs que configures.'
-        },
-        {
-          icon: '🛡️',
-          title: 'Auto-Moderación',
-          description: 'Configurá filtros automáticos para palabras prohibidas, spam de menciones, enlaces maliciosos y flood de mensajes. El bot actúa sin intervención manual.'
+          name: '/music leave',
+          description: 'Hace que el bot salga del canal de voz.',
+          adminOnly: false,
+          params: [],
+          expectedOutput: '👋 Saliendo del canal de voz.'
         }
       ]
     },
     {
       icon: Coins,
       name: 'Economía',
-      subtitle: 'Sistema de monedas virtuales con trabajos, tienda y más',
+      subtitle: 'Sistema de monedas virtual con trabajos, crímenes y ruleta',
       commands: [
         {
-          name: '/daily',
-          description: 'Reclama tu recompensa diaria de monedas. Se reinicia cada 24 horas.',
-          adminOnly: false,
-          params: [],
-          expectedOutput: '💰 ¡Recompensa diaria reclamada! +200 monedas. Racha actual: 5 días 🔥'
-        },
-        {
-          name: '/balance',
-          description: 'Consulta tu balance actual de monedas o el de otro usuario.',
+          name: '/economia balance',
+          description: 'Consulta tu balance de bolsillo y banco, o el de otro usuario.',
           adminOnly: false,
           params: [
-            { name: 'usuario', type: 'user', required: false, description: 'Usuario a consultar (opcional, por defecto vos)' }
+            { name: 'usuario', type: 'user', required: false, description: 'Usuario a consultar (opcional)' }
           ],
-          expectedOutput: '💳 Balance de @usuario: 12,450 monedas | Banco: 5,000 monedas'
+          expectedOutput: '💳 Balance de @usuario:\nBolsillo: 1,500 monedas\nBanco: 5,000 monedas'
         },
         {
-          name: '/shop',
-          description: 'Abre la tienda del servidor donde podés comprar items y roles.',
-          adminOnly: false,
-          params: [],
-          expectedOutput: '🏪 **Tienda del Servidor**\n1. 🎨 Color de nombre (500 monedas)\n2. 📛 Rol personalizado (2000 monedas)\n...'
-        },
-        {
-          name: '/pay',
-          description: 'Transfiere monedas a otro usuario.',
+          name: '/economia deposit',
+          description: 'Deposita dinero de tu bolsillo al banco para protegerlo.',
           adminOnly: false,
           params: [
-            { name: 'usuario', type: 'user', required: true, description: 'Destinatario' },
-            { name: 'cantidad', type: 'number', required: true, description: 'Cantidad de monedas' }
+            { name: 'cantidad', type: 'integer', required: true, description: 'Cantidad a depositar (usa un número o "all" para todo)' }
           ],
-          expectedOutput: '💸 Transferiste 500 monedas a @usuario. Tu nuevo balance: 11,950 monedas.'
+          expectedOutput: '🏦 Depositaste 500 monedas al banco. Nuevo balance: 1,000 / 5,500'
         },
         {
-          name: '/work',
-          description: 'Trabaja para ganar monedas. Hay distintos trabajos disponibles según tu nivel.',
+          name: '/economia retirar',
+          description: 'Retira dinero del banco a tu bolsillo.',
+          adminOnly: false,
+          params: [
+            { name: 'cantidad', type: 'integer', required: true, description: 'Cantidad a retirar (usa un número o "all" para todo)' }
+          ],
+          expectedOutput: '💸 Retiraste 500 monedas del banco. Nuevo balance: 1,500 / 5,000'
+        },
+        {
+          name: '/economia work',
+          description: 'Trabaja para ganar dinero. El cooldown se configura por servidor.',
           adminOnly: false,
           params: [],
-          expectedOutput: '👷 Trabajaste como Programador y ganaste 350 monedas. Tu balance: 12,300 monedas.'
+          expectedOutput: '👷 Trabajaste como Programador y ganaste 350 monedas.'
         },
         {
-          name: '/give-coins',
-          description: 'Otorga monedas a un usuario. Solo disponible para administradores.',
+          name: '/economia crime',
+          description: 'Comete un crimen para ganar dinero extra. Incluye riesgo de prisión.',
+          adminOnly: false,
+          params: [],
+          expectedOutput: '💰 Robaste 200 monedas. ¡Cuidado con la policía!'
+        },
+        {
+          name: '/economia rob',
+          description: 'Intenta robar dinero del bolsillo de otro usuario.',
+          adminOnly: false,
+          params: [
+            { name: 'usuario', type: 'user', required: true, description: 'Usuario al que quieres robar' }
+          ],
+          expectedOutput: '🕵️ Intentaste robar a @usuario. ¡Éxito! Ganaste 150 monedas.'
+        },
+        {
+          name: '/economia ruleta',
+          description: 'Juega a la ruleta apostándo tu dinero a color o número.',
+          adminOnly: false,
+          params: [
+            { name: 'tipo', type: 'string', required: true, description: 'Tipo de apuesta: color o número' },
+            { name: 'apuesta', type: 'string', required: true, description: 'Tu apuesta: red/black/green o número (0-36)' },
+            { name: 'cantidad', type: 'integer', required: true, description: 'Cantidad de dinero a apostar' }
+          ],
+          expectedOutput: '🎰 Apostaste 100 monedas a rojo... ¡Ganaste 200 monedas! 🔴'
+        },
+        {
+          name: '/economia leaderboard',
+          description: 'Muestra el ranking de los usuarios más ricos del servidor.',
+          adminOnly: false,
+          params: [
+            { name: 'cantidad', type: 'integer', required: false, description: 'Cantidad de usuarios a mostrar (5-25, por defecto 10)' }
+          ],
+          expectedOutput: '🏆 **Top 5 del Servidor**\n1. @usuarioA — 45,000 monedas\n2. @usuarioB — 38,500 monedas\n...'
+        },
+        {
+          name: '/economia bail',
+          description: 'Paga tu fianza para salir de la prisión si fuiste atrapado.',
+          adminOnly: false,
+          params: [],
+          expectedOutput: '🚓 Pagaste la fianza y saliste de prisión.'
+        }
+      ],
+      cards: [
+        {
+          icon: '⚙️',
+          title: 'Configuración por Servidor',
+          description: 'Los administradores pueden configurar cooldowns de work/crime/rob, multiplicadores de ganancia, dinero inicial y canal de ruleta dedicado.'
+        }
+      ]
+    },
+    {
+      icon: Gamepad2,
+      name: 'XP y Niveles',
+      subtitle: 'Sistema de experiencia y roles por nivel para premiar la actividad',
+      commands: [
+        {
+          name: '/xp rank',
+          description: 'Muestra tu nivel y XP actual o el de otro usuario.',
+          adminOnly: false,
+          params: [
+            { name: 'usuario', type: 'user', required: false, description: 'Usuario a consultar (opcional)' }
+          ],
+          expectedOutput: '⭐ @usuario — Nivel 24\nXP: 4,520 / 5,000\n████████░░ 90%'
+        },
+        {
+          name: '/xp leaderboard',
+          description: 'Muestra el top 10 de usuarios por XP en el servidor.',
+          adminOnly: false,
+          params: [],
+          expectedOutput: '🏆 **Top 10 por XP**\n1. @usuarioA — Nivel 42\n2. @usuarioB — Nivel 38\n...'
+        },
+        {
+          name: '/xp level-roles add',
+          description: 'Asocia un rol que se dará automáticamente al alcanzar un nivel.',
           adminOnly: true,
           params: [
-            { name: 'usuario', type: 'user', required: true, description: 'Usuario que recibe las monedas' },
-            { name: 'cantidad', type: 'number', required: true, description: 'Cantidad de monedas a otorgar' }
+            { name: 'nivel', type: 'integer', required: true, description: 'Nivel requerido' },
+            { name: 'rol', type: 'role', required: true, description: 'Rol que se dará al alcanzar el nivel' }
           ],
-          expectedOutput: '🎁 @admin otorgó 1000 monedas a @usuario.'
+          expectedOutput: '✅ Rol @VIP agregado para el nivel 10.'
+        },
+        {
+          name: '/xp level-roles list',
+          description: 'Lista todas las asociaciones de roles por nivel configuradas.',
+          adminOnly: true,
+          params: [],
+          expectedOutput: '📋 **Roles por Nivel**\nNivel 5 → @Novato\nNivel 10 → @Veterano\nNivel 20 → @Élite'
+        },
+        {
+          name: '/xp level-roles remove',
+          description: 'Elimina la asociación de rol para un nivel específico.',
+          adminOnly: true,
+          params: [
+            { name: 'nivel', type: 'integer', required: true, description: 'Nivel cuya asociación quieres eliminar' }
+          ],
+          expectedOutput: '🗑️ Asociación de nivel 10 eliminada.'
+        },
+        {
+          name: '/xp config enable',
+          description: 'Habilita el sistema de XP en el servidor.',
+          adminOnly: true,
+          params: [],
+          expectedOutput: '✅ Sistema de XP habilitado.'
+        },
+        {
+          name: '/xp config disable',
+          description: 'Deshabilita el sistema de XP en el servidor.',
+          adminOnly: true,
+          params: [],
+          expectedOutput: '✅ Sistema de XP deshabilitado.'
+        },
+        {
+          name: '/xp config set-xp',
+          description: 'Establece la cantidad de XP ganada por mensaje.',
+          adminOnly: true,
+          params: [
+            { name: 'cantidad', type: 'integer', required: true, description: 'XP por mensaje (mínimo 1)' }
+          ],
+          expectedOutput: '✅ XP por mensaje establecido a 15.'
+        }
+      ],
+      cards: [
+        {
+          icon: '🎭',
+          title: 'Roles Automáticos',
+          description: 'Configurá que al alcanzar ciertos niveles, el usuario reciba un rol automáticamente. Incentivá la actividad en tu servidor.'
+        }
+      ]
+    },
+    {
+      icon: Shield,
+      name: 'Configuración',
+      subtitle: 'Configurá canales de logs, bienvenida y más para tu servidor',
+      commands: [
+        {
+          name: '/config set-welcome',
+          description: 'Configura el canal para mensajes de bienvenida.',
+          adminOnly: true,
+          params: [
+            { name: 'canal', type: 'channel', required: true, description: 'Canal donde se enviará el mensaje de bienvenida' }
+          ],
+          expectedOutput: '✅ Canal de bienvenida configurado.'
+        },
+        {
+          name: '/config set-voice-log',
+          description: 'Configura el canal para registrar entrada/salida de canales de voz.',
+          adminOnly: true,
+          params: [
+            { name: 'canal', type: 'channel', required: true, description: 'Canal donde se registrarán los logs de voz' }
+          ],
+          expectedOutput: '✅ Canal de logs de voz configurado.'
+        },
+        {
+          name: '/config set-message-log',
+          description: 'Configura el canal para registrar mensajes editados y eliminados.',
+          adminOnly: true,
+          params: [
+            { name: 'canal', type: 'channel', required: true, description: 'Canal donde se registrarán los logs de mensajes' }
+          ],
+          expectedOutput: '✅ Canal de logs de mensajes configurado.'
+        },
+        {
+          name: '/config set-image-channel',
+          description: 'Configura el canal para reenviar imágenes automáticamente.',
+          adminOnly: true,
+          params: [
+            { name: 'canal', type: 'channel', required: true, description: 'Canal donde se reenviarán las imágenes' }
+          ],
+          expectedOutput: '✅ Canal de reenvío de imágenes configurado.'
+        },
+        {
+          name: '/config show',
+          description: 'Muestra la configuración actual del servidor.',
+          adminOnly: false,
+          params: [
+            { name: 'publico', type: 'boolean', required: false, description: '¿Mostrar públicamente?' }
+          ],
+          expectedOutput: '⚙️ **Configuración del Servidor**\nBienvenida: #general\nLogs de voz: #logs\n...'
+        },
+        {
+          name: '/config remove',
+          description: 'Elimina toda la configuración del servidor.',
+          adminOnly: true,
+          params: [],
+          expectedOutput: '🗑️ Configuración del servidor eliminada.'
+        }
+      ],
+      cards: [
+        {
+          icon: '📊',
+          title: 'Logs Automáticos',
+          description: 'El bot registra automáticamente mensajes eliminados, ediciones, entradas, salidas y cambios de roles en los canales configurados.'
+        }
+      ]
+    },
+    {
+      icon: Shield,
+      name: 'AutoRole',
+      subtitle: 'Asigna roles automáticamente con reacciones o botones',
+      commands: [
+        {
+          name: '/autorole setup',
+          description: 'Configura un mensaje con botones o reacciones para asignar roles automáticamente.',
+          adminOnly: true,
+          params: [
+            { name: 'message_id', type: 'string', required: false, description: 'ID del mensaje existente (opcional)' },
+            { name: 'canal', type: 'channel', required: false, description: 'Canal donde se enviará el mensaje (si no usás message_id)' }
+          ],
+          expectedOutput: '✅ Mensaje de autorole creado con botones de roles.'
+        },
+        {
+          name: '/autorole listar',
+          description: 'Lista todos los mensajes de autorole configurados en el servidor.',
+          adminOnly: true,
+          params: [],
+          expectedOutput: '📋 **AutoRole configurado**\nMensaje ID: 123456789\nRoles: @Verde, @Azul'
+        },
+        {
+          name: '/autorole editar',
+          description: 'Edita el mensaje, rol o botones de un autorole existente.',
+          adminOnly: true,
+          params: [
+            { name: 'message_id', type: 'string', required: true, description: 'ID del mensaje a editar' }
+          ],
+          expectedOutput: '✏️ Autorole editado correctamente.'
+        },
+        {
+          name: '/autorole remover',
+          description: 'Elimina un mensaje de autorole y su configuración.',
+          adminOnly: true,
+          params: [
+            { name: 'message_id', type: 'string', required: true, description: 'ID del mensaje a eliminar' }
+          ],
+          expectedOutput: '🗑️ Autorole eliminado.'
+        }
+      ]
+    },
+    {
+      icon: Shield,
+      name: 'Verificación',
+      subtitle: 'Sistema de verificación de usuarios con panel y revisión manual',
+      commands: [
+        {
+          name: '/verificacion setup',
+          description: 'Configura el sistema de verificación con canal, rol y canales de log.',
+          adminOnly: true,
+          params: [
+            { name: 'verification-channel', type: 'channel', required: true, description: 'Canal donde se mostrará el botón de verificación' },
+            { name: 'log-channel', type: 'channel', required: true, description: 'Canal donde se registrarán las verificaciones' },
+            { name: 'verified-role', type: 'role', required: true, description: 'Rol que se asignará a los usuarios verificados' }
+          ],
+          expectedOutput: '✅ Sistema de verificación configurado.'
+        },
+        {
+          name: '/verificacion panel',
+          description: 'Envía el panel de verificación al canal configurado.',
+          adminOnly: true,
+          params: [],
+          expectedOutput: '📋 Panel de verificación enviado al canal.'
+        },
+        {
+          name: '/verificacion pendientes',
+          description: 'Lista todas las solicitudes de verificación pendientes de revisión.',
+          adminOnly: true,
+          params: [],
+          expectedOutput: '📝 **Solicitudes pendientes**\n1. @usuario1 — hace 2 horas\n2. @usuario2 — hace 5 horas'
         }
       ]
     },
     {
       icon: Wrench,
       name: 'Utilidades',
-      subtitle: 'Herramientas prácticas para el día a día de tu servidor',
+      subtitle: 'Herramientas prácticas para personalizar el bot',
       commands: [
         {
           name: '/ping',
-          description: 'Muestra la latencia del bot y el tiempo de respuesta de la API de Discord.',
+          description: 'Verifica el estado y latencia del bot.',
           adminOnly: false,
           params: [],
-          expectedOutput: '🏓 Pong! Latencia: 42ms | API: 28ms'
+          expectedOutput: '📡 Latencia: 42ms\n🌐 API: 28ms\n✅ Estado: En línea'
         },
         {
-          name: '/avatar',
-          description: 'Muestra el avatar de un usuario en tamaño completo.',
-          adminOnly: false,
-          params: [
-            { name: 'usuario', type: 'user', required: false, description: 'Usuario cuyo avatar querés ver' }
-          ],
-          expectedOutput: '[Imagen del avatar de @usuario en tamaño completo]'
-        },
-        {
-          name: '/serverinfo',
-          description: 'Muestra información detallada del servidor actual.',
-          adminOnly: false,
+          name: '/guild-avatar server',
+          description: 'Establece el avatar del bot con el ícono actual del servidor.',
+          adminOnly: true,
           params: [],
-          expectedOutput: '📊 **Servidor**\nMiembros: 1,234 | Canales: 45 | Roles: 12 | Creado: 15/03/2023'
+          expectedOutput: '✅ Avatar del bot actualizado al ícono del servidor.'
         },
         {
-          name: '/help',
-          description: 'Muestra la lista de comandos disponibles o información sobre un comando específico.',
-          adminOnly: false,
+          name: '/guild-avatar custom',
+          description: 'Establece un avatar personalizado para el bot subiendo una imagen.',
+          adminOnly: true,
           params: [
-            { name: 'comando', type: 'string', required: false, description: 'Comando del que querés más info' }
+            { name: 'imagen', type: 'attachment', required: true, description: 'La imagen para usar como avatar (PNG, JPG o GIF)' }
           ],
-          expectedOutput: '📚 **Ayuda de CharlyBot**\nUsá /help [comando] para detalles específicos.\nCategorías: Música, Moderación, Economía...'
-        }
-      ]
-    },
-    {
-      icon: Gamepad2,
-      name: 'Diversión',
-      subtitle: 'Juegos, niveles, duelos y sistemas RPG para tu comunidad',
-      commands: [
-        {
-          name: '/duel',
-          description: 'Desafía a otro usuario a un duelo. El resultado depende de las stats de cada jugador.',
-          adminOnly: false,
-          params: [
-            { name: 'usuario', type: 'user', required: true, description: 'Usuario a desafiar' }
-          ],
-          expectedOutput: '⚔️ @usuario1 (❤️ 85/100) vs @usuario2 (❤️ 42/100) — ¡@usuario1 gana el duelo!'
+          expectedOutput: '✅ Avatar del bot actualizado a la imagen personalizada.'
         },
         {
-          name: '/level',
-          description: 'Muestra tu nivel actual, XP y progreso hacia el siguiente nivel.',
-          adminOnly: false,
-          params: [
-            { name: 'usuario', type: 'user', required: false, description: 'Usuario a consultar' }
-          ],
-          expectedOutput: '⭐ @usuario — Nivel 24 | XP: 4,520/5,000 | ████████░░ 90%'
-        },
-        {
-          name: '/rank',
-          description: 'Muestra el ranking de niveles del servidor.',
-          adminOnly: false,
+          name: '/guild-avatar reset',
+          description: 'Elimina el avatar del servidor y vuelve al avatar global del bot.',
+          adminOnly: true,
           params: [],
-          expectedOutput: '🏆 **Top 5 del Servidor**\n1. @usuarioA — Nivel 42\n2. @usuarioB — Nivel 38\n...'
+          expectedOutput: '✅ Avatar del servidor eliminado. Volviendo al avatar global.'
         },
         {
-          name: '/rpg',
-          description: 'Accede a tu perfil RPG con clase, stats y habilidades especiales.',
-          adminOnly: false,
+          name: '/nickname server',
+          description: 'Establece el apodo del bot con el nombre actual del servidor.',
+          adminOnly: true,
           params: [],
-          expectedOutput: '🧙 @usuario — Clase: Mago Nv.15\nATK: 42 | DEF: 28 | MAG: 65\nHabilidades: Bola de Fuego, Teleport'
+          expectedOutput: '✅ Apodo del bot establecido al nombre del servidor.'
         },
         {
-          name: '/achievements',
-          description: 'Muestra tus logros desbloqueados. También podés consultar los de otro usuario.',
-          adminOnly: false,
+          name: '/nickname custom',
+          description: 'Establece un apodo personalizado para el bot.',
+          adminOnly: true,
           params: [
-            { name: 'usuario', type: 'user', required: false, description: 'Usuario a consultar (opcional, por defecto vos)' }
+            { name: 'nombre', type: 'string', required: true, description: 'El nuevo apodo para el bot (máx. 32 caracteres)' }
           ],
-          expectedOutput: '🏅 Logros de @usuario (12/30):\n✅ Primer duelo\n✅ Racha de 7 días\n🔒 Coleccionista (falta 1 ítem)'
-        }
-      ],
-      cards: [
-        {
-          icon: '🎭',
-          title: 'Sistema de Clases',
-          description: 'El sistema RPG incluye 5 clases (Guerrero, Mago, Arquero, Curandero, Asesino) cada una con stats y habilidades únicas. Desbloqueá nuevas habilidades al subir de nivel.'
-        },
-        {
-          icon: '🏅',
-          title: 'Logros y Recompensas',
-          description: 'Completá logros para ganar recompensas exclusivas. Hay más de 30 logros que abarcan actividad, economía, combate y eventos especiales.'
+          expectedOutput: '✅ Apodo del bot cambiado a: [nombre].'
         }
       ]
     }
