@@ -49,6 +49,7 @@ export class ValkeyClient implements IValkeyClient {
   private _circuitState: CircuitState = 'closed';
   private circuitErrorCount = 0;
   private circuitOpenedAt = 0;
+  private circuitFirstErrorAt = 0;
 
   get circuitState(): CircuitState {
     return this._circuitState ?? 'closed';
@@ -675,8 +676,15 @@ this.redis = new Redis({
   }
 
   private recordError(): void {
-    this.circuitErrorCount++;
     const now = Date.now();
+
+    // Reset error count if outside the window
+    if (this.circuitFirstErrorAt === 0 || (now - this.circuitFirstErrorAt) > CIRCUIT_BREAKER_CONFIG.errorWindowMs) {
+      this.circuitErrorCount = 0;
+      this.circuitFirstErrorAt = now;
+    }
+
+    this.circuitErrorCount++;
 
     if (this.circuitErrorCount >= CIRCUIT_BREAKER_CONFIG.errorThreshold) {
       this._circuitState = 'open';
@@ -690,6 +698,7 @@ this.redis = new Redis({
 
   private recordSuccess(): void {
     this.circuitErrorCount = 0;
+    this.circuitFirstErrorAt = 0;
     this._circuitState = 'closed';
   }
 }

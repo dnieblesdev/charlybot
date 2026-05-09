@@ -81,11 +81,13 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
     try {
       await this.client.set<T>(key, value, ttlSeconds);
     } catch (err) {
-      this.logger?.warn('Valkey set failed, dropping', {
+      this.logger?.warn('Valkey set failed, writing to fallback', {
         key,
         error: err instanceof Error ? err.message : String(err),
       });
-      // Silently drop per design
+      if (this.fallback) {
+        await this.fallback.set(key, value, ttlSeconds);
+      }
     }
   }
 
@@ -93,11 +95,13 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
     try {
       await this.client.del(key);
     } catch (err) {
-      this.logger?.warn('Valkey del failed, dropping', {
+      this.logger?.warn('Valkey del failed, using fallback', {
         key,
         error: err instanceof Error ? err.message : String(err),
       });
-      // Silently drop per design
+      if (this.fallback) {
+        await this.fallback.del(key);
+      }
     }
   }
 
