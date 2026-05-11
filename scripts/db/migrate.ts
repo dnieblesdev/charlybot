@@ -54,14 +54,14 @@ async function runPrismaMigrateDev(args: string[]): Promise<number> {
     env.DATABASE_URL = "file:./dev.db";
   }
   
-  const prismaCmd = `bunx --bun prisma migrate dev --schema=./packages/shared/prisma/schema.prisma ${args.join(" ")}`;
+  const prismaCmd = `bunx --bun prisma migrate dev --schema=./prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
   
   try {
     execSync(prismaCmd, { 
       stdio: "inherit",
-      cwd: join(__dirname, "../../"),
+      cwd: join(__dirname, "../../packages/shared"),
       env,
     });
     return 0;
@@ -76,14 +76,14 @@ async function runPrismaMigrateDev(args: string[]): Promise<number> {
 async function runPrismaMigrate(args: string[]): Promise<number> {
   const { execSync } = await import("node:child_process");
   
-  const prismaCmd = `bunx prisma migrate deploy --schema=./packages/shared/prisma/schema.prisma ${args.join(" ")}`;
+  const prismaCmd = `bunx prisma migrate deploy --schema=./prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
   
   try {
     execSync(prismaCmd, { 
       stdio: "inherit",
-      cwd: join(__dirname, "../../"),
+      cwd: join(__dirname, "../../packages/shared"),
     });
     return 0;
   } catch (error: any) {
@@ -97,14 +97,14 @@ async function runPrismaMigrate(args: string[]): Promise<number> {
 async function runPrismaPush(args: string[]): Promise<number> {
   const { execSync } = await import("node:child_process");
   
-  const prismaCmd = `bunx prisma db push --schema=./packages/shared/prisma/schema.prisma ${args.join(" ")}`;
+  const prismaCmd = `bunx prisma db push --schema=./prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
   
   try {
     execSync(prismaCmd, { 
       stdio: "inherit",
-      cwd: join(__dirname, "../../"),
+      cwd: join(__dirname, "../../packages/shared"),
     });
     return 0;
   } catch (error: any) {
