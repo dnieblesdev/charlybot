@@ -14,6 +14,7 @@ export const GuildConfigSchema = z.object({
   messageLogChannelId: z.string().nullable().optional(),
   modLogChannelId: z.string().nullable().optional(),
   modRoleId: z.string().nullable().optional(),
+  antispamEnabled: z.boolean().default(true),
 });
 
 export type IGuildConfig = z.infer<typeof GuildConfigSchema>;

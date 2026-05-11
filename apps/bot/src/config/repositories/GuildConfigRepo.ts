@@ -44,6 +44,7 @@ export async function getGuildConfig(guildId: string): Promise<IGuildConfig | nu
     messageLogChannelId: config.messageLogChannelId ?? undefined,
     modLogChannelId: config.modLogChannelId ?? undefined,
     modRoleId: config.modRoleId ?? undefined,
+    antispamEnabled: config.antispamEnabled,
   };
 
   await valkey.set<IGuildConfig>(key, result, CACHE_TTL_CONFIG / 1000);
@@ -350,6 +351,7 @@ export async function getAllGuildConfigs(): Promise<IGuildConfig[]> {
     messageLogChannelId: config.messageLogChannelId ?? undefined,
     modLogChannelId: config.modLogChannelId ?? undefined,
     modRoleId: config.modRoleId ?? undefined,
+    antispamEnabled: config.antispamEnabled,
   }));
 }
 

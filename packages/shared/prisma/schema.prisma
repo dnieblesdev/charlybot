@@ -72,6 +72,7 @@ model GuildConfig {
   messageLogChannelId         String?
   modLogChannelId String?
   modRoleId       String?
+  antispamEnabled Boolean  @default(true)
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
   guild                       Guild    @relation(fields: [guildId], references: [guildId])
