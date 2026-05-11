@@ -1,5 +1,5 @@
 import type { ChatInputCommandInteraction } from "discord.js";
-import { EmbedBuilder, MessageFlags } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 
 import * as ModCaseRepository from "../../../config/repositories/modCaseRepository.js";
 import logger from "../../../utils/logger.js";
@@ -15,8 +15,6 @@ const TYPE_COLORS: Record<string, number> = {
 
 export default async function cases(interaction: ChatInputCommandInteraction) {
   try {
-    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-
     if (!interaction.guildId) {
       await interaction.editReply({
         content: "❌ Este comando solo puede usarse en un servidor.",

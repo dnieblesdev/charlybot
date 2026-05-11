@@ -1,5 +1,4 @@
 import type { ChatInputCommandInteraction } from "discord.js";
-import { MessageFlags } from "discord.js";
 import { DurationSchema } from "@charlybot/shared/schemas/moderation";
 
 import {
@@ -16,8 +15,6 @@ const MAX_TIMEOUT_MS = BigInt(2_419_200_000); // 28 days in ms
 
 export default async function timeout(interaction: ChatInputCommandInteraction) {
   try {
-    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-
     if (!interaction.guildId || !interaction.guild) {
       await interaction.editReply({
         content: "❌ Este comando solo puede usarse en un servidor.",

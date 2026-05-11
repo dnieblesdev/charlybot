@@ -163,6 +163,9 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
   const subcommand = interaction.options.getSubcommand();
 
+  // Defer immediately to prevent 3-second Discord timeout during dynamic import
+  await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
   try {
     switch (subcommand) {
       case "warn": {

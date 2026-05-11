@@ -232,7 +232,6 @@ describe("/mod clear", () => {
 
     await clearHandler(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalled();
     expect(mockModCaseCreate).toHaveBeenCalledWith(
       expect.objectContaining({ type: "clear", messageCount: 5 }),
     );
@@ -319,7 +318,6 @@ describe("/mod cases", () => {
 
     await casesHandler(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalled();
     expect(mockModCaseFindByGuild).toHaveBeenCalledWith("guild-1");
     expect(interaction.editReply).toHaveBeenCalled();
     const replyArg = (interaction.editReply as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
@@ -408,7 +406,6 @@ describe("/mod reason", () => {
 
     await reasonHandler(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalled();
     expect(mockCanModerate).toHaveBeenCalled();
     expect(mockModCaseFindByGuildAndCaseNumber).toHaveBeenCalledWith("guild-1", 42);
     expect(mockModCaseUpdateReason).toHaveBeenCalledWith(1, "Nueva razón");
@@ -471,7 +468,6 @@ describe("/mod config mod-role", () => {
 
     await modRoleHandler(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalled();
     expect(mockGuildConfigUpdate).toHaveBeenCalledWith("guild-1", { modRoleId: "role-123" });
     expect(interaction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({ content: expect.stringContaining("role-123") }),
@@ -511,7 +507,6 @@ describe("/mod config mod-log", () => {
 
     await modLogHandler(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalled();
     expect(mockGuildConfigUpdate).toHaveBeenCalledWith("guild-1", { modLogChannelId: "channel-123" });
     expect(mockChannel.send).toHaveBeenCalled();
     expect(interaction.editReply).toHaveBeenCalledWith(

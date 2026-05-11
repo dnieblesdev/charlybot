@@ -1,5 +1,5 @@
 import type { ChatInputCommandInteraction } from "discord.js";
-import { EmbedBuilder, MessageFlags } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 
 import { canModerate } from "../../../services/ModGuardService.js";
 import { getGuildConfig } from "../../../../config/repositories/GuildConfigRepo.js";
@@ -8,8 +8,6 @@ import logger from "../../../../utils/logger.js";
 
 export default async function view(interaction: ChatInputCommandInteraction) {
   try {
-    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-
     if (!interaction.guildId) {
       await interaction.editReply({
         content: "❌ Este comando solo puede usarse en un servidor.",

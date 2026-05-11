@@ -1,5 +1,4 @@
 import type { ChatInputCommandInteraction } from "discord.js";
-import { MessageFlags } from "discord.js";
 
 import { canModerate } from "../../services/ModGuardService.js";
 import { logModAction } from "../../services/ModLogService.js";
@@ -8,8 +7,6 @@ import logger from "../../../utils/logger.js";
 
 export default async function reason(interaction: ChatInputCommandInteraction) {
   try {
-    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-
     if (!interaction.guildId) {
       await interaction.editReply({
         content: "❌ Este comando solo puede usarse en un servidor.",

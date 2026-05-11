@@ -201,9 +201,6 @@ describe("/mod warn", () => {
 
     await warnHandler(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalledWith(
-      expect.objectContaining({ flags: expect.arrayContaining([1 << 6]) }),
-    );
     expect(mockCanModerate).toHaveBeenCalled();
     expect(mockCanTargetSelf).toHaveBeenCalledWith("mod-1", "target-1");
     expect(mockCanTargetModerator).toHaveBeenCalled();
@@ -322,7 +319,6 @@ describe("/mod timeout", () => {
 
     await timeoutHandler(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalled();
     expect(mockModCaseCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "timeout",
@@ -391,7 +387,6 @@ describe("/mod kick", () => {
 
     await kickHandler(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalled();
     expect(mockModCaseCreate).toHaveBeenCalledWith(
       expect.objectContaining({ type: "kick" }),
     );
@@ -446,7 +441,6 @@ describe("/mod ban", () => {
 
     await banHandler(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalled();
     expect(mockModCaseCreate).toHaveBeenCalledWith(
       expect.objectContaining({ type: "ban" }),
     );
@@ -521,7 +515,6 @@ describe("/mod unban", () => {
 
     await unbanHandler(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalled();
     expect(mockModCaseCreate).toHaveBeenCalledWith(
       expect.objectContaining({ type: "unban" }),
     );

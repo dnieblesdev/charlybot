@@ -1,5 +1,5 @@
 import type { ChatInputCommandInteraction } from "discord.js";
-import { MessageFlags, PermissionFlagsBits } from "discord.js";
+import { PermissionFlagsBits } from "discord.js";
 
 import { DurationSchema } from "@charlybot/shared/schemas/moderation";
 import type { WarnThresholdAction } from "@charlybot/shared/schemas/moderation";
@@ -8,8 +8,6 @@ import logger from "../../../../utils/logger.js";
 
 export default async function warnThreshold(interaction: ChatInputCommandInteraction) {
   try {
-    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-
     if (!interaction.guildId) {
       await interaction.editReply({
         content: "❌ Este comando solo puede usarse en un servidor.",

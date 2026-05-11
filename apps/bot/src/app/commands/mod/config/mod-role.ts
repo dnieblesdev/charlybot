@@ -1,13 +1,11 @@
 import type { ChatInputCommandInteraction } from "discord.js";
-import { MessageFlags, PermissionFlagsBits } from "discord.js";
+import { PermissionFlagsBits } from "discord.js";
 
 import { update as updateGuildConfig } from "../../../../config/repositories/GuildConfigRepo.js";
 import logger from "../../../../utils/logger.js";
 
 export default async function modRole(interaction: ChatInputCommandInteraction) {
   try {
-    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-
     if (!interaction.guildId) {
       await interaction.editReply({
         content: "❌ Este comando solo puede usarse en un servidor.",
