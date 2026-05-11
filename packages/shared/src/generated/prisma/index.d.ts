@@ -113,6 +113,16 @@ export type XPConfig = $Result.DefaultSelection<Prisma.$XPConfigPayload>
  * 
  */
 export type LevelRole = $Result.DefaultSelection<Prisma.$LevelRolePayload>
+/**
+ * Model ModCase
+ * 
+ */
+export type ModCase = $Result.DefaultSelection<Prisma.$ModCasePayload>
+/**
+ * Model WarnThreshold
+ * 
+ */
+export type WarnThreshold = $Result.DefaultSelection<Prisma.$WarnThresholdPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -227,7 +237,7 @@ export class PrismaClient<
    * 
    * Read more in our [docs](https://www.prisma.io/docs/orm/prisma-client/queries/transactions).
    */
-  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
+  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
 
   $transaction<R>(fn: (prisma: Omit<PrismaClient, runtime.ITXClientDenyList>) => $Utils.JsPromise<R>, options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<R>
 
@@ -434,6 +444,26 @@ export class PrismaClient<
     * ```
     */
   get levelRole(): Prisma.LevelRoleDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.modCase`: Exposes CRUD operations for the **ModCase** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ModCases
+    * const modCases = await prisma.modCase.findMany()
+    * ```
+    */
+  get modCase(): Prisma.ModCaseDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.warnThreshold`: Exposes CRUD operations for the **WarnThreshold** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WarnThresholds
+    * const warnThresholds = await prisma.warnThreshold.findMany()
+    * ```
+    */
+  get warnThreshold(): Prisma.WarnThresholdDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -484,8 +514,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 7.5.0
-   * Query Engine version: 280c870be64f457428992c43c1f6d557fab6e29e
+   * Prisma Client JS version: 7.8.0
+   * Query Engine version: 3c6e192761c0362d496ed980de936e2f3cebcd3a
    */
   export type PrismaVersion = {
     client: string
@@ -887,7 +917,9 @@ export namespace Prisma {
     GuildMusicConfig: 'GuildMusicConfig',
     UserXP: 'UserXP',
     XPConfig: 'XPConfig',
-    LevelRole: 'LevelRole'
+    LevelRole: 'LevelRole',
+    ModCase: 'ModCase',
+    WarnThreshold: 'WarnThreshold'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -903,7 +935,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tipoClase" | "classes" | "subclass" | "guild" | "guildConfig" | "userEconomy" | "globalBank" | "rouletteGame" | "rouletteBet" | "economyConfig" | "leaderboard" | "autoRole" | "roleMapping" | "verificationRequest" | "musicQueue" | "musicQueueItem" | "guildMusicConfig" | "userXP" | "xPConfig" | "levelRole"
+      modelProps: "tipoClase" | "classes" | "subclass" | "guild" | "guildConfig" | "userEconomy" | "globalBank" | "rouletteGame" | "rouletteBet" | "economyConfig" | "leaderboard" | "autoRole" | "roleMapping" | "verificationRequest" | "musicQueue" | "musicQueueItem" | "guildMusicConfig" | "userXP" | "xPConfig" | "levelRole" | "modCase" | "warnThreshold"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2387,6 +2419,154 @@ export namespace Prisma {
           }
         }
       }
+      ModCase: {
+        payload: Prisma.$ModCasePayload<ExtArgs>
+        fields: Prisma.ModCaseFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ModCaseFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModCasePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ModCaseFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModCasePayload>
+          }
+          findFirst: {
+            args: Prisma.ModCaseFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModCasePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ModCaseFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModCasePayload>
+          }
+          findMany: {
+            args: Prisma.ModCaseFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModCasePayload>[]
+          }
+          create: {
+            args: Prisma.ModCaseCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModCasePayload>
+          }
+          createMany: {
+            args: Prisma.ModCaseCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ModCaseCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModCasePayload>[]
+          }
+          delete: {
+            args: Prisma.ModCaseDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModCasePayload>
+          }
+          update: {
+            args: Prisma.ModCaseUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModCasePayload>
+          }
+          deleteMany: {
+            args: Prisma.ModCaseDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ModCaseUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ModCaseUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModCasePayload>[]
+          }
+          upsert: {
+            args: Prisma.ModCaseUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModCasePayload>
+          }
+          aggregate: {
+            args: Prisma.ModCaseAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateModCase>
+          }
+          groupBy: {
+            args: Prisma.ModCaseGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ModCaseGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ModCaseCountArgs<ExtArgs>
+            result: $Utils.Optional<ModCaseCountAggregateOutputType> | number
+          }
+        }
+      }
+      WarnThreshold: {
+        payload: Prisma.$WarnThresholdPayload<ExtArgs>
+        fields: Prisma.WarnThresholdFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WarnThresholdFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WarnThresholdPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WarnThresholdFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WarnThresholdPayload>
+          }
+          findFirst: {
+            args: Prisma.WarnThresholdFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WarnThresholdPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WarnThresholdFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WarnThresholdPayload>
+          }
+          findMany: {
+            args: Prisma.WarnThresholdFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WarnThresholdPayload>[]
+          }
+          create: {
+            args: Prisma.WarnThresholdCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WarnThresholdPayload>
+          }
+          createMany: {
+            args: Prisma.WarnThresholdCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WarnThresholdCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WarnThresholdPayload>[]
+          }
+          delete: {
+            args: Prisma.WarnThresholdDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WarnThresholdPayload>
+          }
+          update: {
+            args: Prisma.WarnThresholdUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WarnThresholdPayload>
+          }
+          deleteMany: {
+            args: Prisma.WarnThresholdDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WarnThresholdUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WarnThresholdUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WarnThresholdPayload>[]
+          }
+          upsert: {
+            args: Prisma.WarnThresholdUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WarnThresholdPayload>
+          }
+          aggregate: {
+            args: Prisma.WarnThresholdAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWarnThreshold>
+          }
+          groupBy: {
+            args: Prisma.WarnThresholdGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WarnThresholdGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WarnThresholdCountArgs<ExtArgs>
+            result: $Utils.Optional<WarnThresholdCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2515,6 +2695,8 @@ export namespace Prisma {
     userXP?: UserXPOmit
     xPConfig?: XPConfigOmit
     levelRole?: LevelRoleOmit
+    modCase?: ModCaseOmit
+    warnThreshold?: WarnThresholdOmit
   }
 
   /* Types for Logging */
@@ -7220,6 +7402,9 @@ export namespace Prisma {
     verificationReviewChannelId: string | null
     verifiedRoleId: string | null
     messageLogChannelId: string | null
+    modLogChannelId: string | null
+    modRoleId: string | null
+    antispamEnabled: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -7237,6 +7422,9 @@ export namespace Prisma {
     verificationReviewChannelId: string | null
     verifiedRoleId: string | null
     messageLogChannelId: string | null
+    modLogChannelId: string | null
+    modRoleId: string | null
+    antispamEnabled: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -7254,6 +7442,9 @@ export namespace Prisma {
     verificationReviewChannelId: number
     verifiedRoleId: number
     messageLogChannelId: number
+    modLogChannelId: number
+    modRoleId: number
+    antispamEnabled: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -7281,6 +7472,9 @@ export namespace Prisma {
     verificationReviewChannelId?: true
     verifiedRoleId?: true
     messageLogChannelId?: true
+    modLogChannelId?: true
+    modRoleId?: true
+    antispamEnabled?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -7298,6 +7492,9 @@ export namespace Prisma {
     verificationReviewChannelId?: true
     verifiedRoleId?: true
     messageLogChannelId?: true
+    modLogChannelId?: true
+    modRoleId?: true
+    antispamEnabled?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -7315,6 +7512,9 @@ export namespace Prisma {
     verificationReviewChannelId?: true
     verifiedRoleId?: true
     messageLogChannelId?: true
+    modLogChannelId?: true
+    modRoleId?: true
+    antispamEnabled?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -7419,6 +7619,9 @@ export namespace Prisma {
     verificationReviewChannelId: string | null
     verifiedRoleId: string | null
     messageLogChannelId: string | null
+    modLogChannelId: string | null
+    modRoleId: string | null
+    antispamEnabled: boolean
     createdAt: Date
     updatedAt: Date
     _count: GuildConfigCountAggregateOutputType | null
@@ -7455,6 +7658,9 @@ export namespace Prisma {
     verificationReviewChannelId?: boolean
     verifiedRoleId?: boolean
     messageLogChannelId?: boolean
+    modLogChannelId?: boolean
+    modRoleId?: boolean
+    antispamEnabled?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     guild?: boolean | GuildDefaultArgs<ExtArgs>
@@ -7473,6 +7679,9 @@ export namespace Prisma {
     verificationReviewChannelId?: boolean
     verifiedRoleId?: boolean
     messageLogChannelId?: boolean
+    modLogChannelId?: boolean
+    modRoleId?: boolean
+    antispamEnabled?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     guild?: boolean | GuildDefaultArgs<ExtArgs>
@@ -7491,6 +7700,9 @@ export namespace Prisma {
     verificationReviewChannelId?: boolean
     verifiedRoleId?: boolean
     messageLogChannelId?: boolean
+    modLogChannelId?: boolean
+    modRoleId?: boolean
+    antispamEnabled?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     guild?: boolean | GuildDefaultArgs<ExtArgs>
@@ -7509,11 +7721,14 @@ export namespace Prisma {
     verificationReviewChannelId?: boolean
     verifiedRoleId?: boolean
     messageLogChannelId?: boolean
+    modLogChannelId?: boolean
+    modRoleId?: boolean
+    antispamEnabled?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type GuildConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "name" | "targetChannelId" | "voiceLogChannelId" | "welcomeChannelId" | "welcomeMessage" | "leaveLogChannelId" | "verificationChannelId" | "verificationReviewChannelId" | "verifiedRoleId" | "messageLogChannelId" | "createdAt" | "updatedAt", ExtArgs["result"]["guildConfig"]>
+  export type GuildConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "name" | "targetChannelId" | "voiceLogChannelId" | "welcomeChannelId" | "welcomeMessage" | "leaveLogChannelId" | "verificationChannelId" | "verificationReviewChannelId" | "verifiedRoleId" | "messageLogChannelId" | "modLogChannelId" | "modRoleId" | "antispamEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["guildConfig"]>
   export type GuildConfigInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     guild?: boolean | GuildDefaultArgs<ExtArgs>
   }
@@ -7542,6 +7757,9 @@ export namespace Prisma {
       verificationReviewChannelId: string | null
       verifiedRoleId: string | null
       messageLogChannelId: string | null
+      modLogChannelId: string | null
+      modRoleId: string | null
+      antispamEnabled: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["guildConfig"]>
@@ -7980,6 +8198,9 @@ export namespace Prisma {
     readonly verificationReviewChannelId: FieldRef<"GuildConfig", 'String'>
     readonly verifiedRoleId: FieldRef<"GuildConfig", 'String'>
     readonly messageLogChannelId: FieldRef<"GuildConfig", 'String'>
+    readonly modLogChannelId: FieldRef<"GuildConfig", 'String'>
+    readonly modRoleId: FieldRef<"GuildConfig", 'String'>
+    readonly antispamEnabled: FieldRef<"GuildConfig", 'Boolean'>
     readonly createdAt: FieldRef<"GuildConfig", 'DateTime'>
     readonly updatedAt: FieldRef<"GuildConfig", 'DateTime'>
   }
@@ -25413,6 +25634,2181 @@ export namespace Prisma {
 
 
   /**
+   * Model ModCase
+   */
+
+  export type AggregateModCase = {
+    _count: ModCaseCountAggregateOutputType | null
+    _avg: ModCaseAvgAggregateOutputType | null
+    _sum: ModCaseSumAggregateOutputType | null
+    _min: ModCaseMinAggregateOutputType | null
+    _max: ModCaseMaxAggregateOutputType | null
+  }
+
+  export type ModCaseAvgAggregateOutputType = {
+    id: number | null
+    caseNumber: number | null
+    duration: number | null
+    messageCount: number | null
+  }
+
+  export type ModCaseSumAggregateOutputType = {
+    id: number | null
+    caseNumber: number | null
+    duration: bigint | null
+    messageCount: number | null
+  }
+
+  export type ModCaseMinAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    userId: string | null
+    moderatorId: string | null
+    caseNumber: number | null
+    type: string | null
+    reason: string | null
+    duration: bigint | null
+    active: boolean | null
+    messageCount: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ModCaseMaxAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    userId: string | null
+    moderatorId: string | null
+    caseNumber: number | null
+    type: string | null
+    reason: string | null
+    duration: bigint | null
+    active: boolean | null
+    messageCount: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ModCaseCountAggregateOutputType = {
+    id: number
+    guildId: number
+    userId: number
+    moderatorId: number
+    caseNumber: number
+    type: number
+    reason: number
+    duration: number
+    active: number
+    messageCount: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ModCaseAvgAggregateInputType = {
+    id?: true
+    caseNumber?: true
+    duration?: true
+    messageCount?: true
+  }
+
+  export type ModCaseSumAggregateInputType = {
+    id?: true
+    caseNumber?: true
+    duration?: true
+    messageCount?: true
+  }
+
+  export type ModCaseMinAggregateInputType = {
+    id?: true
+    guildId?: true
+    userId?: true
+    moderatorId?: true
+    caseNumber?: true
+    type?: true
+    reason?: true
+    duration?: true
+    active?: true
+    messageCount?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ModCaseMaxAggregateInputType = {
+    id?: true
+    guildId?: true
+    userId?: true
+    moderatorId?: true
+    caseNumber?: true
+    type?: true
+    reason?: true
+    duration?: true
+    active?: true
+    messageCount?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ModCaseCountAggregateInputType = {
+    id?: true
+    guildId?: true
+    userId?: true
+    moderatorId?: true
+    caseNumber?: true
+    type?: true
+    reason?: true
+    duration?: true
+    active?: true
+    messageCount?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ModCaseAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModCase to aggregate.
+     */
+    where?: ModCaseWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModCases to fetch.
+     */
+    orderBy?: ModCaseOrderByWithRelationInput | ModCaseOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ModCaseWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModCases from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModCases.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ModCases
+    **/
+    _count?: true | ModCaseCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ModCaseAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ModCaseSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ModCaseMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ModCaseMaxAggregateInputType
+  }
+
+  export type GetModCaseAggregateType<T extends ModCaseAggregateArgs> = {
+        [P in keyof T & keyof AggregateModCase]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateModCase[P]>
+      : GetScalarType<T[P], AggregateModCase[P]>
+  }
+
+
+
+
+  export type ModCaseGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ModCaseWhereInput
+    orderBy?: ModCaseOrderByWithAggregationInput | ModCaseOrderByWithAggregationInput[]
+    by: ModCaseScalarFieldEnum[] | ModCaseScalarFieldEnum
+    having?: ModCaseScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ModCaseCountAggregateInputType | true
+    _avg?: ModCaseAvgAggregateInputType
+    _sum?: ModCaseSumAggregateInputType
+    _min?: ModCaseMinAggregateInputType
+    _max?: ModCaseMaxAggregateInputType
+  }
+
+  export type ModCaseGroupByOutputType = {
+    id: number
+    guildId: string
+    userId: string
+    moderatorId: string
+    caseNumber: number
+    type: string
+    reason: string | null
+    duration: bigint | null
+    active: boolean
+    messageCount: number | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ModCaseCountAggregateOutputType | null
+    _avg: ModCaseAvgAggregateOutputType | null
+    _sum: ModCaseSumAggregateOutputType | null
+    _min: ModCaseMinAggregateOutputType | null
+    _max: ModCaseMaxAggregateOutputType | null
+  }
+
+  type GetModCaseGroupByPayload<T extends ModCaseGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ModCaseGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ModCaseGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ModCaseGroupByOutputType[P]>
+            : GetScalarType<T[P], ModCaseGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ModCaseSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    userId?: boolean
+    moderatorId?: boolean
+    caseNumber?: boolean
+    type?: boolean
+    reason?: boolean
+    duration?: boolean
+    active?: boolean
+    messageCount?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["modCase"]>
+
+  export type ModCaseSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    userId?: boolean
+    moderatorId?: boolean
+    caseNumber?: boolean
+    type?: boolean
+    reason?: boolean
+    duration?: boolean
+    active?: boolean
+    messageCount?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["modCase"]>
+
+  export type ModCaseSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    userId?: boolean
+    moderatorId?: boolean
+    caseNumber?: boolean
+    type?: boolean
+    reason?: boolean
+    duration?: boolean
+    active?: boolean
+    messageCount?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["modCase"]>
+
+  export type ModCaseSelectScalar = {
+    id?: boolean
+    guildId?: boolean
+    userId?: boolean
+    moderatorId?: boolean
+    caseNumber?: boolean
+    type?: boolean
+    reason?: boolean
+    duration?: boolean
+    active?: boolean
+    messageCount?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ModCaseOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "userId" | "moderatorId" | "caseNumber" | "type" | "reason" | "duration" | "active" | "messageCount" | "createdAt" | "updatedAt", ExtArgs["result"]["modCase"]>
+
+  export type $ModCasePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ModCase"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      guildId: string
+      userId: string
+      moderatorId: string
+      caseNumber: number
+      type: string
+      reason: string | null
+      duration: bigint | null
+      active: boolean
+      messageCount: number | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["modCase"]>
+    composites: {}
+  }
+
+  type ModCaseGetPayload<S extends boolean | null | undefined | ModCaseDefaultArgs> = $Result.GetResult<Prisma.$ModCasePayload, S>
+
+  type ModCaseCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ModCaseFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ModCaseCountAggregateInputType | true
+    }
+
+  export interface ModCaseDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ModCase'], meta: { name: 'ModCase' } }
+    /**
+     * Find zero or one ModCase that matches the filter.
+     * @param {ModCaseFindUniqueArgs} args - Arguments to find a ModCase
+     * @example
+     * // Get one ModCase
+     * const modCase = await prisma.modCase.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ModCaseFindUniqueArgs>(args: SelectSubset<T, ModCaseFindUniqueArgs<ExtArgs>>): Prisma__ModCaseClient<$Result.GetResult<Prisma.$ModCasePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ModCase that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ModCaseFindUniqueOrThrowArgs} args - Arguments to find a ModCase
+     * @example
+     * // Get one ModCase
+     * const modCase = await prisma.modCase.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ModCaseFindUniqueOrThrowArgs>(args: SelectSubset<T, ModCaseFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ModCaseClient<$Result.GetResult<Prisma.$ModCasePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModCase that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModCaseFindFirstArgs} args - Arguments to find a ModCase
+     * @example
+     * // Get one ModCase
+     * const modCase = await prisma.modCase.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ModCaseFindFirstArgs>(args?: SelectSubset<T, ModCaseFindFirstArgs<ExtArgs>>): Prisma__ModCaseClient<$Result.GetResult<Prisma.$ModCasePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModCase that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModCaseFindFirstOrThrowArgs} args - Arguments to find a ModCase
+     * @example
+     * // Get one ModCase
+     * const modCase = await prisma.modCase.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ModCaseFindFirstOrThrowArgs>(args?: SelectSubset<T, ModCaseFindFirstOrThrowArgs<ExtArgs>>): Prisma__ModCaseClient<$Result.GetResult<Prisma.$ModCasePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ModCases that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModCaseFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ModCases
+     * const modCases = await prisma.modCase.findMany()
+     * 
+     * // Get first 10 ModCases
+     * const modCases = await prisma.modCase.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const modCaseWithIdOnly = await prisma.modCase.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ModCaseFindManyArgs>(args?: SelectSubset<T, ModCaseFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModCasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ModCase.
+     * @param {ModCaseCreateArgs} args - Arguments to create a ModCase.
+     * @example
+     * // Create one ModCase
+     * const ModCase = await prisma.modCase.create({
+     *   data: {
+     *     // ... data to create a ModCase
+     *   }
+     * })
+     * 
+     */
+    create<T extends ModCaseCreateArgs>(args: SelectSubset<T, ModCaseCreateArgs<ExtArgs>>): Prisma__ModCaseClient<$Result.GetResult<Prisma.$ModCasePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ModCases.
+     * @param {ModCaseCreateManyArgs} args - Arguments to create many ModCases.
+     * @example
+     * // Create many ModCases
+     * const modCase = await prisma.modCase.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ModCaseCreateManyArgs>(args?: SelectSubset<T, ModCaseCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ModCases and returns the data saved in the database.
+     * @param {ModCaseCreateManyAndReturnArgs} args - Arguments to create many ModCases.
+     * @example
+     * // Create many ModCases
+     * const modCase = await prisma.modCase.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ModCases and only return the `id`
+     * const modCaseWithIdOnly = await prisma.modCase.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ModCaseCreateManyAndReturnArgs>(args?: SelectSubset<T, ModCaseCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModCasePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ModCase.
+     * @param {ModCaseDeleteArgs} args - Arguments to delete one ModCase.
+     * @example
+     * // Delete one ModCase
+     * const ModCase = await prisma.modCase.delete({
+     *   where: {
+     *     // ... filter to delete one ModCase
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ModCaseDeleteArgs>(args: SelectSubset<T, ModCaseDeleteArgs<ExtArgs>>): Prisma__ModCaseClient<$Result.GetResult<Prisma.$ModCasePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ModCase.
+     * @param {ModCaseUpdateArgs} args - Arguments to update one ModCase.
+     * @example
+     * // Update one ModCase
+     * const modCase = await prisma.modCase.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ModCaseUpdateArgs>(args: SelectSubset<T, ModCaseUpdateArgs<ExtArgs>>): Prisma__ModCaseClient<$Result.GetResult<Prisma.$ModCasePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ModCases.
+     * @param {ModCaseDeleteManyArgs} args - Arguments to filter ModCases to delete.
+     * @example
+     * // Delete a few ModCases
+     * const { count } = await prisma.modCase.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ModCaseDeleteManyArgs>(args?: SelectSubset<T, ModCaseDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModCases.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModCaseUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ModCases
+     * const modCase = await prisma.modCase.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ModCaseUpdateManyArgs>(args: SelectSubset<T, ModCaseUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModCases and returns the data updated in the database.
+     * @param {ModCaseUpdateManyAndReturnArgs} args - Arguments to update many ModCases.
+     * @example
+     * // Update many ModCases
+     * const modCase = await prisma.modCase.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ModCases and only return the `id`
+     * const modCaseWithIdOnly = await prisma.modCase.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ModCaseUpdateManyAndReturnArgs>(args: SelectSubset<T, ModCaseUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModCasePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ModCase.
+     * @param {ModCaseUpsertArgs} args - Arguments to update or create a ModCase.
+     * @example
+     * // Update or create a ModCase
+     * const modCase = await prisma.modCase.upsert({
+     *   create: {
+     *     // ... data to create a ModCase
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ModCase we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ModCaseUpsertArgs>(args: SelectSubset<T, ModCaseUpsertArgs<ExtArgs>>): Prisma__ModCaseClient<$Result.GetResult<Prisma.$ModCasePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ModCases.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModCaseCountArgs} args - Arguments to filter ModCases to count.
+     * @example
+     * // Count the number of ModCases
+     * const count = await prisma.modCase.count({
+     *   where: {
+     *     // ... the filter for the ModCases we want to count
+     *   }
+     * })
+    **/
+    count<T extends ModCaseCountArgs>(
+      args?: Subset<T, ModCaseCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ModCaseCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ModCase.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModCaseAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ModCaseAggregateArgs>(args: Subset<T, ModCaseAggregateArgs>): Prisma.PrismaPromise<GetModCaseAggregateType<T>>
+
+    /**
+     * Group by ModCase.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModCaseGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ModCaseGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ModCaseGroupByArgs['orderBy'] }
+        : { orderBy?: ModCaseGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ModCaseGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetModCaseGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ModCase model
+   */
+  readonly fields: ModCaseFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ModCase.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ModCaseClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ModCase model
+   */
+  interface ModCaseFieldRefs {
+    readonly id: FieldRef<"ModCase", 'Int'>
+    readonly guildId: FieldRef<"ModCase", 'String'>
+    readonly userId: FieldRef<"ModCase", 'String'>
+    readonly moderatorId: FieldRef<"ModCase", 'String'>
+    readonly caseNumber: FieldRef<"ModCase", 'Int'>
+    readonly type: FieldRef<"ModCase", 'String'>
+    readonly reason: FieldRef<"ModCase", 'String'>
+    readonly duration: FieldRef<"ModCase", 'BigInt'>
+    readonly active: FieldRef<"ModCase", 'Boolean'>
+    readonly messageCount: FieldRef<"ModCase", 'Int'>
+    readonly createdAt: FieldRef<"ModCase", 'DateTime'>
+    readonly updatedAt: FieldRef<"ModCase", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ModCase findUnique
+   */
+  export type ModCaseFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+    /**
+     * Filter, which ModCase to fetch.
+     */
+    where: ModCaseWhereUniqueInput
+  }
+
+  /**
+   * ModCase findUniqueOrThrow
+   */
+  export type ModCaseFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+    /**
+     * Filter, which ModCase to fetch.
+     */
+    where: ModCaseWhereUniqueInput
+  }
+
+  /**
+   * ModCase findFirst
+   */
+  export type ModCaseFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+    /**
+     * Filter, which ModCase to fetch.
+     */
+    where?: ModCaseWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModCases to fetch.
+     */
+    orderBy?: ModCaseOrderByWithRelationInput | ModCaseOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModCases.
+     */
+    cursor?: ModCaseWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModCases from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModCases.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModCases.
+     */
+    distinct?: ModCaseScalarFieldEnum | ModCaseScalarFieldEnum[]
+  }
+
+  /**
+   * ModCase findFirstOrThrow
+   */
+  export type ModCaseFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+    /**
+     * Filter, which ModCase to fetch.
+     */
+    where?: ModCaseWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModCases to fetch.
+     */
+    orderBy?: ModCaseOrderByWithRelationInput | ModCaseOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModCases.
+     */
+    cursor?: ModCaseWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModCases from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModCases.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModCases.
+     */
+    distinct?: ModCaseScalarFieldEnum | ModCaseScalarFieldEnum[]
+  }
+
+  /**
+   * ModCase findMany
+   */
+  export type ModCaseFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+    /**
+     * Filter, which ModCases to fetch.
+     */
+    where?: ModCaseWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModCases to fetch.
+     */
+    orderBy?: ModCaseOrderByWithRelationInput | ModCaseOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ModCases.
+     */
+    cursor?: ModCaseWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModCases from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModCases.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModCases.
+     */
+    distinct?: ModCaseScalarFieldEnum | ModCaseScalarFieldEnum[]
+  }
+
+  /**
+   * ModCase create
+   */
+  export type ModCaseCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+    /**
+     * The data needed to create a ModCase.
+     */
+    data: XOR<ModCaseCreateInput, ModCaseUncheckedCreateInput>
+  }
+
+  /**
+   * ModCase createMany
+   */
+  export type ModCaseCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ModCases.
+     */
+    data: ModCaseCreateManyInput | ModCaseCreateManyInput[]
+  }
+
+  /**
+   * ModCase createManyAndReturn
+   */
+  export type ModCaseCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+    /**
+     * The data used to create many ModCases.
+     */
+    data: ModCaseCreateManyInput | ModCaseCreateManyInput[]
+  }
+
+  /**
+   * ModCase update
+   */
+  export type ModCaseUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+    /**
+     * The data needed to update a ModCase.
+     */
+    data: XOR<ModCaseUpdateInput, ModCaseUncheckedUpdateInput>
+    /**
+     * Choose, which ModCase to update.
+     */
+    where: ModCaseWhereUniqueInput
+  }
+
+  /**
+   * ModCase updateMany
+   */
+  export type ModCaseUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ModCases.
+     */
+    data: XOR<ModCaseUpdateManyMutationInput, ModCaseUncheckedUpdateManyInput>
+    /**
+     * Filter which ModCases to update
+     */
+    where?: ModCaseWhereInput
+    /**
+     * Limit how many ModCases to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModCase updateManyAndReturn
+   */
+  export type ModCaseUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+    /**
+     * The data used to update ModCases.
+     */
+    data: XOR<ModCaseUpdateManyMutationInput, ModCaseUncheckedUpdateManyInput>
+    /**
+     * Filter which ModCases to update
+     */
+    where?: ModCaseWhereInput
+    /**
+     * Limit how many ModCases to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModCase upsert
+   */
+  export type ModCaseUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+    /**
+     * The filter to search for the ModCase to update in case it exists.
+     */
+    where: ModCaseWhereUniqueInput
+    /**
+     * In case the ModCase found by the `where` argument doesn't exist, create a new ModCase with this data.
+     */
+    create: XOR<ModCaseCreateInput, ModCaseUncheckedCreateInput>
+    /**
+     * In case the ModCase was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ModCaseUpdateInput, ModCaseUncheckedUpdateInput>
+  }
+
+  /**
+   * ModCase delete
+   */
+  export type ModCaseDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+    /**
+     * Filter which ModCase to delete.
+     */
+    where: ModCaseWhereUniqueInput
+  }
+
+  /**
+   * ModCase deleteMany
+   */
+  export type ModCaseDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModCases to delete
+     */
+    where?: ModCaseWhereInput
+    /**
+     * Limit how many ModCases to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModCase without action
+   */
+  export type ModCaseDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModCase
+     */
+    select?: ModCaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModCase
+     */
+    omit?: ModCaseOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WarnThreshold
+   */
+
+  export type AggregateWarnThreshold = {
+    _count: WarnThresholdCountAggregateOutputType | null
+    _avg: WarnThresholdAvgAggregateOutputType | null
+    _sum: WarnThresholdSumAggregateOutputType | null
+    _min: WarnThresholdMinAggregateOutputType | null
+    _max: WarnThresholdMaxAggregateOutputType | null
+  }
+
+  export type WarnThresholdAvgAggregateOutputType = {
+    id: number | null
+    warnCount: number | null
+    duration: number | null
+  }
+
+  export type WarnThresholdSumAggregateOutputType = {
+    id: number | null
+    warnCount: number | null
+    duration: bigint | null
+  }
+
+  export type WarnThresholdMinAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    warnCount: number | null
+    action: string | null
+    duration: bigint | null
+  }
+
+  export type WarnThresholdMaxAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    warnCount: number | null
+    action: string | null
+    duration: bigint | null
+  }
+
+  export type WarnThresholdCountAggregateOutputType = {
+    id: number
+    guildId: number
+    warnCount: number
+    action: number
+    duration: number
+    _all: number
+  }
+
+
+  export type WarnThresholdAvgAggregateInputType = {
+    id?: true
+    warnCount?: true
+    duration?: true
+  }
+
+  export type WarnThresholdSumAggregateInputType = {
+    id?: true
+    warnCount?: true
+    duration?: true
+  }
+
+  export type WarnThresholdMinAggregateInputType = {
+    id?: true
+    guildId?: true
+    warnCount?: true
+    action?: true
+    duration?: true
+  }
+
+  export type WarnThresholdMaxAggregateInputType = {
+    id?: true
+    guildId?: true
+    warnCount?: true
+    action?: true
+    duration?: true
+  }
+
+  export type WarnThresholdCountAggregateInputType = {
+    id?: true
+    guildId?: true
+    warnCount?: true
+    action?: true
+    duration?: true
+    _all?: true
+  }
+
+  export type WarnThresholdAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WarnThreshold to aggregate.
+     */
+    where?: WarnThresholdWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WarnThresholds to fetch.
+     */
+    orderBy?: WarnThresholdOrderByWithRelationInput | WarnThresholdOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WarnThresholdWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WarnThresholds from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WarnThresholds.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WarnThresholds
+    **/
+    _count?: true | WarnThresholdCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WarnThresholdAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WarnThresholdSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WarnThresholdMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WarnThresholdMaxAggregateInputType
+  }
+
+  export type GetWarnThresholdAggregateType<T extends WarnThresholdAggregateArgs> = {
+        [P in keyof T & keyof AggregateWarnThreshold]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWarnThreshold[P]>
+      : GetScalarType<T[P], AggregateWarnThreshold[P]>
+  }
+
+
+
+
+  export type WarnThresholdGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WarnThresholdWhereInput
+    orderBy?: WarnThresholdOrderByWithAggregationInput | WarnThresholdOrderByWithAggregationInput[]
+    by: WarnThresholdScalarFieldEnum[] | WarnThresholdScalarFieldEnum
+    having?: WarnThresholdScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WarnThresholdCountAggregateInputType | true
+    _avg?: WarnThresholdAvgAggregateInputType
+    _sum?: WarnThresholdSumAggregateInputType
+    _min?: WarnThresholdMinAggregateInputType
+    _max?: WarnThresholdMaxAggregateInputType
+  }
+
+  export type WarnThresholdGroupByOutputType = {
+    id: number
+    guildId: string
+    warnCount: number
+    action: string
+    duration: bigint | null
+    _count: WarnThresholdCountAggregateOutputType | null
+    _avg: WarnThresholdAvgAggregateOutputType | null
+    _sum: WarnThresholdSumAggregateOutputType | null
+    _min: WarnThresholdMinAggregateOutputType | null
+    _max: WarnThresholdMaxAggregateOutputType | null
+  }
+
+  type GetWarnThresholdGroupByPayload<T extends WarnThresholdGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WarnThresholdGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WarnThresholdGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WarnThresholdGroupByOutputType[P]>
+            : GetScalarType<T[P], WarnThresholdGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WarnThresholdSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    warnCount?: boolean
+    action?: boolean
+    duration?: boolean
+  }, ExtArgs["result"]["warnThreshold"]>
+
+  export type WarnThresholdSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    warnCount?: boolean
+    action?: boolean
+    duration?: boolean
+  }, ExtArgs["result"]["warnThreshold"]>
+
+  export type WarnThresholdSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    warnCount?: boolean
+    action?: boolean
+    duration?: boolean
+  }, ExtArgs["result"]["warnThreshold"]>
+
+  export type WarnThresholdSelectScalar = {
+    id?: boolean
+    guildId?: boolean
+    warnCount?: boolean
+    action?: boolean
+    duration?: boolean
+  }
+
+  export type WarnThresholdOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "warnCount" | "action" | "duration", ExtArgs["result"]["warnThreshold"]>
+
+  export type $WarnThresholdPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WarnThreshold"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      guildId: string
+      warnCount: number
+      action: string
+      duration: bigint | null
+    }, ExtArgs["result"]["warnThreshold"]>
+    composites: {}
+  }
+
+  type WarnThresholdGetPayload<S extends boolean | null | undefined | WarnThresholdDefaultArgs> = $Result.GetResult<Prisma.$WarnThresholdPayload, S>
+
+  type WarnThresholdCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WarnThresholdFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WarnThresholdCountAggregateInputType | true
+    }
+
+  export interface WarnThresholdDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WarnThreshold'], meta: { name: 'WarnThreshold' } }
+    /**
+     * Find zero or one WarnThreshold that matches the filter.
+     * @param {WarnThresholdFindUniqueArgs} args - Arguments to find a WarnThreshold
+     * @example
+     * // Get one WarnThreshold
+     * const warnThreshold = await prisma.warnThreshold.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WarnThresholdFindUniqueArgs>(args: SelectSubset<T, WarnThresholdFindUniqueArgs<ExtArgs>>): Prisma__WarnThresholdClient<$Result.GetResult<Prisma.$WarnThresholdPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WarnThreshold that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WarnThresholdFindUniqueOrThrowArgs} args - Arguments to find a WarnThreshold
+     * @example
+     * // Get one WarnThreshold
+     * const warnThreshold = await prisma.warnThreshold.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WarnThresholdFindUniqueOrThrowArgs>(args: SelectSubset<T, WarnThresholdFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WarnThresholdClient<$Result.GetResult<Prisma.$WarnThresholdPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WarnThreshold that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WarnThresholdFindFirstArgs} args - Arguments to find a WarnThreshold
+     * @example
+     * // Get one WarnThreshold
+     * const warnThreshold = await prisma.warnThreshold.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WarnThresholdFindFirstArgs>(args?: SelectSubset<T, WarnThresholdFindFirstArgs<ExtArgs>>): Prisma__WarnThresholdClient<$Result.GetResult<Prisma.$WarnThresholdPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WarnThreshold that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WarnThresholdFindFirstOrThrowArgs} args - Arguments to find a WarnThreshold
+     * @example
+     * // Get one WarnThreshold
+     * const warnThreshold = await prisma.warnThreshold.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WarnThresholdFindFirstOrThrowArgs>(args?: SelectSubset<T, WarnThresholdFindFirstOrThrowArgs<ExtArgs>>): Prisma__WarnThresholdClient<$Result.GetResult<Prisma.$WarnThresholdPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WarnThresholds that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WarnThresholdFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WarnThresholds
+     * const warnThresholds = await prisma.warnThreshold.findMany()
+     * 
+     * // Get first 10 WarnThresholds
+     * const warnThresholds = await prisma.warnThreshold.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const warnThresholdWithIdOnly = await prisma.warnThreshold.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WarnThresholdFindManyArgs>(args?: SelectSubset<T, WarnThresholdFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WarnThresholdPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WarnThreshold.
+     * @param {WarnThresholdCreateArgs} args - Arguments to create a WarnThreshold.
+     * @example
+     * // Create one WarnThreshold
+     * const WarnThreshold = await prisma.warnThreshold.create({
+     *   data: {
+     *     // ... data to create a WarnThreshold
+     *   }
+     * })
+     * 
+     */
+    create<T extends WarnThresholdCreateArgs>(args: SelectSubset<T, WarnThresholdCreateArgs<ExtArgs>>): Prisma__WarnThresholdClient<$Result.GetResult<Prisma.$WarnThresholdPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WarnThresholds.
+     * @param {WarnThresholdCreateManyArgs} args - Arguments to create many WarnThresholds.
+     * @example
+     * // Create many WarnThresholds
+     * const warnThreshold = await prisma.warnThreshold.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WarnThresholdCreateManyArgs>(args?: SelectSubset<T, WarnThresholdCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WarnThresholds and returns the data saved in the database.
+     * @param {WarnThresholdCreateManyAndReturnArgs} args - Arguments to create many WarnThresholds.
+     * @example
+     * // Create many WarnThresholds
+     * const warnThreshold = await prisma.warnThreshold.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WarnThresholds and only return the `id`
+     * const warnThresholdWithIdOnly = await prisma.warnThreshold.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WarnThresholdCreateManyAndReturnArgs>(args?: SelectSubset<T, WarnThresholdCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WarnThresholdPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WarnThreshold.
+     * @param {WarnThresholdDeleteArgs} args - Arguments to delete one WarnThreshold.
+     * @example
+     * // Delete one WarnThreshold
+     * const WarnThreshold = await prisma.warnThreshold.delete({
+     *   where: {
+     *     // ... filter to delete one WarnThreshold
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WarnThresholdDeleteArgs>(args: SelectSubset<T, WarnThresholdDeleteArgs<ExtArgs>>): Prisma__WarnThresholdClient<$Result.GetResult<Prisma.$WarnThresholdPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WarnThreshold.
+     * @param {WarnThresholdUpdateArgs} args - Arguments to update one WarnThreshold.
+     * @example
+     * // Update one WarnThreshold
+     * const warnThreshold = await prisma.warnThreshold.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WarnThresholdUpdateArgs>(args: SelectSubset<T, WarnThresholdUpdateArgs<ExtArgs>>): Prisma__WarnThresholdClient<$Result.GetResult<Prisma.$WarnThresholdPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WarnThresholds.
+     * @param {WarnThresholdDeleteManyArgs} args - Arguments to filter WarnThresholds to delete.
+     * @example
+     * // Delete a few WarnThresholds
+     * const { count } = await prisma.warnThreshold.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WarnThresholdDeleteManyArgs>(args?: SelectSubset<T, WarnThresholdDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WarnThresholds.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WarnThresholdUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WarnThresholds
+     * const warnThreshold = await prisma.warnThreshold.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WarnThresholdUpdateManyArgs>(args: SelectSubset<T, WarnThresholdUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WarnThresholds and returns the data updated in the database.
+     * @param {WarnThresholdUpdateManyAndReturnArgs} args - Arguments to update many WarnThresholds.
+     * @example
+     * // Update many WarnThresholds
+     * const warnThreshold = await prisma.warnThreshold.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WarnThresholds and only return the `id`
+     * const warnThresholdWithIdOnly = await prisma.warnThreshold.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WarnThresholdUpdateManyAndReturnArgs>(args: SelectSubset<T, WarnThresholdUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WarnThresholdPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WarnThreshold.
+     * @param {WarnThresholdUpsertArgs} args - Arguments to update or create a WarnThreshold.
+     * @example
+     * // Update or create a WarnThreshold
+     * const warnThreshold = await prisma.warnThreshold.upsert({
+     *   create: {
+     *     // ... data to create a WarnThreshold
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WarnThreshold we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WarnThresholdUpsertArgs>(args: SelectSubset<T, WarnThresholdUpsertArgs<ExtArgs>>): Prisma__WarnThresholdClient<$Result.GetResult<Prisma.$WarnThresholdPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WarnThresholds.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WarnThresholdCountArgs} args - Arguments to filter WarnThresholds to count.
+     * @example
+     * // Count the number of WarnThresholds
+     * const count = await prisma.warnThreshold.count({
+     *   where: {
+     *     // ... the filter for the WarnThresholds we want to count
+     *   }
+     * })
+    **/
+    count<T extends WarnThresholdCountArgs>(
+      args?: Subset<T, WarnThresholdCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WarnThresholdCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WarnThreshold.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WarnThresholdAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WarnThresholdAggregateArgs>(args: Subset<T, WarnThresholdAggregateArgs>): Prisma.PrismaPromise<GetWarnThresholdAggregateType<T>>
+
+    /**
+     * Group by WarnThreshold.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WarnThresholdGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WarnThresholdGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WarnThresholdGroupByArgs['orderBy'] }
+        : { orderBy?: WarnThresholdGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WarnThresholdGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWarnThresholdGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WarnThreshold model
+   */
+  readonly fields: WarnThresholdFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WarnThreshold.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WarnThresholdClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WarnThreshold model
+   */
+  interface WarnThresholdFieldRefs {
+    readonly id: FieldRef<"WarnThreshold", 'Int'>
+    readonly guildId: FieldRef<"WarnThreshold", 'String'>
+    readonly warnCount: FieldRef<"WarnThreshold", 'Int'>
+    readonly action: FieldRef<"WarnThreshold", 'String'>
+    readonly duration: FieldRef<"WarnThreshold", 'BigInt'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WarnThreshold findUnique
+   */
+  export type WarnThresholdFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+    /**
+     * Filter, which WarnThreshold to fetch.
+     */
+    where: WarnThresholdWhereUniqueInput
+  }
+
+  /**
+   * WarnThreshold findUniqueOrThrow
+   */
+  export type WarnThresholdFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+    /**
+     * Filter, which WarnThreshold to fetch.
+     */
+    where: WarnThresholdWhereUniqueInput
+  }
+
+  /**
+   * WarnThreshold findFirst
+   */
+  export type WarnThresholdFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+    /**
+     * Filter, which WarnThreshold to fetch.
+     */
+    where?: WarnThresholdWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WarnThresholds to fetch.
+     */
+    orderBy?: WarnThresholdOrderByWithRelationInput | WarnThresholdOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WarnThresholds.
+     */
+    cursor?: WarnThresholdWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WarnThresholds from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WarnThresholds.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WarnThresholds.
+     */
+    distinct?: WarnThresholdScalarFieldEnum | WarnThresholdScalarFieldEnum[]
+  }
+
+  /**
+   * WarnThreshold findFirstOrThrow
+   */
+  export type WarnThresholdFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+    /**
+     * Filter, which WarnThreshold to fetch.
+     */
+    where?: WarnThresholdWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WarnThresholds to fetch.
+     */
+    orderBy?: WarnThresholdOrderByWithRelationInput | WarnThresholdOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WarnThresholds.
+     */
+    cursor?: WarnThresholdWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WarnThresholds from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WarnThresholds.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WarnThresholds.
+     */
+    distinct?: WarnThresholdScalarFieldEnum | WarnThresholdScalarFieldEnum[]
+  }
+
+  /**
+   * WarnThreshold findMany
+   */
+  export type WarnThresholdFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+    /**
+     * Filter, which WarnThresholds to fetch.
+     */
+    where?: WarnThresholdWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WarnThresholds to fetch.
+     */
+    orderBy?: WarnThresholdOrderByWithRelationInput | WarnThresholdOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WarnThresholds.
+     */
+    cursor?: WarnThresholdWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WarnThresholds from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WarnThresholds.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WarnThresholds.
+     */
+    distinct?: WarnThresholdScalarFieldEnum | WarnThresholdScalarFieldEnum[]
+  }
+
+  /**
+   * WarnThreshold create
+   */
+  export type WarnThresholdCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+    /**
+     * The data needed to create a WarnThreshold.
+     */
+    data: XOR<WarnThresholdCreateInput, WarnThresholdUncheckedCreateInput>
+  }
+
+  /**
+   * WarnThreshold createMany
+   */
+  export type WarnThresholdCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WarnThresholds.
+     */
+    data: WarnThresholdCreateManyInput | WarnThresholdCreateManyInput[]
+  }
+
+  /**
+   * WarnThreshold createManyAndReturn
+   */
+  export type WarnThresholdCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+    /**
+     * The data used to create many WarnThresholds.
+     */
+    data: WarnThresholdCreateManyInput | WarnThresholdCreateManyInput[]
+  }
+
+  /**
+   * WarnThreshold update
+   */
+  export type WarnThresholdUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+    /**
+     * The data needed to update a WarnThreshold.
+     */
+    data: XOR<WarnThresholdUpdateInput, WarnThresholdUncheckedUpdateInput>
+    /**
+     * Choose, which WarnThreshold to update.
+     */
+    where: WarnThresholdWhereUniqueInput
+  }
+
+  /**
+   * WarnThreshold updateMany
+   */
+  export type WarnThresholdUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WarnThresholds.
+     */
+    data: XOR<WarnThresholdUpdateManyMutationInput, WarnThresholdUncheckedUpdateManyInput>
+    /**
+     * Filter which WarnThresholds to update
+     */
+    where?: WarnThresholdWhereInput
+    /**
+     * Limit how many WarnThresholds to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WarnThreshold updateManyAndReturn
+   */
+  export type WarnThresholdUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+    /**
+     * The data used to update WarnThresholds.
+     */
+    data: XOR<WarnThresholdUpdateManyMutationInput, WarnThresholdUncheckedUpdateManyInput>
+    /**
+     * Filter which WarnThresholds to update
+     */
+    where?: WarnThresholdWhereInput
+    /**
+     * Limit how many WarnThresholds to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WarnThreshold upsert
+   */
+  export type WarnThresholdUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+    /**
+     * The filter to search for the WarnThreshold to update in case it exists.
+     */
+    where: WarnThresholdWhereUniqueInput
+    /**
+     * In case the WarnThreshold found by the `where` argument doesn't exist, create a new WarnThreshold with this data.
+     */
+    create: XOR<WarnThresholdCreateInput, WarnThresholdUncheckedCreateInput>
+    /**
+     * In case the WarnThreshold was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WarnThresholdUpdateInput, WarnThresholdUncheckedUpdateInput>
+  }
+
+  /**
+   * WarnThreshold delete
+   */
+  export type WarnThresholdDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+    /**
+     * Filter which WarnThreshold to delete.
+     */
+    where: WarnThresholdWhereUniqueInput
+  }
+
+  /**
+   * WarnThreshold deleteMany
+   */
+  export type WarnThresholdDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WarnThresholds to delete
+     */
+    where?: WarnThresholdWhereInput
+    /**
+     * Limit how many WarnThresholds to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WarnThreshold without action
+   */
+  export type WarnThresholdDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WarnThreshold
+     */
+    select?: WarnThresholdSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WarnThreshold
+     */
+    omit?: WarnThresholdOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -25486,6 +27882,9 @@ export namespace Prisma {
     verificationReviewChannelId: 'verificationReviewChannelId',
     verifiedRoleId: 'verifiedRoleId',
     messageLogChannelId: 'messageLogChannelId',
+    modLogChannelId: 'modLogChannelId',
+    modRoleId: 'modRoleId',
+    antispamEnabled: 'antispamEnabled',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -25732,6 +28131,35 @@ export namespace Prisma {
   export type LevelRoleScalarFieldEnum = (typeof LevelRoleScalarFieldEnum)[keyof typeof LevelRoleScalarFieldEnum]
 
 
+  export const ModCaseScalarFieldEnum: {
+    id: 'id',
+    guildId: 'guildId',
+    userId: 'userId',
+    moderatorId: 'moderatorId',
+    caseNumber: 'caseNumber',
+    type: 'type',
+    reason: 'reason',
+    duration: 'duration',
+    active: 'active',
+    messageCount: 'messageCount',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ModCaseScalarFieldEnum = (typeof ModCaseScalarFieldEnum)[keyof typeof ModCaseScalarFieldEnum]
+
+
+  export const WarnThresholdScalarFieldEnum: {
+    id: 'id',
+    guildId: 'guildId',
+    warnCount: 'warnCount',
+    action: 'action',
+    duration: 'duration'
+  };
+
+  export type WarnThresholdScalarFieldEnum = (typeof WarnThresholdScalarFieldEnum)[keyof typeof WarnThresholdScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -25775,6 +28203,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -25782,9 +28217,9 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Boolean'
+   * Reference to a field of type 'BigInt'
    */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+  export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
     
   /**
    * Deep Input Types
@@ -26065,6 +28500,9 @@ export namespace Prisma {
     verificationReviewChannelId?: StringNullableFilter<"GuildConfig"> | string | null
     verifiedRoleId?: StringNullableFilter<"GuildConfig"> | string | null
     messageLogChannelId?: StringNullableFilter<"GuildConfig"> | string | null
+    modLogChannelId?: StringNullableFilter<"GuildConfig"> | string | null
+    modRoleId?: StringNullableFilter<"GuildConfig"> | string | null
+    antispamEnabled?: BoolFilter<"GuildConfig"> | boolean
     createdAt?: DateTimeFilter<"GuildConfig"> | Date | string
     updatedAt?: DateTimeFilter<"GuildConfig"> | Date | string
     guild?: XOR<GuildScalarRelationFilter, GuildWhereInput>
@@ -26083,6 +28521,9 @@ export namespace Prisma {
     verificationReviewChannelId?: SortOrderInput | SortOrder
     verifiedRoleId?: SortOrderInput | SortOrder
     messageLogChannelId?: SortOrderInput | SortOrder
+    modLogChannelId?: SortOrderInput | SortOrder
+    modRoleId?: SortOrderInput | SortOrder
+    antispamEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     guild?: GuildOrderByWithRelationInput
@@ -26104,6 +28545,9 @@ export namespace Prisma {
     verificationReviewChannelId?: StringNullableFilter<"GuildConfig"> | string | null
     verifiedRoleId?: StringNullableFilter<"GuildConfig"> | string | null
     messageLogChannelId?: StringNullableFilter<"GuildConfig"> | string | null
+    modLogChannelId?: StringNullableFilter<"GuildConfig"> | string | null
+    modRoleId?: StringNullableFilter<"GuildConfig"> | string | null
+    antispamEnabled?: BoolFilter<"GuildConfig"> | boolean
     createdAt?: DateTimeFilter<"GuildConfig"> | Date | string
     updatedAt?: DateTimeFilter<"GuildConfig"> | Date | string
     guild?: XOR<GuildScalarRelationFilter, GuildWhereInput>
@@ -26122,6 +28566,9 @@ export namespace Prisma {
     verificationReviewChannelId?: SortOrderInput | SortOrder
     verifiedRoleId?: SortOrderInput | SortOrder
     messageLogChannelId?: SortOrderInput | SortOrder
+    modLogChannelId?: SortOrderInput | SortOrder
+    modRoleId?: SortOrderInput | SortOrder
+    antispamEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: GuildConfigCountOrderByAggregateInput
@@ -26147,6 +28594,9 @@ export namespace Prisma {
     verificationReviewChannelId?: StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
     verifiedRoleId?: StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
     messageLogChannelId?: StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
+    modLogChannelId?: StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
+    modRoleId?: StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
+    antispamEnabled?: BoolWithAggregatesFilter<"GuildConfig"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"GuildConfig"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"GuildConfig"> | Date | string
   }
@@ -27358,6 +29808,150 @@ export namespace Prisma {
     roleId?: StringWithAggregatesFilter<"LevelRole"> | string
   }
 
+  export type ModCaseWhereInput = {
+    AND?: ModCaseWhereInput | ModCaseWhereInput[]
+    OR?: ModCaseWhereInput[]
+    NOT?: ModCaseWhereInput | ModCaseWhereInput[]
+    id?: IntFilter<"ModCase"> | number
+    guildId?: StringFilter<"ModCase"> | string
+    userId?: StringFilter<"ModCase"> | string
+    moderatorId?: StringFilter<"ModCase"> | string
+    caseNumber?: IntFilter<"ModCase"> | number
+    type?: StringFilter<"ModCase"> | string
+    reason?: StringNullableFilter<"ModCase"> | string | null
+    duration?: BigIntNullableFilter<"ModCase"> | bigint | number | null
+    active?: BoolFilter<"ModCase"> | boolean
+    messageCount?: IntNullableFilter<"ModCase"> | number | null
+    createdAt?: DateTimeFilter<"ModCase"> | Date | string
+    updatedAt?: DateTimeFilter<"ModCase"> | Date | string
+  }
+
+  export type ModCaseOrderByWithRelationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    userId?: SortOrder
+    moderatorId?: SortOrder
+    caseNumber?: SortOrder
+    type?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    duration?: SortOrderInput | SortOrder
+    active?: SortOrder
+    messageCount?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ModCaseWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    AND?: ModCaseWhereInput | ModCaseWhereInput[]
+    OR?: ModCaseWhereInput[]
+    NOT?: ModCaseWhereInput | ModCaseWhereInput[]
+    guildId?: StringFilter<"ModCase"> | string
+    userId?: StringFilter<"ModCase"> | string
+    moderatorId?: StringFilter<"ModCase"> | string
+    caseNumber?: IntFilter<"ModCase"> | number
+    type?: StringFilter<"ModCase"> | string
+    reason?: StringNullableFilter<"ModCase"> | string | null
+    duration?: BigIntNullableFilter<"ModCase"> | bigint | number | null
+    active?: BoolFilter<"ModCase"> | boolean
+    messageCount?: IntNullableFilter<"ModCase"> | number | null
+    createdAt?: DateTimeFilter<"ModCase"> | Date | string
+    updatedAt?: DateTimeFilter<"ModCase"> | Date | string
+  }, "id">
+
+  export type ModCaseOrderByWithAggregationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    userId?: SortOrder
+    moderatorId?: SortOrder
+    caseNumber?: SortOrder
+    type?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    duration?: SortOrderInput | SortOrder
+    active?: SortOrder
+    messageCount?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ModCaseCountOrderByAggregateInput
+    _avg?: ModCaseAvgOrderByAggregateInput
+    _max?: ModCaseMaxOrderByAggregateInput
+    _min?: ModCaseMinOrderByAggregateInput
+    _sum?: ModCaseSumOrderByAggregateInput
+  }
+
+  export type ModCaseScalarWhereWithAggregatesInput = {
+    AND?: ModCaseScalarWhereWithAggregatesInput | ModCaseScalarWhereWithAggregatesInput[]
+    OR?: ModCaseScalarWhereWithAggregatesInput[]
+    NOT?: ModCaseScalarWhereWithAggregatesInput | ModCaseScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"ModCase"> | number
+    guildId?: StringWithAggregatesFilter<"ModCase"> | string
+    userId?: StringWithAggregatesFilter<"ModCase"> | string
+    moderatorId?: StringWithAggregatesFilter<"ModCase"> | string
+    caseNumber?: IntWithAggregatesFilter<"ModCase"> | number
+    type?: StringWithAggregatesFilter<"ModCase"> | string
+    reason?: StringNullableWithAggregatesFilter<"ModCase"> | string | null
+    duration?: BigIntNullableWithAggregatesFilter<"ModCase"> | bigint | number | null
+    active?: BoolWithAggregatesFilter<"ModCase"> | boolean
+    messageCount?: IntNullableWithAggregatesFilter<"ModCase"> | number | null
+    createdAt?: DateTimeWithAggregatesFilter<"ModCase"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ModCase"> | Date | string
+  }
+
+  export type WarnThresholdWhereInput = {
+    AND?: WarnThresholdWhereInput | WarnThresholdWhereInput[]
+    OR?: WarnThresholdWhereInput[]
+    NOT?: WarnThresholdWhereInput | WarnThresholdWhereInput[]
+    id?: IntFilter<"WarnThreshold"> | number
+    guildId?: StringFilter<"WarnThreshold"> | string
+    warnCount?: IntFilter<"WarnThreshold"> | number
+    action?: StringFilter<"WarnThreshold"> | string
+    duration?: BigIntNullableFilter<"WarnThreshold"> | bigint | number | null
+  }
+
+  export type WarnThresholdOrderByWithRelationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    warnCount?: SortOrder
+    action?: SortOrder
+    duration?: SortOrderInput | SortOrder
+  }
+
+  export type WarnThresholdWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    guildId_warnCount?: WarnThresholdGuildIdWarnCountCompoundUniqueInput
+    AND?: WarnThresholdWhereInput | WarnThresholdWhereInput[]
+    OR?: WarnThresholdWhereInput[]
+    NOT?: WarnThresholdWhereInput | WarnThresholdWhereInput[]
+    guildId?: StringFilter<"WarnThreshold"> | string
+    warnCount?: IntFilter<"WarnThreshold"> | number
+    action?: StringFilter<"WarnThreshold"> | string
+    duration?: BigIntNullableFilter<"WarnThreshold"> | bigint | number | null
+  }, "id" | "guildId_warnCount">
+
+  export type WarnThresholdOrderByWithAggregationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    warnCount?: SortOrder
+    action?: SortOrder
+    duration?: SortOrderInput | SortOrder
+    _count?: WarnThresholdCountOrderByAggregateInput
+    _avg?: WarnThresholdAvgOrderByAggregateInput
+    _max?: WarnThresholdMaxOrderByAggregateInput
+    _min?: WarnThresholdMinOrderByAggregateInput
+    _sum?: WarnThresholdSumOrderByAggregateInput
+  }
+
+  export type WarnThresholdScalarWhereWithAggregatesInput = {
+    AND?: WarnThresholdScalarWhereWithAggregatesInput | WarnThresholdScalarWhereWithAggregatesInput[]
+    OR?: WarnThresholdScalarWhereWithAggregatesInput[]
+    NOT?: WarnThresholdScalarWhereWithAggregatesInput | WarnThresholdScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"WarnThreshold"> | number
+    guildId?: StringWithAggregatesFilter<"WarnThreshold"> | string
+    warnCount?: IntWithAggregatesFilter<"WarnThreshold"> | number
+    action?: StringWithAggregatesFilter<"WarnThreshold"> | string
+    duration?: BigIntNullableWithAggregatesFilter<"WarnThreshold"> | bigint | number | null
+  }
+
   export type tipoClaseCreateInput = {
     rolId: string
     guildId: string
@@ -27636,6 +30230,9 @@ export namespace Prisma {
     verificationReviewChannelId?: string | null
     verifiedRoleId?: string | null
     messageLogChannelId?: string | null
+    modLogChannelId?: string | null
+    modRoleId?: string | null
+    antispamEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     guild: GuildCreateNestedOneWithoutGuildConfigsInput
@@ -27654,6 +30251,9 @@ export namespace Prisma {
     verificationReviewChannelId?: string | null
     verifiedRoleId?: string | null
     messageLogChannelId?: string | null
+    modLogChannelId?: string | null
+    modRoleId?: string | null
+    antispamEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -27669,6 +30269,9 @@ export namespace Prisma {
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
     messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    antispamEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     guild?: GuildUpdateOneRequiredWithoutGuildConfigsNestedInput
@@ -27687,6 +30290,9 @@ export namespace Prisma {
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
     messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    antispamEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27704,6 +30310,9 @@ export namespace Prisma {
     verificationReviewChannelId?: string | null
     verifiedRoleId?: string | null
     messageLogChannelId?: string | null
+    modLogChannelId?: string | null
+    modRoleId?: string | null
+    antispamEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -27719,6 +30328,9 @@ export namespace Prisma {
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
     messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    antispamEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27736,6 +30348,9 @@ export namespace Prisma {
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
     messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    antispamEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -29074,6 +31689,161 @@ export namespace Prisma {
     roleId?: StringFieldUpdateOperationsInput | string
   }
 
+  export type ModCaseCreateInput = {
+    guildId: string
+    userId: string
+    moderatorId: string
+    caseNumber: number
+    type: string
+    reason?: string | null
+    duration?: bigint | number | null
+    active?: boolean
+    messageCount?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ModCaseUncheckedCreateInput = {
+    id?: number
+    guildId: string
+    userId: string
+    moderatorId: string
+    caseNumber: number
+    type: string
+    reason?: string | null
+    duration?: bigint | number | null
+    active?: boolean
+    messageCount?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ModCaseUpdateInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    moderatorId?: StringFieldUpdateOperationsInput | string
+    caseNumber?: IntFieldUpdateOperationsInput | number
+    type?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    duration?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    messageCount?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModCaseUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    moderatorId?: StringFieldUpdateOperationsInput | string
+    caseNumber?: IntFieldUpdateOperationsInput | number
+    type?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    duration?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    messageCount?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModCaseCreateManyInput = {
+    id?: number
+    guildId: string
+    userId: string
+    moderatorId: string
+    caseNumber: number
+    type: string
+    reason?: string | null
+    duration?: bigint | number | null
+    active?: boolean
+    messageCount?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ModCaseUpdateManyMutationInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    moderatorId?: StringFieldUpdateOperationsInput | string
+    caseNumber?: IntFieldUpdateOperationsInput | number
+    type?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    duration?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    messageCount?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModCaseUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    moderatorId?: StringFieldUpdateOperationsInput | string
+    caseNumber?: IntFieldUpdateOperationsInput | number
+    type?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    duration?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    messageCount?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WarnThresholdCreateInput = {
+    guildId: string
+    warnCount: number
+    action: string
+    duration?: bigint | number | null
+  }
+
+  export type WarnThresholdUncheckedCreateInput = {
+    id?: number
+    guildId: string
+    warnCount: number
+    action: string
+    duration?: bigint | number | null
+  }
+
+  export type WarnThresholdUpdateInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    warnCount?: IntFieldUpdateOperationsInput | number
+    action?: StringFieldUpdateOperationsInput | string
+    duration?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  }
+
+  export type WarnThresholdUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    warnCount?: IntFieldUpdateOperationsInput | number
+    action?: StringFieldUpdateOperationsInput | string
+    duration?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  }
+
+  export type WarnThresholdCreateManyInput = {
+    id?: number
+    guildId: string
+    warnCount: number
+    action: string
+    duration?: bigint | number | null
+  }
+
+  export type WarnThresholdUpdateManyMutationInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    warnCount?: IntFieldUpdateOperationsInput | number
+    action?: StringFieldUpdateOperationsInput | string
+    duration?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  }
+
+  export type WarnThresholdUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    warnCount?: IntFieldUpdateOperationsInput | number
+    action?: StringFieldUpdateOperationsInput | string
+    duration?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -29394,6 +32164,11 @@ export namespace Prisma {
     _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type GuildScalarRelationFilter = {
     is?: GuildWhereInput
     isNot?: GuildWhereInput
@@ -29412,6 +32187,9 @@ export namespace Prisma {
     verificationReviewChannelId?: SortOrder
     verifiedRoleId?: SortOrder
     messageLogChannelId?: SortOrder
+    modLogChannelId?: SortOrder
+    modRoleId?: SortOrder
+    antispamEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -29433,6 +32211,9 @@ export namespace Prisma {
     verificationReviewChannelId?: SortOrder
     verifiedRoleId?: SortOrder
     messageLogChannelId?: SortOrder
+    modLogChannelId?: SortOrder
+    modRoleId?: SortOrder
+    antispamEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -29450,12 +32231,23 @@ export namespace Prisma {
     verificationReviewChannelId?: SortOrder
     verifiedRoleId?: SortOrder
     messageLogChannelId?: SortOrder
+    modLogChannelId?: SortOrder
+    modRoleId?: SortOrder
+    antispamEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type GuildConfigSumOrderByAggregateInput = {
     id?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type FloatFilter<$PrismaModel = never> = {
@@ -29467,11 +32259,6 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
-  }
-
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type DateTimeNullableFilter<$PrismaModel = never> = {
@@ -29579,14 +32366,6 @@ export namespace Prisma {
     _sum?: NestedFloatFilter<$PrismaModel>
     _min?: NestedFloatFilter<$PrismaModel>
     _max?: NestedFloatFilter<$PrismaModel>
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -30386,6 +33165,133 @@ export namespace Prisma {
     level?: SortOrder
   }
 
+  export type BigIntNullableFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel> | null
+    in?: bigint[] | number[] | null
+    notIn?: bigint[] | number[] | null
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntNullableFilter<$PrismaModel> | bigint | number | null
+  }
+
+  export type ModCaseCountOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    userId?: SortOrder
+    moderatorId?: SortOrder
+    caseNumber?: SortOrder
+    type?: SortOrder
+    reason?: SortOrder
+    duration?: SortOrder
+    active?: SortOrder
+    messageCount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ModCaseAvgOrderByAggregateInput = {
+    id?: SortOrder
+    caseNumber?: SortOrder
+    duration?: SortOrder
+    messageCount?: SortOrder
+  }
+
+  export type ModCaseMaxOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    userId?: SortOrder
+    moderatorId?: SortOrder
+    caseNumber?: SortOrder
+    type?: SortOrder
+    reason?: SortOrder
+    duration?: SortOrder
+    active?: SortOrder
+    messageCount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ModCaseMinOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    userId?: SortOrder
+    moderatorId?: SortOrder
+    caseNumber?: SortOrder
+    type?: SortOrder
+    reason?: SortOrder
+    duration?: SortOrder
+    active?: SortOrder
+    messageCount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ModCaseSumOrderByAggregateInput = {
+    id?: SortOrder
+    caseNumber?: SortOrder
+    duration?: SortOrder
+    messageCount?: SortOrder
+  }
+
+  export type BigIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel> | null
+    in?: bigint[] | number[] | null
+    notIn?: bigint[] | number[] | null
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntNullableWithAggregatesFilter<$PrismaModel> | bigint | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedBigIntNullableFilter<$PrismaModel>
+    _min?: NestedBigIntNullableFilter<$PrismaModel>
+    _max?: NestedBigIntNullableFilter<$PrismaModel>
+  }
+
+  export type WarnThresholdGuildIdWarnCountCompoundUniqueInput = {
+    guildId: string
+    warnCount: number
+  }
+
+  export type WarnThresholdCountOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    warnCount?: SortOrder
+    action?: SortOrder
+    duration?: SortOrder
+  }
+
+  export type WarnThresholdAvgOrderByAggregateInput = {
+    id?: SortOrder
+    warnCount?: SortOrder
+    duration?: SortOrder
+  }
+
+  export type WarnThresholdMaxOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    warnCount?: SortOrder
+    action?: SortOrder
+    duration?: SortOrder
+  }
+
+  export type WarnThresholdMinOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    warnCount?: SortOrder
+    action?: SortOrder
+    duration?: SortOrder
+  }
+
+  export type WarnThresholdSumOrderByAggregateInput = {
+    id?: SortOrder
+    warnCount?: SortOrder
+    duration?: SortOrder
+  }
+
   export type classesCreateNestedManyWithoutTipoInput = {
     create?: XOR<classesCreateWithoutTipoInput, classesUncheckedCreateWithoutTipoInput> | classesCreateWithoutTipoInput[] | classesUncheckedCreateWithoutTipoInput[]
     connectOrCreate?: classesCreateOrConnectWithoutTipoInput | classesCreateOrConnectWithoutTipoInput[]
@@ -30564,6 +33470,10 @@ export namespace Prisma {
     connect?: GuildWhereUniqueInput
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type GuildUpdateOneRequiredWithoutGuildConfigsNestedInput = {
     create?: XOR<GuildCreateWithoutGuildConfigsInput, GuildUncheckedCreateWithoutGuildConfigsInput>
     connectOrCreate?: GuildCreateOrConnectWithoutGuildConfigsInput
@@ -30592,10 +33502,6 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
   }
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -30824,6 +33730,14 @@ export namespace Prisma {
     update?: XOR<XOR<MusicQueueUpdateToOneWithWhereWithoutItemsInput, MusicQueueUpdateWithoutItemsInput>, MusicQueueUncheckedUpdateWithoutItemsInput>
   }
 
+  export type NullableBigIntFieldUpdateOperationsInput = {
+    set?: bigint | number | null
+    increment?: bigint | number
+    decrement?: bigint | number
+    multiply?: bigint | number
+    divide?: bigint | number
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -30992,6 +33906,14 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | null
@@ -31017,14 +33939,6 @@ export namespace Prisma {
     _sum?: NestedFloatFilter<$PrismaModel>
     _min?: NestedFloatFilter<$PrismaModel>
     _max?: NestedFloatFilter<$PrismaModel>
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -31068,6 +33982,33 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedBoolNullableFilter<$PrismaModel>
     _max?: NestedBoolNullableFilter<$PrismaModel>
+  }
+
+  export type NestedBigIntNullableFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel> | null
+    in?: bigint[] | number[] | null
+    notIn?: bigint[] | number[] | null
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntNullableFilter<$PrismaModel> | bigint | number | null
+  }
+
+  export type NestedBigIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel> | null
+    in?: bigint[] | number[] | null
+    notIn?: bigint[] | number[] | null
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntNullableWithAggregatesFilter<$PrismaModel> | bigint | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedBigIntNullableFilter<$PrismaModel>
+    _min?: NestedBigIntNullableFilter<$PrismaModel>
+    _max?: NestedBigIntNullableFilter<$PrismaModel>
   }
 
   export type classesCreateWithoutTipoInput = {
@@ -31283,6 +34224,9 @@ export namespace Prisma {
     verificationReviewChannelId?: string | null
     verifiedRoleId?: string | null
     messageLogChannelId?: string | null
+    modLogChannelId?: string | null
+    modRoleId?: string | null
+    antispamEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -31299,6 +34243,9 @@ export namespace Prisma {
     verificationReviewChannelId?: string | null
     verifiedRoleId?: string | null
     messageLogChannelId?: string | null
+    modLogChannelId?: string | null
+    modRoleId?: string | null
+    antispamEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -31330,6 +34277,9 @@ export namespace Prisma {
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
     messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    antispamEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -31346,6 +34296,9 @@ export namespace Prisma {
     verificationReviewChannelId?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedRoleId?: NullableStringFieldUpdateOperationsInput | string | null
     messageLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modLogChannelId?: NullableStringFieldUpdateOperationsInput | string | null
+    modRoleId?: NullableStringFieldUpdateOperationsInput | string | null
+    antispamEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
