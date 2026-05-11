@@ -59,6 +59,8 @@ export const ANTI_SPAM_KEYS = {
     `cb:antispam:${guildId}:${userId}:links`,
   userLevel: (guildId: string, userId: string) =>
     `cb:antispam:${guildId}:${userId}:level`,
+  userDuplicates: (guildId: string, userId: string, hash: string) =>
+    `cb:antispam:${guildId}:${userId}:dup:${hash}`,
 } as const;
 
 // TTL constants (in seconds) - use simple object for numeric values

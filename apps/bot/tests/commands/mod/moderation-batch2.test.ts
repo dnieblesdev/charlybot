@@ -395,6 +395,8 @@ describe("/mod reason", () => {
     vi.clearAllMocks();
     mockModCaseFindByGuildAndCaseNumber.mockResolvedValue(MOCK_CASE);
     mockModCaseUpdateReason.mockResolvedValue(MOCK_CASE);
+    mockCanModerate.mockResolvedValue({ allowed: true });
+    mockLogModAction.mockResolvedValue(undefined);
   });
 
   it("should update reason successfully", async () => {
@@ -407,8 +409,10 @@ describe("/mod reason", () => {
     await reasonHandler(interaction);
 
     expect(interaction.deferReply).toHaveBeenCalled();
+    expect(mockCanModerate).toHaveBeenCalled();
     expect(mockModCaseFindByGuildAndCaseNumber).toHaveBeenCalledWith("guild-1", 42);
     expect(mockModCaseUpdateReason).toHaveBeenCalledWith(1, "Nueva razón");
+    expect(mockLogModAction).toHaveBeenCalled();
     expect(interaction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({ content: expect.stringContaining("actualizada") }),
     );
@@ -426,6 +430,21 @@ describe("/mod reason", () => {
 
     expect(interaction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({ content: expect.stringContaining("No se encontró") }),
+    );
+    expect(mockModCaseUpdateReason).not.toHaveBeenCalled();
+  });
+
+  it("should reject when user cannot moderate", async () => {
+    mockCanModerate.mockResolvedValue({ allowed: false, reason: "No tenés permisos" });
+
+    const interaction = createMockInteraction({
+      options: { optionMap: { id: 42, razon: "Nueva razón" } },
+    });
+
+    await reasonHandler(interaction);
+
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining("permisos") }),
     );
     expect(mockModCaseUpdateReason).not.toHaveBeenCalled();
   });

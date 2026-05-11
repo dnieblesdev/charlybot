@@ -5,6 +5,10 @@ import { getGuildConfig } from "../../config/repositories/GuildConfigRepo.ts";
 import * as XPRepo from "../../config/repositories/XPRepo";
 import logger from "../../utils/logger.ts";
 import { isValidImageAttachment } from "../../utils/attachmentValidator.ts";
+import { AntiSpamService, SpamLevel } from "../services/AntiSpamService.ts";
+import * as ModCaseRepository from "../../config/repositories/modCaseRepository.ts";
+import { logModAction } from "../services/ModLogService.ts";
+import { getValkeyClient } from "../../infrastructure/valkey/index.ts";
 
 export default {
   name: Events.MessageCreate,
@@ -12,6 +16,106 @@ export default {
     if (message.author.bot) return;
     const guildId = message.guild?.id;
     if (!guildId) return;
+
+    // ========== ANTI-SPAM CHECK ==========
+    try {
+      const guildConfig = await getGuildConfig(guildId);
+      // antispamEnabled is true by default (null/undefined means enabled)
+      if (guildConfig?.antispamEnabled !== false) {
+        const valkey = getValkeyClient();
+        const antiSpam = new AntiSpamService(valkey);
+        const spamResult = await antiSpam.evaluate(message);
+
+        if (spamResult.isSpam) {
+          // Delete the spam message
+          await message.delete().catch(() => {
+            logger.debug("Failed to delete spam message", {
+              messageId: message.id,
+              guildId,
+              userId: message.author.id,
+            });
+          });
+
+          // Escalar acción según nivel
+          const member = message.member;
+          if (member) {
+            let modCase;
+            switch (spamResult.level) {
+              case SpamLevel.WARNING:
+                modCase = await ModCaseRepository.create({
+                  guildId,
+                  userId: message.author.id,
+                  moderatorId: "SYSTEM",
+                  type: "warn",
+                  reason: `[Auto-mod] ${spamResult.reason}`,
+                });
+                break;
+              case SpamLevel.MUTE_5MIN:
+                await member.timeout(5 * 60 * 1000, spamResult.reason);
+                modCase = await ModCaseRepository.create({
+                  guildId,
+                  userId: message.author.id,
+                  moderatorId: "SYSTEM",
+                  type: "timeout",
+                  reason: `[Auto-mod] ${spamResult.reason}`,
+                  duration: BigInt(5 * 60 * 1000),
+                });
+                break;
+              case SpamLevel.MUTE_30MIN:
+                await member.timeout(30 * 60 * 1000, spamResult.reason);
+                modCase = await ModCaseRepository.create({
+                  guildId,
+                  userId: message.author.id,
+                  moderatorId: "SYSTEM",
+                  type: "timeout",
+                  reason: `[Auto-mod] ${spamResult.reason}`,
+                  duration: BigInt(30 * 60 * 1000),
+                });
+                break;
+              case SpamLevel.KICK:
+                await member.kick(spamResult.reason);
+                modCase = await ModCaseRepository.create({
+                  guildId,
+                  userId: message.author.id,
+                  moderatorId: "SYSTEM",
+                  type: "kick",
+                  reason: `[Auto-mod] ${spamResult.reason}`,
+                });
+                break;
+            }
+
+            // Log action if we created a ModCase
+            if (modCase) {
+              await logModAction(
+                message.client,
+                guildId,
+                modCase,
+                "AutoMod",
+                message.author.username,
+              );
+            }
+          }
+
+          logger.info("Auto-mod action taken", {
+            level: spamResult.level,
+            reason: spamResult.reason,
+            guildId,
+            userId: message.author.id,
+          });
+
+          // Don't continue to XP tracking for spam messages
+          return;
+        }
+      }
+    } catch (err) {
+      // Fail-open: log error but don't block the message
+      logger.error("Anti-spam check failed, failing open", {
+        error: err instanceof Error ? err.message : String(err),
+        guildId,
+        userId: message.author.id,
+      });
+    }
+    // ========== END ANTI-SPAM ==========
 
     // ========== XP TRACKING (independiente de imágenes) ==========
     // No contar como XP mensajes de interacciones (comandos slash)

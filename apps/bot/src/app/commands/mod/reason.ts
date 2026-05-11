@@ -1,6 +1,8 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 import { MessageFlags } from "discord.js";
 
+import { canModerate } from "../../services/ModGuardService.js";
+import { logModAction } from "../../services/ModLogService.js";
 import * as ModCaseRepository from "../../../config/repositories/modCaseRepository.js";
 import logger from "../../../utils/logger.js";
 
@@ -12,6 +14,13 @@ export default async function reason(interaction: ChatInputCommandInteraction) {
       await interaction.editReply({
         content: "❌ Este comando solo puede usarse en un servidor.",
       });
+      return;
+    }
+
+    // Guard: canModerate
+    const guardResult = await canModerate(interaction);
+    if (!guardResult.allowed) {
+      await interaction.editReply({ content: `❌ ${guardResult.reason}` });
       return;
     }
 
@@ -35,6 +44,14 @@ export default async function reason(interaction: ChatInputCommandInteraction) {
     }
 
     await ModCaseRepository.updateReason(modCase.id, newReason);
+
+    // Audit trail: log the reason update
+    const refreshedCase = await ModCaseRepository.findByGuildAndCaseNumber(interaction.guildId, caseNumber);
+    if (refreshedCase) {
+      const moderatorTag = interaction.user.tag;
+      const userTag = refreshedCase.userId;
+      await logModAction(interaction.client, interaction.guildId, refreshedCase, moderatorTag, userTag);
+    }
 
     await interaction.editReply({
       content: `✅ Razón del caso #${caseNumber} actualizada.`,

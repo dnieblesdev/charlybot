@@ -323,7 +323,7 @@ model ModCase {
   updatedAt    DateTime @updatedAt
 
   @@index([guildId, userId])
-  @@index([guildId, caseNumber])
+  @@unique([guildId, caseNumber])
 }
 
 model WarnThreshold {

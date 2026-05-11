@@ -70,6 +70,13 @@ vi.mock("@charlybot/shared", async (importOriginal) => {
         update: vi.fn(),
         deleteMany: vi.fn(),
       },
+      modCase: {
+        count: vi.fn(() => Promise.resolve(0)),
+        create: vi.fn(),
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+        update: vi.fn(),
+      },
       $transaction: vi.fn((cb) => cb()),
     },
   };
