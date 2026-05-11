@@ -42,6 +42,8 @@ export async function getGuildConfig(guildId: string): Promise<IGuildConfig | nu
     verificationReviewChannelId: config.verificationReviewChannelId ?? undefined,
     verifiedRoleId: config.verifiedRoleId ?? undefined,
     messageLogChannelId: config.messageLogChannelId ?? undefined,
+    modLogChannelId: config.modLogChannelId ?? undefined,
+    modRoleId: config.modRoleId ?? undefined,
   };
 
   await valkey.set<IGuildConfig>(key, result, CACHE_TTL_CONFIG / 1000);
@@ -346,6 +348,8 @@ export async function getAllGuildConfigs(): Promise<IGuildConfig[]> {
     verificationReviewChannelId: config.verificationReviewChannelId ?? undefined,
     verifiedRoleId: config.verifiedRoleId ?? undefined,
     messageLogChannelId: config.messageLogChannelId ?? undefined,
+    modLogChannelId: config.modLogChannelId ?? undefined,
+    modRoleId: config.modRoleId ?? undefined,
   }));
 }
 
