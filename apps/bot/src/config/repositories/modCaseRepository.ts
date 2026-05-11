@@ -17,22 +17,24 @@ export interface CreateModCaseData {
  * Calcula caseNumber automáticamente como countByGuild(guildId) + 1.
  */
 export async function create(data: CreateModCaseData): Promise<IModCase> {
-  const count = await prisma.modCase.count({
-    where: { guildId: data.guildId },
-  });
+  const created = await prisma.$transaction(async (tx) => {
+    const count = await tx.modCase.count({
+      where: { guildId: data.guildId },
+    });
 
-  const created = await prisma.modCase.create({
-    data: {
-      guildId: data.guildId,
-      userId: data.userId,
-      moderatorId: data.moderatorId,
-      caseNumber: count + 1,
-      type: data.type,
-      reason: data.reason ?? null,
-      duration: data.duration ?? null,
-      messageCount: data.messageCount ?? null,
-      active: true,
-    },
+    return tx.modCase.create({
+      data: {
+        guildId: data.guildId,
+        userId: data.userId,
+        moderatorId: data.moderatorId,
+        caseNumber: count + 1,
+        type: data.type,
+        reason: data.reason ?? null,
+        duration: data.duration ?? null,
+        messageCount: data.messageCount ?? null,
+        active: true,
+      },
+    });
   });
 
   logger.info(`ModCase #${created.caseNumber} created`, {

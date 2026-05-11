@@ -1,11 +1,11 @@
-import { prisma } from "@charlybot/shared";
+import { prisma, KEYS } from "@charlybot/shared";
 import { getValkeyClient } from "../../infrastructure/valkey";
 import logger from "../../utils/logger";
 import type { IGuildConfig, Guild } from "@charlybot/shared";
 
 // Cache constants (inlined from deleted cacheConstants)
 const CACHE_TTL_CONFIG = 5 * 60 * 1000; // 5 minutes
-const makeCacheKey = (guildId: string) => `guildConfig:${guildId}`;
+const makeCacheKey = (guildId: string) => `${KEYS.GUILD_CONFIG}:${guildId}`;
 
 /**
  * Obtiene la configuración de un servidor

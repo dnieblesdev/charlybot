@@ -184,7 +184,7 @@ export class AntiSpamService {
     }
 
     // Simple hash: use the content itself as key (Valkey handles it)
-    const dupKey = `cb:antispam:${message.guildId}:${message.author.id}:dup:${this.hashContent(content)}`;
+    const dupKey = ANTI_SPAM_KEYS.userDuplicates(message.guildId!, message.author.id, this.hashContent(content));
 
     try {
       const exists = await this.valkey.get<string>(dupKey);

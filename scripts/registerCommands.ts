@@ -83,7 +83,10 @@ async function registerCommands() {
     context: "registerCommands",
     mode: MODE,
   });
-  console.log(`📂 Encontrados ${commandFiles.length} archivos de comandos`);
+  logger.info(`Encontrados ${commandFiles.length} archivos de comandos`, {
+    context: "registerCommands",
+    mode: MODE,
+  });
 
   for (const file of commandFiles) {
     try {
@@ -94,14 +97,17 @@ async function registerCommands() {
           context: "registerCommands",
           commandName: command.data.name,
         });
-        console.log(`✅ Cargado: ${file}`);
+        logger.info(`Cargado: ${file}`, { context: "registerCommands" });
       }
     } catch (error) {
       logger.error(`Error loading command file: ${file}`, {
         error: error instanceof Error ? error.message : String(error),
         context: "registerCommands",
       });
-      console.error(`❌ Error cargando ${file}:`, error);
+      logger.error(`Error cargando ${file}`, {
+        error: error instanceof Error ? error.message : String(error),
+        context: "registerCommands",
+      });
     }
   }
 
@@ -133,9 +139,10 @@ async function registerCommands() {
       context: "registerCommands",
       mode: MODE,
     });
-    console.log(
-      `\n🔄 Registrando ${commands.length} comandos en modo: ${MODE}\n`,
-    );
+    logger.info(`Registrando ${commands.length} comandos en modo: ${MODE}`, {
+      context: "registerCommands",
+      mode: MODE,
+    });
 
     if (MODE === "DEVELOPMENT") {
       // ========================================================================
@@ -166,7 +173,10 @@ async function registerCommands() {
         guildCount: mainGuilds.length,
       });
 
-      console.log("📍 Registrando en servidores principales (instantáneo):");
+        logger.info("Registrando en servidores principales (producción)", {
+          context: "registerCommands",
+          mode: "PRODUCTION",
+        });
 
       for (const guildId of mainGuilds) {
         try {
@@ -180,16 +190,21 @@ async function registerCommands() {
             commandCount: data.length,
             mode: "DEVELOPMENT",
           });
-          console.log(
-            `   ✅ Servidor ${guildId}: ${data.length} comandos registrados`,
-          );
+          logger.info(`Servidor ${guildId}: ${data.length} comandos registrados`, {
+            context: "registerCommands",
+            guildId,
+          });
         } catch (error) {
           logger.error(`Error registering commands to guild`, {
             error: error instanceof Error ? error.message : String(error),
             context: "registerCommands",
             guildId: guildId,
           });
-          console.error(`   ❌ Error en servidor ${guildId}:`, error);
+              logger.error(`Error en servidor ${guildId} (producción)`, {
+                error: error instanceof Error ? error.message : String(error),
+                context: "registerCommands",
+                guildId,
+              });
         }
       }
 
@@ -198,9 +213,10 @@ async function registerCommands() {
         mode: "DEVELOPMENT",
         guildCount: mainGuilds.length,
       });
-      console.log("\n✅ Registro completado exitosamente!");
-      console.log("   📍 Comandos disponibles solo en servidores principales");
-      console.log("   💡 Cambia MODE a 'PRODUCTION' para registro global");
+      logger.info("Registro completado exitosamente - servidores principales", {
+        context: "registerCommands",
+        mode: "DEVELOPMENT",
+      });
     } else if (MODE === "PRODUCTION") {
       // ========================================================================
       // MODO PRODUCCIÓN: Registro global + servidores principales
@@ -217,7 +233,10 @@ async function registerCommands() {
 
       // Registrar en servidores principales (instantáneo)
       if (mainGuilds.length > 0) {
-        console.log("📍 Registrando en servidores principales (instantáneo):");
+      logger.info("Registrando en servidores principales (instantáneo)", {
+        context: "registerCommands",
+        guildCount: mainGuilds.length,
+      });
 
         for (const guildId of mainGuilds) {
           try {
@@ -231,16 +250,21 @@ async function registerCommands() {
               commandCount: data.length,
               mode: "PRODUCTION",
             });
-            console.log(
-              `   ✅ Servidor ${guildId}: ${data.length} comandos registrados`,
-            );
+              logger.info(`Servidor ${guildId}: ${data.length} comandos registrados (producción)`, {
+                context: "registerCommands",
+                guildId,
+              });
           } catch (error) {
             logger.error(`Error registering commands to guild (production)`, {
               error: error instanceof Error ? error.message : String(error),
               context: "registerCommands",
               guildId: guildId,
             });
-            console.error(`   ❌ Error en servidor ${guildId}:`, error);
+          logger.error(`Error en servidor ${guildId}`, {
+            error: error instanceof Error ? error.message : String(error),
+            context: "registerCommands",
+            guildId,
+          });
           }
         }
       }
@@ -250,9 +274,10 @@ async function registerCommands() {
         context: "registerCommands",
         mode: "PRODUCTION",
       });
-      console.log(
-        "\n🌍 Registrando comandos globales (puede tardar hasta 1 hora)...",
-      );
+      logger.info("Registrando comandos globales (puede tardar hasta 1 hora)", {
+        context: "registerCommands",
+        mode: "PRODUCTION",
+      });
       const globalData = (await rest.put(Routes.applicationCommands(clientId), {
         body: commands,
       })) as any[];
@@ -261,18 +286,21 @@ async function registerCommands() {
         commandCount: globalData.length,
         mode: "PRODUCTION",
       });
-      console.log(`   ✅ Global: ${globalData.length} comandos registrados`);
+      logger.info(`Global: ${globalData.length} comandos registrados`, {
+        context: "registerCommands",
+        mode: "PRODUCTION",
+      });
 
       logger.info("Command registration completed successfully", {
         context: "registerCommands",
         mode: "PRODUCTION",
         guildCount: mainGuilds.length,
       });
-      console.log("\n✅ Registro completado exitosamente!");
-      console.log(
-        "   📍 Servidores principales: Comandos disponibles inmediatamente",
-      );
-      console.log("   🌍 Otros servidores: Comandos disponibles en ~1 hora");
+      logger.info("Registro completado exitosamente - producción", {
+        context: "registerCommands",
+        mode: "PRODUCTION",
+        guildCount: mainGuilds.length,
+      });
     } else {
       logger.error("Invalid MODE value", {
         context: "registerCommands",
@@ -288,7 +316,10 @@ async function registerCommands() {
       stack: error instanceof Error ? error.stack : undefined,
       context: "registerCommands",
     });
-    console.error("❌ Error registrando comandos:", error);
+    logger.error("Error registrando comandos", {
+      error: error instanceof Error ? error.message : String(error),
+      context: "registerCommands",
+    });
   }
 }
 
