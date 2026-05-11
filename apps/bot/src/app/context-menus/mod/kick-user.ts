@@ -10,16 +10,13 @@ import {
   canTargetModerator,
   canTargetSelf,
   canBotAct,
-} from "../../../services/ModGuardService.js";
-import { logModAction } from "../../../services/ModLogService.js";
-import * as ModCaseRepository from "../../../../config/repositories/modCaseRepository.js";
-import logger from "../../../../utils/logger.js";
-
-// Default timeout duration: 1 hour
-const DEFAULT_TIMEOUT_MS = 60 * 60 * 1000;
+} from "../../services/ModGuardService.js";
+import { logModAction } from "../../services/ModLogService.js";
+import * as ModCaseRepository from "../../../config/repositories/modCaseRepository.js";
+import logger from "../../../utils/logger.js";
 
 export const data = new ContextMenuCommandBuilder()
-  .setName("Timeout User")
+  .setName("Kick User")
   .setType(ApplicationCommandType.User);
 
 export async function execute(interaction: UserContextMenuCommandInteraction) {
@@ -67,19 +64,30 @@ export async function execute(interaction: UserContextMenuCommandInteraction) {
       return;
     }
 
-    // Execute timeout (1 hour default)
+    // Create ModCase first (guaranteed record even if Discord action fails)
     const reason = "Sin razón (context menu)";
-    await targetMember.timeout(DEFAULT_TIMEOUT_MS, reason);
-
-    // Create ModCase
     const modCase = await ModCaseRepository.create({
       guildId: interaction.guildId,
       userId: targetUser.id,
       moderatorId: interaction.user.id,
-      type: "timeout",
+      type: "kick",
       reason,
-      duration: BigInt(DEFAULT_TIMEOUT_MS),
     });
+
+    // DM the user before kicking
+    try {
+      await targetUser.send(
+        `Has sido expulsado de ${interaction.guild.name}: ${reason}`,
+      );
+    } catch {
+      logger.warn("Failed to send DM for context menu kick", {
+        userId: targetUser.id,
+        guildId: interaction.guildId,
+      });
+    }
+
+    // Execute kick
+    await targetMember.kick(reason);
 
     // Log action
     const modTag = modMember.user.username;
@@ -92,30 +100,18 @@ export async function execute(interaction: UserContextMenuCommandInteraction) {
       userTag,
     );
 
-    // DM the user
-    try {
-      await targetUser.send(
-        `Has sido silenciado en ${interaction.guild.name} por 1 hora: ${reason}`,
-      );
-    } catch {
-      logger.warn("Failed to send DM for context menu timeout", {
-        userId: targetUser.id,
-        guildId: interaction.guildId,
-      });
-    }
-
     await interaction.editReply({
-      content: `✅ ${userTag} silenciado por 1 hora. Case #${modCase.caseNumber}`,
+      content: `✅ ${userTag} expulsado. Case #${modCase.caseNumber}`,
     });
   } catch (error) {
-    logger.error("Error executing Timeout User context menu", {
+    logger.error("Error executing Kick User context menu", {
       error: error instanceof Error ? error.message : String(error),
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
 
     await interaction.editReply({
-      content: "❌ Error al ejecutar el timeout. Inténtalo de nuevo.",
+      content: "❌ Error al ejecutar el kick. Inténtalo de nuevo.",
     });
   }
 }

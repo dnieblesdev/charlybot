@@ -70,16 +70,16 @@ vi.mock("../../../src/utils/logger.js", () => ({
 // =============================================================================
 
 const { execute: executeWarn, data: dataWarn } = await import(
-  "../../../src/app/commands/context-menus/mod/warn-user.js"
+  "../../../src/app/context-menus/mod/warn-user.js"
 );
 const { execute: executeBan, data: dataBan } = await import(
-  "../../../src/app/commands/context-menus/mod/ban-user.js"
+  "../../../src/app/context-menus/mod/ban-user.js"
 );
 const { execute: executeKick, data: dataKick } = await import(
-  "../../../src/app/commands/context-menus/mod/kick-user.js"
+  "../../../src/app/context-menus/mod/kick-user.js"
 );
 const { execute: executeTimeout, data: dataTimeout } = await import(
-  "../../../src/app/commands/context-menus/mod/timeout-user.js"
+  "../../../src/app/context-menus/mod/timeout-user.js"
 );
 
 import type { UserContextMenuCommandInteraction, Guild, GuildMember, User, Client } from "discord.js";
@@ -133,7 +133,7 @@ function createMockContextInteraction(overrides?: {
     guildId,
     guild,
     targetUser,
-    client: {} as Client,
+    client: { user: { id: "bot-123" } } as Client,
     deferReply: vi.fn(() => Promise.resolve()),
     editReply: vi.fn(() => Promise.resolve()),
   } as unknown as UserContextMenuCommandInteraction;
@@ -141,7 +141,26 @@ function createMockContextInteraction(overrides?: {
 
 describe("Context Menu Commands", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    // Re-set default implementations after reset
+    mockCanModerate.mockImplementation(() => Promise.resolve({ allowed: true }));
+    mockCanTargetSelf.mockImplementation(() => ({ allowed: true }));
+    mockCanTargetModerator.mockImplementation(() => ({ allowed: true }));
+    mockCanBotAct.mockImplementation(() => ({ allowed: true }));
+    mockLogModAction.mockImplementation(() => Promise.resolve());
+    mockModCaseCreate.mockImplementation(() =>
+      Promise.resolve({
+        id: 1,
+        caseNumber: 1,
+        type: "warn",
+        reason: "Sin razón (context menu)",
+        guildId: "guild-123",
+        userId: "target-456",
+        moderatorId: "mod-789",
+        active: true,
+      }),
+    );
+    mockGetGuildConfig.mockImplementation(() => Promise.resolve(null));
   });
 
   describe("Warn User", () => {

@@ -11,59 +11,76 @@ export async function loadCommands(
 ): Promise<Collection<string, any>> {
   const commands: Collection<string, any> = new Collection();
   const commandsPath = path.join(__dirname, "commands");
+  const contextMenusPath = path.join(__dirname, "context-menus");
 
   try {
-    const entries = await readdir(commandsPath, { withFileTypes: true });
     const commandFiles: string[] = [];
 
-    // Buscar archivos .ts/.js directamente en commands/
-    for (const entry of entries) {
-      if (
-        entry.isFile() &&
-        (entry.name.endsWith(".ts") || entry.name.endsWith(".js"))
-      ) {
-        commandFiles.push(entry.name);
+    // Helper to discover command files in a directory
+    async function discoverInDir(
+      basePath: string,
+      baseDir: string,
+    ): Promise<void> {
+      let entries;
+      try {
+        entries = await readdir(basePath, { withFileTypes: true });
+      } catch {
+        return; // Directory doesn't exist, skip
       }
-      // Buscar carpetas: index.ts (slash commands) O archivos .ts sueltos (context menus)
-      else if (entry.isDirectory()) {
-        const subfolderPath = path.join(commandsPath, entry.name);
-        const subfolderEntries = await readdir(subfolderPath);
 
-        // Skip register/clear/debug folders
+      for (const entry of entries) {
         if (
-          entry.name === "register" ||
-          entry.name === "clear" ||
-          entry.name === "debug"
+          entry.isFile() &&
+          (entry.name.endsWith(".ts") || entry.name.endsWith(".js"))
         ) {
-          continue;
-        }
+          commandFiles.push(path.join(baseDir, entry.name));
+        } else if (entry.isDirectory()) {
+          const subfolderPath = path.join(basePath, entry.name);
 
-        if (
-          subfolderEntries.includes("index.ts") ||
-          subfolderEntries.includes("index.js")
-        ) {
-          const indexFile = subfolderEntries.includes("index.ts")
-            ? "index.ts"
-            : "index.js";
-          commandFiles.push(`${entry.name}/${indexFile}`);
-        } else {
-          // Also discover individual .ts files (e.g., context menus)
-          for (const subEntry of subfolderEntries) {
-            if (
-              subEntry.endsWith(".ts") ||
-              subEntry.endsWith(".js")
-            ) {
-              commandFiles.push(`${entry.name}/${subEntry}`);
+          if (
+            entry.name === "register" ||
+            entry.name === "clear" ||
+            entry.name === "debug"
+          ) {
+            continue;
+          }
+
+          let subfolderEntries;
+          try {
+            subfolderEntries = await readdir(subfolderPath);
+          } catch {
+            continue;
+          }
+
+          if (
+            subfolderEntries.includes("index.ts") ||
+            subfolderEntries.includes("index.js")
+          ) {
+            const indexFile = subfolderEntries.includes("index.ts")
+              ? "index.ts"
+              : "index.js";
+            commandFiles.push(path.join(baseDir, entry.name, indexFile));
+          } else {
+            // Also discover individual .ts files (e.g., context menus)
+            for (const subEntry of subfolderEntries) {
+              if (subEntry.endsWith(".ts") || subEntry.endsWith(".js")) {
+                commandFiles.push(
+                  path.join(baseDir, entry.name, subEntry),
+                );
+              }
             }
           }
         }
       }
     }
 
+    await discoverInDir(commandsPath, "commands");
+    await discoverInDir(contextMenusPath, "context-menus");
+
     console.log(`📋 Encontrados ${commandFiles.length} archivos de comandos`);
 
     for (const file of commandFiles) {
-      const filePath = path.join(commandsPath, file);
+      const filePath = path.join(__dirname, file);
       try {
         const command = await import(filePath);
 

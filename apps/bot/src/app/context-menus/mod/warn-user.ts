@@ -10,13 +10,13 @@ import {
   canTargetModerator,
   canTargetSelf,
   canBotAct,
-} from "../../../services/ModGuardService.js";
-import { logModAction } from "../../../services/ModLogService.js";
-import * as ModCaseRepository from "../../../../config/repositories/modCaseRepository.js";
-import logger from "../../../../utils/logger.js";
+} from "../../services/ModGuardService.js";
+import { logModAction } from "../../services/ModLogService.js";
+import * as ModCaseRepository from "../../../config/repositories/modCaseRepository.js";
+import logger from "../../../utils/logger.js";
 
 export const data = new ContextMenuCommandBuilder()
-  .setName("Ban User")
+  .setName("Warn User")
   .setType(ApplicationCommandType.User);
 
 export async function execute(interaction: UserContextMenuCommandInteraction) {
@@ -64,29 +64,13 @@ export async function execute(interaction: UserContextMenuCommandInteraction) {
       return;
     }
 
-    // DM the user before banning
-    const reason = "Sin razón (context menu)";
-    try {
-      await targetUser.send(
-        `Has sido baneado de ${interaction.guild.name}: ${reason}`,
-      );
-    } catch {
-      logger.warn("Failed to send DM for context menu ban", {
-        userId: targetUser.id,
-        guildId: interaction.guildId,
-      });
-    }
-
-    // Execute ban
-    await targetMember.ban({ deleteMessageSeconds: 0, reason });
-
     // Create ModCase
     const modCase = await ModCaseRepository.create({
       guildId: interaction.guildId,
       userId: targetUser.id,
       moderatorId: interaction.user.id,
-      type: "ban",
-      reason,
+      type: "warn",
+      reason: "Sin razón (context menu)",
     });
 
     // Log action
@@ -100,18 +84,30 @@ export async function execute(interaction: UserContextMenuCommandInteraction) {
       userTag,
     );
 
+    // DM the user
+    try {
+      await targetUser.send(
+        `Has sido advertido en ${interaction.guild.name}: Sin razón (context menu)`,
+      );
+    } catch {
+      logger.warn("Failed to send DM for context menu warn", {
+        userId: targetUser.id,
+        guildId: interaction.guildId,
+      });
+    }
+
     await interaction.editReply({
-      content: `✅ ${userTag} baneado. Case #${modCase.caseNumber}`,
+      content: `✅ ${userTag} advertido. Case #${modCase.caseNumber}`,
     });
   } catch (error) {
-    logger.error("Error executing Ban User context menu", {
+    logger.error("Error executing Warn User context menu", {
       error: error instanceof Error ? error.message : String(error),
       userId: interaction.user.id,
       guildId: interaction.guildId,
     });
 
     await interaction.editReply({
-      content: "❌ Error al ejecutar el ban. Inténtalo de nuevo.",
+      content: "❌ Error al ejecutar la advertencia. Inténtalo de nuevo.",
     });
   }
 }

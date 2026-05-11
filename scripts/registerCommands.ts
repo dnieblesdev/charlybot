@@ -19,41 +19,65 @@ const MODE = "DEVELOPMENT"; // Opciones: "DEVELOPMENT" o "PRODUCTION"
 async function registerCommands() {
   const commands: unknown[] = [];
 
-  const commandsPath = path.join(__dirname, "../apps/bot/src/app/commands");
-  const entries = await readdir(commandsPath, { withFileTypes: true });
-
+  const appSrcPath = path.join(__dirname, "../apps/bot/src/app");
   const commandFiles: string[] = [];
 
-  // Buscar archivos .ts directamente en commands/ (excluyendo register)
-  for (const entry of entries) {
-    if (
-      entry.isFile() &&
-      entry.name.endsWith(".ts") &&
-      !entry.name.includes("register")
-    ) {
-      commandFiles.push(entry.name);
+  // Helper to discover command files in a directory
+  async function discoverInDir(
+    basePath: string,
+    baseDir: string,
+  ): Promise<void> {
+    let entries;
+    try {
+      entries = await readdir(basePath, { withFileTypes: true });
+    } catch {
+      return; // Directory doesn't exist, skip
     }
-    // Buscar carpetas: index.ts (slash commands) O archivos .ts sueltos (context menus)
-    else if (
-      entry.isDirectory() &&
-      entry.name !== "register" &&
-      entry.name !== "clear" &&
-      entry.name !== "debug"
-    ) {
-      const subfolderPath = path.join(commandsPath, entry.name);
-      const subfolderEntries = await readdir(subfolderPath);
-      if (subfolderEntries.includes("index.ts")) {
-        commandFiles.push(`${entry.name}/index.ts`);
-      } else {
-        // Also discover individual .ts files (e.g., context menus)
-        for (const subEntry of subfolderEntries) {
-          if (subEntry.endsWith(".ts")) {
-            commandFiles.push(`${entry.name}/${subEntry}`);
+
+    for (const entry of entries) {
+      if (
+        entry.isFile() &&
+        entry.name.endsWith(".ts") &&
+        !entry.name.includes("register")
+      ) {
+        commandFiles.push(path.join(baseDir, entry.name));
+      } else if (
+        entry.isDirectory() &&
+        entry.name !== "register" &&
+        entry.name !== "clear" &&
+        entry.name !== "debug"
+      ) {
+        const subfolderPath = path.join(basePath, entry.name);
+        let subfolderEntries;
+        try {
+          subfolderEntries = await readdir(subfolderPath);
+        } catch {
+          continue;
+        }
+        if (subfolderEntries.includes("index.ts")) {
+          commandFiles.push(path.join(baseDir, entry.name, "index.ts"));
+        } else {
+          // Also discover individual .ts files (e.g., context menus)
+          for (const subEntry of subfolderEntries) {
+            if (subEntry.endsWith(".ts")) {
+              commandFiles.push(
+                path.join(baseDir, entry.name, subEntry),
+              );
+            }
           }
         }
       }
     }
   }
+
+  await discoverInDir(
+    path.join(appSrcPath, "commands"),
+    "commands",
+  );
+  await discoverInDir(
+    path.join(appSrcPath, "context-menus"),
+    "context-menus",
+  );
 
   logger.info(`Found ${commandFiles.length} command files`, {
     context: "registerCommands",
@@ -63,7 +87,7 @@ async function registerCommands() {
 
   for (const file of commandFiles) {
     try {
-      const command = await import(`../apps/bot/src/app/commands/${file}`);
+      const command = await import(`../apps/bot/src/app/${file}`);
       if (command.data) {
         commands.push(command.data.toJSON());
         logger.debug(`Command loaded: ${file}`, {
