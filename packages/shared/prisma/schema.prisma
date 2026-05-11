@@ -70,6 +70,8 @@ model GuildConfig {
   verificationReviewChannelId String?
   verifiedRoleId              String?
   messageLogChannelId         String?
+  modLogChannelId String?
+  modRoleId       String?
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
   guild                       Guild    @relation(fields: [guildId], references: [guildId])
@@ -302,4 +304,33 @@ model LevelRole {
 
   @@unique([guildId, level])
   @@index([guildId])
+}
+
+// Moderation System
+model ModCase {
+  id           Int      @id @default(autoincrement())
+  guildId      String
+  userId       String
+  moderatorId  String
+  caseNumber   Int
+  type         String   // "warn" | "ban" | "kick" | "timeout" | "unban" | "clear"
+  reason       String?
+  duration     BigInt?
+  active       Boolean  @default(true)
+  messageCount Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([guildId, userId])
+  @@index([guildId, caseNumber])
+}
+
+model WarnThreshold {
+  id        Int     @id @default(autoincrement())
+  guildId   String
+  warnCount Int
+  action    String  // "timeout" | "kick" | "ban"
+  duration  BigInt? // ms, required solo para timeout
+
+  @@unique([guildId, warnCount])
 }
