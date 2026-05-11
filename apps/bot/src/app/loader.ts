@@ -24,10 +24,20 @@ export async function loadCommands(
       ) {
         commandFiles.push(entry.name);
       }
-      // Buscar carpetas con index.ts/index.js (como autorole/index.ts)
+      // Buscar carpetas: index.ts (slash commands) O archivos .ts sueltos (context menus)
       else if (entry.isDirectory()) {
         const subfolderPath = path.join(commandsPath, entry.name);
         const subfolderEntries = await readdir(subfolderPath);
+
+        // Skip register/clear/debug folders
+        if (
+          entry.name === "register" ||
+          entry.name === "clear" ||
+          entry.name === "debug"
+        ) {
+          continue;
+        }
+
         if (
           subfolderEntries.includes("index.ts") ||
           subfolderEntries.includes("index.js")
@@ -36,6 +46,16 @@ export async function loadCommands(
             ? "index.ts"
             : "index.js";
           commandFiles.push(`${entry.name}/${indexFile}`);
+        } else {
+          // Also discover individual .ts files (e.g., context menus)
+          for (const subEntry of subfolderEntries) {
+            if (
+              subEntry.endsWith(".ts") ||
+              subEntry.endsWith(".js")
+            ) {
+              commandFiles.push(`${entry.name}/${subEntry}`);
+            }
+          }
         }
       }
     }

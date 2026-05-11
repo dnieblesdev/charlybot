@@ -33,7 +33,7 @@ async function registerCommands() {
     ) {
       commandFiles.push(entry.name);
     }
-    // Buscar carpetas con index.ts (como autorole/index.ts)
+    // Buscar carpetas: index.ts (slash commands) O archivos .ts sueltos (context menus)
     else if (
       entry.isDirectory() &&
       entry.name !== "register" &&
@@ -44,6 +44,13 @@ async function registerCommands() {
       const subfolderEntries = await readdir(subfolderPath);
       if (subfolderEntries.includes("index.ts")) {
         commandFiles.push(`${entry.name}/index.ts`);
+      } else {
+        // Also discover individual .ts files (e.g., context menus)
+        for (const subEntry of subfolderEntries) {
+          if (subEntry.endsWith(".ts")) {
+            commandFiles.push(`${entry.name}/${subEntry}`);
+          }
+        }
       }
     }
   }
