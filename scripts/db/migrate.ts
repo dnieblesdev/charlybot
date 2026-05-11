@@ -48,6 +48,12 @@ async function preMigrationBackup(): Promise<string | null> {
 async function runPrismaMigrateDev(args: string[]): Promise<number> {
   const { execSync } = await import("node:child_process");
   
+  // migrate dev requires DATABASE_URL; default to SQLite if not set
+  const env = { ...process.env };
+  if (!env.DATABASE_URL) {
+    env.DATABASE_URL = "file:./dev.db";
+  }
+  
   const prismaCmd = `bunx --bun prisma migrate dev --schema=./packages/shared/prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
@@ -56,6 +62,7 @@ async function runPrismaMigrateDev(args: string[]): Promise<number> {
     execSync(prismaCmd, { 
       stdio: "inherit",
       cwd: join(__dirname, "../../"),
+      env,
     });
     return 0;
   } catch (error: any) {
