@@ -23,6 +23,7 @@ const mockModCaseCreate = vi.fn(() =>
     active: true,
   }),
 );
+const mockGetGuildConfig = vi.fn(() => Promise.resolve(null));
 
 // =============================================================================
 // vi.mock() — hoisted, runs BEFORE imports
@@ -41,6 +42,18 @@ vi.mock("../../../src/app/services/ModLogService.js", () => ({
 
 vi.mock("../../../src/config/repositories/modCaseRepository.js", () => ({
   create: (...args: unknown[]) => mockModCaseCreate(...args),
+}));
+
+vi.mock("../../../src/config/repositories/GuildConfigRepo.js", () => ({
+  getGuildConfig: (...args: unknown[]) => mockGetGuildConfig(...args),
+}));
+
+vi.mock("../../../src/infrastructure/valkey/index.js", () => ({
+  getValkeyClient: () => ({
+    get: vi.fn(() => Promise.resolve(undefined)),
+    set: vi.fn(() => Promise.resolve()),
+    del: vi.fn(() => Promise.resolve()),
+  }),
 }));
 
 vi.mock("../../../src/utils/logger.js", () => ({
