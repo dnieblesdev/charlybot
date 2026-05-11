@@ -78,7 +78,7 @@ export async function loadCommands(
     await discoverInDir(commandsPath, "commands");
     await discoverInDir(contextMenusPath, "context-menus");
 
-    logger.info(`Encontrados ${commandFiles.length} archivos de comandos`);
+    logger.info(`📋 Encontrados ${commandFiles.length} archivos de comandos`);
 
     for (const file of commandFiles) {
       const filePath = path.join(__dirname, file);
@@ -90,18 +90,18 @@ export async function loadCommands(
           if (client && command.init) {
             await command.init(client);
           }
-          logger.info(`Comando cargado: ${command.data.name} - ${file}`);
+          logger.info(`✅ Comando cargado: ${command.data.name} - ${file}`);
         } else {
-          logger.warn(`Comando inválido en ${file}`);
+          logger.warn(`⚠️ Comando inválido en ${file}`);
         }
       } catch (error) {
-        logger.error(`Error cargando comando ${file}`, { error: error instanceof Error ? error.message : String(error) });
+        logger.error(`❌ Error cargando comando ${file}`, { error: error instanceof Error ? error.message : String(error) });
       }
     }
 
-    logger.info(`${commands.size} comandos cargados correctamente`);
+    logger.info(`🎯 ${commands.size} comandos cargados correctamente`);
   } catch (error) {
-    logger.error("Error cargando comandos", { error: error instanceof Error ? error.message : String(error) });
+    logger.error("❌ Error cargando comandos", { error: error instanceof Error ? error.message : String(error) });
   }
 
   return commands;
@@ -116,29 +116,29 @@ export async function loadEvents(client: Client) {
       (file) => file.endsWith(".ts") || file.endsWith(".js"),
     );
 
-    logger.info(`Encontrados ${eventFiles.length} archivos de eventos`);
+    logger.info(`📋 Encontrados ${eventFiles.length} archivos de eventos`);
 
     for (const file of eventFiles) {
       const filePath = path.join(eventsPath, file);
       const event = await import(filePath);
 
       if (!event.default) {
-        logger.warn(`Evento inválido en ${file}`);
+        logger.warn(`⚠️ Evento inválido en ${file}`);
         continue;
       }
 
       const evt = event.default;
       if (evt.once) {
         client.once(evt.name, (...args) => evt.execute(...args));
-        logger.info(`Evento cargado (once): ${evt.name} - ${file}`);
+        logger.info(`✅ Evento cargado (once): ${evt.name} - ${file}`);
       } else {
         client.on(evt.name, (...args) => evt.execute(...args));
-        logger.info(`Evento cargado (on): ${evt.name} - ${file}`);
+        logger.info(`✅ Evento cargado (on): ${evt.name} - ${file}`);
       }
     }
 
-    logger.info(`${eventFiles.length} eventos cargados correctamente`);
+    logger.info(`🎯 ${eventFiles.length} eventos cargados correctamente`);
   } catch (error) {
-    logger.error("Error cargando eventos", { error: error instanceof Error ? error.message : String(error) });
+    logger.error("❌ Error cargando eventos", { error: error instanceof Error ? error.message : String(error) });
   }
 }
