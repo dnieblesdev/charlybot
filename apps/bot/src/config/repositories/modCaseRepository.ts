@@ -65,7 +65,7 @@ export async function findByUser(
 ): Promise<IModCase[]> {
   const cases = await prisma.modCase.findMany({
     where: { guildId, userId },
-    orderBy: { caseNumber: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 
   return cases.map(toDomain);
@@ -77,7 +77,7 @@ export async function findByUser(
 export async function findByGuild(guildId: string): Promise<IModCase[]> {
   const cases = await prisma.modCase.findMany({
     where: { guildId },
-    orderBy: { caseNumber: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 
   return cases.map(toDomain);
