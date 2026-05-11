@@ -188,7 +188,13 @@ export default {
       });
 
       try {
-        childLogger.info(`Command started: ${interaction.commandName}`);
+        const tCommand = Date.now();
+        const msSinceCreation = tCommand - interaction.createdTimestamp;
+        childLogger.info(`Command started: ${interaction.commandName}`, {
+          msSinceCreation,
+          deferred: interaction.deferred,
+          replied: interaction.replied,
+        });
         const end = commandDuration.startTimer({ command: interaction.commandName });
         try {
           await command.execute(interaction);

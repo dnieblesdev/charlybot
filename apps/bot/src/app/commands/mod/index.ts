@@ -161,12 +161,23 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+  const tEntry = Date.now();
   const subcommand = interaction.options.getSubcommand();
 
-  // Defer immediately to prevent 3-second Discord timeout during dynamic import
-  await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-
   try {
+    // Defer immediately to prevent 3-second Discord timeout during dynamic import.
+    // Placed inside try/catch so that "Unknown interaction" errors from Discord
+    // are caught cleanly instead of propagating to the outer interaction handler.
+    const tDefer = Date.now();
+    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+    const deferMs = Date.now() - tDefer;
+    logger.debug("[mod] deferReply OK", {
+      subcommand,
+      deferMs,
+      msSinceEntry: Date.now() - tEntry,
+      interactionAge: Date.now() - interaction.createdTimestamp,
+    });
+
     switch (subcommand) {
       case "warn": {
         const handler = await import("./warn.js");
@@ -214,25 +225,50 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         await handler.default(interaction);
         break;
       }
-      default:
-        await interaction.reply({
+      default: {
+        // After deferReply, use editReply — reply() would fail on an already-deferred interaction.
+        await interaction.editReply({
           content: "❌ Subcomando no reconocido",
-          flags: [MessageFlags.Ephemeral],
         });
         break;
+      }
     }
   } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     logger.error("Error in /mod router", {
       subcommand,
-      error: error instanceof Error ? error.message : String(error),
+      error: errMsg,
       userId: interaction.user.id,
       guildId: interaction.guildId,
+      msSinceEntry: Date.now() - tEntry,
+      interactionAge: Date.now() - interaction.createdTimestamp,
+      wasDeferred: interaction.deferred,
+      wasReplied: interaction.replied,
+      isUnknownInteraction: errMsg === "Unknown interaction",
     });
 
-    if (!interaction.deferred && !interaction.replied) {
-      await interaction.reply({
-        content: "❌ Error interno al procesar el comando",
-        flags: [MessageFlags.Ephemeral],
+    // Send a graceful error reply to the user.
+    // - If deferReply succeeded: use followUp (token is still valid).
+    // - If deferReply itself failed: try reply — it will likely fail too,
+    //   but we handle that silently.
+    try {
+      if (interaction.deferred || interaction.replied) {
+        await interaction.followUp({
+          content: "❌ Error interno al procesar el comando.",
+          flags: [MessageFlags.Ephemeral],
+        });
+      } else {
+        await interaction.reply({
+          content: "❌ Error interno al procesar el comando.",
+          flags: [MessageFlags.Ephemeral],
+        });
+      }
+    } catch (replyError) {
+      logger.error("Failed to send error reply in /mod router", {
+        error: replyError instanceof Error ? replyError.message : String(replyError),
+        subcommand,
+        userId: interaction.user.id,
+        guildId: interaction.guildId,
       });
     }
   }

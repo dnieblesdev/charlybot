@@ -12,6 +12,8 @@ services:
         valkey-server
         --maxmemory 256mb
         --maxmemory-policy allkeys-lru
+        --save ""
+        --appendonly no
         ${VALKEY_PASSWORD:+--requirepass "$VALKEY_PASSWORD"}
     expose:
       - "6379"
