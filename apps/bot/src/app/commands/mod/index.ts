@@ -72,6 +72,92 @@ export const data = new SlashCommandBuilder()
         o.setName("usuario_id").setDescription("ID del usuario").setRequired(true),
       )
       .addStringOption((o) => o.setName("razon").setDescription("Razón").setRequired(false)),
+  )
+
+  // subcomando: clear
+  .addSubcommand((sub) =>
+    sub
+      .setName("clear")
+      .setDescription("Eliminar mensajes en masa")
+      .addIntegerOption((o) =>
+        o.setName("cantidad").setDescription("Cantidad (1-100)").setRequired(true).setMinValue(1).setMaxValue(100),
+      )
+      .addUserOption((o) =>
+        o.setName("usuario").setDescription("Filtrar por usuario").setRequired(false),
+      ),
+  )
+
+  // subcomando: cases
+  .addSubcommand((sub) =>
+    sub
+      .setName("cases")
+      .setDescription("Ver historial de infracciones")
+      .addUserOption((o) =>
+        o.setName("usuario").setDescription("Usuario").setRequired(false),
+      )
+      .addIntegerOption((o) =>
+        o.setName("id").setDescription("Número de caso específico").setRequired(false),
+      ),
+  )
+
+  // subcomando: reason
+  .addSubcommand((sub) =>
+    sub
+      .setName("reason")
+      .setDescription("Actualizar razón de un caso")
+      .addIntegerOption((o) =>
+        o.setName("id").setDescription("Número de caso").setRequired(true),
+      )
+      .addStringOption((o) =>
+        o.setName("razon").setDescription("Nueva razón").setRequired(true),
+      ),
+  )
+
+  // grupo: config
+  .addSubcommandGroup((group) =>
+    group
+      .setName("config")
+      .setDescription("Configurar moderación")
+      .addSubcommand((sub) =>
+        sub
+          .setName("mod-role")
+          .setDescription("Rol de moderador")
+          .addRoleOption((o) =>
+            o.setName("rol").setDescription("Rol").setRequired(true),
+          ),
+      )
+      .addSubcommand((sub) =>
+        sub
+          .setName("mod-log")
+          .setDescription("Canal de registro")
+          .addChannelOption((o) =>
+            o.setName("canal").setDescription("Canal").setRequired(true),
+          ),
+      )
+      .addSubcommand((sub) =>
+        sub
+          .setName("warn-threshold")
+          .setDescription("Configurar escalado de warns")
+          .addIntegerOption((o) =>
+            o.setName("warns").setDescription("Cantidad de warns").setRequired(true).setMinValue(1),
+          )
+          .addStringOption((o) =>
+            o.setName("accion").setDescription("Acción").setRequired(true)
+              .addChoices(
+                { name: "Timeout", value: "timeout" },
+                { name: "Kick", value: "kick" },
+                { name: "Ban", value: "ban" },
+              ),
+          )
+          .addStringOption((o) =>
+            o.setName("duracion").setDescription("Duración (solo para timeout, ej: 1h)").setRequired(false),
+          ),
+      )
+      .addSubcommand((sub) =>
+        sub
+          .setName("view")
+          .setDescription("Ver configuración actual"),
+      ),
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
@@ -101,6 +187,27 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
       case "unban": {
         const handler = await import("./unban.js");
+        await handler.default(interaction);
+        break;
+      }
+      case "clear": {
+        const handler = await import("./clear.js");
+        await handler.default(interaction);
+        break;
+      }
+      case "cases": {
+        const handler = await import("./cases.js");
+        await handler.default(interaction);
+        break;
+      }
+      case "reason": {
+        const handler = await import("./reason.js");
+        await handler.default(interaction);
+        break;
+      }
+      case "config": {
+        const configSub = interaction.options.getSubcommand();
+        const handler = await import(`./config/${configSub}.js`);
         await handler.default(interaction);
         break;
       }

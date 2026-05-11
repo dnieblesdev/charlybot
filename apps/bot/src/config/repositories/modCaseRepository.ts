@@ -72,6 +72,21 @@ export async function findByUser(
 }
 
 /**
+ * Busca un caso por guildId y caseNumber.
+ */
+export async function findByGuildAndCaseNumber(
+  guildId: string,
+  caseNumber: number,
+): Promise<IModCase | null> {
+  const modCase = await prisma.modCase.findFirst({
+    where: { guildId, caseNumber },
+  });
+
+  if (!modCase) return null;
+  return toDomain(modCase);
+}
+
+/**
  * Lista todos los casos de un guild.
  */
 export async function findByGuild(guildId: string): Promise<IModCase[]> {
