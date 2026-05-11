@@ -356,6 +356,39 @@ export async function getAllGuildConfigs(): Promise<IGuildConfig[]> {
 }
 
 /**
+ * Actualiza campos específicos de la configuración de un servidor.
+ * Hace upsert del guild y guildConfig, luego invalida la caché.
+ */
+export async function update(
+  guildId: string,
+  data: Partial<IGuildConfig>,
+): Promise<void> {
+  const key = makeCacheKey(guildId);
+  const valkey = getValkeyClient();
+
+  // Ensure Guild exists first
+  await prisma.guild.upsert({
+    where: { guildId },
+    update: {},
+    create: { guildId },
+  });
+
+  const updateData: Record<string, unknown> = {};
+  if (data.modRoleId !== undefined) updateData.modRoleId = data.modRoleId;
+  if (data.modLogChannelId !== undefined) updateData.modLogChannelId = data.modLogChannelId;
+  if (data.antispamEnabled !== undefined) updateData.antispamEnabled = data.antispamEnabled;
+
+  await prisma.guildConfig.upsert({
+    where: { guildId },
+    update: updateData,
+    create: { guildId, ...updateData },
+  });
+
+  await valkey.del(key);
+  logger.info(`GuildConfig updated`, { guildId, fields: Object.keys(updateData) });
+}
+
+/**
  * Obtiene la metadata de un servidor
  */
 export async function getGuild(guildId: string): Promise<Guild | null> {
