@@ -40,11 +40,26 @@ export const KEYS = {
 
   // Domain-specific streams
   STREAM_LEADERBOARD: 'cb:stream:leaderboard',
+
+  // Anti-spam tracking
+  ANTI_SPAM: 'antispam',
 } as const;
 
 export const CHANNELS = KEYS;
 
 export const STREAMS = KEYS;
+
+// Anti-spam key builders
+export const ANTI_SPAM_KEYS = {
+  userMessages: (guildId: string, userId: string) =>
+    `cb:antispam:${guildId}:${userId}:messages`,
+  userMentions: (guildId: string, userId: string) =>
+    `cb:antispam:${guildId}:${userId}:mentions`,
+  userLinks: (guildId: string, userId: string) =>
+    `cb:antispam:${guildId}:${userId}:links`,
+  userLevel: (guildId: string, userId: string) =>
+    `cb:antispam:${guildId}:${userId}:level`,
+} as const;
 
 // TTL constants (in seconds) - use simple object for numeric values
 export const TTL: Readonly<{
@@ -96,6 +111,17 @@ export const BOT_COMMAND_RATE_LIMITS: Readonly<Record<string, readonly [limit: n
   balance: [10, 60],  // 10 uses per minute
   deposit: [5, 60],  // 5 uses per minute
   retire: [5, 60],   // 5 uses per minute
+
+  // Moderation commands
+  'mod:warn': [3, 10],     // 3 warns per 10 seconds
+  'mod:ban': [2, 10],      // 2 bans per 10 seconds
+  'mod:kick': [2, 10],     // 2 kicks per 10 seconds
+  'mod:timeout': [3, 10],  // 3 timeouts per 10 seconds
+  'mod:clear': [2, 10],    // 2 clears per 10 seconds
+  'mod:unban': [2, 10],    // 2 unbans per 10 seconds
+  'mod:cases': [5, 10],    // 5 case lookups per 10 seconds
+  'mod:reason': [5, 10],   // 5 reason updates per 10 seconds
+  'mod:config': [3, 10],   // 3 config changes per 10 seconds
 };
 
 // Lock TTL for bot commands (seconds)
