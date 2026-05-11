@@ -43,12 +43,33 @@ async function preMigrationBackup(): Promise<string | null> {
 }
 
 /**
+ * Run Prisma migration dev command (creates new migration from schema diff)
+ */
+async function runPrismaMigrateDev(args: string[]): Promise<number> {
+  const { execSync } = await import("node:child_process");
+  
+  const prismaCmd = `bunx --bun prisma migrate dev --schema=./packages/shared/prisma/schema.prisma ${args.join(" ")}`;
+  
+  console.log(`Running: ${prismaCmd}\n`);
+  
+  try {
+    execSync(prismaCmd, { 
+      stdio: "inherit",
+      cwd: join(__dirname, "../../"),
+    });
+    return 0;
+  } catch (error: any) {
+    return error.status ?? 1;
+  }
+}
+
+/**
  * Run Prisma migration command
  */
 async function runPrismaMigrate(args: string[]): Promise<number> {
   const { execSync } = await import("node:child_process");
   
-  const prismaCmd = `bunx prisma migrate deploy --schema=./prisma/schema.prisma ${args.join(" ")}`;
+  const prismaCmd = `bunx prisma migrate deploy --schema=./packages/shared/prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
   
@@ -69,7 +90,7 @@ async function runPrismaMigrate(args: string[]): Promise<number> {
 async function runPrismaPush(args: string[]): Promise<number> {
   const { execSync } = await import("node:child_process");
   
-  const prismaCmd = `bunx prisma db push --schema=./prisma/schema.prisma ${args.join(" ")}`;
+  const prismaCmd = `bunx prisma db push --schema=./packages/shared/prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
   
@@ -82,6 +103,60 @@ async function runPrismaPush(args: string[]): Promise<number> {
   } catch (error: any) {
     return error.status ?? 1;
   }
+}
+
+/**
+ * Dev migration flow — creates a new migration from schema changes
+ */
+export async function migrateDev(args: string[] = []): Promise<MigrationResult> {
+  // Check if database exists
+  if (!existsSync(DB_PATH)) {
+    console.log("⚠️  Database doesn't exist. Running migration dev without backup.");
+    
+    const exitCode = await runPrismaMigrateDev(args);
+    return {
+      success: exitCode === 0,
+      error: exitCode !== 0 ? "Migration dev failed" : undefined,
+    };
+  }
+
+  // Create pre-migration backup
+  const backupFilepath = await preMigrationBackup();
+  
+  if (!backupFilepath) {
+    console.log("\n⚠️  Proceeding with migration dev despite backup failure!\n");
+  }
+
+  // Run migration dev
+  console.log("🚀 Creating migration...\n");
+  const exitCode = await runPrismaMigrateDev(args);
+
+  if (exitCode !== 0) {
+    console.error(`\n❌ Migration dev failed with exit code ${exitCode}`);
+    console.log("\n📌 To restore from backup, run:");
+    console.log(`   bun run scripts/db/restore.ts ${backupFilepath}\n`);
+    
+    return {
+      success: false,
+      backupFilepath: backupFilepath ?? undefined,
+      error: `Migration dev failed with exit code ${exitCode}`,
+    };
+  }
+
+  console.log("\n✅ Migration created successfully!");
+  
+  // Run rotation
+  try {
+    const { rotateBackups } = await import("./rotate.ts");
+    await rotateBackups();
+  } catch {
+    console.log("ℹ️  Backup rotation skipped");
+  }
+
+  return {
+    success: true,
+    backupFilepath: backupFilepath ?? undefined,
+  };
 }
 
 /**
@@ -205,6 +280,11 @@ if (import.meta.main) {
       process.exit(result.success ? 0 : 1);
       break;
     }
+    case "dev": {
+      const result = await migrateDev(args.slice(1));
+      process.exit(result.success ? 0 : 1);
+      break;
+    }
     case "push": {
       const result = await dbPush(args.slice(1));
       process.exit(result.success ? 0 : 1);
@@ -212,7 +292,8 @@ if (import.meta.main) {
     }
     default:
       console.log("Usage:");
-      console.log("  bun run scripts/db/migrate.ts migrate [args]");
-      console.log("  bun run scripts/db/migrate.ts push [args]");
+      console.log("  bun run scripts/db/migrate.ts dev [--name <name>]   → create new migration");
+      console.log("  bun run scripts/db/migrate.ts deploy                 → apply migrations (production)");
+      console.log("  bun run scripts/db/migrate.ts push                   → sync schema without migration");
   }
 }
