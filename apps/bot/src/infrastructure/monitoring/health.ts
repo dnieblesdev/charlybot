@@ -1,19 +1,20 @@
 import express from "express";
 import { getValkeyClient } from "../valkey";
 import { createMetricsRegistry } from "@charlybot/shared";
+import { Histogram, Counter } from "prom-client";
 
 // Create metrics registry from shared module
 const { register, errorCounter, valkeyCircuitGauge, prismaQueryHistogram } = createMetricsRegistry();
 
 // Add bot-specific metrics to the shared registry
-const commandDuration = new (require("prom-client").Histogram)({
+const commandDuration = new Histogram({
   name: 'charlybot_command_duration_seconds',
   help: 'Command execution duration in seconds',
   labelNames: ['command'],
   registers: [register],
 });
 
-const commandTotal = new (require("prom-client").Counter)({
+const commandTotal = new Counter({
   name: 'charlybot_commands_total',
   help: 'Total commands executed',
   labelNames: ['command', 'status'],
