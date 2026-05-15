@@ -2,13 +2,18 @@
 FROM node:22-slim AS build
 WORKDIR /app
 
+# Enable corepack and install Angular CLI globally
+ENV PNPM_HOME="/root/.local/share/pnpm"
+ENV PATH="$PNPM_HOME/bin:$PATH"
+RUN corepack enable && pnpm add -g @angular/cli@21
+
 # Copy workspace root for pnpm monorepo context
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 # Copy package files (context is project root)
 COPY apps/landing/package.json ./apps/landing/
 
 # Install dependencies
-RUN corepack enable && pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # Copy source (context is project root)
 COPY apps/landing/ ./
