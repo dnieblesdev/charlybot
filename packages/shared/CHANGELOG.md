@@ -1,5 +1,16 @@
 # @charlybot/shared
 
+## 3.0.0
+
+### Major Changes
+
+- Migrate from Bun to pnpm + Node.js 22
+
+  - Replace \_\_dirname with ESM-compatible fileURLToPath in prisma.ts
+  - All package.json scripts updated from bun/bunx to pnpm/tsx
+  - Workspace now uses pnpm-workspace.yaml and .npmrc (node-linker=hoisted)
+  - Prisma CLI commands use pnpm exec instead of bunx
+
 ## 2.6.0
 
 ### Minor Changes

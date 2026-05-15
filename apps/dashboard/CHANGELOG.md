@@ -1,5 +1,17 @@
 # dashboard
 
+## 1.0.0
+
+### Major Changes
+
+- Migrate from Bun/npm to pnpm + Node.js 22
+
+  - Production Dockerfile: node:22-slim, corepack + pnpm install
+  - COPY paths corrected for pnpm monorepo workspace structure
+  - Angular CLI installed globally via pnpm
+  - packageManager field updated from bun to pnpm
+  - README and AGENTS.md updated
+
 ## 0.1.3
 
 ### Patch Changes
@@ -32,6 +44,7 @@
 ### Minor Changes
 
 - d8581af: Initial release — Angular 21 admin dashboard with Discord auth
+
   - Angular 21 standalone app with zoneless change detection
   - Tailwind CSS 4 via PostCSS
   - Discord OAuth2 login flow (callback, token storage, JWT)

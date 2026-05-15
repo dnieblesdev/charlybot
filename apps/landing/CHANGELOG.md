@@ -1,5 +1,16 @@
 # landing
 
+## 1.0.0
+
+### Major Changes
+
+- Migrate from Bun/npm to pnpm + Node.js 22
+
+  - Production Dockerfile: node:22-slim, corepack + pnpm install
+  - COPY paths corrected for pnpm monorepo workspace structure
+  - Angular CLI installed globally via pnpm
+  - README and AGENTS.md updated
+
 ## 0.2.0
 
 ### Minor Changes
