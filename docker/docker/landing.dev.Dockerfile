@@ -6,6 +6,7 @@ WORKDIR /app
 
 # Install Angular CLI globally
 RUN corepack enable && pnpm add -g @angular/cli@21
+ENV PATH="/root/.local/share/pnpm/bin:$PATH"
 
 # Copy workspace root for pnpm
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
@@ -19,4 +20,4 @@ COPY apps/landing/ ./
 EXPOSE 4200
 
 # Angular dev server with hot reload
-CMD ["npx", "ng", "serve", "--port", "4200", "--host", "0.0.0.0"]
+CMD ["ng", "serve", "--port", "4200", "--host", "0.0.0.0"]
