@@ -5,8 +5,9 @@ FROM node:22-slim
 WORKDIR /app
 
 # Install Angular CLI globally
+ENV PNPM_HOME="/root/.local/share/pnpm"
+ENV PATH="$PNPM_HOME/bin:$PATH"
 RUN corepack enable && pnpm add -g @angular/cli@21
-ENV PATH="/root/.local/share/pnpm/bin:$PATH"
 
 # Copy workspace root for pnpm
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
