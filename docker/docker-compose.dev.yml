@@ -28,7 +28,7 @@ services:
       timeout: 3s
       retries: 3
 
-  # API service — hot reload via bun --hot
+  # API service — hot reload via tsx --watch
   api:
     build:
       context: ..
@@ -47,7 +47,7 @@ services:
       - charlybot-net
     command: ["pnpm", "--filter", "@charlybot/api", "dev"]
 
-  # Bot service — hot reload via bun run
+  # Bot service — hot reload via tsx
   bot:
     build:
       context: ..

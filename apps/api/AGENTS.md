@@ -45,7 +45,7 @@ Context for AI agents working on the API. Read this in full before making change
 
 | | |
 |---|---|
-| Runtime | Bun |
+| Runtime | Node.js 22 |
 | Framework | Hono |
 | Validation | Zod + `@hono/zod-validator` |
 | Logger | Winston (`src/utils/logger.ts`) |
@@ -74,7 +74,7 @@ pnpm dev:api                 # API dev server
 - Protects `/api/*` with `authMiddleware`.
 - Mounts routers under `/api/v1/...`.
 - `GET /api/v1/health` authenticated with DB + Valkey checks.
-- Exports `default { port, fetch }` (Bun server).
+- Exports `default { port, fetch }` (Hono server — runs via tsx).
 
 ## Structure
 
