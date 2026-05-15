@@ -446,7 +446,7 @@ class PlayerServiceImpl {
         // IMPORTANTE: Reproducir siguiente canción automáticamente
         try {
           // Importar servicios aquí para evitar dependencia circular
-          const { QueueManagementService, AudioStreamService, VoiceConnectionService } = require("./index");
+          const { QueueManagementService, AudioStreamService, VoiceConnectionService } = await import("./index");
           
           // Obtener la sesión de voz
           const session = VoiceConnectionService.getSession(guildId);

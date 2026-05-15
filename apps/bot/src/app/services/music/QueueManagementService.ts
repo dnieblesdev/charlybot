@@ -13,6 +13,7 @@
  */
 
 import type { IMusicRepository } from "../../../domain/ports/IMusicRepository";
+import { PrismaMusicAdapter } from "../../../config/repositories/MusicRepo";
 import type {
   Song,
   Track,
@@ -815,8 +816,6 @@ export function createQueueManagementService(
  */
 export function getQueueManagementService(): QueueManagementServiceClass {
   if (!queueServiceInstance) {
-    // Use PrismaMusicAdapter for direct DB access (no HTTP overhead)
-    const { PrismaMusicAdapter } = require("../../../config/repositories/MusicRepo");
     queueServiceInstance = new QueueManagementServiceClass(
       new PrismaMusicAdapter()
     );

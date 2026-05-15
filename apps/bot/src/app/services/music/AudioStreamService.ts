@@ -18,6 +18,7 @@
 import { createReadStream, unlink } from "fs";
 import { existsSync, mkdirSync } from "fs";
 import path from "path";
+import { PassThrough } from "stream";
 import { spawn } from "child_process";
 import playdl, {
   type YouTubeVideo,
@@ -816,7 +817,6 @@ class AudioStreamServiceImpl {
       }, STREAM_TIMEOUT_MS);
 
       // PassThrough stream para manejar el flujo
-      const { PassThrough } = require("stream");
       const passthroughStream = new PassThrough();
 
       // Usar on("data") para manejar cada chunk individualmente
