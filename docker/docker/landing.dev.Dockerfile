@@ -11,13 +11,18 @@ RUN corepack enable && pnpm add -g @angular/cli@21
 
 # Copy workspace root for pnpm
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
-# Copy package files and install (node_modules persist in container)
+# Copy ALL workspace package.json files (pnpm needs complete workspace to resolve)
 COPY apps/landing/package.json ./apps/landing/
-RUN corepack enable && pnpm install --frozen-lockfile
+COPY apps/dashboard/package.json ./apps/dashboard/
+COPY apps/bot/package.json ./apps/bot/
+COPY apps/api/package.json ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
+RUN pnpm install --frozen-lockfile
 
-# Copy source
-COPY apps/landing/ ./
+# Copy source to the correct workspace subdirectory
+COPY apps/landing/ ./apps/landing/
 
+WORKDIR /app/apps/landing
 EXPOSE 4200
 
 # Angular dev server with hot reload
