@@ -18,7 +18,6 @@
 import { createReadStream, unlink } from "fs";
 import { existsSync, mkdirSync } from "fs";
 import path from "path";
-import { which } from "bun";
 import { spawn } from "child_process";
 import playdl, {
   type YouTubeVideo,
@@ -58,10 +57,29 @@ const TEMP_FILE_CLEANUP_MS = 300000; // 5 minutos
 // ============================================================================
 
 /**
+ * Find an executable in the system PATH.
+ * Equivalent to Bun's `which()` — searches PATH directories for a matching executable.
+ * Returns the full path if found, null otherwise.
+ */
+function findExecutable(name: string): string | null {
+  const envPath = process.env.PATH || "";
+  const dirs = envPath.split(path.delimiter);
+  const exeName = process.platform === "win32" ? `${name}.exe` : name;
+
+  for (const dir of dirs) {
+    const fullPath = path.join(dir, exeName);
+    if (existsSync(fullPath)) {
+      return fullPath;
+    }
+  }
+  return null;
+}
+
+/**
  * Helper function to find yt-dlp: buscar en PATH primero, luego fallback local
  */
 const getYtDlpPath = (): string => {
-  const systemYtDlp = which("yt-dlp");
+  const systemYtDlp = findExecutable("yt-dlp");
   if (systemYtDlp) return systemYtDlp;
   // Fallback: buscar en bin/ del proyecto
   return path.join(process.cwd(), "bin", "yt-dlp.exe");

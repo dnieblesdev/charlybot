@@ -5,7 +5,6 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "types": ["bun"],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"
   },
