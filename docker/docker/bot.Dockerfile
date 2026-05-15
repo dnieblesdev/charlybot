@@ -1,9 +1,8 @@
-# Multi-stage build for Bot
-# Stage 1: Build dependencies and Prisma
-FROM node:22-slim AS builder
+# Single-stage build for Bot
+# pnpm virtual store + native modules don't survive multi-stage COPY
+FROM node:22-slim
 
-# Install build tools needed for native modules (ioredis, sodium-native, opus)
-# These are NOT copied to runtime — only needed during build
+# Install build tools for native modules (sodium-native, opus, ioredis)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3 \
@@ -20,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Download yt-dlp latest (standalone binary, no Python needed)
+# Download yt-dlp latest (standalone binary)
 RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
     && chmod 755 /usr/local/bin/yt-dlp
 
@@ -29,52 +28,21 @@ WORKDIR /app
 # Enable corepack for pnpm
 RUN corepack enable
 
-# Copy package files — bot + shared only (no api)
+# Copy workspace root and package files
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/bot/package.json ./apps/bot/
-COPY packages/shared/ ./packages/shared/
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/api/package.json ./apps/api/
 
-# Install dependencies and generate Prisma
+# Install dependencies (build tools present → native modules compile)
 RUN pnpm install --frozen-lockfile
+
+# Generate Prisma client
 RUN pnpm exec prisma generate --schema=./packages/shared/prisma/schema.prisma
 
-# Stage 2: Runtime
-# NOTE: Production-ready — no build tools included
-FROM node:22-slim
-
-# Install runtime dependencies only (ffmpeg, opus, yt-dlp)
-# build-essential, python3 are NOT included — saves ~150MB+
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg \
-    libopus0 \
-    libsodium23 \
-    ca-certificates \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
-
-# Download yt-dlp latest (standalone binary, no Python needed)
-RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
-    && chmod 755 /usr/local/bin/yt-dlp
-
-WORKDIR /app
-
-# Enable corepack for pnpm
-RUN corepack enable
-
-# Copy workspace root for pnpm
-COPY --from=builder /app/pnpm-workspace.yaml /app/package.json /app/pnpm-lock.yaml ./
-# Copy package.json files for pnpm install
-COPY --from=builder /app/apps/bot/package.json ./apps/bot/
-COPY --from=builder /app/packages/shared/package.json ./packages/shared/
-# Rebuild node_modules (COPY breaks pnpm symlinks)
-RUN pnpm install --frozen-lockfile
-# Copy Prisma generated client
-COPY --from=builder /app/packages/shared/src/generated /app/packages/shared/src/generated
-
-# Copy source files — bot + shared only (no api)
-# Bot consumes API via HTTP (adapters in apps/bot/src/infrastructure/api/*)
+# Copy source files
 COPY apps/bot/ ./apps/bot/
 COPY packages/shared/ ./packages/shared/
 
-# Run with pnpm filter (no build needed — tsx executes TypeScript natively)
+# Run with tsx (executes TypeScript natively)
 CMD ["pnpm", "--filter", "@charlybot/bot", "dev"]

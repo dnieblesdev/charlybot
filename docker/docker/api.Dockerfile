@@ -1,23 +1,5 @@
-# Multi-stage build for API
-# Stage 1: Build dependencies and Prisma
-FROM node:22-slim AS builder
-
-WORKDIR /app
-
-# Enable corepack for pnpm
-RUN corepack enable
-
-# Copy package files
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/shared/ ./packages/shared/
-
-# Install dependencies and generate Prisma
-RUN pnpm install --frozen-lockfile
-RUN pnpm exec prisma generate --schema=./packages/shared/prisma/schema.prisma
-
-# Stage 2: Runtime
-# NOTE: Production-ready — minimal runtime with only API service
+# Single-stage build for API
+# pnpm virtual store + Prisma generated client don't survive multi-stage COPY
 FROM node:22-slim
 
 WORKDIR /app
@@ -25,15 +7,17 @@ WORKDIR /app
 # Enable corepack for pnpm
 RUN corepack enable
 
-# Copy workspace root for pnpm
-COPY --from=builder /app/pnpm-workspace.yaml /app/package.json /app/pnpm-lock.yaml ./
-# Copy package.json files for pnpm install
-COPY --from=builder /app/apps/api/package.json ./apps/api/
-COPY --from=builder /app/packages/shared/package.json ./packages/shared/
-# Rebuild node_modules (COPY breaks pnpm symlinks)
+# Copy workspace root and package files
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/bot/package.json ./apps/bot/
+
+# Install dependencies
 RUN pnpm install --frozen-lockfile
-# Copy Prisma generated client
-COPY --from=builder /app/packages/shared/src/generated /app/packages/shared/src/generated
+
+# Generate Prisma client
+RUN pnpm exec prisma generate --schema=./packages/shared/prisma/schema.prisma
 
 # Copy source files
 COPY apps/api/ ./apps/api/
