@@ -1,6 +1,10 @@
 import { PrismaClient } from './generated/prisma';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ESM-compatible __dirname (Node.js doesn't provide it like Bun does)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Default to absolute path relative to this file's directory
 const defaultDbPath = path.resolve(__dirname, '../dev.db');
