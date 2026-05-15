@@ -1,6 +1,6 @@
 # Multi-stage build for Bot
 # Stage 1: Build dependencies and Prisma
-FROM oven/bun:1 AS builder
+FROM node:22-slim AS builder
 
 # Install build tools needed for native modules (ioredis, sodium-native, opus)
 # These are NOT copied to runtime — only needed during build
@@ -26,18 +26,21 @@ RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/late
 
 WORKDIR /app
 
+# Enable corepack for pnpm
+RUN corepack enable
+
 # Copy package files — bot + shared only (no api)
-COPY package.json bun.lock ./
+COPY package.json pnpm-lock.yaml ./
 COPY apps/bot/package.json ./apps/bot/
 COPY packages/shared/ ./packages/shared/
 
 # Install dependencies and generate Prisma
-RUN bun install
-RUN bunx prisma generate --schema=./packages/shared/prisma/schema.prisma
+RUN pnpm install --frozen-lockfile
+RUN pnpm exec prisma generate --schema=./packages/shared/prisma/schema.prisma
 
 # Stage 2: Runtime
 # NOTE: Production-ready — no build tools included
-FROM oven/bun:1
+FROM node:22-slim
 
 # Install runtime dependencies only (ffmpeg, opus, yt-dlp)
 # build-essential, python3 are NOT included — saves ~150MB+
@@ -55,6 +58,9 @@ RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/late
 
 WORKDIR /app
 
+# Enable corepack for pnpm
+RUN corepack enable
+
 # Copy built artifacts from builder
 COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/packages/shared/src/generated /app/packages/shared/src/generated
@@ -64,5 +70,5 @@ COPY --from=builder /app/packages/shared/src/generated /app/packages/shared/src/
 COPY apps/bot/ ./apps/bot/
 COPY packages/shared/ ./packages/shared/
 
-# Run directly with Bun (no build needed — Bun executes TypeScript natively)
-CMD ["bun", "run", "--cwd", "/app/apps/bot", "src/index.ts"]
+# Run with pnpm filter (no build needed — tsx executes TypeScript natively)
+CMD ["pnpm", "--filter", "@charlybot/bot", "dev"]

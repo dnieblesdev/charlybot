@@ -84,7 +84,7 @@ services:
     networks:
       - charlybot-net
     restart: unless-stopped
-    command: ["bun", "run", "--cwd", "/app/apps/api", "start"]
+    command: ["pnpm", "--filter", "@charlybot/api", "start"]
 
   # Bot service
   bot:
@@ -101,9 +101,9 @@ services:
     networks:
       - charlybot-net
     restart: unless-stopped
-    command: ["bun", "run", "--cwd", "/app/apps/bot", "src/index.ts"]
+    command: ["pnpm", "--filter", "@charlybot/bot", "dev"]
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -f 'bun.*index.ts' || exit 1"]
+      test: ["CMD-SHELL", "pgrep -f 'tsx.*index.ts' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3

@@ -45,7 +45,7 @@ services:
         condition: service_healthy
     networks:
       - charlybot-net
-    command: ["bun", "run", "--cwd", "/app/apps/api", "dev"]
+    command: ["pnpm", "--filter", "@charlybot/api", "dev"]
 
   # Bot service — hot reload via bun run
   bot:
@@ -62,7 +62,7 @@ services:
         condition: service_healthy
     networks:
       - charlybot-net
-    command: ["bun", "run", "--cwd", "/app/apps/bot", "dev"]
+    command: ["pnpm", "--filter", "@charlybot/bot", "dev"]
 
   # Landing — Angular SSR dev server with hot reload
   landing:

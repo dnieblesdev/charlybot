@@ -1,23 +1,29 @@
 # Multi-stage build for API
 # Stage 1: Build dependencies and Prisma
-FROM oven/bun:1 AS builder
+FROM node:22-slim AS builder
 
 WORKDIR /app
 
+# Enable corepack for pnpm
+RUN corepack enable
+
 # Copy package files
-COPY package.json bun.lock ./
+COPY package.json pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/ ./packages/shared/
 
 # Install dependencies and generate Prisma
-RUN bun install
-RUN bunx prisma generate --schema=./packages/shared/prisma/schema.prisma
+RUN pnpm install --frozen-lockfile
+RUN pnpm exec prisma generate --schema=./packages/shared/prisma/schema.prisma
 
 # Stage 2: Runtime
 # NOTE: Production-ready — minimal runtime with only API service
-FROM oven/bun:1
+FROM node:22-slim
 
 WORKDIR /app
+
+# Enable corepack for pnpm
+RUN corepack enable
 
 # Copy built artifacts from builder
 COPY --from=builder /app/node_modules /app/node_modules
@@ -30,4 +36,4 @@ COPY packages/shared/ ./packages/shared/
 EXPOSE 3000
 
 # Uses "start" script from apps/api/package.json
-CMD ["bun", "run", "--cwd", "/app/apps/api", "start"]
+CMD ["pnpm", "--filter", "@charlybot/api", "start"]
