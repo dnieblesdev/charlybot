@@ -5,7 +5,7 @@ FROM node:22-slim
 WORKDIR /app
 
 # Install Angular CLI globally
-RUN npm install -g @angular/cli@21
+RUN corepack enable && pnpm add -g @angular/cli@21
 
 # Copy workspace root for pnpm
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
