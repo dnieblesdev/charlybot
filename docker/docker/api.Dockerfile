@@ -27,8 +27,12 @@ RUN corepack enable
 
 # Copy workspace root for pnpm
 COPY --from=builder /app/pnpm-workspace.yaml /app/package.json /app/pnpm-lock.yaml ./
-# Copy built artifacts from builder
-COPY --from=builder /app/node_modules /app/node_modules
+# Copy package.json files for pnpm install
+COPY --from=builder /app/apps/api/package.json ./apps/api/
+COPY --from=builder /app/packages/shared/package.json ./packages/shared/
+# Rebuild node_modules (COPY breaks pnpm symlinks)
+RUN pnpm install --frozen-lockfile
+# Copy Prisma generated client
 COPY --from=builder /app/packages/shared/src/generated /app/packages/shared/src/generated
 
 # Copy source files
