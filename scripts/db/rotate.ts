@@ -131,7 +131,7 @@ if (import.meta.main) {
     }
     default:
       console.log("Usage:");
-      console.log("  bun run scripts/db/rotate.ts run");
-      console.log("  bun run scripts/db/rotate.ts status");
+      console.log("  pnpm db:rotate run");
+      console.log("  pnpm db:rotate status");
   }
 }

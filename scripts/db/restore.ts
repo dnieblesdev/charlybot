@@ -134,11 +134,11 @@ export async function listRestoreOptions(): Promise<void> {
     const size = (backup.sizeBytes / 1024).toFixed(2);
     console.log(`   ${backup.filename}`);
     console.log(`     ${date} | ${size} KB`);
-    console.log(`     bun run scripts/db/restore.ts ${backup.filename}\n`);
+    console.log(`     pnpm db:restore ${backup.filename}\n`);
   }
   
   console.log("   Quick restore latest:");
-  console.log("   bun run scripts/db/restore.ts latest\n");
+  console.log("   pnpm db:restore latest\n");
 }
 
 // CLI execution

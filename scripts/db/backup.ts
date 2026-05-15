@@ -178,8 +178,8 @@ if (import.meta.main) {
     }
     default:
       console.log("Usage:");
-      console.log("  bun run backup.ts create [daily|migration]");
-      console.log("  bun run backup.ts list");
-      console.log("  bun run backup.ts latest");
+      console.log("  pnpm db:backup create [daily|migration]");
+      console.log("  pnpm db:backup list");
+      console.log("  pnpm db:backup latest");
   }
 }

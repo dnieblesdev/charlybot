@@ -54,7 +54,7 @@ async function runPrismaMigrateDev(args: string[]): Promise<number> {
     env.DATABASE_URL = "file:./dev.db";
   }
   
-  const prismaCmd = `bunx --bun prisma migrate dev --schema=./prisma/schema.prisma ${args.join(" ")}`;
+  const prismaCmd = `pnpm exec prisma migrate dev --schema=./prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
   
@@ -76,7 +76,7 @@ async function runPrismaMigrateDev(args: string[]): Promise<number> {
 async function runPrismaMigrate(args: string[]): Promise<number> {
   const { execSync } = await import("node:child_process");
   
-  const prismaCmd = `bunx prisma migrate deploy --schema=./prisma/schema.prisma ${args.join(" ")}`;
+  const prismaCmd = `pnpm exec prisma migrate deploy --schema=./prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
   
@@ -97,7 +97,7 @@ async function runPrismaMigrate(args: string[]): Promise<number> {
 async function runPrismaPush(args: string[]): Promise<number> {
   const { execSync } = await import("node:child_process");
   
-  const prismaCmd = `bunx prisma db push --schema=./prisma/schema.prisma ${args.join(" ")}`;
+  const prismaCmd = `pnpm exec prisma db push --schema=./prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
   
@@ -141,7 +141,7 @@ export async function migrateDev(args: string[] = []): Promise<MigrationResult> 
   if (exitCode !== 0) {
     console.error(`\n❌ Migration dev failed with exit code ${exitCode}`);
     console.log("\n📌 To restore from backup, run:");
-    console.log(`   bun run scripts/db/restore.ts ${backupFilepath}\n`);
+    console.log(`   pnpm db:restore ${backupFilepath}\n`);
     
     return {
       success: false,
@@ -195,7 +195,7 @@ export async function migrate(args: string[] = []): Promise<MigrationResult> {
   if (exitCode !== 0) {
     console.error(`\n❌ Migration failed with exit code ${exitCode}`);
     console.log("\n📌 To restore from backup, run:");
-    console.log(`   bun run scripts/db/restore.ts ${backupFilepath}\n`);
+    console.log(`   pnpm db:restore ${backupFilepath}\n`);
     
     return {
       success: false,
@@ -250,7 +250,7 @@ export async function dbPush(args: string[] = []): Promise<MigrationResult> {
   if (exitCode !== 0) {
     console.error(`\n❌ db push failed with exit code ${exitCode}`);
     console.log("\n📌 To restore from backup, run:");
-    console.log(`   bun run scripts/db/restore.ts ${backupFilepath}\n`);
+    console.log(`   pnpm db:restore ${backupFilepath}\n`);
     
     return {
       success: false,
@@ -299,8 +299,8 @@ if (import.meta.main) {
     }
     default:
       console.log("Usage:");
-      console.log("  bun run scripts/db/migrate.ts dev [--name <name>]   → create new migration");
-      console.log("  bun run scripts/db/migrate.ts deploy                 → apply migrations (production)");
-      console.log("  bun run scripts/db/migrate.ts push                   → sync schema without migration");
+      console.log("  pnpm db:migrate dev [--name <name>]   → create new migration");
+      console.log("  pnpm db:migrate deploy                → apply migrations (production)");
+      console.log("  pnpm db:migrate push                  → sync schema without migration");
   }
 }
