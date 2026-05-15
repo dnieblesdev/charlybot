@@ -1,32 +1,34 @@
 {
   "name": "charlybot",
   "private": true,
+  "packageManager": "pnpm@10.14.0",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"bun run dev:api\" \"bun run dev:bot\"",
-    "dev:bot": "bun run --cwd apps/bot dev",
-    "dev:api": "bun run --cwd apps/api dev",
-    "rc": "bun --cwd apps/bot run rc",
-    "cc": "bun --cwd apps/bot run cc",
-    "lc": "bun --cwd apps/bot run lc",
-    "db:backup": "bun run scripts/db/backup.ts create daily",
-    "db:backup:migration": "bun run scripts/db/backup.ts create migration",
-    "db:backup:list": "bun run scripts/db/backup.ts list",
-    "db:backup:latest": "bun run scripts/db/backup.ts latest",
-    "db:migrate": "bun run scripts/db/migrate.ts migrate",
-    "db:push": "bun run scripts/db/migrate.ts push",
-    "db:restore": "bun run scripts/db/restore.ts",
-    "db:restore:latest": "bun run scripts/db/restore.ts latest",
-    "db:rotate": "bun run scripts/db/rotate.ts run",
-    "db:rotate:status": "bun run scripts/db/rotate.ts status"
+    "dev": "concurrently \"pnpm dev:api\" \"pnpm dev:bot\"",
+    "dev:bot": "pnpm --filter @charlybot/bot dev",
+    "dev:api": "pnpm --filter @charlybot/api dev",
+    "rc": "pnpm --filter @charlybot/bot rc",
+    "cc": "pnpm --filter @charlybot/bot cc",
+    "lc": "pnpm --filter @charlybot/bot lc",
+    "db:backup": "tsx scripts/db/backup.ts create daily",
+    "db:backup:migration": "tsx scripts/db/backup.ts create migration",
+    "db:backup:list": "tsx scripts/db/backup.ts list",
+    "db:backup:latest": "tsx scripts/db/backup.ts latest",
+    "db:migrate": "tsx scripts/db/migrate.ts migrate",
+    "db:push": "tsx scripts/db/migrate.ts push",
+    "db:restore": "tsx scripts/db/restore.ts",
+    "db:restore:latest": "tsx scripts/db/restore.ts latest",
+    "db:rotate": "tsx scripts/db/rotate.ts run",
+    "db:rotate:status": "tsx scripts/db/rotate.ts status"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
     "@changesets/cli": "^2.30.0",
     "prisma": "latest",
+    "tsx": "^4",
     "typescript": "^5"
   },
   "dependencies": {
