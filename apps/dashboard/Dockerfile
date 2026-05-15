@@ -16,10 +16,10 @@ COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies (full workspace — builder stage is discarded)
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
-# Copy source (context is project root)
-COPY apps/dashboard/ ./
+# Copy source to the correct workspace subdirectory
+COPY apps/dashboard/ ./apps/dashboard/
 
 # Build Angular app from within the dashboard directory
 WORKDIR /app/apps/dashboard
@@ -27,7 +27,7 @@ RUN pnpm run build
 
 FROM nginx:alpine
 # Copy Angular build output to /dashboard/ subdirectory (matches baseHref)
-COPY --from=build /app/dist/dashboard/browser /usr/share/nginx/html/dashboard
+COPY --from=build /app/apps/dashboard/dist/dashboard/browser /usr/share/nginx/html/dashboard
 COPY apps/dashboard/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 4201
 CMD ["nginx", "-g", "daemon off;"]

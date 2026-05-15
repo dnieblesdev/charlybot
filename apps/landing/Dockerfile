@@ -17,10 +17,10 @@ COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies (full workspace — builder stage is discarded)
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
-# Copy source (context is project root)
-COPY apps/landing/ ./
+# Copy source to the correct workspace subdirectory
+COPY apps/landing/ ./apps/landing/
 
 # Build SSR app from within the landing directory
 WORKDIR /app/apps/landing
@@ -30,8 +30,8 @@ RUN pnpm run build
 FROM node:22-slim
 WORKDIR /app
 
-# Copy built artifacts
-COPY --from=build /app/dist/landing /app/dist/landing
+# Copy built artifacts (output is at apps/landing/dist/landing/)
+COPY --from=build /app/apps/landing/dist/landing /app/dist/landing
 
 # Expose port
 EXPOSE 4200
