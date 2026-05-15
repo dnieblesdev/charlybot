@@ -2,8 +2,10 @@
 FROM node:22-slim AS build
 WORKDIR /app
 
+# Copy workspace root for pnpm monorepo context
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 # Copy package files (context is project root)
-COPY apps/landing/package.json apps/landing/pnpm-lock.yaml ./
+COPY apps/landing/package.json ./apps/landing/
 
 # Install dependencies
 RUN corepack enable && pnpm install --frozen-lockfile

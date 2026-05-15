@@ -1,7 +1,9 @@
 FROM node:22-slim AS build
 WORKDIR /app
+# Copy workspace root for pnpm monorepo context
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 # Copy package files (context is project root)
-COPY apps/dashboard/package.json apps/dashboard/pnpm-lock.yaml ./
+COPY apps/dashboard/package.json ./apps/dashboard/
 RUN corepack enable && pnpm install --frozen-lockfile
 # Copy source (context is project root)
 COPY apps/dashboard/ ./

@@ -30,7 +30,7 @@ WORKDIR /app
 RUN corepack enable
 
 # Copy package files — bot + shared only (no api)
-COPY package.json pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/bot/package.json ./apps/bot/
 COPY packages/shared/ ./packages/shared/
 
@@ -61,6 +61,8 @@ WORKDIR /app
 # Enable corepack for pnpm
 RUN corepack enable
 
+# Copy workspace root for pnpm
+COPY --from=builder /app/pnpm-workspace.yaml /app/package.json /app/pnpm-lock.yaml ./
 # Copy built artifacts from builder
 COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/packages/shared/src/generated /app/packages/shared/src/generated
