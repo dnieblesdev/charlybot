@@ -16,14 +16,14 @@ COPY apps/bot/package.json ./apps/bot/
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install dependencies
 # Install dependencies (full workspace — builder stage is discarded)
 RUN pnpm install --frozen-lockfile
 
 # Copy source (context is project root)
 COPY apps/landing/ ./
 
-# Build SSR app
+# Build SSR app from within the landing directory
+WORKDIR /app/apps/landing
 RUN pnpm run build
 
 # Stage 2: Runtime
