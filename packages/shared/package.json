@@ -11,8 +11,8 @@
     "./schemas/*": "./src/schemas/*.ts"
   },
   "scripts": {
-    "db:generate": "bunx prisma generate --schema=./prisma/schema.prisma",
-    "db:push": "bunx prisma db push --schema=./prisma/schema.prisma"
+    "db:generate": "pnpm exec prisma generate --schema=./prisma/schema.prisma",
+    "db:push": "pnpm exec prisma db push --schema=./prisma/schema.prisma"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
