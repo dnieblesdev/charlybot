@@ -3,16 +3,16 @@ FROM node:22-slim AS build
 WORKDIR /app
 
 # Copy package files (context is project root)
-COPY apps/landing/package.json apps/landing/bun.lockb* ./
+COPY apps/landing/package.json apps/landing/pnpm-lock.yaml ./
 
 # Install dependencies
-RUN npm install
+RUN corepack enable && pnpm install --frozen-lockfile
 
 # Copy source (context is project root)
 COPY apps/landing/ ./
 
 # Build SSR app
-RUN npm run build
+RUN pnpm run build
 
 # Stage 2: Runtime
 FROM node:22-slim

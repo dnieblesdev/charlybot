@@ -1,11 +1,11 @@
-FROM oven/bun:1 AS build
+FROM node:22-slim AS build
 WORKDIR /app
 # Copy package files (context is project root)
-COPY apps/dashboard/package.json apps/dashboard/bun.lockb* ./
-RUN bun install
+COPY apps/dashboard/package.json apps/dashboard/pnpm-lock.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
 # Copy source (context is project root)
 COPY apps/dashboard/ ./
-RUN bun run build
+RUN pnpm run build
 
 FROM nginx:alpine
 # Copy Angular build output to /dashboard/ subdirectory (matches baseHref)

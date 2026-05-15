@@ -7,9 +7,11 @@ WORKDIR /app
 # Install Angular CLI globally
 RUN npm install -g @angular/cli@21
 
+# Copy workspace root for pnpm
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 # Copy package files and install (node_modules persist in container)
-COPY apps/landing/package.json apps/landing/bun.lockb* ./
-RUN npm install
+COPY apps/landing/package.json ./apps/landing/
+RUN corepack enable && pnpm install --frozen-lockfile
 
 # Copy source
 COPY apps/landing/ ./
