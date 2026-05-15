@@ -17,7 +17,7 @@ COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies (full workspace — builder stage is discarded)
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # Copy source (context is project root)
 COPY apps/landing/ ./
