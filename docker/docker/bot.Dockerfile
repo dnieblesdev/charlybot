@@ -32,6 +32,7 @@ RUN corepack enable
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/bot/package.json ./apps/bot/
 COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared/prisma ./packages/shared/prisma/
 COPY apps/api/package.json ./apps/api/
 
 # Install dependencies (build tools present → native modules compile)
