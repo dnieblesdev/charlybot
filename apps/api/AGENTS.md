@@ -33,7 +33,7 @@ Context for AI agents working on the API. Read this in full before making change
 
 ## TL;DR
 
-- Runtime: **Bun** (`bun --hot`).
+- Runtime: **Node.js 22** (`tsx --watch`).
 - Framework: **Hono**.
 - Validation: **zod** + `@hono/zod-validator`.
 - Logs: **Winston** (`src/utils/logger.ts`).
@@ -56,10 +56,11 @@ Context for AI agents working on the API. Read this in full before making change
 
 ```bash
 # from apps/api
-bun run dev
+tsx --watch src/index.ts     # Dev server with hot reload
+tsx src/index.ts             # Start server
 
 # from root
-bun run dev:api
+pnpm dev:api                 # API dev server
 ```
 
 ## Entry Point

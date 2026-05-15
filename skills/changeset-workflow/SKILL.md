@@ -1,7 +1,7 @@
 ---
 name: changeset-workflow
 description: >
-  Automates the changeset versioning workflow for bun monorepos. Uses `bun changeset add --empty` to create changeset templates, then edits them with package bumps and descriptions. Includes the full git workflow from branch to release.
+  Automates the changeset versioning workflow for pnpm monorepos. Uses `pnpm exec changeset add --empty` to create changeset templates, then edits them with package bumps and descriptions. Includes the full git workflow from branch to release.
   Trigger: When user wants to version packages, run changeset, "versionear", "preparar release", or create a release.
 license: Apache-2.0
 metadata:
@@ -21,18 +21,18 @@ metadata:
 
 | Rule | Why |
 |------|-----|
-| Use `bun changeset add --empty` (never interactive `bun changeset add` without `--empty`) | The interactive CLI hangs with AI agents |
+| Use `pnpm exec changeset add --empty` (never interactive `pnpm exec changeset add` without `--empty`) | The interactive CLI hangs with AI agents |
 | List `.changeset/` after `--empty` to find the generated file | File names are random: `adjective-noun-verb.md` |
 | Quote scoped package names in YAML: `"@charlybot/bot"` | YAML requires quotes for `@`-prefixed keys |
-| Run `bun changeset version` AFTER all changesets are committed | This bumps package.json versions and updates CHANGELOGs |
+| Run `pnpm exec changeset version` AFTER all changesets are committed | This bumps package.json versions and updates CHANGELOGs |
 | Commit release with `chore(release): ...` message | Conventional commit standard for releases |
 
 ### NEVER
 
 | Rule | Consequence |
 |------|-------------|
-| Run `bun changeset add` without `--empty` | Interactive prompts hang the agent indefinitely |
-| Forget to commit changeset `.md` files before `bun changeset version` | Version command won't find uncommitted changesets |
+| Run `pnpm exec changeset add` without `--empty` | Interactive prompts hang the agent indefinitely |
+| Forget to commit changeset `.md` files before `pnpm exec changeset version` | Version command won't find uncommitted changesets |
 | Push branches other than `master` | `develop` stays local/CI; only `master` goes to remote |
 | Use `changeset` CLI for the version commit message | Use `git commit -m "chore(release): ..."` manually |
 
@@ -68,7 +68,7 @@ The agent must edit it to:
    git commit -m "feat(scope): description"
 
 3. Create changeset
-   bun changeset add --empty
+   pnpm exec changeset add --empty
    # → creates .changeset/random-name.md
    # List files to find it:
    ls .changeset/*.md
@@ -84,7 +84,7 @@ The agent must edit it to:
    # If bugs found: create fix/ branch, repeat steps 2-4
 
 6. Version and release
-   bun changeset version
+   pnpm exec changeset version
    git add -A
    git commit -m "chore(release): vX.Y.Z"
 
@@ -111,13 +111,13 @@ The agent must edit it to:
 
 ```bash
 # Create empty changeset
-bun changeset add --empty
+pnpm exec changeset add --empty
 
 # Find the generated file
 ls .changeset/*.md
 
 # Run versioning (after all changesets committed)
-bun changeset version
+pnpm exec changeset version
 
 # Check version changes
 git diff packages/*/package.json apps/*/package.json
@@ -129,8 +129,8 @@ git commit -m "chore(release): vX.Y.Z"
 
 ## Common Issues
 
-### "bun changeset add hangs"
-→ Never use without `--empty`. Always `bun changeset add --empty`.
+### "pnpm exec changeset add hangs"
+→ Never use without `--empty`. Always `pnpm exec changeset add --empty`.
 
 ### "Which packages to include?"
 → Check `git diff --name-only HEAD~1` for modified packages in `packages/` and `apps/`.

@@ -44,7 +44,7 @@ Context for AI agents working on the landing page. Read this in full before maki
 
 | | |
 |---|---|
-| Package Manager | Bun 1.3.9 |
+| Package Manager | pnpm 10 |
 | Framework | Angular 21.2.0 standalone components, zoneless |
 | SSR | `@angular/ssr` 21.2.2 + Express 5.1.0 |
 | Change Detection | Zoneless (`provideZonelessChangeDetection()`) |
@@ -320,10 +320,10 @@ No other environment variables are required for the landing page. Discord OAuth 
 ## Scripts
 
 ```bash
-bun run start         # ng serve (dev server)
-bun run build        # ng build (production browser + server bundles)
-bun run watch        # ng build --watch --configuration development
-bun run serve:ssr:landing  # node dist/landing/server/server.mjs (production SSR)
+pnpm run start         # ng serve (dev server)
+pnpm run build        # ng build (production browser + server bundles)
+pnpm run watch        # ng build --watch --configuration development
+pnpm run serve:ssr:landing  # node dist/landing/server/server.mjs (production SSR)
 ```
 
 ## Tests
@@ -333,7 +333,7 @@ bun run serve:ssr:landing  # node dist/landing/server/server.mjs (production SSR
 - `tsconfig.spec.json` references vitest types but no test runner is configured
 - Zero `.spec.ts` files in the project
 - No `vitest.config.ts`, no `karma.conf.js`
-- Do not run `bun test` — there is nothing to run
+- Do not run `pnpm test` — there is nothing to run
 
 ## Auto-Invoke Skills
 

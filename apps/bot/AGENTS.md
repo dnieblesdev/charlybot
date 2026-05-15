@@ -34,7 +34,7 @@ Context for AI agents working on the bot. Read this in full before making any ch
 
 ## TL;DR
 
-- Stack: **TypeScript + Bun + Discord.js v14**.
+- Stack: **TypeScript + Node.js 22 + Discord.js v14**.
 - Entry: `src/index.ts` imports `src/app/core/index.ts`.
 - Commands new: folder + `index.ts` + subcommands (pattern `src/app/commands/autorole/`).
 - Interactions: `customId` ALWAYS via `CUSTOM_IDS.*` (no hardcoded strings).
@@ -45,7 +45,7 @@ Context for AI agents working on the bot. Read this in full before making any ch
 
 | | |
 |---|---|
-| Runtime | Bun |
+| Runtime | Node.js 22 |
 | Language | TypeScript (ESM) |
 | Discord | Discord.js v14 |
 | Logger | Winston via `@charlybot/shared` |
@@ -227,13 +227,14 @@ Typical variables: `VALKEY_HOST`, `VALKEY_PORT`, `VALKEY_PASSWORD`, `VALKEY_PREF
 ## Useful Scripts
 
 ```bash
-bun run dev          # Start the bot (apps/bot)
-bun run rc           # Register slash commands (scripts/registerCommands.ts)
-bun run cc           # Clear slash commands
-bun run lc           # List registered slash commands
+tsx src/index.ts                        # Start the bot (apps/bot)
+tsx ../../scripts/registerCommands.ts  # Register slash commands (scripts/registerCommands.ts)
+tsx ../../scripts/clearCommands.ts     # Clear slash commands
+tsx ../../scripts/listRegistered.ts    # List registered slash commands
+pnpm --filter @charlybot/bot test       # Run tests
 ```
 
-Note: Command administration scripts live in `scripts/` (root) and are run with Bun.
+Note: Command administration scripts live in `scripts/` (root) and are run with tsx.
 
 ## Technical Debt (Do Not Extend)
 
@@ -333,7 +334,7 @@ const repo = createMockEconomyRepo({
 - [ ] `deferReply()` called before async operations
 - [ ] New commands created as folders with `index.ts` (not flat files)
 - [ ] Repository used for data access (Prisma only via repositories, not in services/commands)
-- [ ] Tests pass: `bun run test`
+- [ ] Tests pass: `pnpm --filter @charlybot/bot test`
 - [ ] ESM imports used (no `require()`)
 - [ ] No hardcoded strings for interaction identifiers
 

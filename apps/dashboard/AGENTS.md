@@ -38,8 +38,8 @@ Context for AI agents working on the dashboard. Read this in full before making 
 ## TL;DR
 
 - Stack: **Angular 21.2 standalone + zoneless + Tailwind CSS 4** — pure SPA, no SSR.
-- Dev server: `ng serve` — **NOT `bun run dev`** (bun is package manager only).
-- Tests: **Jest 30** via `ng test` — vitest is NOT configured; `bun test` does NOT run dashboard tests.
+- Dev server: `ng serve` — **NOT `pnpm dev`** (pnpm is package manager only).
+- Tests: **Jest 30** via `ng test` — vitest is NOT configured; `pnpm test` does NOT run dashboard tests.
 - Icons: `lucide-angular` 1.0.0.
 - Forms: template-driven via `FormsModule` — `[(ngModel)]`, `(ngSubmit)`.
 - API state: `createApiState()` signals in `shared/http/api-state.ts`.
@@ -48,7 +48,7 @@ Context for AI agents working on the dashboard. Read this in full before making 
 
 | | |
 |---|---|
-| Package Manager | Bun 1.3.9 |
+| Package Manager | pnpm 10 |
 | Framework | Angular 21.2.0 standalone components, zoneless |
 | Change Detection | Zoneless (`provideZonelessChangeDetection()`) |
 | Styling | Tailwind CSS 4 + PostCSS (`@tailwindcss/postcss`) |
@@ -248,9 +248,9 @@ The only environment variable needed is the API base URL — set by the proxy du
 ## Scripts
 
 ```bash
-ng serve        # Dev server (port 4200) — NOT bun run dev
+ng serve        # Dev server (port 4200)
 ng build       # Production build (output to dist/)
-ng test        # Run Jest 30 test suite — NOT bun test
+ng test        # Run Jest 30 test suite
 ```
 
 ## Tests
@@ -273,7 +273,7 @@ ng test        # Runs Jest in watch mode via @angular-builders/jest
 
 - `tsconfig.spec.json` references Jest types — no vitest types
 - `jest.config.ts` uses `ts-jest` preset with `jest-environment-jsdom`
-- Do **NOT** run `bun test` — it does not run dashboard tests (different runner from bot/api)
+- Do **NOT** run `pnpm test` — it does not run dashboard tests (different runner from bot/api)
 
 ## Auto-Invoke Skills
 
@@ -299,7 +299,7 @@ ng test        # Runs Jest in watch mode via @angular-builders/jest
 - [ ] No imports from `@charlybot/shared`
 - [ ] No Angular CDK or Angular Material — Tailwind CSS 4 only for styling
 - [ ] Icons from `lucide-angular` — no raw SVG inline
-- [ ] Tests run via `ng test` (Jest 30) — not `bun test`
+- [ ] Tests run via `ng test` (Jest 30) — not `pnpm test`
 - [ ] `app.routes.ts` uses `loadComponent` for all 10 features (lazy loading)
 
 ## Explicit Declarations

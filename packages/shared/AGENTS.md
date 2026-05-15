@@ -200,3 +200,4 @@ throw new NotFoundError("EconomyUser", userId);
 - [ ] Logger used via `createLogger()`, not `console.log`
 - [ ] Valkey keys built via `redis-keys.ts` helpers, not hardcoded strings
 - [ ] AppError subclasses used for typed errors in new code
+- [ ] QA scripts run with `pnpm exec prisma generate` (not `bunx`)
