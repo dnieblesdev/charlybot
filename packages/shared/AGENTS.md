@@ -23,7 +23,7 @@ Context for AI agents working on the shared package. Read this in full before ma
 
 | # | Rule | Consequence |
 |---|------|-------------|
-| 1 | Edit generated Prisma files in `src/generated/prisma/` | Regenerated on `bun run db:generate`, changes are lost |
+| 1 | Edit generated Prisma files in `src/generated/prisma/` | Regenerated on `pnpm run db:generate`, changes are lost |
 | 2 | Add runtime dependencies without checking bundle impact | Bot and API share this package; extra deps multiply |
 | 3 | Import `prisma` directly in bot commands/services | Bot must use API via HTTP adapters; Prisma is for API layer only |
 | 4 | Hardcode Valkey key prefixes | Use constants from `./valkey/redis-keys.ts` |

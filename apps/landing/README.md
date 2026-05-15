@@ -5,9 +5,9 @@ Sitio público de CharlyBot con SSR. Muestra características, comandos y docume
 ## 🚀 Desarrollo
 
 ```bash
-bun install
+pnpm install
 ng serve                    # http://localhost:4200
-bun run dev                 # Si definido en package.json
+pnpm dev                 # Si definido en package.json
 ```
 
 ## 🛠️ Stack

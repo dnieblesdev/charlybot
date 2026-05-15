@@ -6,18 +6,18 @@ API REST del ecosistema CharlyBot. Provee datos al bot de Discord y al dashboard
 
 ```bash
 # Desde apps/api
-bun install
-bun run dev           # http://localhost:3000
+pnpm install
+pnpm dev           # http://localhost:3000
 
 # Desde la raíz del monorepo
-bun run dev:api
+pnpm dev:api
 ```
 
 ## 🛠️ Stack
 
 | Capa | Tecnología |
 |---|---|
-| Runtime | Bun |
+| Runtime | Node.js 22 |
 | Framework HTTP | Hono |
 | Validación | Zod + `@hono/zod-validator` |
 | Base de datos | SQLite (Prisma + LibSQL adapter) |
@@ -91,7 +91,7 @@ docker compose -f docker/docker-compose.yml up -d api
 ## 🧪 Tests
 
 ```bash
-bun test               # Vitest (unitarios)
-bun run test:watch     # Watch mode
-bun run test:coverage  # Coverage report
+pnpm test               # Vitest (unitarios)
+pnpm test:watch     # Watch mode
+pnpm test:coverage  # Coverage report
 ```

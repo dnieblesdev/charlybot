@@ -5,11 +5,11 @@ Bot de Discord multifuncional con sistemas de música, economía, verificación,
 ## 🚀 Inicio Rápido
 
 ```bash
-bun install
-bun run dev          # Inicia el bot
-bun run rc           # Registra slash commands
-bun run cc           # Limpia slash commands
-bun run lc           # Lista comandos registrados
+pnpm install
+pnpm dev          # Inicia el bot
+pnpm rc           # Registra slash commands
+pnpm cc           # Limpia slash commands
+pnpm lc           # Lista comandos registrados
 ```
 
 ## ✨ Sistemas
@@ -94,7 +94,7 @@ Eventos automáticos: entrada/salida de miembros, cambios en canales de voz, men
 
 | Capa | Tecnología |
 |---|---|
-| Runtime | Bun |
+| Runtime | Node.js 22 |
 | Framework | Discord.js v14 |
 | Lenguaje | TypeScript (ESM) |
 | Audio | `@discordjs/voice`, `play-dl`, `yt-dlp` |
@@ -154,7 +154,7 @@ docker compose -f docker/docker-compose.yml up -d bot
 ## 🧪 Tests
 
 ```bash
-bun test               # Vitest con pool forks
-bun run test:watch     # Watch mode
-bun run test:coverage  # Coverage report (v8)
+pnpm test               # Vitest con pool forks
+pnpm test:watch     # Watch mode
+pnpm test:coverage  # Coverage report (v8)
 ```

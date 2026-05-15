@@ -251,9 +251,9 @@ The bot uses **vitest** as the test runner with pool `forks` for deterministic i
 
 ```bash
 # from apps/bot/
-bun test              # run once
-bun run test:watch    # watch mode
-bun run test:coverage # with coverage report (v8)
+pnpm test              # run once
+pnpm test:watch    # watch mode
+pnpm test:coverage # with coverage report (v8)
 ```
 
 ### File structure

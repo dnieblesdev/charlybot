@@ -5,9 +5,9 @@ Panel de administración web para gestionar la configuración del bot, ver estad
 ## 🚀 Desarrollo
 
 ```bash
-bun install
+pnpm install
 ng serve                    # http://localhost:4201
-bun run dev                 # Si definido en package.json
+pnpm dev                 # Si definido en package.json
 ```
 
 ## 🛠️ Stack

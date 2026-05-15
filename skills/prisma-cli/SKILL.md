@@ -77,15 +77,6 @@ prisma generate --watch
 prisma generate --generator client
 ```
 
-### Bun Runtime
-
-When using Bun, always add the `--bun` flag so Prisma runs with the Bun runtime (otherwise it falls back to Node.js because of the CLI shebang):
-
-```bash
-bunx --bun prisma init
-bunx --bun prisma generate
-```
-
 ### Local Development Database
 
 ```bash

@@ -4,7 +4,7 @@ Context for AI agents working on this monorepo. Read this in full before making 
 
 ## TL;DR
 
-- Monorepo with **Bun + TypeScript (ESM)**.
+- Monorepo with **Node.js 22 + TypeScript (ESM)**.
 - Apps: `apps/bot` (Discord.js v14) and `apps/api` (Hono).
 - Shared package: `packages/shared` (Prisma + Zod schemas + observability).
 - Persistence: Prisma (LibSQL/SQLite) via `@charlybot/shared`. Bot and API use Prisma directly.
@@ -55,17 +55,17 @@ skills/        ← repo-specific skills (also see <available_skills> in system p
 ## Quick Commands
 
 ```bash
-bun install
-bun run dev          # API + Bot in parallel
-bun run dev:api
-bun run dev:bot
-bun run rc           # register slash commands
-bun run cc           # clear slash commands
-bun run lc           # list registered commands
-bun run db:backup
-bun run db:migrate
-bun run db:push
-bun run db:restore
+pnpm install
+pnpm dev          # API + Bot in parallel
+pnpm dev:api
+pnpm dev:bot
+pnpm rc           # register slash commands
+pnpm cc           # clear slash commands
+pnpm lc           # list registered commands
+pnpm db:backup
+pnpm db:migrate
+pnpm db:push
+pnpm db:restore
 ```
 
 ## Cross-Cutting Rules
@@ -73,7 +73,7 @@ bun run db:restore
 - **Logger**: Use Winston (`logger` or `createLogger()`), never `console.log`.
 - **No generated Prisma**: Do not edit files in `packages/shared/src/generated/prisma/`.
 - **Test policy**: NEVER run tests unless the user explicitly requests it.
-  - **EXCEPTION**: in `apps/bot/`, you may run `bun run test` (vitest) when editing commands.
+  - **EXCEPTION**: in `apps/bot/`, you may run `pnpm --filter @charlybot/bot test` (vitest) when editing commands.
 - **No destructives**: Do not run build/test or destructive commands unless explicitly requested.
 
 ## Available Skills
@@ -94,7 +94,6 @@ bun run db:restore
 | `prisma-client-api` | api, bot, shared | Prisma models, queries, DB operations | [SKILL.md](skills/prisma-client-api/SKILL.md) |
 | `vitest` | bot, api | Tests with vitest | [SKILL.md](skills/vitest/SKILL.md) |
 | `typescript-advanced-types` | bot, api, shared | TypeScript code, types, utilities | [SKILL.md](skills/typescript-advanced-types/SKILL.md) |
-| `bun` | all | Runtime, package manager, bundler | [SKILL.md](skills/bun/SKILL.md) |
 | `pr_review` | root | Review PRs and Issues | [SKILL.md](skills/pr_review/SKILL.md) |
 | `vite` | landing, dashboard | Vite config, plugins, SSR | [SKILL.md](skills/vite/SKILL.md) |
 | `angular-developer` | dashboard | Angular components, signals, forms, routing | [SKILL.md](skills/angular-developer/SKILL.md) |
@@ -127,7 +126,6 @@ When you perform these actions, load the corresponding skill FIRST:
 | Create Zod schemas | `zod` |
 | Write Hono routes | `hono` |
 | Write TypeScript, types, utilities | `typescript-advanced-types` |
-| Work with Bun, install packages | `bun` |
 | Work on the dashboard (Angular) | `angular-developer` |
 | Angular architecture, project structure | `reference-core` |
 | Use Angular compiler-cli (ngtsc) | `reference-compiler-cli` |
