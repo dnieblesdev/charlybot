@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "hono": "latest",
+    "@hono/node-server": "latest",
     "@hono/zod-validator": "latest",
     "zod": "^3.23.8",
     "winston": "latest",

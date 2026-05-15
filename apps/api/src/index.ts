@@ -105,9 +105,15 @@ app.get("/api/v1/health", async (c) => {
 // Initialize Valkey before starting server
 await initializeValkey();
 
+const port = Number(process.env.PORT) || 3000;
+
 logger.info("Charly API starting...");
 
-export default {
-  port: process.env.PORT || 3000,
-  fetch: app.fetch,
-};
+// Node.js server — Bun's export default { port, fetch } auto-start doesn't work with tsx
+import { serve } from "@hono/node-server";
+serve({ fetch: app.fetch, port });
+
+logger.info(`Charly API running on port ${port}`);
+
+// Export for testability
+export { app };
