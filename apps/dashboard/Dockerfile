@@ -14,10 +14,11 @@ COPY apps/landing/package.json ./apps/landing/
 COPY apps/bot/package.json ./apps/bot/
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
-# Install only dashboard dependencies (not entire monorepo)
-RUN pnpm install --filter @charlybot/dashboard --frozen-lockfile
+# Install dependencies (full workspace — builder stage is discarded)
+RUN pnpm install --frozen-lockfile
 # Copy source (context is project root)
 COPY apps/dashboard/ ./
+# Build Angular app
 RUN pnpm run build
 
 FROM nginx:alpine

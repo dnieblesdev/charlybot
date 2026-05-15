@@ -17,8 +17,8 @@ COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies
-# Install only landing dependencies (not entire monorepo)
-RUN pnpm install --filter @charlybot/landing --frozen-lockfile
+# Install dependencies (full workspace — builder stage is discarded)
+RUN pnpm install --frozen-lockfile
 
 # Copy source (context is project root)
 COPY apps/landing/ ./
