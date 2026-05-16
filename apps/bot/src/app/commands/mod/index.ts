@@ -113,6 +113,23 @@ export const data = new SlashCommandBuilder()
       ),
   )
 
+  // subcomando: antispam
+  .addSubcommand((sub) =>
+    sub
+      .setName("antispam")
+      .setDescription("Activar o desactivar el sistema anti-spam")
+      .addStringOption((o) =>
+        o
+          .setName("estado")
+          .setDescription("Estado del anti-spam")
+          .setRequired(true)
+          .addChoices(
+            { name: "Activar", value: "true" },
+            { name: "Desactivar", value: "false" },
+          ),
+      ),
+  )
+
   // grupo: config
   .addSubcommandGroup((group) =>
     group
@@ -216,6 +233,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
       case "reason": {
         const handler = await import("./reason.js");
+        await handler.default(interaction);
+        break;
+      }
+      case "antispam": {
+        const handler = await import("./antispam.js");
         await handler.default(interaction);
         break;
       }

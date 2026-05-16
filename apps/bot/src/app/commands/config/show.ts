@@ -6,6 +6,12 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
 import logger, { logCommand } from "../../../utils/logger.ts";
 
+/** Trunca un mensaje para que quepa en un campo de embed (máx 1024 chars). */
+function truncate(value: string, max = 200): string {
+  if (value.length <= max) return value;
+  return value.slice(0, max - 3) + "...";
+}
+
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
     logCommand(interaction.user.id, interaction.guildId || "DM", "show-config");
@@ -44,7 +50,29 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       })
       .setTimestamp();
 
-    // Agregar canal de imágenes si existe
+    // ── Bienvenida ──
+    if (config.welcomeChannelId) {
+      const lines: string[] = [`📡 Canal: <#${config.welcomeChannelId}>`];
+      if (config.welcomeMessage) {
+        lines.push(`💬 Mensaje: ${truncate(config.welcomeMessage)}`);
+      }
+      embed.addFields({
+        name: "👋 Bienvenida",
+        value: lines.join("\n"),
+        inline: false,
+      });
+    }
+
+    // ── Logs de salida ──
+    if (config.leaveLogChannelId) {
+      embed.addFields({
+        name: "🚪 Canal de Logs de Salida",
+        value: `<#${config.leaveLogChannelId}>`,
+        inline: false,
+      });
+    }
+
+    // ── Imágenes ──
     if (config.targetChannelId) {
       embed.addFields({
         name: "📸 Canal de Imágenes",
@@ -53,7 +81,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
     }
 
-    // Agregar canal de logs de voz si existe
+    // ── Voz ──
     if (config.voiceLogChannelId) {
       embed.addFields({
         name: "🎤 Canal de Logs de Voz",
@@ -62,11 +90,38 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
     }
 
-    // Agregar canal de logs de mensajes si existe
+    // ── Mensajes ──
     if (config.messageLogChannelId) {
       embed.addFields({
         name: "✏️ Canal de Logs de Mensajes",
         value: `<#${config.messageLogChannelId}>`,
+        inline: false,
+      });
+    }
+
+    // ── Verificación ──
+    if (config.verificationChannelId || config.verificationReviewChannelId || config.verifiedRoleId) {
+      const lines: string[] = [];
+      if (config.verificationChannelId) lines.push(`📡 Canal: <#${config.verificationChannelId}>`);
+      if (config.verificationReviewChannelId) lines.push(`📋 Revisión: <#${config.verificationReviewChannelId}>`);
+      if (config.verifiedRoleId) lines.push(`🏅 Rol: <@&${config.verifiedRoleId}>`);
+      embed.addFields({
+        name: "✅ Verificación",
+        value: lines.join("\n"),
+        inline: false,
+      });
+    }
+
+    // ── Moderación ──
+    const modLines: string[] = [];
+    if (config.modRoleId) modLines.push(`👮 Rol: <@&${config.modRoleId}>`);
+    if (config.modLogChannelId) modLines.push(`📝 Logs: <#${config.modLogChannelId}>`);
+    const antispamStatus = config.antispamEnabled ? "✅ Activado" : "❌ Desactivado";
+    modLines.push(`🛡️ Anti-spam: ${antispamStatus}`);
+    if (modLines.length > 0) {
+      embed.addFields({
+        name: "🛡️ Moderación",
+        value: modLines.join("\n"),
         inline: false,
       });
     }
@@ -77,6 +132,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       isPublic,
       hasImageChannel: !!config.targetChannelId,
       hasVoiceLogChannel: !!config.voiceLogChannelId,
+      hasWelcomeChannel: !!config.welcomeChannelId,
+      hasLeaveLog: !!config.leaveLogChannelId,
+      hasVerification: !!config.verificationChannelId,
+      hasModRole: !!config.modRoleId,
+      antispamEnabled: config.antispamEnabled,
     });
 
     await interaction.editReply({
