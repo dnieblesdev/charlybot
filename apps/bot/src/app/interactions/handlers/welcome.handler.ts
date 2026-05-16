@@ -3,8 +3,6 @@
  *
  * Handles the welcome modal submission — extracts channelId from the customId
  * payload, validates the guild context, and persists the welcome configuration.
- *
- * Logic moved from interactionCreate.ts lines 243–291.
  */
 
 import { MessageFlags } from "discord.js";
@@ -22,8 +20,9 @@ import logger from "../../../utils/logger.ts";
  * Expects customId format: `welcome:modal:{channelId}`
  *  - Extracts channelId from payload
  *  - Reads the "mensaje" text input field
+ *  - Defers reply before any async work to prevent Discord's 3-second timeout
  *  - Persists welcome message and channel via GuildConfigRepo
- *  - Replies with success or error
+ *  - Edits the deferred reply with success or error
  */
 export async function handleModal(
   interaction: ModalSubmitInteraction,
@@ -51,6 +50,10 @@ export async function handleModal(
     return;
   }
 
+  // Defer before any DB writes — Discord kills interactions that don't
+  // respond within 3 seconds.
+  await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
   try {
     const mensaje = interaction.fields.getTextInputValue("mensaje");
 
@@ -64,9 +67,8 @@ export async function handleModal(
       message: mensaje,
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `✅ Mensaje de bienvenida configurado para <#${channelId}>.\nMensaje: ${mensaje}`,
-      flags: [MessageFlags.Ephemeral],
     });
   } catch (err) {
     logger.error("welcome.handler: error procesando modal set-welcome", {
@@ -75,10 +77,10 @@ export async function handleModal(
       guildId: interaction.guildId,
     });
 
-    if (!interaction.replied) {
-      await interaction.reply({
+    // Already deferred, use editReply
+    if (interaction.deferred) {
+      await interaction.editReply({
         content: "❌ Error guardando la configuración de bienvenida.",
-        flags: [MessageFlags.Ephemeral],
       });
     }
   }
