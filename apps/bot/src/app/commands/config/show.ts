@@ -12,6 +12,11 @@ function truncate(value: string, max = 200): string {
   return value.slice(0, max - 3) + "...";
 }
 
+/** Renderiza una lista de pares [label, valor] como bullets con flecha. */
+function drawList(rows: [string, string][]): string {
+  return rows.map(([label, val]) => `• **${label}** → ${val}`).join("\n");
+}
+
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
     logCommand(interaction.user.id, interaction.guildId || "DM", "show-config");
@@ -24,7 +29,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    await interaction.deferReply();
+    // Leer publico ANTES de deferReply para controlar si la respuesta es ephemeral
+    const isPublic = interaction.options.getBoolean("publico") ?? false;
+
+    await interaction.deferReply({
+      flags: isPublic ? undefined : [MessageFlags.Ephemeral],
+    });
 
     const config = await getGuildConfig(interaction.guild.id);
 
@@ -36,10 +46,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    // Obtener la opción de mostrar públicamente
-    const isPublic = interaction.options.getBoolean("publico") ?? false;
-
-    // Crear un embed bonito
     const embed = new EmbedBuilder()
       .setColor(0x00ff99)
       .setTitle("⚙️ Configuración del Servidor")
@@ -50,81 +56,62 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       })
       .setTimestamp();
 
-    // ── Bienvenida ──
-    if (config.welcomeChannelId) {
-      const lines: string[] = [`📡 Canal: <#${config.welcomeChannelId}>`];
-      if (config.welcomeMessage) {
-        lines.push(`💬 Mensaje: ${truncate(config.welcomeMessage)}`);
-      }
-      embed.addFields({
-        name: "👋 Bienvenida",
-        value: lines.join("\n"),
-        inline: false,
-      });
+    // ── 📡 Canales ──
+    const canales: [string, string][] = [];
+    if (config.welcomeChannelId && !config.welcomeMessage) {
+      canales.push(["Bienvenida", `<#${config.welcomeChannelId}>`]);
     }
-
-    // ── Logs de salida ──
     if (config.leaveLogChannelId) {
-      embed.addFields({
-        name: "🚪 Canal de Logs de Salida",
-        value: `<#${config.leaveLogChannelId}>`,
-        inline: false,
-      });
+      canales.push(["Salidas", `<#${config.leaveLogChannelId}>`]);
     }
-
-    // ── Imágenes ──
     if (config.targetChannelId) {
-      embed.addFields({
-        name: "📸 Canal de Imágenes",
-        value: `<#${config.targetChannelId}>`,
-        inline: false,
-      });
+      canales.push(["Imágenes", `<#${config.targetChannelId}>`]);
     }
-
-    // ── Voz ──
     if (config.voiceLogChannelId) {
-      embed.addFields({
-        name: "🎤 Canal de Logs de Voz",
-        value: `<#${config.voiceLogChannelId}>`,
-        inline: false,
-      });
+      canales.push(["Voz", `<#${config.voiceLogChannelId}>`]);
     }
-
-    // ── Mensajes ──
     if (config.messageLogChannelId) {
-      embed.addFields({
-        name: "✏️ Canal de Logs de Mensajes",
-        value: `<#${config.messageLogChannelId}>`,
-        inline: false,
-      });
+      canales.push(["Mensajes", `<#${config.messageLogChannelId}>`]);
+    }
+    if (canales.length > 0) {
+      embed.addFields({ name: "📡 Canales", value: drawList(canales), inline: false });
     }
 
-    // ── Verificación ──
-    if (config.verificationChannelId || config.verificationReviewChannelId || config.verifiedRoleId) {
-      const lines: string[] = [];
-      if (config.verificationChannelId) lines.push(`📡 Canal: <#${config.verificationChannelId}>`);
-      if (config.verificationReviewChannelId) lines.push(`📋 Revisión: <#${config.verificationReviewChannelId}>`);
-      if (config.verifiedRoleId) lines.push(`🏅 Rol: <@&${config.verifiedRoleId}>`);
-      embed.addFields({
-        name: "✅ Verificación",
-        value: lines.join("\n"),
-        inline: false,
-      });
+    // ── 💬 Bienvenida ──
+    if (config.welcomeMessage) {
+      const bienvenida: [string, string][] = [];
+      if (config.welcomeChannelId) {
+        bienvenida.push(["Canal", `<#${config.welcomeChannelId}>`]);
+      }
+      bienvenida.push(["Mensaje", truncate(config.welcomeMessage)]);
+      embed.addFields({ name: "💬 Bienvenida", value: drawList(bienvenida), inline: false });
     }
 
-    // ── Moderación ──
-    const modLines: string[] = [];
-    if (config.modRoleId) modLines.push(`👮 Rol: <@&${config.modRoleId}>`);
-    if (config.modLogChannelId) modLines.push(`📝 Logs: <#${config.modLogChannelId}>`);
-    const antispamStatus = config.antispamEnabled ? "✅ Activado" : "❌ Desactivado";
-    modLines.push(`🛡️ Anti-spam: ${antispamStatus}`);
-    if (modLines.length > 0) {
-      embed.addFields({
-        name: "🛡️ Moderación",
-        value: modLines.join("\n"),
-        inline: false,
-      });
+    // ── ✅ Verificación ──
+    const verificacion: [string, string][] = [];
+    if (config.verificationChannelId) {
+      verificacion.push(["Canal", `<#${config.verificationChannelId}>`]);
     }
+    if (config.verificationReviewChannelId) {
+      verificacion.push(["Revisión", `<#${config.verificationReviewChannelId}>`]);
+    }
+    if (config.verifiedRoleId) {
+      verificacion.push(["Rol", `<@&${config.verifiedRoleId}>`]);
+    }
+    if (verificacion.length > 0) {
+      embed.addFields({ name: "✅ Verificación", value: drawList(verificacion), inline: false });
+    }
+
+    // ── 🛡️ Moderación ──
+    const moderacion: [string, string][] = [];
+    if (config.modRoleId) {
+      moderacion.push(["Rol", `<@&${config.modRoleId}>`]);
+    }
+    if (config.modLogChannelId) {
+      moderacion.push(["Logs", `<#${config.modLogChannelId}>`]);
+    }
+    moderacion.push(["Anti-spam", config.antispamEnabled ? "✅ Activado" : "❌ Desactivado"]);
+    embed.addFields({ name: "🛡️ Moderación", value: drawList(moderacion), inline: false });
 
     logger.info("Show config command executed successfully", {
       userId: interaction.user.id,
