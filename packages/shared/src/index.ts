@@ -1,4 +1,5 @@
 export * from './prisma';
+export * from './schemas/social-link';
 export * from './schemas/classes';
 export * from './schemas/guild';
 export * from './schemas/economy';

@@ -55,6 +55,7 @@ model Guild {
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
   guildConfigs                GuildConfig?
+  socialLinks                 SocialLink[]
 }
 
 model GuildConfig {
@@ -305,6 +306,15 @@ model LevelRole {
 
   @@unique([guildId, level])
   @@index([guildId])
+}
+
+model SocialLink {
+  guildId  String
+  platform String
+  url      String
+  guild    Guild  @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+
+  @@id([guildId, platform])
 }
 
 // Moderation System
