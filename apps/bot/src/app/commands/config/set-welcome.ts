@@ -34,6 +34,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       .setCustomId("mensaje")
       .setLabel("Mensaje de bienvenida")
       .setStyle(TextInputStyle.Paragraph)
+      .setPlaceholder("Disponibles: {user}, {username}, {server}, {enlace_twitch}, {enlace_kick}, {enlace_youtube}...")
       .setRequired(true)
       .setMaxLength(4000);
 

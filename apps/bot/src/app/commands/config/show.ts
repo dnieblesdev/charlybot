@@ -4,6 +4,7 @@ import {
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
+import { listSocialLinks } from "../../../config/repositories/SocialLinkRepo.ts";
 import logger, { logCommand } from "../../../utils/logger.ts";
 
 /** Trunca un mensaje para que quepa en un campo de embed (máx 1024 chars). */
@@ -112,6 +113,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
     moderacion.push(["Anti-spam", config.antispamEnabled ? "✅ Activado" : "❌ Desactivado"]);
     embed.addFields({ name: "🛡️ Moderación", value: drawList(moderacion), inline: false });
+
+    // ── 🔗 Redes ──
+    const socialLinks = await listSocialLinks(interaction.guild.id);
+    if (socialLinks.size > 0) {
+      const redes: [string, string][] = [];
+      for (const [platform, url] of socialLinks) {
+        redes.push([platform.charAt(0).toUpperCase() + platform.slice(1), url]);
+      }
+      embed.addFields({ name: "🔗 Redes", value: drawList(redes), inline: false });
+    }
 
     logger.info("Show config command executed successfully", {
       userId: interaction.user.id,

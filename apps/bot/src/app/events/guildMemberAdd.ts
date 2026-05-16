@@ -1,14 +1,22 @@
 import { Events, TextChannel, EmbedBuilder } from "discord.js";
 import type { GuildMember } from "discord.js";
 import { getGuildConfig } from "../../config/repositories/GuildConfigRepo.ts";
+import { listSocialLinks } from "../../config/repositories/SocialLinkRepo.ts";
 import logger from "../../utils/logger.ts";
 
-function formatWelcomeMessage(template: string, member: GuildMember) {
-  // Placeholders simples que puedes ampliar: {user}, {username}, {server}
+export function formatWelcomeMessage(
+  template: string,
+  member: GuildMember,
+  socialLinks: Map<string, string>,
+) {
   return template
     .replace(/{user}/g, member.toString())
     .replace(/{username}/g, member.user.username)
-    .replace(/{server}/g, member.guild.name);
+    .replace(/{server}/g, member.guild.name)
+    .replace(
+      /{enlace_(\w+)}/g,
+      (_, platform) => socialLinks.get(platform) ?? `{enlace_${platform}}`,
+    );
 }
 
 export default {
@@ -44,7 +52,8 @@ export default {
 
       // Si hay mensaje personalizado, usarlo
       if (messageTemplate) {
-        const finalMessage = formatWelcomeMessage(messageTemplate, member);
+        const socialLinks = await listSocialLinks(guildId);
+        const finalMessage = formatWelcomeMessage(messageTemplate, member, socialLinks);
         await (channel as TextChannel).send({ content: finalMessage });
       } else {
         // Si no hay mensaje personalizado, usar embed por defecto
