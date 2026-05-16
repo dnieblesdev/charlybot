@@ -22,7 +22,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    const platform = interaction.options.getString("plataforma", true);
+    const platform = interaction.options.getString("plataforma", true).toLowerCase();
     await interaction.deferReply();
 
     // Check existence

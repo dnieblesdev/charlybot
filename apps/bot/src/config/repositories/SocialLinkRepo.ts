@@ -3,14 +3,30 @@ import logger from "../../utils/logger";
 
 /**
  * Sets or updates a social link for a guild.
- * Ensures the Guild exists via upsert before creating the link.
+ * If maxLinks is provided, enforces the limit atomically within the transaction
+ * (skipping the check when updating an existing link for the same platform).
  */
 export async function setSocialLink(
   guildId: string,
   platform: string,
   url: string,
+  maxLinks?: number,
 ): Promise<void> {
   await prisma.$transaction(async (tx) => {
+    // Enforce max links limit atomically
+    if (maxLinks !== undefined) {
+      const existing = await tx.socialLink.findUnique({
+        where: { guildId_platform: { guildId, platform } },
+        select: { platform: true },
+      });
+      if (!existing) {
+        const count = await tx.socialLink.count({ where: { guildId } });
+        if (count >= maxLinks) {
+          throw new Error("MAX_LINKS_EXCEEDED");
+        }
+      }
+    }
+
     // Ensure Guild exists
     await tx.guild.upsert({
       where: { guildId },

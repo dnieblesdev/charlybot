@@ -15,7 +15,7 @@ export function formatWelcomeMessage(
     .replace(/{server}/g, member.guild.name)
     .replace(
       /{enlace_(\w+)}/g,
-      (_, platform) => socialLinks.get(platform) ?? `{enlace_${platform}}`,
+      (_, platform: string) => socialLinks.get(platform.toLowerCase()) ?? `{enlace_${platform}}`,
     );
 }
 
@@ -52,7 +52,9 @@ export default {
 
       // Si hay mensaje personalizado, usarlo
       if (messageTemplate) {
-        const socialLinks = await listSocialLinks(guildId);
+        const socialLinks = messageTemplate.includes("{enlace_")
+          ? await listSocialLinks(guildId)
+          : new Map<string, string>();
         const finalMessage = formatWelcomeMessage(messageTemplate, member, socialLinks);
         await (channel as TextChannel).send({ content: finalMessage });
       } else {

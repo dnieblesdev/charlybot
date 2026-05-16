@@ -57,7 +57,7 @@ vi.mock("@charlybot/shared", async (importOriginal) => {
     },
     socialLink: {
       findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(),
-      update: vi.fn(), upsert: vi.fn(), delete: vi.fn(),
+      update: vi.fn(), upsert: vi.fn(), delete: vi.fn(), count: vi.fn(),
     },
     guild: {
       upsert: vi.fn(), findUnique: vi.fn(),
