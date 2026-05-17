@@ -115,23 +115,24 @@ export async function showRotationStatus(policy: RetentionPolicy = DEFAULT_POLIC
 
 // CLI execution
 if (import.meta.main) {
-  const args = process.argv.slice(2);
-  const command = args[0];
+  (async () => {
+    const args = process.argv.slice(2);
+    const command = args[0];
 
-  switch (command) {
-    case "run":
-    case "rotate": {
-      const count = await rotateBackups();
-      process.exit(0);
-      break;
+    switch (command) {
+      case "run":
+      case "rotate": {
+        await rotateBackups();
+        process.exit(0);
+      }
+      case "status": {
+        await showRotationStatus();
+        break;
+      }
+      default:
+        console.log("Usage:");
+        console.log("  pnpm db:rotate run");
+        console.log("  pnpm db:rotate status");
     }
-    case "status": {
-      await showRotationStatus();
-      break;
-    }
-    default:
-      console.log("Usage:");
-      console.log("  pnpm db:rotate run");
-      console.log("  pnpm db:rotate status");
-  }
+  })();
 }

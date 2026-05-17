@@ -22,24 +22,6 @@ export interface RestoreOptions {
 }
 
 /**
- * Find a backup file by name or get latest
- */
-function resolveBackupFile(request: string | "latest"): string | null {
-  if (request === "latest") {
-    const { getLatestBackup } = require("./backup.js");
-    // We need to import dynamically for ESM
-    return null; // Will be resolved below
-  }
-  
-  const filepath = join(BACKUP_DIR, request);
-  if (existsSync(filepath)) {
-    return filepath;
-  }
-  
-  return null;
-}
-
-/**
  * Restore database from backup
  */
 export async function restore(options: RestoreOptions): Promise<boolean> {

@@ -1,5 +1,14 @@
 import { REST, Routes } from "discord.js";
+import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 import logger from "../apps/bot/src/utils/logger.ts";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Cargar variables de entorno desde apps/bot/.env
+dotenv.config({ path: path.resolve(__dirname, "../apps/bot/.env") });
 
 async function listRegisteredCommands() {
   const token = process.env.DISCORD_TOKEN;

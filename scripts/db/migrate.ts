@@ -277,30 +277,30 @@ export async function dbPush(args: string[] = []): Promise<MigrationResult> {
 
 // CLI execution
 if (import.meta.main) {
-  const args = process.argv.slice(2);
-  const command = args[0];
+  (async () => {
+    const args = process.argv.slice(2);
+    const command = args[0];
 
-  switch (command) {
-    case "migrate":
-    case "deploy": {
-      const result = await migrate(args.slice(1));
-      process.exit(result.success ? 0 : 1);
-      break;
+    switch (command) {
+      case "migrate":
+      case "deploy": {
+        const result = await migrate(args.slice(1));
+        process.exit(result.success ? 0 : 1);
+      }
+      case "dev": {
+        const result = await migrateDev(args.slice(1));
+        process.exit(result.success ? 0 : 1);
+      }
+      case "push": {
+        const result = await dbPush(args.slice(1));
+        process.exit(result.success ? 0 : 1);
+      }
+      default:
+        console.log("Usage:");
+        console.log("  pnpm db:migrate dev [--name <name>]   → create new migration");
+        console.log("  pnpm db:migrate deploy                → apply migrations (production)");
+        console.log("  pnpm db:migrate push                  → sync schema without migration");
+        process.exit(1);
     }
-    case "dev": {
-      const result = await migrateDev(args.slice(1));
-      process.exit(result.success ? 0 : 1);
-      break;
-    }
-    case "push": {
-      const result = await dbPush(args.slice(1));
-      process.exit(result.success ? 0 : 1);
-      break;
-    }
-    default:
-      console.log("Usage:");
-      console.log("  pnpm db:migrate dev [--name <name>]   → create new migration");
-      console.log("  pnpm db:migrate deploy                → apply migrations (production)");
-      console.log("  pnpm db:migrate push                  → sync schema without migration");
-  }
+  })();
 }

@@ -146,40 +146,42 @@ export async function getLatestBackup(type?: "daily" | "migration"): Promise<Bac
 
 // CLI execution
 if (import.meta.main) {
-  const args = process.argv.slice(2);
-  const command = args[0];
+  (async () => {
+    const args = process.argv.slice(2);
+    const command = args[0];
 
-  switch (command) {
-    case "create": {
-      const type = (args[1] as "daily" | "migration") || "daily";
-      await createBackup({ type });
-      break;
-    }
-    case "list": {
-      const backups = await listBackups();
-      console.log("\n📦 Available backups:\n");
-      for (const backup of backups) {
-        const date = backup.timestamp.toLocaleString();
-        const size = (backup.sizeBytes / 1024).toFixed(2);
-        console.log(`  ${backup.filename}`);
-        console.log(`    ${date} | ${size} KB\n`);
+    switch (command) {
+      case "create": {
+        const type = (args[1] as "daily" | "migration") || "daily";
+        await createBackup({ type });
+        break;
       }
-      break;
-    }
-    case "latest": {
-      const backup = await getLatestBackup();
-      if (backup) {
-        console.log(backup.filepath);
-      } else {
-        console.error("No backups found");
-        process.exit(1);
+      case "list": {
+        const backups = await listBackups();
+        console.log("\n📦 Available backups:\n");
+        for (const backup of backups) {
+          const date = backup.timestamp.toLocaleString();
+          const size = (backup.sizeBytes / 1024).toFixed(2);
+          console.log(`  ${backup.filename}`);
+          console.log(`    ${date} | ${size} KB\n`);
+        }
+        break;
       }
-      break;
+      case "latest": {
+        const backup = await getLatestBackup();
+        if (backup) {
+          console.log(backup.filepath);
+        } else {
+          console.error("No backups found");
+          process.exit(1);
+        }
+        break;
+      }
+      default:
+        console.log("Usage:");
+        console.log("  pnpm db:backup create [daily|migration]");
+        console.log("  pnpm db:backup list");
+        console.log("  pnpm db:backup latest");
     }
-    default:
-      console.log("Usage:");
-      console.log("  pnpm db:backup create [daily|migration]");
-      console.log("  pnpm db:backup list");
-      console.log("  pnpm db:backup latest");
-  }
+  })();
 }

@@ -14,7 +14,7 @@
     "test-format-error": "tsx debug/test-format-error.ts",
     "test-playlist-performance": "tsx debug/test-playlist-performance.ts",
     "migrate-json": "tsx ../../scripts/migracion-json-prisma.ts",
-    "build": "# bun build src/index.ts --outdir dist --target node (DEFERRED — use node dist/index.js after build)",
+    "build": "echo 'Build not configured — run tsx src/index.ts directly for dev' && exit 1",
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",

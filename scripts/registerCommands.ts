@@ -2,11 +2,16 @@ import { REST, Routes } from "discord.js";
 import { readdir } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 import logger from "../apps/bot/src/utils/logger.ts";
 
 // Obtener __dirname en módulos ES
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Cargar variables de entorno desde apps/bot/.env
+// (el script se ejecuta desde apps/bot y el .env está ahí)
+dotenv.config({ path: path.resolve(__dirname, "../apps/bot/.env") });
 
 // ============================================================================
 // CONFIGURACIÓN: Cambia entre DESARROLLO y PRODUCCIÓN
@@ -173,9 +178,9 @@ async function registerCommands() {
         guildCount: mainGuilds.length,
       });
 
-        logger.info("Registrando en servidores principales (producción)", {
+        logger.info("Registrando en servidores principales (desarrollo)", {
           context: "registerCommands",
-          mode: "PRODUCTION",
+          mode: "DEVELOPMENT",
         });
 
       for (const guildId of mainGuilds) {
