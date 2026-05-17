@@ -65,7 +65,7 @@ Multi-feature Discord bot with music, economy, verification, AutoRole, and more 
 | Verification | Panel with button → registration modal → moderator review → role assignment | `/setup-verification`, `/send-verification-panel`, `/list-pending-verifications` |
 | AutoRole | Role assignment by reaction or button on configurable messages | `/autorole setup/list/edit/remove` |
 | Economy | Per-server wallet, global bank, work, crime, rob, roulette, leaderboard | `/economia balance`, `/economia deposit`, `/economia retirar`, `/economia work`, `/economia crime`, `/economia rob`, `/economia ruleta`, `/economia leaderboard`, `/economia bail` |
-| Config | Per-server configuration (log channels, welcome, verification, etc.) | `/set-welcome`, `/set-voice-log-channel`, `/set-image-channel`, `/show-config` |
+| Welcome | Channel, message, and custom variables for member join messages | `/welcome channel`, `/welcome message`, `/welcome var set`, `/welcome var remove` |
 | Logs | Voice events, member join/leave, messages | Automatic via events |
 | Classes | Hierarchical role system (type → class → subclass) | `/addClass`, `/listClasses`, `/removeClass` |
 
