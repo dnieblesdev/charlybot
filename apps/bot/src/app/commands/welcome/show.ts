@@ -34,9 +34,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       listSocialLinks(guildId),
     ]);
 
+    // Handle "nothing configured" state
+    if (!config?.welcomeChannelId && !config?.welcomeMessage && customVars.size === 0 && socialLinks.size === 0) {
+      await interaction.editReply({
+        content: "📋 No hay configuración de bienvenida para este servidor.",
+      });
+      return;
+    }
+
     const embed = new EmbedBuilder()
       .setTitle("📋 Configuración de Bienvenida")
-      .setColor(0x2ecc71);
+      .setColor(0x5865F2);
 
     // Welcome channel
     if (config?.welcomeChannelId) {
@@ -76,14 +84,18 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Custom variables count
     embed.addFields({
       name: "🔧 Variables Personalizadas",
-      value: customVars.size > 0 ? `**${customVars.size}** configurada(s)` : "Ninguna",
+      value: customVars.size > 0
+        ? `**${customVars.size}** configurada(s)\nUsa \`/welcome var list\` para verlas`
+        : "Ninguna — Usa `/welcome var set` para crear una",
       inline: true,
     });
 
     // Social links count
     embed.addFields({
       name: "🔗 Enlaces Sociales",
-      value: socialLinks.size > 0 ? `**${socialLinks.size}** configurado(s)` : "Ninguno",
+      value: socialLinks.size > 0
+        ? `**${socialLinks.size}** configurado(s)\nUsa \`/social-link list\` para verlos`
+        : "Ninguno — Usa `/social-link set` para crear uno",
       inline: true,
     });
 

@@ -17,11 +17,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const nombre = interaction.options.getString("nombre", true);
 
+    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
     await removeWelcomeCustomVar(interaction.guild.id, nombre);
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `✅ Variable de bienvenida **${nombre}** eliminada.`,
-      flags: [MessageFlags.Ephemeral],
     });
 
     logger.info("welcome:var:remove", {
@@ -36,9 +37,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       guildId: interaction.guildId,
     });
 
-    if (!interaction.replied) {
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({
+        content: `❌ La variable **${nombre}** no existe o no pudo ser eliminada.`,
+      });
+    } else {
       await interaction.reply({
-        content: "❌ Error al eliminar la variable de bienvenida.",
+        content: `❌ La variable **${nombre}** no existe o no pudo ser eliminada.`,
         flags: [MessageFlags.Ephemeral],
       });
     }

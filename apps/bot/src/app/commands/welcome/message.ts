@@ -27,9 +27,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const config = await getGuildConfig(interaction.guild.id);
     const mensajeActual = config?.welcomeMessage || "";
 
-    // Use stored welcomeChannelId if set, otherwise require channel option in future
-    // For now, use "default" as placeholder since handler will update both
-    const channelId = config?.welcomeChannelId || "default";
+    // Require channel to be configured first
+    if (!config?.welcomeChannelId) {
+      await interaction.reply({
+        content: "❌ Primero configura un canal con `/welcome channel <#canal>`.",
+        flags: [MessageFlags.Ephemeral],
+      });
+      return;
+    }
+
+    const channelId = config.welcomeChannelId;
 
     // Build helper text for available variables (truncated to Discord's 100-char placeholder limit)
     const customVars = await listWelcomeCustomVars(interaction.guild.id);

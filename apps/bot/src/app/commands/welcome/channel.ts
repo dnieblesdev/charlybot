@@ -17,11 +17,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const canal = interaction.options.getChannel("canal", true);
 
+    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
     await setWelcomeChannel(interaction.guild.id, canal.id);
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `✅ Canal de bienvenida establecido: <#${canal.id}>`,
-      flags: [MessageFlags.Ephemeral],
     });
 
     logger.info("welcome:channel", {

@@ -31,7 +31,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     if (customVars.size === 0) {
       await interaction.editReply({
-        content: "No hay variables personalizadas configuradas.",
+        content: "📋 No hay variables personalizadas configuradas.",
       });
       return;
     }

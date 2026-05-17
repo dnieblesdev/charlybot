@@ -18,11 +18,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const nombre = interaction.options.getString("nombre", true);
     const valor = interaction.options.getString("valor", true);
 
+    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
     await setWelcomeCustomVar(interaction.guild.id, nombre, valor);
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `✅ Variable de bienvenida **${nombre}** configurada: \`${valor}\``,
-      flags: [MessageFlags.Ephemeral],
     });
 
     logger.info("welcome:var:set", {

@@ -67,7 +67,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       toString: () => interaction.user.toString(),
       user: interaction.user,
       guild: interaction.guild,
-    } as any;
+    } as Pick<GuildMember, "toString" | "user" | "guild">;
 
     const preview = formatWelcomeMessage(
       config!.welcomeMessage,

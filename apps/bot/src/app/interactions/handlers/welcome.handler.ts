@@ -71,7 +71,7 @@ export async function handleModal(
       content: `✅ Mensaje de bienvenida configurado para <#${channelId}>.\nMensaje: ${mensaje}`,
     });
   } catch (err) {
-    logger.error("welcome.handler: error procesando modal set-welcome", {
+    logger.error("welcome.handler: error procesando modal welcome:message", {
       error: err instanceof Error ? err.message : String(err),
       userId: interaction.user.id,
       guildId: interaction.guildId,

@@ -1,6 +1,7 @@
 import {
   ChatInputCommandInteraction,
   MessageFlags,
+  PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
 
@@ -13,6 +14,7 @@ import { execute as varRouter } from "./var/index.js";
 export const data = new SlashCommandBuilder()
   .setName("welcome")
   .setDescription("Configura el sistema de bienvenida del servidor")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 
   // /welcome channel <#canal>
   .addSubcommand((sub) =>
