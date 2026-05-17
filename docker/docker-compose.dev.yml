@@ -57,6 +57,7 @@ services:
     volumes:
       - ../apps/bot/src:/app/apps/bot/src
       - ../packages/shared/src:/app/packages/shared/src
+      - ../packages/shared/dev.db:/app/packages/shared/dev.db
     depends_on:
       valkey:
         condition: service_healthy
