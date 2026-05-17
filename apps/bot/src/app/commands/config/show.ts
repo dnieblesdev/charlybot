@@ -5,7 +5,6 @@ import {
 import type { ChatInputCommandInteraction } from "discord.js";
 import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
 import { listSocialLinks } from "../../../config/repositories/SocialLinkRepo.ts";
-import { listWelcomeCustomVars } from "../../../config/repositories/WelcomeCustomVarRepo.ts";
 import logger, { logCommand } from "../../../utils/logger.ts";
 
 /** Trunca un mensaje para que quepa en un campo de embed (máx 1024 chars). */
@@ -60,9 +59,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // ── 📡 Canales ──
     const canales: [string, string][] = [];
-    if (config.welcomeChannelId && !config.welcomeMessage) {
-      canales.push(["Bienvenida", `<#${config.welcomeChannelId}>`]);
-    }
     if (config.leaveLogChannelId) {
       canales.push(["Salidas", `<#${config.leaveLogChannelId}>`]);
     }
@@ -77,30 +73,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
     if (canales.length > 0) {
       embed.addFields({ name: "📡 Canales", value: drawList(canales), inline: false });
-    }
-
-    // ── 💬 Bienvenida ──
-    if (config.welcomeMessage) {
-      const bienvenida: [string, string][] = [];
-      if (config.welcomeChannelId) {
-        bienvenida.push(["Canal", `<#${config.welcomeChannelId}>`]);
-      }
-      bienvenida.push(["Mensaje", truncate(config.welcomeMessage)]);
-      embed.addFields({ name: "💬 Bienvenida", value: drawList(bienvenida), inline: false });
-    }
-
-    // ── 🔧 Variables personalizadas de bienvenida ──
-    const customVars = await listWelcomeCustomVars(interaction.guild.id);
-    if (customVars.size > 0) {
-      const varsList: [string, string][] = [];
-      for (const [name, value] of customVars) {
-        varsList.push([name, value]);
-      }
-      embed.addFields({
-        name: "🔧 Variables de Bienvenida",
-        value: drawList(varsList),
-        inline: false,
-      });
     }
 
     // ── ✅ Verificación ──
