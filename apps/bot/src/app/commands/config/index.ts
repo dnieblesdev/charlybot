@@ -7,6 +7,8 @@ import {
 } from "discord.js";
 
 import { execute as setWelcome } from "./set-welcome";
+import { execute as setWelcomeVar } from "./set-welcome-var";
+import { execute as removeWelcomeVar } from "./remove-welcome-var";
 import { execute as setVoiceLog } from "./set-voice-log";
 import { execute as setLeaveLog } from "./set-leave-log";
 import { execute as setImageChannel } from "./set-image-channel";
@@ -29,8 +31,40 @@ export const data = new SlashCommandBuilder()
         option
           .setName("canal")
           .setDescription(
-            "El canal donde se enviará el mensaje de bienvenida",
+            "El canal donde se envía el mensaje de bienvenida",
           )
+          .setRequired(true),
+      ),
+  )
+
+  // subcomando: set-welcome-var
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName("set-welcome-var")
+      .setDescription("Configura una variable personalizada para mensajes de bienvenida")
+      .addStringOption((option) =>
+        option
+          .setName("nombre")
+          .setDescription("Nombre de la variable (ej: reglas, staff)")
+          .setRequired(true),
+      )
+      .addStringOption((option) =>
+        option
+          .setName("valor")
+          .setDescription("Valor de reemplazo (ej: #reglas-del-servidor)")
+          .setRequired(true),
+      ),
+  )
+
+  // subcomando: remove-welcome-var
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName("remove-welcome-var")
+      .setDescription("Elimina una variable personalizada de bienvenida")
+      .addStringOption((option) =>
+        option
+          .setName("nombre")
+          .setDescription("Nombre de la variable a eliminar")
           .setRequired(true),
       ),
   )
@@ -128,6 +162,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   switch (subcommand) {
     case "set-welcome":
       await setWelcome(interaction);
+      break;
+    case "set-welcome-var":
+      await setWelcomeVar(interaction);
+      break;
+    case "remove-welcome-var":
+      await removeWelcomeVar(interaction);
       break;
     case "set-voice-log":
       await setVoiceLog(interaction);

@@ -5,6 +5,7 @@ import {
 import type { ChatInputCommandInteraction } from "discord.js";
 import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
 import { listSocialLinks } from "../../../config/repositories/SocialLinkRepo.ts";
+import { listWelcomeCustomVars } from "../../../config/repositories/WelcomeCustomVarRepo.ts";
 import logger, { logCommand } from "../../../utils/logger.ts";
 
 /** Trunca un mensaje para que quepa en un campo de embed (máx 1024 chars). */
@@ -86,6 +87,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
       bienvenida.push(["Mensaje", truncate(config.welcomeMessage)]);
       embed.addFields({ name: "💬 Bienvenida", value: drawList(bienvenida), inline: false });
+    }
+
+    // ── 🔧 Variables personalizadas de bienvenida ──
+    const customVars = await listWelcomeCustomVars(interaction.guild.id);
+    if (customVars.size > 0) {
+      const varsList: [string, string][] = [];
+      for (const [name, value] of customVars) {
+        varsList.push([name, value]);
+      }
+      embed.addFields({
+        name: "🔧 Variables de Bienvenida",
+        value: drawList(varsList),
+        inline: false,
+      });
     }
 
     // ── ✅ Verificación ──

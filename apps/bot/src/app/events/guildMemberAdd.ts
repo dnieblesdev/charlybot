@@ -2,21 +2,45 @@ import { Events, TextChannel, EmbedBuilder } from "discord.js";
 import type { GuildMember } from "discord.js";
 import { getGuildConfig } from "../../config/repositories/GuildConfigRepo.ts";
 import { listSocialLinks } from "../../config/repositories/SocialLinkRepo.ts";
+import { listWelcomeCustomVars } from "../../config/repositories/WelcomeCustomVarRepo.ts";
 import logger from "../../utils/logger.ts";
 
+/**
+ * Formats a welcome message template by replacing placeholders.
+ *
+ * Placeholders:
+ * - `{user}` → member mention
+ * - `{username}` → member username
+ * - `{server}` → guild name
+ * - `{name}` → first look up WelcomeCustomVar[name], then SocialLink[name] (name as platform key),
+ *              leave as-is if neither found
+ */
 export function formatWelcomeMessage(
   template: string,
   member: GuildMember,
+  customVars: Map<string, string>,
   socialLinks: Map<string, string>,
 ) {
   return template
     .replace(/{user}/g, member.toString())
     .replace(/{username}/g, member.user.username)
     .replace(/{server}/g, member.guild.name)
-    .replace(
-      /{enlace_(\w+)}/g,
-      (_, platform: string) => socialLinks.get(platform.toLowerCase()) ?? `{enlace_${platform}}`,
-    );
+    .replace(/{(\w+)}/g, (_, name: string) => {
+      // Built-in variables handled above; skip them here
+      if (name === "user" || name === "username" || name === "server") {
+        return `{${name}}`;
+      }
+      // Try WelcomeCustomVar first
+      if (customVars.has(name)) {
+        return customVars.get(name)!;
+      }
+      // Fall back to SocialLink using name as platform (no "enlace_" prefix)
+      if (socialLinks.has(name.toLowerCase())) {
+        return socialLinks.get(name.toLowerCase())!;
+      }
+      // Leave as-is if not found
+      return `{${name}}`;
+    });
 }
 
 export default {
@@ -52,10 +76,20 @@ export default {
 
       // Si hay mensaje personalizado, usarlo
       if (messageTemplate) {
-        const socialLinks = messageTemplate.includes("{enlace_")
-          ? await listSocialLinks(guildId)
-          : new Map<string, string>();
-        const finalMessage = formatWelcomeMessage(messageTemplate, member, socialLinks);
+        // Always fetch both maps when a custom message exists
+        const [customVars, socialLinks] = await Promise.all([
+          listWelcomeCustomVars(guildId),
+          listSocialLinks(guildId),
+        ]);
+
+        logger.debug("formatWelcomeMessage inputs", {
+          guildId,
+          customVarsKeys: [...customVars.keys()],
+          socialLinksKeys: [...socialLinks.keys()],
+          template: messageTemplate,
+        });
+
+        const finalMessage = formatWelcomeMessage(messageTemplate, member, customVars, socialLinks);
         await (channel as TextChannel).send({ content: finalMessage });
       } else {
         // Si no hay mensaje personalizado, usar embed por defecto

@@ -5,6 +5,9 @@ import {
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { getGuildConfig } from "../../config/repositories/GuildConfigRepo.ts";
+import { listSocialLinks } from "../../config/repositories/SocialLinkRepo.ts";
+import { listWelcomeCustomVars } from "../../config/repositories/WelcomeCustomVarRepo.ts";
+import { formatWelcomeMessage } from "../events/guildMemberAdd.ts";
 import logger, { logCommand } from "../../utils/logger.ts";
 import {
   validateChannelConfigured,
@@ -62,11 +65,25 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    // Reemplazar placeholders con valores de prueba
-    const preview = config!.welcomeMessage
-      .replace(/{user}/g, interaction.user.toString())
-      .replace(/{username}/g, interaction.user.username)
-      .replace(/{server}/g, interaction.guild.name);
+    // Fetch custom vars and social links, then use the same formatter as the real event
+    const [customVars, socialLinks] = await Promise.all([
+      listWelcomeCustomVars(interaction.guild.id),
+      listSocialLinks(interaction.guild.id),
+    ]);
+
+    // Build a fake GuildMember-like object for the preview
+    const previewMember = {
+      toString: () => interaction.user.toString(),
+      user: interaction.user,
+      guild: interaction.guild,
+    } as any;
+
+    const preview = formatWelcomeMessage(
+      config!.welcomeMessage,
+      previewMember,
+      customVars,
+      socialLinks,
+    );
 
     // Enviar al canal configurado
     await (channel as any).send({ content: preview });

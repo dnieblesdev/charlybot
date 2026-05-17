@@ -1,5 +1,4 @@
 import {
-  PermissionsBitField,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
@@ -10,6 +9,8 @@ import {
 import type { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.ts";
 import { CUSTOM_IDS } from "../../interactions/customIds.ts";
+import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
+import { listWelcomeCustomVars } from "../../../config/repositories/WelcomeCustomVarRepo.ts";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -23,8 +24,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    // Obtenemos el canal elegido y abrimos un modal para que el usuario introduzca el mensaje
+    // Obtenemos el canal elegido y recuperamos el mensaje actual si existe
     const canal = interaction.options.getChannel("canal", true);
+    const config = await getGuildConfig(interaction.guild.id);
+    const mensajeActual = config?.welcomeMessage || "";
+
+    // Build helper text for available variables (truncated to Discord's 100-char placeholder limit)
+    const customVars = await listWelcomeCustomVars(interaction.guild.id);
+    const customVarNames = [...customVars.keys()].map((n) => `{${n}}`);
+    const allVars = ["{user}", "{username}", "{server}", ...customVarNames];
+    let placeholder = `Vars: ${allVars.join(", ")}`;
+    if (placeholder.length > 100) {
+      placeholder = placeholder.slice(0, 97) + "...";
+    }
 
     const modal = new ModalBuilder()
       .setCustomId(CUSTOM_IDS.welcome.MODAL(canal.id))
@@ -34,7 +46,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       .setCustomId("mensaje")
       .setLabel("Mensaje de bienvenida")
       .setStyle(TextInputStyle.Paragraph)
-      .setPlaceholder("Disponibles: {user}, {username}, {server}, {enlace_twitch}, {enlace_kick}, {enlace_youtube}...")
+      .setValue(mensajeActual)
+      .setPlaceholder(placeholder)
       .setRequired(true)
       .setMaxLength(4000);
 
