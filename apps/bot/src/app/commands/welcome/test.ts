@@ -2,6 +2,7 @@ import {
   ChatInputCommandInteraction,
   MessageFlags,
 } from "discord.js";
+import type { GuildMember } from "discord.js";
 
 import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
 import { listWelcomeCustomVars } from "../../../config/repositories/WelcomeCustomVarRepo.ts";
@@ -63,11 +64,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     ]);
 
     // Build fake GuildMember-like object for the preview
+    // We only need toString, user, and guild for formatWelcomeMessage
     const previewMember = {
       toString: () => interaction.user.toString(),
       user: interaction.user,
       guild: interaction.guild,
-    } as Pick<GuildMember, "toString" | "user" | "guild">;
+    } as unknown as GuildMember;
 
     const preview = formatWelcomeMessage(
       config!.welcomeMessage,

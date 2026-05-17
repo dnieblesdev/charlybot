@@ -12,10 +12,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return;
   }
 
+  const nombre = interaction.options.getString("nombre", true);
+
   try {
     logCommand(interaction.user.id, interaction.guild.id, "welcome:var:remove");
-
-    const nombre = interaction.options.getString("nombre", true);
 
     await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
