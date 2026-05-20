@@ -174,6 +174,36 @@ export const data = new SlashCommandBuilder()
         sub
           .setName("view")
           .setDescription("Ver configuración actual"),
+      )
+      .addSubcommand((sub) =>
+        sub
+          .setName("antispam")
+          .setDescription("Configurar anti-spam")
+          .addStringOption((o) =>
+            o
+              .setName("subcomando")
+              .setDescription("Subcomando")
+              .setRequired(true)
+              .addChoices(
+                { name: "Ver configuración", value: "view" },
+                { name: "Activar/Desactivar", value: "toggle" },
+                { name: "Configurar patrón", value: "pattern" },
+                { name: "Configurar acción", value: "action" },
+                { name: "Configurar escalado", value: "escalation" },
+              ),
+          )
+          .addStringOption((o) =>
+            o.setName("nombre").setDescription("Nombre del patrón").setRequired(false),
+          )
+          .addStringOption((o) =>
+            o.setName("estado").setDescription("Activar o desactivar").setRequired(false),
+          )
+          .addStringOption((o) =>
+            o.setName("accion").setDescription("Acción a aplicar").setRequired(false),
+          )
+          .addIntegerOption((o) =>
+            o.setName("cantidad").setDescription("Cantidad de infracciones").setRequired(false).setMinValue(1).setMaxValue(100),
+          ),
       ),
   );
 
@@ -182,6 +212,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const subcommand = interaction.options.getSubcommand();
 
   try {
+    const subcommandGroup = interaction.options.getSubcommandGroup();
+
     // Defer immediately to prevent 3-second Discord timeout during dynamic import.
     // Placed inside try/catch so that "Unknown interaction" errors from Discord
     // are caught cleanly instead of propagating to the outer interaction handler.
@@ -190,10 +222,30 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const deferMs = Date.now() - tDefer;
     logger.debug("[mod] deferReply OK", {
       subcommand,
+      subcommandGroup,
       deferMs,
       msSinceEntry: Date.now() - tEntry,
       interactionAge: Date.now() - interaction.createdTimestamp,
     });
+
+    // Si hay un grupo, enrutar por grupo (ej: /mod config view)
+    if (subcommandGroup) {
+      switch (subcommandGroup) {
+        case "config": {
+          const configSub = interaction.options.getSubcommand();
+          const handler = await import(`./config/${configSub}.js`);
+          await handler.default(interaction);
+          break;
+        }
+        default: {
+          await interaction.editReply({
+            content: "❌ Grupo de subcomandos no reconocido",
+          });
+          break;
+        }
+      }
+      return;
+    }
 
     switch (subcommand) {
       case "warn": {
@@ -238,12 +290,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
       case "antispam": {
         const handler = await import("./antispam.js");
-        await handler.default(interaction);
-        break;
-      }
-      case "config": {
-        const configSub = interaction.options.getSubcommand();
-        const handler = await import(`./config/${configSub}.js`);
         await handler.default(interaction);
         break;
       }

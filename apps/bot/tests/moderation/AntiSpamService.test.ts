@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { AntiSpamService, SpamLevel } from "../../src/app/services/AntiSpamService";
+import { AntiSpamService } from "../../src/app/services/AntiSpamService";
+import { AntiSpamAction } from "../../src/app/services/SpamCheckResult";
 import type { Message } from "discord.js";
 
 // Mock ValkeyClient
@@ -7,11 +8,23 @@ function createMockValkeyClient(overrides?: {
   rateLimit?: ReturnType<typeof vi.fn>;
   get?: ReturnType<typeof vi.fn>;
   set?: ReturnType<typeof vi.fn>;
+  sortedSetAdd?: ReturnType<typeof vi.fn>;
+  sortedSetRemoveByScore?: ReturnType<typeof vi.fn>;
+  sortedSetRangeByScore?: ReturnType<typeof vi.fn>;
+  expire?: ReturnType<typeof vi.fn>;
+  acquireLock?: ReturnType<typeof vi.fn>;
+  releaseLock?: ReturnType<typeof vi.fn>;
 }) {
   return {
     rateLimit: overrides?.rateLimit ?? vi.fn(() => Promise.resolve(true)),
     get: overrides?.get ?? vi.fn(() => Promise.resolve(undefined)),
     set: overrides?.set ?? vi.fn(() => Promise.resolve()),
+    sortedSetAdd: overrides?.sortedSetAdd ?? vi.fn(() => Promise.resolve(1)),
+    sortedSetRemoveByScore: overrides?.sortedSetRemoveByScore ?? vi.fn(() => Promise.resolve(0)),
+    sortedSetRangeByScore: overrides?.sortedSetRangeByScore ?? vi.fn(() => Promise.resolve([])),
+    expire: overrides?.expire ?? vi.fn(() => Promise.resolve()),
+    acquireLock: overrides?.acquireLock ?? vi.fn(() => Promise.resolve(true)),
+    releaseLock: overrides?.releaseLock ?? vi.fn(() => Promise.resolve()),
     connect: vi.fn(() => Promise.resolve()),
     disconnect: vi.fn(() => Promise.resolve()),
     isConnected: vi.fn(() => true),
@@ -25,6 +38,7 @@ function createMockMessage(overrides?: Partial<Message>): Message {
     content: "Hello world",
     mentions: { users: { size: 0 } },
     id: "msg-123",
+    channel: { id: "ch-1" },
     member: {} as any,
     client: {} as any,
     delete: vi.fn(() => Promise.resolve()),
@@ -40,9 +54,9 @@ describe("AntiSpamService", () => {
   });
 
   describe("evaluate", () => {
-    it("returns NONE when no spam detected", async () => {
+    it("returns not spam when no spam detected", async () => {
       const valkey = createMockValkeyClient({
-        rateLimit: vi.fn(() => Promise.resolve(true)),
+        sortedSetRangeByScore: vi.fn(() => Promise.resolve([])),
       });
       service = new AntiSpamService(valkey);
 
@@ -50,12 +64,22 @@ describe("AntiSpamService", () => {
       const result = await service.evaluate(message);
 
       expect(result.isSpam).toBe(false);
-      expect(result.level).toBe(SpamLevel.NONE);
+      expect(result.pattern).toBe("");
+      expect(result.action).toBe(AntiSpamAction.WARN);
     });
 
-    it("detects message rate limit spam", async () => {
+    it("detects message rate limit spam (rateLimit pattern)", async () => {
       const valkey = createMockValkeyClient({
-        rateLimit: vi.fn(() => Promise.resolve(false)),
+        sortedSetRangeByScore: vi.fn(() =>
+          Promise.resolve([
+            "msg-1:ch-1",
+            "msg-2:ch-1",
+            "msg-3:ch-1",
+            "msg-4:ch-1",
+            "msg-5:ch-1",
+            "msg-6:ch-1",
+          ]),
+        ),
       });
       service = new AntiSpamService(valkey);
 
@@ -63,19 +87,16 @@ describe("AntiSpamService", () => {
       const result = await service.evaluate(message);
 
       expect(result.isSpam).toBe(true);
-      expect(result.level).toBe(SpamLevel.WARNING);
+      expect(result.pattern).toBe("rateLimit");
+      expect(result.action).toBe("warn");
       expect(result.reason).toContain("Rate limit");
+      expect(result.messageIds).toHaveLength(6);
     });
 
     it("detects mention spam", async () => {
-      let callCount = 0;
       const valkey = createMockValkeyClient({
-        rateLimit: vi.fn(() => {
-          callCount++;
-          // First call (message rate limit): allowed
-          // Second call (mention rate limit): denied
-          return callCount === 1 ? Promise.resolve(true) : Promise.resolve(false);
-        }),
+        sortedSetRangeByScore: vi.fn(() => Promise.resolve([])),
+        rateLimit: vi.fn(() => Promise.resolve(false)),
       });
       service = new AntiSpamService(valkey);
 
@@ -86,20 +107,15 @@ describe("AntiSpamService", () => {
       const result = await service.evaluate(message);
 
       expect(result.isSpam).toBe(true);
-      expect(result.level).toBe(SpamLevel.MUTE_5MIN);
-      expect(result.reason).toContain("Menciones masivas");
+      expect(result.pattern).toBe("mention");
+      expect(result.action).toBe("timeout_5min");
+      expect(result.reason).toContain("Mention spam");
     });
 
     it("detects link spam", async () => {
-      let callCount = 0;
       const valkey = createMockValkeyClient({
-        rateLimit: vi.fn(() => {
-          callCount++;
-          // Message rate limit: allowed
-          // Link rate limit: denied
-          if (callCount === 1) return Promise.resolve(true);
-          return Promise.resolve(false);
-        }),
+        sortedSetRangeByScore: vi.fn(() => Promise.resolve([])),
+        rateLimit: vi.fn(() => Promise.resolve(false)),
       });
       service = new AntiSpamService(valkey);
 
@@ -110,14 +126,20 @@ describe("AntiSpamService", () => {
       const result = await service.evaluate(message);
 
       expect(result.isSpam).toBe(true);
-      expect(result.level).toBe(SpamLevel.MUTE_5MIN);
+      expect(result.pattern).toBe("link");
+      expect(result.action).toBe("timeout_5min");
       expect(result.reason).toContain("Link spam");
     });
 
     it("detects duplicate content", async () => {
       const valkey = createMockValkeyClient({
-        rateLimit: vi.fn(() => Promise.resolve(true)),
-        get: vi.fn(() => Promise.resolve("1")), // Content already exists
+        sortedSetRangeByScore: vi.fn(() => Promise.resolve([])),
+        get: vi.fn((key: string) => {
+          // actionTaken guard should NOT be set for this test
+          if (key.includes("actionTaken")) return Promise.resolve(undefined);
+          // simulate duplicate content already exists
+          return Promise.resolve("1");
+        }),
       });
       service = new AntiSpamService(valkey);
 
@@ -128,13 +150,14 @@ describe("AntiSpamService", () => {
       const result = await service.evaluate(message);
 
       expect(result.isSpam).toBe(true);
-      expect(result.level).toBe(SpamLevel.MUTE_5MIN);
-      expect(result.reason).toContain("duplicado");
+      expect(result.pattern).toBe("duplicate");
+      expect(result.action).toBe("warn");
+      expect(result.reason).toContain("Duplicate");
     });
 
     it("detects caps spam", async () => {
       const valkey = createMockValkeyClient({
-        rateLimit: vi.fn(() => Promise.resolve(true)),
+        sortedSetRangeByScore: vi.fn(() => Promise.resolve([])),
         get: vi.fn(() => Promise.resolve(undefined)),
         set: vi.fn(() => Promise.resolve()),
       });
@@ -147,13 +170,14 @@ describe("AntiSpamService", () => {
       const result = await service.evaluate(message);
 
       expect(result.isSpam).toBe(true);
-      expect(result.level).toBe(SpamLevel.WARNING);
+      expect(result.pattern).toBe("caps");
+      expect(result.action).toBe("warn");
       expect(result.reason).toContain("Caps spam");
     });
 
     it("fails open when Valkey throws", async () => {
       const valkey = createMockValkeyClient({
-        rateLimit: vi.fn(() => Promise.reject(new Error("Valkey down"))),
+        sortedSetAdd: vi.fn(() => Promise.reject(new Error("Valkey down"))),
       });
       service = new AntiSpamService(valkey);
 
@@ -162,10 +186,10 @@ describe("AntiSpamService", () => {
 
       // Should fail open — not crash
       expect(result.isSpam).toBe(false);
-      expect(result.level).toBe(SpamLevel.NONE);
+      expect(result.pattern).toBe("");
     });
 
-    it("returns NONE for messages without guildId", async () => {
+    it("returns not spam for messages without guildId", async () => {
       const valkey = createMockValkeyClient();
       service = new AntiSpamService(valkey);
 
@@ -173,19 +197,22 @@ describe("AntiSpamService", () => {
       const result = await service.evaluate(message);
 
       expect(result.isSpam).toBe(false);
-      expect(result.level).toBe(SpamLevel.NONE);
+      expect(result.pattern).toBe("");
     });
 
-    it("returns highest level when multiple checks trigger", async () => {
-      let callCount = 0;
+    it("returns first detected spam (not highest)", async () => {
       const valkey = createMockValkeyClient({
-        rateLimit: vi.fn(() => {
-          callCount++;
-          // Message rate limit: denied (WARNING)
-          if (callCount === 1) return Promise.resolve(false);
-          // Mention rate limit: denied (MUTE_5MIN)
-          return Promise.resolve(false);
-        }),
+        sortedSetRangeByScore: vi.fn(() =>
+          Promise.resolve([
+            "msg-1:ch-1",
+            "msg-2:ch-1",
+            "msg-3:ch-1",
+            "msg-4:ch-1",
+            "msg-5:ch-1",
+            "msg-6:ch-1",
+          ]),
+        ),
+        rateLimit: vi.fn(() => Promise.resolve(false)),
       });
       service = new AntiSpamService(valkey);
 
@@ -195,15 +222,17 @@ describe("AntiSpamService", () => {
       });
       const result = await service.evaluate(message);
 
-      // Should return the highest level (MUTE_5MIN > WARNING)
+      // Returns the first detected spam (rateLimit is checked first)
       expect(result.isSpam).toBe(true);
-      expect(result.level).toBe(SpamLevel.MUTE_5MIN);
+      expect(result.pattern).toBe("rateLimit");
     });
   });
 
   describe("checkCapsSpam", () => {
     it("ignores short messages", async () => {
-      const valkey = createMockValkeyClient();
+      const valkey = createMockValkeyClient({
+        sortedSetRangeByScore: vi.fn(() => Promise.resolve([])),
+      });
       service = new AntiSpamService(valkey);
 
       const message = createMockMessage({ content: "HI" });
@@ -214,7 +243,7 @@ describe("AntiSpamService", () => {
 
     it("ignores messages with no alphabetic chars", async () => {
       const valkey = createMockValkeyClient({
-        rateLimit: vi.fn(() => Promise.resolve(true)),
+        sortedSetRangeByScore: vi.fn(() => Promise.resolve([])),
       });
       service = new AntiSpamService(valkey);
 

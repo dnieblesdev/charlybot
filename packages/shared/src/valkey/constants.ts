@@ -61,6 +61,19 @@ export const ANTI_SPAM_KEYS = {
     `cb:antispam:${guildId}:${userId}:level`,
   userDuplicates: (guildId: string, userId: string, hash: string) =>
     `cb:antispam:${guildId}:${userId}:dup:${hash}`,
+  // Phase 1 anti-spam foundation keys
+  userBurst: (guildId: string, userId: string) =>
+    `cb:antispam:${guildId}:${userId}:burst`,
+  userVelocity: (guildId: string, userId: string) =>
+    `cb:antispam:${guildId}:${userId}:velocity`,
+  userEmoji: (guildId: string, userId: string) =>
+    `cb:antispam:${guildId}:${userId}:emoji`,
+  userCombo: (guildId: string, userId: string) =>
+    `cb:antispam:${guildId}:${userId}:combo`,
+  userNotified: (guildId: string, userId: string) =>
+    `cb:antispam:${guildId}:${userId}:notified`,
+  userLock: (guildId: string, userId: string) =>
+    `cb:antispam:${guildId}:${userId}:lock`,
 } as const;
 
 // TTL constants (in seconds) - use simple object for numeric values
