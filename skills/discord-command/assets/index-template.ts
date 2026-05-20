@@ -18,8 +18,37 @@ export const data = new SlashCommandBuilder()
 // .addSubcommand((sub) =>
 //   sub.setName("subcomando2").setDescription("Descripción del subcomando 2")
 // );
+// .addSubcommandGroup((group) =>
+//   group
+//     .setName("config")
+//     .setDescription("Configuración")
+//     .addSubcommand((sub) =>
+//       sub.setName("view").setDescription("Ver configuración")
+//     )
+// );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+  const subcommandGroup = interaction.options.getSubcommandGroup();
+
+  // IMPORTANTE: Si hay grupos, enrutar por grupo primero.
+  // getSubcommand() devuelve la hoja (ej: "view"), no el grupo ("config").
+  if (subcommandGroup) {
+    switch (subcommandGroup) {
+      // case "config": {
+      //   const configSub = interaction.options.getSubcommand();
+      //   const handler = await import(`./config/${configSub}.js`);
+      //   await handler.default(interaction);
+      //   break;
+      // }
+      default:
+        await interaction.reply({
+          content: "Grupo de comandos no reconocido.",
+          flags: [MessageFlags.Ephemeral],
+        });
+    }
+    return;
+  }
+
   const subcommand = interaction.options.getSubcommand();
   switch (subcommand) {
     case "subcomando1":

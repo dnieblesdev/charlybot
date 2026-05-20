@@ -37,6 +37,10 @@ That is the legacy pattern. Always use a folder.
 
 ### index.ts — fixed structure
 
+#### Option A: Simple subcommands (no groups)
+
+Use this when commands are flat like `/mod warn`, `/mod timeout`.
+
 ```typescript
 import {
   ChatInputCommandInteraction,
@@ -73,6 +77,83 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 }
 ```
+
+#### Option B: Subcommand groups (nested commands)
+
+**CRITICAL**: Use this when you need grouping like `/mod config view`, `/mod config mod-log`.
+
+**Common bug**: `getSubcommand()` returns the leaf name (e.g. `"view"`), NOT the group name. You MUST check `getSubcommandGroup()` first.
+
+```typescript
+import {
+  ChatInputCommandInteraction,
+  MessageFlags,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+} from "discord.js";
+
+export const data = new SlashCommandBuilder()
+  .setName("mod")
+  .setDescription("Moderation commands")
+  .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+  .addSubcommand((sub) =>
+    sub.setName("warn").setDescription("Warn a user")
+  )
+  .addSubcommandGroup((group) =>
+    group
+      .setName("config")
+      .setDescription("Configuration")
+      .addSubcommand((sub) =>
+        sub.setName("view").setDescription("View current config")
+      )
+      .addSubcommand((sub) =>
+        sub.setName("mod-log").setDescription("Set mod log channel")
+      )
+  );
+
+export async function execute(interaction: ChatInputCommandInteraction) {
+  const subcommandGroup = interaction.options.getSubcommandGroup();
+
+  // MUST check group first — getSubcommand() returns the leaf, not the group
+  if (subcommandGroup) {
+    switch (subcommandGroup) {
+      case "config": {
+        const configSub = interaction.options.getSubcommand();
+        const handler = await import(`./config/${configSub}.js`);
+        await handler.default(interaction);
+        break;
+      }
+      default:
+        await interaction.reply({
+          content: "Unrecognized command group.",
+          flags: [MessageFlags.Ephemeral],
+        });
+    }
+    return;
+  }
+
+  const subcommand = interaction.options.getSubcommand();
+  switch (subcommand) {
+    case "warn": {
+      const handler = await import("./warn.js");
+      await handler.default(interaction);
+      break;
+    }
+    // ... other flat subcommands
+    default:
+      await interaction.reply({
+        content: "Unrecognized command.",
+        flags: [MessageFlags.Ephemeral],
+      });
+  }
+}
+```
+
+**Why this matters**: For `/mod config view`, Discord.js returns:
+- `getSubcommandGroup()` → `"config"`
+- `getSubcommand()` → `"view"`
+
+If you only switch on `getSubcommand()`, `"view"` won't match anything and falls through to default. Always handle groups first.
 
 ### Subcommand — fixed structure
 
