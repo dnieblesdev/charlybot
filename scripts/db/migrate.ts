@@ -2,20 +2,19 @@
  * Database Migration Wrapper
  * 
  * Automatically creates a backup before running Prisma migrations.
+ * Supports both SQLite and PostgreSQL providers.
  * If migration fails, provides easy rollback to the pre-migration backup.
  */
 
 import { existsSync } from "node:fs";
-import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
+
+import { detectProvider, isPostgreSQL } from "./provider.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// Configuration
-const DB_PATH = join(__dirname, "../../packages/shared/dev.db");
-const BACKUP_SCRIPT = join(__dirname, "./backup.ts");
 
 interface MigrationResult {
   success: boolean;
@@ -27,7 +26,7 @@ interface MigrationResult {
  * Run pre-migration backup
  */
 async function preMigrationBackup(): Promise<string | null> {
-  const { createBackup, getLatestBackup } = await import("./backup.ts");
+  const { createBackup } = await import("./backup.js");
   
   console.log("\n📦 Creating pre-migration backup...");
   
@@ -43,17 +42,29 @@ async function preMigrationBackup(): Promise<string | null> {
 }
 
 /**
+ * Check if database exists (SQLite only — PostgreSQL is always "remote" and exists)
+ */
+async function dbExists(): Promise<boolean> {
+  const provider = detectProvider();
+  
+  if (provider === "postgresql") {
+    // PostgreSQL is always remote — we assume it exists if DATABASE_URL is set
+    return !!process.env.DATABASE_URL;
+  }
+  
+  // SQLite: check if file exists
+  const dbUrl = process.env.DATABASE_URL ?? "";
+  const dbPath = dbUrl.startsWith("file:") 
+    ? dbUrl.replace(/^file:/, "")
+    : join(__dirname, "../../packages/shared/dev.db");
+  
+  return existsSync(dbPath);
+}
+
+/**
  * Run Prisma migration dev command (creates new migration from schema diff)
  */
 async function runPrismaMigrateDev(args: string[]): Promise<number> {
-  const { execSync } = await import("node:child_process");
-  
-  // migrate dev requires DATABASE_URL; default to SQLite if not set
-  const env = { ...process.env };
-  if (!env.DATABASE_URL) {
-    env.DATABASE_URL = "file:./dev.db";
-  }
-  
   const prismaCmd = `pnpm exec prisma migrate dev --schema=./prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
@@ -62,7 +73,6 @@ async function runPrismaMigrateDev(args: string[]): Promise<number> {
     execSync(prismaCmd, { 
       stdio: "inherit",
       cwd: join(__dirname, "../../packages/shared"),
-      env,
     });
     return 0;
   } catch (error: any) {
@@ -71,11 +81,9 @@ async function runPrismaMigrateDev(args: string[]): Promise<number> {
 }
 
 /**
- * Run Prisma migration command
+ * Run Prisma migration command (production deploy)
  */
 async function runPrismaMigrate(args: string[]): Promise<number> {
-  const { execSync } = await import("node:child_process");
-  
   const prismaCmd = `pnpm exec prisma migrate deploy --schema=./prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
@@ -95,8 +103,6 @@ async function runPrismaMigrate(args: string[]): Promise<number> {
  * Run Prisma db push command
  */
 async function runPrismaPush(args: string[]): Promise<number> {
-  const { execSync } = await import("node:child_process");
-  
   const prismaCmd = `pnpm exec prisma db push --schema=./prisma/schema.prisma ${args.join(" ")}`;
   
   console.log(`Running: ${prismaCmd}\n`);
@@ -113,12 +119,29 @@ async function runPrismaPush(args: string[]): Promise<number> {
 }
 
 /**
+ * Run backup rotation after successful migration
+ */
+async function runRotation(): Promise<void> {
+  try {
+    const { rotateBackups } = await import("./rotate.js");
+    await rotateBackups();
+  } catch {
+    console.log("ℹ️  Backup rotation skipped");
+  }
+}
+
+/**
  * Dev migration flow — creates a new migration from schema changes
  */
 export async function migrateDev(args: string[] = []): Promise<MigrationResult> {
-  // Check if database exists
-  if (!existsSync(DB_PATH)) {
-    console.log("⚠️  Database doesn't exist. Running migration dev without backup.");
+  const provider = detectProvider();
+  
+  // Check if database exists (skipped for PostgreSQL — always remote)
+  const exists = await dbExists();
+  
+  if (!exists) {
+    console.log(`⚠️  Database doesn't exist (${provider}). Running migration without backup.`);
+    console.log(`   First time setup — ensure DATABASE_URL is set correctly.\n`);
     
     const exitCode = await runPrismaMigrateDev(args);
     return {
@@ -131,7 +154,7 @@ export async function migrateDev(args: string[] = []): Promise<MigrationResult> 
   const backupFilepath = await preMigrationBackup();
   
   if (!backupFilepath) {
-    console.log("\n⚠️  Proceeding with migration dev despite backup failure!\n");
+    console.log("\n⚠️  Proceeding with migration despite backup failure!\n");
   }
 
   // Run migration dev
@@ -140,8 +163,11 @@ export async function migrateDev(args: string[] = []): Promise<MigrationResult> 
 
   if (exitCode !== 0) {
     console.error(`\n❌ Migration dev failed with exit code ${exitCode}`);
-    console.log("\n📌 To restore from backup, run:");
-    console.log(`   pnpm db:restore ${backupFilepath}\n`);
+    
+    if (backupFilepath) {
+      console.log("\n📌 To restore from backup, run:");
+      console.log(`   pnpm db:restore latest --force\n`);
+    }
     
     return {
       success: false,
@@ -153,12 +179,7 @@ export async function migrateDev(args: string[] = []): Promise<MigrationResult> 
   console.log("\n✅ Migration created successfully!");
   
   // Run rotation
-  try {
-    const { rotateBackups } = await import("./rotate.ts");
-    await rotateBackups();
-  } catch {
-    console.log("ℹ️  Backup rotation skipped");
-  }
+  await runRotation();
 
   return {
     success: true,
@@ -167,12 +188,17 @@ export async function migrateDev(args: string[] = []): Promise<MigrationResult> 
 }
 
 /**
- * Main migration flow
+ * Main migration flow (production deploy)
  */
 export async function migrate(args: string[] = []): Promise<MigrationResult> {
-  // Check if database exists
-  if (!existsSync(DB_PATH)) {
-    console.log("⚠️  Database doesn't exist. Running migration without backup.");
+  const provider = detectProvider();
+  
+  // Check if database exists (skipped for PostgreSQL)
+  const exists = await dbExists();
+  
+  if (!exists) {
+    console.log(`⚠️  Database doesn't exist (${provider}). Running migration without backup.`);
+    console.log(`   First time setup — ensure DATABASE_URL is set correctly.\n`);
     
     const exitCode = await runPrismaMigrate(args);
     return {
@@ -194,8 +220,11 @@ export async function migrate(args: string[] = []): Promise<MigrationResult> {
 
   if (exitCode !== 0) {
     console.error(`\n❌ Migration failed with exit code ${exitCode}`);
-    console.log("\n📌 To restore from backup, run:");
-    console.log(`   pnpm db:restore ${backupFilepath}\n`);
+    
+    if (backupFilepath) {
+      console.log("\n📌 To restore from backup, run:");
+      console.log(`   pnpm db:restore latest --force\n`);
+    }
     
     return {
       success: false,
@@ -207,13 +236,7 @@ export async function migrate(args: string[] = []): Promise<MigrationResult> {
   console.log("\n✅ Migration completed successfully!");
   
   // Run rotation to clean old backups
-  try {
-    const { rotateBackups } = await import("./rotate.ts");
-    await rotateBackups();
-  } catch (error) {
-    // Rotation failure is not critical
-    console.log("ℹ️  Backup rotation skipped (can be run manually)");
-  }
+  await runRotation();
 
   return {
     success: true,
@@ -222,12 +245,17 @@ export async function migrate(args: string[] = []): Promise<MigrationResult> {
 }
 
 /**
- * db push flow - same as migrate but using db push
+ * db push flow — syncs schema without migration file
  */
 export async function dbPush(args: string[] = []): Promise<MigrationResult> {
-  // Check if database exists
-  if (!existsSync(DB_PATH)) {
-    console.log("⚠️  Database doesn't exist. Running db push without backup.");
+  const provider = detectProvider();
+  
+  // Check if database exists (skipped for PostgreSQL)
+  const exists = await dbExists();
+  
+  if (!exists) {
+    console.log(`⚠️  Database doesn't exist (${provider}). Running db push without backup.`);
+    console.log(`   First time setup — ensure DATABASE_URL is set correctly.\n`);
     
     const exitCode = await runPrismaPush(args);
     return {
@@ -249,8 +277,11 @@ export async function dbPush(args: string[] = []): Promise<MigrationResult> {
 
   if (exitCode !== 0) {
     console.error(`\n❌ db push failed with exit code ${exitCode}`);
-    console.log("\n📌 To restore from backup, run:");
-    console.log(`   pnpm db:restore ${backupFilepath}\n`);
+    
+    if (backupFilepath) {
+      console.log("\n📌 To restore from backup, run:");
+      console.log(`   pnpm db:restore latest --force\n`);
+    }
     
     return {
       success: false,
@@ -262,12 +293,7 @@ export async function dbPush(args: string[] = []): Promise<MigrationResult> {
   console.log("\n✅ db push completed successfully!");
   
   // Run rotation
-  try {
-    const { rotateBackups } = await import("./rotate.ts");
-    await rotateBackups();
-  } catch (error) {
-    console.log("ℹ️  Backup rotation skipped");
-  }
+  await runRotation();
 
   return {
     success: true,
@@ -300,6 +326,7 @@ if (import.meta.main) {
         console.log("  pnpm db:migrate dev [--name <name>]   → create new migration");
         console.log("  pnpm db:migrate deploy                → apply migrations (production)");
         console.log("  pnpm db:migrate push                  → sync schema without migration");
+        console.log("\nNote: All commands create a backup before running.");
         process.exit(1);
     }
   })();
