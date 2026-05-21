@@ -369,6 +369,21 @@ exports.Prisma.LevelRoleScalarFieldEnum = {
   roleId: 'roleId'
 };
 
+exports.Prisma.SocialLinkScalarFieldEnum = {
+  guildId: 'guildId',
+  platform: 'platform',
+  url: 'url'
+};
+
+exports.Prisma.WelcomeCustomVarScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  name: 'name',
+  value: 'value',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.ModCaseScalarFieldEnum = {
   id: 'id',
   guildId: 'guildId',
@@ -390,6 +405,41 @@ exports.Prisma.WarnThresholdScalarFieldEnum = {
   warnCount: 'warnCount',
   action: 'action',
   duration: 'duration'
+};
+
+exports.Prisma.AntiSpamConfigScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  enabled: 'enabled',
+  burstEnabled: 'burstEnabled',
+  duplicateEnabled: 'duplicateEnabled',
+  mentionEnabled: 'mentionEnabled',
+  linkEnabled: 'linkEnabled',
+  capsEnabled: 'capsEnabled',
+  emojiEnabled: 'emojiEnabled',
+  comboEnabled: 'comboEnabled',
+  burstAction: 'burstAction',
+  duplicateAction: 'duplicateAction',
+  mentionAction: 'mentionAction',
+  linkAction: 'linkAction',
+  capsAction: 'capsAction',
+  emojiAction: 'emojiAction',
+  comboAction: 'comboAction',
+  escalationEnabled: 'escalationEnabled',
+  escalationCount: 'escalationCount',
+  notifyOnSpam: 'notifyOnSpam',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AntiSpamHistoryScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  userId: 'userId',
+  pattern: 'pattern',
+  action: 'action',
+  reason: 'reason',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -424,8 +474,12 @@ exports.Prisma.ModelName = {
   UserXP: 'UserXP',
   XPConfig: 'XPConfig',
   LevelRole: 'LevelRole',
+  SocialLink: 'SocialLink',
+  WelcomeCustomVar: 'WelcomeCustomVar',
   ModCase: 'ModCase',
-  WarnThreshold: 'WarnThreshold'
+  WarnThreshold: 'WarnThreshold',
+  AntiSpamConfig: 'AntiSpamConfig',
+  AntiSpamHistory: 'AntiSpamHistory'
 };
 
 /**

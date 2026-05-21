@@ -114,6 +114,16 @@ export type XPConfig = $Result.DefaultSelection<Prisma.$XPConfigPayload>
  */
 export type LevelRole = $Result.DefaultSelection<Prisma.$LevelRolePayload>
 /**
+ * Model SocialLink
+ * 
+ */
+export type SocialLink = $Result.DefaultSelection<Prisma.$SocialLinkPayload>
+/**
+ * Model WelcomeCustomVar
+ * 
+ */
+export type WelcomeCustomVar = $Result.DefaultSelection<Prisma.$WelcomeCustomVarPayload>
+/**
  * Model ModCase
  * 
  */
@@ -123,6 +133,16 @@ export type ModCase = $Result.DefaultSelection<Prisma.$ModCasePayload>
  * 
  */
 export type WarnThreshold = $Result.DefaultSelection<Prisma.$WarnThresholdPayload>
+/**
+ * Model AntiSpamConfig
+ * 
+ */
+export type AntiSpamConfig = $Result.DefaultSelection<Prisma.$AntiSpamConfigPayload>
+/**
+ * Model AntiSpamHistory
+ * 
+ */
+export type AntiSpamHistory = $Result.DefaultSelection<Prisma.$AntiSpamHistoryPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -446,6 +466,26 @@ export class PrismaClient<
   get levelRole(): Prisma.LevelRoleDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.socialLink`: Exposes CRUD operations for the **SocialLink** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SocialLinks
+    * const socialLinks = await prisma.socialLink.findMany()
+    * ```
+    */
+  get socialLink(): Prisma.SocialLinkDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.welcomeCustomVar`: Exposes CRUD operations for the **WelcomeCustomVar** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WelcomeCustomVars
+    * const welcomeCustomVars = await prisma.welcomeCustomVar.findMany()
+    * ```
+    */
+  get welcomeCustomVar(): Prisma.WelcomeCustomVarDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.modCase`: Exposes CRUD operations for the **ModCase** model.
     * Example usage:
     * ```ts
@@ -464,6 +504,26 @@ export class PrismaClient<
     * ```
     */
   get warnThreshold(): Prisma.WarnThresholdDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.antiSpamConfig`: Exposes CRUD operations for the **AntiSpamConfig** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AntiSpamConfigs
+    * const antiSpamConfigs = await prisma.antiSpamConfig.findMany()
+    * ```
+    */
+  get antiSpamConfig(): Prisma.AntiSpamConfigDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.antiSpamHistory`: Exposes CRUD operations for the **AntiSpamHistory** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AntiSpamHistories
+    * const antiSpamHistories = await prisma.antiSpamHistory.findMany()
+    * ```
+    */
+  get antiSpamHistory(): Prisma.AntiSpamHistoryDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -918,8 +978,12 @@ export namespace Prisma {
     UserXP: 'UserXP',
     XPConfig: 'XPConfig',
     LevelRole: 'LevelRole',
+    SocialLink: 'SocialLink',
+    WelcomeCustomVar: 'WelcomeCustomVar',
     ModCase: 'ModCase',
-    WarnThreshold: 'WarnThreshold'
+    WarnThreshold: 'WarnThreshold',
+    AntiSpamConfig: 'AntiSpamConfig',
+    AntiSpamHistory: 'AntiSpamHistory'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -935,7 +999,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tipoClase" | "classes" | "subclass" | "guild" | "guildConfig" | "userEconomy" | "globalBank" | "rouletteGame" | "rouletteBet" | "economyConfig" | "leaderboard" | "autoRole" | "roleMapping" | "verificationRequest" | "musicQueue" | "musicQueueItem" | "guildMusicConfig" | "userXP" | "xPConfig" | "levelRole" | "modCase" | "warnThreshold"
+      modelProps: "tipoClase" | "classes" | "subclass" | "guild" | "guildConfig" | "userEconomy" | "globalBank" | "rouletteGame" | "rouletteBet" | "economyConfig" | "leaderboard" | "autoRole" | "roleMapping" | "verificationRequest" | "musicQueue" | "musicQueueItem" | "guildMusicConfig" | "userXP" | "xPConfig" | "levelRole" | "socialLink" | "welcomeCustomVar" | "modCase" | "warnThreshold" | "antiSpamConfig" | "antiSpamHistory"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2419,6 +2483,154 @@ export namespace Prisma {
           }
         }
       }
+      SocialLink: {
+        payload: Prisma.$SocialLinkPayload<ExtArgs>
+        fields: Prisma.SocialLinkFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SocialLinkFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SocialLinkPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SocialLinkFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SocialLinkPayload>
+          }
+          findFirst: {
+            args: Prisma.SocialLinkFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SocialLinkPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SocialLinkFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SocialLinkPayload>
+          }
+          findMany: {
+            args: Prisma.SocialLinkFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SocialLinkPayload>[]
+          }
+          create: {
+            args: Prisma.SocialLinkCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SocialLinkPayload>
+          }
+          createMany: {
+            args: Prisma.SocialLinkCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SocialLinkCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SocialLinkPayload>[]
+          }
+          delete: {
+            args: Prisma.SocialLinkDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SocialLinkPayload>
+          }
+          update: {
+            args: Prisma.SocialLinkUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SocialLinkPayload>
+          }
+          deleteMany: {
+            args: Prisma.SocialLinkDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SocialLinkUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SocialLinkUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SocialLinkPayload>[]
+          }
+          upsert: {
+            args: Prisma.SocialLinkUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SocialLinkPayload>
+          }
+          aggregate: {
+            args: Prisma.SocialLinkAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSocialLink>
+          }
+          groupBy: {
+            args: Prisma.SocialLinkGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SocialLinkGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SocialLinkCountArgs<ExtArgs>
+            result: $Utils.Optional<SocialLinkCountAggregateOutputType> | number
+          }
+        }
+      }
+      WelcomeCustomVar: {
+        payload: Prisma.$WelcomeCustomVarPayload<ExtArgs>
+        fields: Prisma.WelcomeCustomVarFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WelcomeCustomVarFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WelcomeCustomVarPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WelcomeCustomVarFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WelcomeCustomVarPayload>
+          }
+          findFirst: {
+            args: Prisma.WelcomeCustomVarFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WelcomeCustomVarPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WelcomeCustomVarFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WelcomeCustomVarPayload>
+          }
+          findMany: {
+            args: Prisma.WelcomeCustomVarFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WelcomeCustomVarPayload>[]
+          }
+          create: {
+            args: Prisma.WelcomeCustomVarCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WelcomeCustomVarPayload>
+          }
+          createMany: {
+            args: Prisma.WelcomeCustomVarCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WelcomeCustomVarCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WelcomeCustomVarPayload>[]
+          }
+          delete: {
+            args: Prisma.WelcomeCustomVarDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WelcomeCustomVarPayload>
+          }
+          update: {
+            args: Prisma.WelcomeCustomVarUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WelcomeCustomVarPayload>
+          }
+          deleteMany: {
+            args: Prisma.WelcomeCustomVarDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WelcomeCustomVarUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WelcomeCustomVarUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WelcomeCustomVarPayload>[]
+          }
+          upsert: {
+            args: Prisma.WelcomeCustomVarUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WelcomeCustomVarPayload>
+          }
+          aggregate: {
+            args: Prisma.WelcomeCustomVarAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWelcomeCustomVar>
+          }
+          groupBy: {
+            args: Prisma.WelcomeCustomVarGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WelcomeCustomVarGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WelcomeCustomVarCountArgs<ExtArgs>
+            result: $Utils.Optional<WelcomeCustomVarCountAggregateOutputType> | number
+          }
+        }
+      }
       ModCase: {
         payload: Prisma.$ModCasePayload<ExtArgs>
         fields: Prisma.ModCaseFieldRefs
@@ -2567,6 +2779,154 @@ export namespace Prisma {
           }
         }
       }
+      AntiSpamConfig: {
+        payload: Prisma.$AntiSpamConfigPayload<ExtArgs>
+        fields: Prisma.AntiSpamConfigFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AntiSpamConfigFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamConfigPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AntiSpamConfigFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamConfigPayload>
+          }
+          findFirst: {
+            args: Prisma.AntiSpamConfigFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamConfigPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AntiSpamConfigFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamConfigPayload>
+          }
+          findMany: {
+            args: Prisma.AntiSpamConfigFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamConfigPayload>[]
+          }
+          create: {
+            args: Prisma.AntiSpamConfigCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamConfigPayload>
+          }
+          createMany: {
+            args: Prisma.AntiSpamConfigCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AntiSpamConfigCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamConfigPayload>[]
+          }
+          delete: {
+            args: Prisma.AntiSpamConfigDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamConfigPayload>
+          }
+          update: {
+            args: Prisma.AntiSpamConfigUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamConfigPayload>
+          }
+          deleteMany: {
+            args: Prisma.AntiSpamConfigDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AntiSpamConfigUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AntiSpamConfigUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamConfigPayload>[]
+          }
+          upsert: {
+            args: Prisma.AntiSpamConfigUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamConfigPayload>
+          }
+          aggregate: {
+            args: Prisma.AntiSpamConfigAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAntiSpamConfig>
+          }
+          groupBy: {
+            args: Prisma.AntiSpamConfigGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AntiSpamConfigGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AntiSpamConfigCountArgs<ExtArgs>
+            result: $Utils.Optional<AntiSpamConfigCountAggregateOutputType> | number
+          }
+        }
+      }
+      AntiSpamHistory: {
+        payload: Prisma.$AntiSpamHistoryPayload<ExtArgs>
+        fields: Prisma.AntiSpamHistoryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AntiSpamHistoryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamHistoryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AntiSpamHistoryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamHistoryPayload>
+          }
+          findFirst: {
+            args: Prisma.AntiSpamHistoryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamHistoryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AntiSpamHistoryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamHistoryPayload>
+          }
+          findMany: {
+            args: Prisma.AntiSpamHistoryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamHistoryPayload>[]
+          }
+          create: {
+            args: Prisma.AntiSpamHistoryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamHistoryPayload>
+          }
+          createMany: {
+            args: Prisma.AntiSpamHistoryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AntiSpamHistoryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamHistoryPayload>[]
+          }
+          delete: {
+            args: Prisma.AntiSpamHistoryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamHistoryPayload>
+          }
+          update: {
+            args: Prisma.AntiSpamHistoryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamHistoryPayload>
+          }
+          deleteMany: {
+            args: Prisma.AntiSpamHistoryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AntiSpamHistoryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AntiSpamHistoryUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamHistoryPayload>[]
+          }
+          upsert: {
+            args: Prisma.AntiSpamHistoryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AntiSpamHistoryPayload>
+          }
+          aggregate: {
+            args: Prisma.AntiSpamHistoryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAntiSpamHistory>
+          }
+          groupBy: {
+            args: Prisma.AntiSpamHistoryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AntiSpamHistoryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AntiSpamHistoryCountArgs<ExtArgs>
+            result: $Utils.Optional<AntiSpamHistoryCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2695,8 +3055,12 @@ export namespace Prisma {
     userXP?: UserXPOmit
     xPConfig?: XPConfigOmit
     levelRole?: LevelRoleOmit
+    socialLink?: SocialLinkOmit
+    welcomeCustomVar?: WelcomeCustomVarOmit
     modCase?: ModCaseOmit
     warnThreshold?: WarnThresholdOmit
+    antiSpamConfig?: AntiSpamConfigOmit
+    antiSpamHistory?: AntiSpamHistoryOmit
   }
 
   /* Types for Logging */
@@ -2831,6 +3195,37 @@ export namespace Prisma {
    */
   export type ClassesCountOutputTypeCountSubClasesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: subclassWhereInput
+  }
+
+
+  /**
+   * Count Type GuildCountOutputType
+   */
+
+  export type GuildCountOutputType = {
+    socialLinks: number
+  }
+
+  export type GuildCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    socialLinks?: boolean | GuildCountOutputTypeCountSocialLinksArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * GuildCountOutputType without action
+   */
+  export type GuildCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GuildCountOutputType
+     */
+    select?: GuildCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * GuildCountOutputType without action
+   */
+  export type GuildCountOutputTypeCountSocialLinksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SocialLinkWhereInput
   }
 
 
@@ -6448,6 +6843,9 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     guildConfigs?: boolean | Guild$guildConfigsArgs<ExtArgs>
+    antiSpamConfig?: boolean | Guild$antiSpamConfigArgs<ExtArgs>
+    socialLinks?: boolean | Guild$socialLinksArgs<ExtArgs>
+    _count?: boolean | GuildCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["guild"]>
 
   export type GuildSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -6489,6 +6887,9 @@ export namespace Prisma {
   export type GuildOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "name" | "prefix" | "ownerId" | "ownerName" | "MemberCount" | "createdAt" | "updatedAt", ExtArgs["result"]["guild"]>
   export type GuildInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     guildConfigs?: boolean | Guild$guildConfigsArgs<ExtArgs>
+    antiSpamConfig?: boolean | Guild$antiSpamConfigArgs<ExtArgs>
+    socialLinks?: boolean | Guild$socialLinksArgs<ExtArgs>
+    _count?: boolean | GuildCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type GuildIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
   export type GuildIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -6497,6 +6898,8 @@ export namespace Prisma {
     name: "Guild"
     objects: {
       guildConfigs: Prisma.$GuildConfigPayload<ExtArgs> | null
+      antiSpamConfig: Prisma.$AntiSpamConfigPayload<ExtArgs> | null
+      socialLinks: Prisma.$SocialLinkPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -6903,6 +7306,8 @@ export namespace Prisma {
   export interface Prisma__GuildClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     guildConfigs<T extends Guild$guildConfigsArgs<ExtArgs> = {}>(args?: Subset<T, Guild$guildConfigsArgs<ExtArgs>>): Prisma__GuildConfigClient<$Result.GetResult<Prisma.$GuildConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    antiSpamConfig<T extends Guild$antiSpamConfigArgs<ExtArgs> = {}>(args?: Subset<T, Guild$antiSpamConfigArgs<ExtArgs>>): Prisma__AntiSpamConfigClient<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    socialLinks<T extends Guild$socialLinksArgs<ExtArgs> = {}>(args?: Subset<T, Guild$socialLinksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -7348,6 +7753,49 @@ export namespace Prisma {
      */
     include?: GuildConfigInclude<ExtArgs> | null
     where?: GuildConfigWhereInput
+  }
+
+  /**
+   * Guild.antiSpamConfig
+   */
+  export type Guild$antiSpamConfigArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigInclude<ExtArgs> | null
+    where?: AntiSpamConfigWhereInput
+  }
+
+  /**
+   * Guild.socialLinks
+   */
+  export type Guild$socialLinksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkInclude<ExtArgs> | null
+    where?: SocialLinkWhereInput
+    orderBy?: SocialLinkOrderByWithRelationInput | SocialLinkOrderByWithRelationInput[]
+    cursor?: SocialLinkWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SocialLinkScalarFieldEnum | SocialLinkScalarFieldEnum[]
   }
 
   /**
@@ -25634,6 +26082,2086 @@ export namespace Prisma {
 
 
   /**
+   * Model SocialLink
+   */
+
+  export type AggregateSocialLink = {
+    _count: SocialLinkCountAggregateOutputType | null
+    _min: SocialLinkMinAggregateOutputType | null
+    _max: SocialLinkMaxAggregateOutputType | null
+  }
+
+  export type SocialLinkMinAggregateOutputType = {
+    guildId: string | null
+    platform: string | null
+    url: string | null
+  }
+
+  export type SocialLinkMaxAggregateOutputType = {
+    guildId: string | null
+    platform: string | null
+    url: string | null
+  }
+
+  export type SocialLinkCountAggregateOutputType = {
+    guildId: number
+    platform: number
+    url: number
+    _all: number
+  }
+
+
+  export type SocialLinkMinAggregateInputType = {
+    guildId?: true
+    platform?: true
+    url?: true
+  }
+
+  export type SocialLinkMaxAggregateInputType = {
+    guildId?: true
+    platform?: true
+    url?: true
+  }
+
+  export type SocialLinkCountAggregateInputType = {
+    guildId?: true
+    platform?: true
+    url?: true
+    _all?: true
+  }
+
+  export type SocialLinkAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SocialLink to aggregate.
+     */
+    where?: SocialLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SocialLinks to fetch.
+     */
+    orderBy?: SocialLinkOrderByWithRelationInput | SocialLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SocialLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SocialLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SocialLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SocialLinks
+    **/
+    _count?: true | SocialLinkCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SocialLinkMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SocialLinkMaxAggregateInputType
+  }
+
+  export type GetSocialLinkAggregateType<T extends SocialLinkAggregateArgs> = {
+        [P in keyof T & keyof AggregateSocialLink]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSocialLink[P]>
+      : GetScalarType<T[P], AggregateSocialLink[P]>
+  }
+
+
+
+
+  export type SocialLinkGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SocialLinkWhereInput
+    orderBy?: SocialLinkOrderByWithAggregationInput | SocialLinkOrderByWithAggregationInput[]
+    by: SocialLinkScalarFieldEnum[] | SocialLinkScalarFieldEnum
+    having?: SocialLinkScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SocialLinkCountAggregateInputType | true
+    _min?: SocialLinkMinAggregateInputType
+    _max?: SocialLinkMaxAggregateInputType
+  }
+
+  export type SocialLinkGroupByOutputType = {
+    guildId: string
+    platform: string
+    url: string
+    _count: SocialLinkCountAggregateOutputType | null
+    _min: SocialLinkMinAggregateOutputType | null
+    _max: SocialLinkMaxAggregateOutputType | null
+  }
+
+  type GetSocialLinkGroupByPayload<T extends SocialLinkGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SocialLinkGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SocialLinkGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SocialLinkGroupByOutputType[P]>
+            : GetScalarType<T[P], SocialLinkGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SocialLinkSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    guildId?: boolean
+    platform?: boolean
+    url?: boolean
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["socialLink"]>
+
+  export type SocialLinkSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    guildId?: boolean
+    platform?: boolean
+    url?: boolean
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["socialLink"]>
+
+  export type SocialLinkSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    guildId?: boolean
+    platform?: boolean
+    url?: boolean
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["socialLink"]>
+
+  export type SocialLinkSelectScalar = {
+    guildId?: boolean
+    platform?: boolean
+    url?: boolean
+  }
+
+  export type SocialLinkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"guildId" | "platform" | "url", ExtArgs["result"]["socialLink"]>
+  export type SocialLinkInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }
+  export type SocialLinkIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }
+  export type SocialLinkIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }
+
+  export type $SocialLinkPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SocialLink"
+    objects: {
+      guild: Prisma.$GuildPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      guildId: string
+      platform: string
+      url: string
+    }, ExtArgs["result"]["socialLink"]>
+    composites: {}
+  }
+
+  type SocialLinkGetPayload<S extends boolean | null | undefined | SocialLinkDefaultArgs> = $Result.GetResult<Prisma.$SocialLinkPayload, S>
+
+  type SocialLinkCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SocialLinkFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SocialLinkCountAggregateInputType | true
+    }
+
+  export interface SocialLinkDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SocialLink'], meta: { name: 'SocialLink' } }
+    /**
+     * Find zero or one SocialLink that matches the filter.
+     * @param {SocialLinkFindUniqueArgs} args - Arguments to find a SocialLink
+     * @example
+     * // Get one SocialLink
+     * const socialLink = await prisma.socialLink.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SocialLinkFindUniqueArgs>(args: SelectSubset<T, SocialLinkFindUniqueArgs<ExtArgs>>): Prisma__SocialLinkClient<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SocialLink that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SocialLinkFindUniqueOrThrowArgs} args - Arguments to find a SocialLink
+     * @example
+     * // Get one SocialLink
+     * const socialLink = await prisma.socialLink.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SocialLinkFindUniqueOrThrowArgs>(args: SelectSubset<T, SocialLinkFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SocialLinkClient<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SocialLink that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SocialLinkFindFirstArgs} args - Arguments to find a SocialLink
+     * @example
+     * // Get one SocialLink
+     * const socialLink = await prisma.socialLink.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SocialLinkFindFirstArgs>(args?: SelectSubset<T, SocialLinkFindFirstArgs<ExtArgs>>): Prisma__SocialLinkClient<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SocialLink that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SocialLinkFindFirstOrThrowArgs} args - Arguments to find a SocialLink
+     * @example
+     * // Get one SocialLink
+     * const socialLink = await prisma.socialLink.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SocialLinkFindFirstOrThrowArgs>(args?: SelectSubset<T, SocialLinkFindFirstOrThrowArgs<ExtArgs>>): Prisma__SocialLinkClient<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SocialLinks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SocialLinkFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SocialLinks
+     * const socialLinks = await prisma.socialLink.findMany()
+     * 
+     * // Get first 10 SocialLinks
+     * const socialLinks = await prisma.socialLink.findMany({ take: 10 })
+     * 
+     * // Only select the `guildId`
+     * const socialLinkWithGuildIdOnly = await prisma.socialLink.findMany({ select: { guildId: true } })
+     * 
+     */
+    findMany<T extends SocialLinkFindManyArgs>(args?: SelectSubset<T, SocialLinkFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SocialLink.
+     * @param {SocialLinkCreateArgs} args - Arguments to create a SocialLink.
+     * @example
+     * // Create one SocialLink
+     * const SocialLink = await prisma.socialLink.create({
+     *   data: {
+     *     // ... data to create a SocialLink
+     *   }
+     * })
+     * 
+     */
+    create<T extends SocialLinkCreateArgs>(args: SelectSubset<T, SocialLinkCreateArgs<ExtArgs>>): Prisma__SocialLinkClient<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SocialLinks.
+     * @param {SocialLinkCreateManyArgs} args - Arguments to create many SocialLinks.
+     * @example
+     * // Create many SocialLinks
+     * const socialLink = await prisma.socialLink.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SocialLinkCreateManyArgs>(args?: SelectSubset<T, SocialLinkCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SocialLinks and returns the data saved in the database.
+     * @param {SocialLinkCreateManyAndReturnArgs} args - Arguments to create many SocialLinks.
+     * @example
+     * // Create many SocialLinks
+     * const socialLink = await prisma.socialLink.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SocialLinks and only return the `guildId`
+     * const socialLinkWithGuildIdOnly = await prisma.socialLink.createManyAndReturn({
+     *   select: { guildId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SocialLinkCreateManyAndReturnArgs>(args?: SelectSubset<T, SocialLinkCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SocialLink.
+     * @param {SocialLinkDeleteArgs} args - Arguments to delete one SocialLink.
+     * @example
+     * // Delete one SocialLink
+     * const SocialLink = await prisma.socialLink.delete({
+     *   where: {
+     *     // ... filter to delete one SocialLink
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SocialLinkDeleteArgs>(args: SelectSubset<T, SocialLinkDeleteArgs<ExtArgs>>): Prisma__SocialLinkClient<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SocialLink.
+     * @param {SocialLinkUpdateArgs} args - Arguments to update one SocialLink.
+     * @example
+     * // Update one SocialLink
+     * const socialLink = await prisma.socialLink.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SocialLinkUpdateArgs>(args: SelectSubset<T, SocialLinkUpdateArgs<ExtArgs>>): Prisma__SocialLinkClient<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SocialLinks.
+     * @param {SocialLinkDeleteManyArgs} args - Arguments to filter SocialLinks to delete.
+     * @example
+     * // Delete a few SocialLinks
+     * const { count } = await prisma.socialLink.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SocialLinkDeleteManyArgs>(args?: SelectSubset<T, SocialLinkDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SocialLinks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SocialLinkUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SocialLinks
+     * const socialLink = await prisma.socialLink.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SocialLinkUpdateManyArgs>(args: SelectSubset<T, SocialLinkUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SocialLinks and returns the data updated in the database.
+     * @param {SocialLinkUpdateManyAndReturnArgs} args - Arguments to update many SocialLinks.
+     * @example
+     * // Update many SocialLinks
+     * const socialLink = await prisma.socialLink.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SocialLinks and only return the `guildId`
+     * const socialLinkWithGuildIdOnly = await prisma.socialLink.updateManyAndReturn({
+     *   select: { guildId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SocialLinkUpdateManyAndReturnArgs>(args: SelectSubset<T, SocialLinkUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SocialLink.
+     * @param {SocialLinkUpsertArgs} args - Arguments to update or create a SocialLink.
+     * @example
+     * // Update or create a SocialLink
+     * const socialLink = await prisma.socialLink.upsert({
+     *   create: {
+     *     // ... data to create a SocialLink
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SocialLink we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SocialLinkUpsertArgs>(args: SelectSubset<T, SocialLinkUpsertArgs<ExtArgs>>): Prisma__SocialLinkClient<$Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SocialLinks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SocialLinkCountArgs} args - Arguments to filter SocialLinks to count.
+     * @example
+     * // Count the number of SocialLinks
+     * const count = await prisma.socialLink.count({
+     *   where: {
+     *     // ... the filter for the SocialLinks we want to count
+     *   }
+     * })
+    **/
+    count<T extends SocialLinkCountArgs>(
+      args?: Subset<T, SocialLinkCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SocialLinkCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SocialLink.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SocialLinkAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SocialLinkAggregateArgs>(args: Subset<T, SocialLinkAggregateArgs>): Prisma.PrismaPromise<GetSocialLinkAggregateType<T>>
+
+    /**
+     * Group by SocialLink.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SocialLinkGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SocialLinkGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SocialLinkGroupByArgs['orderBy'] }
+        : { orderBy?: SocialLinkGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SocialLinkGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSocialLinkGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SocialLink model
+   */
+  readonly fields: SocialLinkFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SocialLink.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SocialLinkClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    guild<T extends GuildDefaultArgs<ExtArgs> = {}>(args?: Subset<T, GuildDefaultArgs<ExtArgs>>): Prisma__GuildClient<$Result.GetResult<Prisma.$GuildPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SocialLink model
+   */
+  interface SocialLinkFieldRefs {
+    readonly guildId: FieldRef<"SocialLink", 'String'>
+    readonly platform: FieldRef<"SocialLink", 'String'>
+    readonly url: FieldRef<"SocialLink", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SocialLink findUnique
+   */
+  export type SocialLinkFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which SocialLink to fetch.
+     */
+    where: SocialLinkWhereUniqueInput
+  }
+
+  /**
+   * SocialLink findUniqueOrThrow
+   */
+  export type SocialLinkFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which SocialLink to fetch.
+     */
+    where: SocialLinkWhereUniqueInput
+  }
+
+  /**
+   * SocialLink findFirst
+   */
+  export type SocialLinkFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which SocialLink to fetch.
+     */
+    where?: SocialLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SocialLinks to fetch.
+     */
+    orderBy?: SocialLinkOrderByWithRelationInput | SocialLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SocialLinks.
+     */
+    cursor?: SocialLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SocialLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SocialLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SocialLinks.
+     */
+    distinct?: SocialLinkScalarFieldEnum | SocialLinkScalarFieldEnum[]
+  }
+
+  /**
+   * SocialLink findFirstOrThrow
+   */
+  export type SocialLinkFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which SocialLink to fetch.
+     */
+    where?: SocialLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SocialLinks to fetch.
+     */
+    orderBy?: SocialLinkOrderByWithRelationInput | SocialLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SocialLinks.
+     */
+    cursor?: SocialLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SocialLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SocialLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SocialLinks.
+     */
+    distinct?: SocialLinkScalarFieldEnum | SocialLinkScalarFieldEnum[]
+  }
+
+  /**
+   * SocialLink findMany
+   */
+  export type SocialLinkFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which SocialLinks to fetch.
+     */
+    where?: SocialLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SocialLinks to fetch.
+     */
+    orderBy?: SocialLinkOrderByWithRelationInput | SocialLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SocialLinks.
+     */
+    cursor?: SocialLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SocialLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SocialLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SocialLinks.
+     */
+    distinct?: SocialLinkScalarFieldEnum | SocialLinkScalarFieldEnum[]
+  }
+
+  /**
+   * SocialLink create
+   */
+  export type SocialLinkCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SocialLink.
+     */
+    data: XOR<SocialLinkCreateInput, SocialLinkUncheckedCreateInput>
+  }
+
+  /**
+   * SocialLink createMany
+   */
+  export type SocialLinkCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SocialLinks.
+     */
+    data: SocialLinkCreateManyInput | SocialLinkCreateManyInput[]
+  }
+
+  /**
+   * SocialLink createManyAndReturn
+   */
+  export type SocialLinkCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * The data used to create many SocialLinks.
+     */
+    data: SocialLinkCreateManyInput | SocialLinkCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SocialLink update
+   */
+  export type SocialLinkUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SocialLink.
+     */
+    data: XOR<SocialLinkUpdateInput, SocialLinkUncheckedUpdateInput>
+    /**
+     * Choose, which SocialLink to update.
+     */
+    where: SocialLinkWhereUniqueInput
+  }
+
+  /**
+   * SocialLink updateMany
+   */
+  export type SocialLinkUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SocialLinks.
+     */
+    data: XOR<SocialLinkUpdateManyMutationInput, SocialLinkUncheckedUpdateManyInput>
+    /**
+     * Filter which SocialLinks to update
+     */
+    where?: SocialLinkWhereInput
+    /**
+     * Limit how many SocialLinks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SocialLink updateManyAndReturn
+   */
+  export type SocialLinkUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * The data used to update SocialLinks.
+     */
+    data: XOR<SocialLinkUpdateManyMutationInput, SocialLinkUncheckedUpdateManyInput>
+    /**
+     * Filter which SocialLinks to update
+     */
+    where?: SocialLinkWhereInput
+    /**
+     * Limit how many SocialLinks to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SocialLink upsert
+   */
+  export type SocialLinkUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SocialLink to update in case it exists.
+     */
+    where: SocialLinkWhereUniqueInput
+    /**
+     * In case the SocialLink found by the `where` argument doesn't exist, create a new SocialLink with this data.
+     */
+    create: XOR<SocialLinkCreateInput, SocialLinkUncheckedCreateInput>
+    /**
+     * In case the SocialLink was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SocialLinkUpdateInput, SocialLinkUncheckedUpdateInput>
+  }
+
+  /**
+   * SocialLink delete
+   */
+  export type SocialLinkDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkInclude<ExtArgs> | null
+    /**
+     * Filter which SocialLink to delete.
+     */
+    where: SocialLinkWhereUniqueInput
+  }
+
+  /**
+   * SocialLink deleteMany
+   */
+  export type SocialLinkDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SocialLinks to delete
+     */
+    where?: SocialLinkWhereInput
+    /**
+     * Limit how many SocialLinks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SocialLink without action
+   */
+  export type SocialLinkDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SocialLink
+     */
+    select?: SocialLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SocialLink
+     */
+    omit?: SocialLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SocialLinkInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WelcomeCustomVar
+   */
+
+  export type AggregateWelcomeCustomVar = {
+    _count: WelcomeCustomVarCountAggregateOutputType | null
+    _avg: WelcomeCustomVarAvgAggregateOutputType | null
+    _sum: WelcomeCustomVarSumAggregateOutputType | null
+    _min: WelcomeCustomVarMinAggregateOutputType | null
+    _max: WelcomeCustomVarMaxAggregateOutputType | null
+  }
+
+  export type WelcomeCustomVarAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type WelcomeCustomVarSumAggregateOutputType = {
+    id: number | null
+  }
+
+  export type WelcomeCustomVarMinAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    name: string | null
+    value: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WelcomeCustomVarMaxAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    name: string | null
+    value: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WelcomeCustomVarCountAggregateOutputType = {
+    id: number
+    guildId: number
+    name: number
+    value: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WelcomeCustomVarAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type WelcomeCustomVarSumAggregateInputType = {
+    id?: true
+  }
+
+  export type WelcomeCustomVarMinAggregateInputType = {
+    id?: true
+    guildId?: true
+    name?: true
+    value?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WelcomeCustomVarMaxAggregateInputType = {
+    id?: true
+    guildId?: true
+    name?: true
+    value?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WelcomeCustomVarCountAggregateInputType = {
+    id?: true
+    guildId?: true
+    name?: true
+    value?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WelcomeCustomVarAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WelcomeCustomVar to aggregate.
+     */
+    where?: WelcomeCustomVarWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WelcomeCustomVars to fetch.
+     */
+    orderBy?: WelcomeCustomVarOrderByWithRelationInput | WelcomeCustomVarOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WelcomeCustomVarWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WelcomeCustomVars from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WelcomeCustomVars.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WelcomeCustomVars
+    **/
+    _count?: true | WelcomeCustomVarCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WelcomeCustomVarAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WelcomeCustomVarSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WelcomeCustomVarMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WelcomeCustomVarMaxAggregateInputType
+  }
+
+  export type GetWelcomeCustomVarAggregateType<T extends WelcomeCustomVarAggregateArgs> = {
+        [P in keyof T & keyof AggregateWelcomeCustomVar]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWelcomeCustomVar[P]>
+      : GetScalarType<T[P], AggregateWelcomeCustomVar[P]>
+  }
+
+
+
+
+  export type WelcomeCustomVarGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WelcomeCustomVarWhereInput
+    orderBy?: WelcomeCustomVarOrderByWithAggregationInput | WelcomeCustomVarOrderByWithAggregationInput[]
+    by: WelcomeCustomVarScalarFieldEnum[] | WelcomeCustomVarScalarFieldEnum
+    having?: WelcomeCustomVarScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WelcomeCustomVarCountAggregateInputType | true
+    _avg?: WelcomeCustomVarAvgAggregateInputType
+    _sum?: WelcomeCustomVarSumAggregateInputType
+    _min?: WelcomeCustomVarMinAggregateInputType
+    _max?: WelcomeCustomVarMaxAggregateInputType
+  }
+
+  export type WelcomeCustomVarGroupByOutputType = {
+    id: number
+    guildId: string
+    name: string
+    value: string
+    createdAt: Date
+    updatedAt: Date
+    _count: WelcomeCustomVarCountAggregateOutputType | null
+    _avg: WelcomeCustomVarAvgAggregateOutputType | null
+    _sum: WelcomeCustomVarSumAggregateOutputType | null
+    _min: WelcomeCustomVarMinAggregateOutputType | null
+    _max: WelcomeCustomVarMaxAggregateOutputType | null
+  }
+
+  type GetWelcomeCustomVarGroupByPayload<T extends WelcomeCustomVarGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WelcomeCustomVarGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WelcomeCustomVarGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WelcomeCustomVarGroupByOutputType[P]>
+            : GetScalarType<T[P], WelcomeCustomVarGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WelcomeCustomVarSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    name?: boolean
+    value?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["welcomeCustomVar"]>
+
+  export type WelcomeCustomVarSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    name?: boolean
+    value?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["welcomeCustomVar"]>
+
+  export type WelcomeCustomVarSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    name?: boolean
+    value?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["welcomeCustomVar"]>
+
+  export type WelcomeCustomVarSelectScalar = {
+    id?: boolean
+    guildId?: boolean
+    name?: boolean
+    value?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WelcomeCustomVarOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "name" | "value" | "createdAt" | "updatedAt", ExtArgs["result"]["welcomeCustomVar"]>
+
+  export type $WelcomeCustomVarPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WelcomeCustomVar"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      guildId: string
+      name: string
+      value: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["welcomeCustomVar"]>
+    composites: {}
+  }
+
+  type WelcomeCustomVarGetPayload<S extends boolean | null | undefined | WelcomeCustomVarDefaultArgs> = $Result.GetResult<Prisma.$WelcomeCustomVarPayload, S>
+
+  type WelcomeCustomVarCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WelcomeCustomVarFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WelcomeCustomVarCountAggregateInputType | true
+    }
+
+  export interface WelcomeCustomVarDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WelcomeCustomVar'], meta: { name: 'WelcomeCustomVar' } }
+    /**
+     * Find zero or one WelcomeCustomVar that matches the filter.
+     * @param {WelcomeCustomVarFindUniqueArgs} args - Arguments to find a WelcomeCustomVar
+     * @example
+     * // Get one WelcomeCustomVar
+     * const welcomeCustomVar = await prisma.welcomeCustomVar.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WelcomeCustomVarFindUniqueArgs>(args: SelectSubset<T, WelcomeCustomVarFindUniqueArgs<ExtArgs>>): Prisma__WelcomeCustomVarClient<$Result.GetResult<Prisma.$WelcomeCustomVarPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WelcomeCustomVar that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WelcomeCustomVarFindUniqueOrThrowArgs} args - Arguments to find a WelcomeCustomVar
+     * @example
+     * // Get one WelcomeCustomVar
+     * const welcomeCustomVar = await prisma.welcomeCustomVar.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WelcomeCustomVarFindUniqueOrThrowArgs>(args: SelectSubset<T, WelcomeCustomVarFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WelcomeCustomVarClient<$Result.GetResult<Prisma.$WelcomeCustomVarPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WelcomeCustomVar that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WelcomeCustomVarFindFirstArgs} args - Arguments to find a WelcomeCustomVar
+     * @example
+     * // Get one WelcomeCustomVar
+     * const welcomeCustomVar = await prisma.welcomeCustomVar.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WelcomeCustomVarFindFirstArgs>(args?: SelectSubset<T, WelcomeCustomVarFindFirstArgs<ExtArgs>>): Prisma__WelcomeCustomVarClient<$Result.GetResult<Prisma.$WelcomeCustomVarPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WelcomeCustomVar that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WelcomeCustomVarFindFirstOrThrowArgs} args - Arguments to find a WelcomeCustomVar
+     * @example
+     * // Get one WelcomeCustomVar
+     * const welcomeCustomVar = await prisma.welcomeCustomVar.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WelcomeCustomVarFindFirstOrThrowArgs>(args?: SelectSubset<T, WelcomeCustomVarFindFirstOrThrowArgs<ExtArgs>>): Prisma__WelcomeCustomVarClient<$Result.GetResult<Prisma.$WelcomeCustomVarPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WelcomeCustomVars that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WelcomeCustomVarFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WelcomeCustomVars
+     * const welcomeCustomVars = await prisma.welcomeCustomVar.findMany()
+     * 
+     * // Get first 10 WelcomeCustomVars
+     * const welcomeCustomVars = await prisma.welcomeCustomVar.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const welcomeCustomVarWithIdOnly = await prisma.welcomeCustomVar.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WelcomeCustomVarFindManyArgs>(args?: SelectSubset<T, WelcomeCustomVarFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WelcomeCustomVarPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WelcomeCustomVar.
+     * @param {WelcomeCustomVarCreateArgs} args - Arguments to create a WelcomeCustomVar.
+     * @example
+     * // Create one WelcomeCustomVar
+     * const WelcomeCustomVar = await prisma.welcomeCustomVar.create({
+     *   data: {
+     *     // ... data to create a WelcomeCustomVar
+     *   }
+     * })
+     * 
+     */
+    create<T extends WelcomeCustomVarCreateArgs>(args: SelectSubset<T, WelcomeCustomVarCreateArgs<ExtArgs>>): Prisma__WelcomeCustomVarClient<$Result.GetResult<Prisma.$WelcomeCustomVarPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WelcomeCustomVars.
+     * @param {WelcomeCustomVarCreateManyArgs} args - Arguments to create many WelcomeCustomVars.
+     * @example
+     * // Create many WelcomeCustomVars
+     * const welcomeCustomVar = await prisma.welcomeCustomVar.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WelcomeCustomVarCreateManyArgs>(args?: SelectSubset<T, WelcomeCustomVarCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WelcomeCustomVars and returns the data saved in the database.
+     * @param {WelcomeCustomVarCreateManyAndReturnArgs} args - Arguments to create many WelcomeCustomVars.
+     * @example
+     * // Create many WelcomeCustomVars
+     * const welcomeCustomVar = await prisma.welcomeCustomVar.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WelcomeCustomVars and only return the `id`
+     * const welcomeCustomVarWithIdOnly = await prisma.welcomeCustomVar.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WelcomeCustomVarCreateManyAndReturnArgs>(args?: SelectSubset<T, WelcomeCustomVarCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WelcomeCustomVarPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WelcomeCustomVar.
+     * @param {WelcomeCustomVarDeleteArgs} args - Arguments to delete one WelcomeCustomVar.
+     * @example
+     * // Delete one WelcomeCustomVar
+     * const WelcomeCustomVar = await prisma.welcomeCustomVar.delete({
+     *   where: {
+     *     // ... filter to delete one WelcomeCustomVar
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WelcomeCustomVarDeleteArgs>(args: SelectSubset<T, WelcomeCustomVarDeleteArgs<ExtArgs>>): Prisma__WelcomeCustomVarClient<$Result.GetResult<Prisma.$WelcomeCustomVarPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WelcomeCustomVar.
+     * @param {WelcomeCustomVarUpdateArgs} args - Arguments to update one WelcomeCustomVar.
+     * @example
+     * // Update one WelcomeCustomVar
+     * const welcomeCustomVar = await prisma.welcomeCustomVar.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WelcomeCustomVarUpdateArgs>(args: SelectSubset<T, WelcomeCustomVarUpdateArgs<ExtArgs>>): Prisma__WelcomeCustomVarClient<$Result.GetResult<Prisma.$WelcomeCustomVarPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WelcomeCustomVars.
+     * @param {WelcomeCustomVarDeleteManyArgs} args - Arguments to filter WelcomeCustomVars to delete.
+     * @example
+     * // Delete a few WelcomeCustomVars
+     * const { count } = await prisma.welcomeCustomVar.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WelcomeCustomVarDeleteManyArgs>(args?: SelectSubset<T, WelcomeCustomVarDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WelcomeCustomVars.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WelcomeCustomVarUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WelcomeCustomVars
+     * const welcomeCustomVar = await prisma.welcomeCustomVar.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WelcomeCustomVarUpdateManyArgs>(args: SelectSubset<T, WelcomeCustomVarUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WelcomeCustomVars and returns the data updated in the database.
+     * @param {WelcomeCustomVarUpdateManyAndReturnArgs} args - Arguments to update many WelcomeCustomVars.
+     * @example
+     * // Update many WelcomeCustomVars
+     * const welcomeCustomVar = await prisma.welcomeCustomVar.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WelcomeCustomVars and only return the `id`
+     * const welcomeCustomVarWithIdOnly = await prisma.welcomeCustomVar.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WelcomeCustomVarUpdateManyAndReturnArgs>(args: SelectSubset<T, WelcomeCustomVarUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WelcomeCustomVarPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WelcomeCustomVar.
+     * @param {WelcomeCustomVarUpsertArgs} args - Arguments to update or create a WelcomeCustomVar.
+     * @example
+     * // Update or create a WelcomeCustomVar
+     * const welcomeCustomVar = await prisma.welcomeCustomVar.upsert({
+     *   create: {
+     *     // ... data to create a WelcomeCustomVar
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WelcomeCustomVar we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WelcomeCustomVarUpsertArgs>(args: SelectSubset<T, WelcomeCustomVarUpsertArgs<ExtArgs>>): Prisma__WelcomeCustomVarClient<$Result.GetResult<Prisma.$WelcomeCustomVarPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WelcomeCustomVars.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WelcomeCustomVarCountArgs} args - Arguments to filter WelcomeCustomVars to count.
+     * @example
+     * // Count the number of WelcomeCustomVars
+     * const count = await prisma.welcomeCustomVar.count({
+     *   where: {
+     *     // ... the filter for the WelcomeCustomVars we want to count
+     *   }
+     * })
+    **/
+    count<T extends WelcomeCustomVarCountArgs>(
+      args?: Subset<T, WelcomeCustomVarCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WelcomeCustomVarCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WelcomeCustomVar.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WelcomeCustomVarAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WelcomeCustomVarAggregateArgs>(args: Subset<T, WelcomeCustomVarAggregateArgs>): Prisma.PrismaPromise<GetWelcomeCustomVarAggregateType<T>>
+
+    /**
+     * Group by WelcomeCustomVar.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WelcomeCustomVarGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WelcomeCustomVarGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WelcomeCustomVarGroupByArgs['orderBy'] }
+        : { orderBy?: WelcomeCustomVarGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WelcomeCustomVarGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWelcomeCustomVarGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WelcomeCustomVar model
+   */
+  readonly fields: WelcomeCustomVarFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WelcomeCustomVar.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WelcomeCustomVarClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WelcomeCustomVar model
+   */
+  interface WelcomeCustomVarFieldRefs {
+    readonly id: FieldRef<"WelcomeCustomVar", 'Int'>
+    readonly guildId: FieldRef<"WelcomeCustomVar", 'String'>
+    readonly name: FieldRef<"WelcomeCustomVar", 'String'>
+    readonly value: FieldRef<"WelcomeCustomVar", 'String'>
+    readonly createdAt: FieldRef<"WelcomeCustomVar", 'DateTime'>
+    readonly updatedAt: FieldRef<"WelcomeCustomVar", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WelcomeCustomVar findUnique
+   */
+  export type WelcomeCustomVarFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+    /**
+     * Filter, which WelcomeCustomVar to fetch.
+     */
+    where: WelcomeCustomVarWhereUniqueInput
+  }
+
+  /**
+   * WelcomeCustomVar findUniqueOrThrow
+   */
+  export type WelcomeCustomVarFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+    /**
+     * Filter, which WelcomeCustomVar to fetch.
+     */
+    where: WelcomeCustomVarWhereUniqueInput
+  }
+
+  /**
+   * WelcomeCustomVar findFirst
+   */
+  export type WelcomeCustomVarFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+    /**
+     * Filter, which WelcomeCustomVar to fetch.
+     */
+    where?: WelcomeCustomVarWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WelcomeCustomVars to fetch.
+     */
+    orderBy?: WelcomeCustomVarOrderByWithRelationInput | WelcomeCustomVarOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WelcomeCustomVars.
+     */
+    cursor?: WelcomeCustomVarWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WelcomeCustomVars from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WelcomeCustomVars.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WelcomeCustomVars.
+     */
+    distinct?: WelcomeCustomVarScalarFieldEnum | WelcomeCustomVarScalarFieldEnum[]
+  }
+
+  /**
+   * WelcomeCustomVar findFirstOrThrow
+   */
+  export type WelcomeCustomVarFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+    /**
+     * Filter, which WelcomeCustomVar to fetch.
+     */
+    where?: WelcomeCustomVarWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WelcomeCustomVars to fetch.
+     */
+    orderBy?: WelcomeCustomVarOrderByWithRelationInput | WelcomeCustomVarOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WelcomeCustomVars.
+     */
+    cursor?: WelcomeCustomVarWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WelcomeCustomVars from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WelcomeCustomVars.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WelcomeCustomVars.
+     */
+    distinct?: WelcomeCustomVarScalarFieldEnum | WelcomeCustomVarScalarFieldEnum[]
+  }
+
+  /**
+   * WelcomeCustomVar findMany
+   */
+  export type WelcomeCustomVarFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+    /**
+     * Filter, which WelcomeCustomVars to fetch.
+     */
+    where?: WelcomeCustomVarWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WelcomeCustomVars to fetch.
+     */
+    orderBy?: WelcomeCustomVarOrderByWithRelationInput | WelcomeCustomVarOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WelcomeCustomVars.
+     */
+    cursor?: WelcomeCustomVarWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WelcomeCustomVars from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WelcomeCustomVars.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WelcomeCustomVars.
+     */
+    distinct?: WelcomeCustomVarScalarFieldEnum | WelcomeCustomVarScalarFieldEnum[]
+  }
+
+  /**
+   * WelcomeCustomVar create
+   */
+  export type WelcomeCustomVarCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+    /**
+     * The data needed to create a WelcomeCustomVar.
+     */
+    data: XOR<WelcomeCustomVarCreateInput, WelcomeCustomVarUncheckedCreateInput>
+  }
+
+  /**
+   * WelcomeCustomVar createMany
+   */
+  export type WelcomeCustomVarCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WelcomeCustomVars.
+     */
+    data: WelcomeCustomVarCreateManyInput | WelcomeCustomVarCreateManyInput[]
+  }
+
+  /**
+   * WelcomeCustomVar createManyAndReturn
+   */
+  export type WelcomeCustomVarCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+    /**
+     * The data used to create many WelcomeCustomVars.
+     */
+    data: WelcomeCustomVarCreateManyInput | WelcomeCustomVarCreateManyInput[]
+  }
+
+  /**
+   * WelcomeCustomVar update
+   */
+  export type WelcomeCustomVarUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+    /**
+     * The data needed to update a WelcomeCustomVar.
+     */
+    data: XOR<WelcomeCustomVarUpdateInput, WelcomeCustomVarUncheckedUpdateInput>
+    /**
+     * Choose, which WelcomeCustomVar to update.
+     */
+    where: WelcomeCustomVarWhereUniqueInput
+  }
+
+  /**
+   * WelcomeCustomVar updateMany
+   */
+  export type WelcomeCustomVarUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WelcomeCustomVars.
+     */
+    data: XOR<WelcomeCustomVarUpdateManyMutationInput, WelcomeCustomVarUncheckedUpdateManyInput>
+    /**
+     * Filter which WelcomeCustomVars to update
+     */
+    where?: WelcomeCustomVarWhereInput
+    /**
+     * Limit how many WelcomeCustomVars to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WelcomeCustomVar updateManyAndReturn
+   */
+  export type WelcomeCustomVarUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+    /**
+     * The data used to update WelcomeCustomVars.
+     */
+    data: XOR<WelcomeCustomVarUpdateManyMutationInput, WelcomeCustomVarUncheckedUpdateManyInput>
+    /**
+     * Filter which WelcomeCustomVars to update
+     */
+    where?: WelcomeCustomVarWhereInput
+    /**
+     * Limit how many WelcomeCustomVars to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WelcomeCustomVar upsert
+   */
+  export type WelcomeCustomVarUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+    /**
+     * The filter to search for the WelcomeCustomVar to update in case it exists.
+     */
+    where: WelcomeCustomVarWhereUniqueInput
+    /**
+     * In case the WelcomeCustomVar found by the `where` argument doesn't exist, create a new WelcomeCustomVar with this data.
+     */
+    create: XOR<WelcomeCustomVarCreateInput, WelcomeCustomVarUncheckedCreateInput>
+    /**
+     * In case the WelcomeCustomVar was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WelcomeCustomVarUpdateInput, WelcomeCustomVarUncheckedUpdateInput>
+  }
+
+  /**
+   * WelcomeCustomVar delete
+   */
+  export type WelcomeCustomVarDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+    /**
+     * Filter which WelcomeCustomVar to delete.
+     */
+    where: WelcomeCustomVarWhereUniqueInput
+  }
+
+  /**
+   * WelcomeCustomVar deleteMany
+   */
+  export type WelcomeCustomVarDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WelcomeCustomVars to delete
+     */
+    where?: WelcomeCustomVarWhereInput
+    /**
+     * Limit how many WelcomeCustomVars to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WelcomeCustomVar without action
+   */
+  export type WelcomeCustomVarDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WelcomeCustomVar
+     */
+    select?: WelcomeCustomVarSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WelcomeCustomVar
+     */
+    omit?: WelcomeCustomVarOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model ModCase
    */
 
@@ -27809,6 +30337,2384 @@ export namespace Prisma {
 
 
   /**
+   * Model AntiSpamConfig
+   */
+
+  export type AggregateAntiSpamConfig = {
+    _count: AntiSpamConfigCountAggregateOutputType | null
+    _avg: AntiSpamConfigAvgAggregateOutputType | null
+    _sum: AntiSpamConfigSumAggregateOutputType | null
+    _min: AntiSpamConfigMinAggregateOutputType | null
+    _max: AntiSpamConfigMaxAggregateOutputType | null
+  }
+
+  export type AntiSpamConfigAvgAggregateOutputType = {
+    id: number | null
+    escalationCount: number | null
+  }
+
+  export type AntiSpamConfigSumAggregateOutputType = {
+    id: number | null
+    escalationCount: number | null
+  }
+
+  export type AntiSpamConfigMinAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    enabled: boolean | null
+    burstEnabled: boolean | null
+    duplicateEnabled: boolean | null
+    mentionEnabled: boolean | null
+    linkEnabled: boolean | null
+    capsEnabled: boolean | null
+    emojiEnabled: boolean | null
+    comboEnabled: boolean | null
+    burstAction: string | null
+    duplicateAction: string | null
+    mentionAction: string | null
+    linkAction: string | null
+    capsAction: string | null
+    emojiAction: string | null
+    comboAction: string | null
+    escalationEnabled: boolean | null
+    escalationCount: number | null
+    notifyOnSpam: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AntiSpamConfigMaxAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    enabled: boolean | null
+    burstEnabled: boolean | null
+    duplicateEnabled: boolean | null
+    mentionEnabled: boolean | null
+    linkEnabled: boolean | null
+    capsEnabled: boolean | null
+    emojiEnabled: boolean | null
+    comboEnabled: boolean | null
+    burstAction: string | null
+    duplicateAction: string | null
+    mentionAction: string | null
+    linkAction: string | null
+    capsAction: string | null
+    emojiAction: string | null
+    comboAction: string | null
+    escalationEnabled: boolean | null
+    escalationCount: number | null
+    notifyOnSpam: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AntiSpamConfigCountAggregateOutputType = {
+    id: number
+    guildId: number
+    enabled: number
+    burstEnabled: number
+    duplicateEnabled: number
+    mentionEnabled: number
+    linkEnabled: number
+    capsEnabled: number
+    emojiEnabled: number
+    comboEnabled: number
+    burstAction: number
+    duplicateAction: number
+    mentionAction: number
+    linkAction: number
+    capsAction: number
+    emojiAction: number
+    comboAction: number
+    escalationEnabled: number
+    escalationCount: number
+    notifyOnSpam: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AntiSpamConfigAvgAggregateInputType = {
+    id?: true
+    escalationCount?: true
+  }
+
+  export type AntiSpamConfigSumAggregateInputType = {
+    id?: true
+    escalationCount?: true
+  }
+
+  export type AntiSpamConfigMinAggregateInputType = {
+    id?: true
+    guildId?: true
+    enabled?: true
+    burstEnabled?: true
+    duplicateEnabled?: true
+    mentionEnabled?: true
+    linkEnabled?: true
+    capsEnabled?: true
+    emojiEnabled?: true
+    comboEnabled?: true
+    burstAction?: true
+    duplicateAction?: true
+    mentionAction?: true
+    linkAction?: true
+    capsAction?: true
+    emojiAction?: true
+    comboAction?: true
+    escalationEnabled?: true
+    escalationCount?: true
+    notifyOnSpam?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AntiSpamConfigMaxAggregateInputType = {
+    id?: true
+    guildId?: true
+    enabled?: true
+    burstEnabled?: true
+    duplicateEnabled?: true
+    mentionEnabled?: true
+    linkEnabled?: true
+    capsEnabled?: true
+    emojiEnabled?: true
+    comboEnabled?: true
+    burstAction?: true
+    duplicateAction?: true
+    mentionAction?: true
+    linkAction?: true
+    capsAction?: true
+    emojiAction?: true
+    comboAction?: true
+    escalationEnabled?: true
+    escalationCount?: true
+    notifyOnSpam?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AntiSpamConfigCountAggregateInputType = {
+    id?: true
+    guildId?: true
+    enabled?: true
+    burstEnabled?: true
+    duplicateEnabled?: true
+    mentionEnabled?: true
+    linkEnabled?: true
+    capsEnabled?: true
+    emojiEnabled?: true
+    comboEnabled?: true
+    burstAction?: true
+    duplicateAction?: true
+    mentionAction?: true
+    linkAction?: true
+    capsAction?: true
+    emojiAction?: true
+    comboAction?: true
+    escalationEnabled?: true
+    escalationCount?: true
+    notifyOnSpam?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AntiSpamConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AntiSpamConfig to aggregate.
+     */
+    where?: AntiSpamConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AntiSpamConfigs to fetch.
+     */
+    orderBy?: AntiSpamConfigOrderByWithRelationInput | AntiSpamConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AntiSpamConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AntiSpamConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AntiSpamConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AntiSpamConfigs
+    **/
+    _count?: true | AntiSpamConfigCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AntiSpamConfigAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AntiSpamConfigSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AntiSpamConfigMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AntiSpamConfigMaxAggregateInputType
+  }
+
+  export type GetAntiSpamConfigAggregateType<T extends AntiSpamConfigAggregateArgs> = {
+        [P in keyof T & keyof AggregateAntiSpamConfig]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAntiSpamConfig[P]>
+      : GetScalarType<T[P], AggregateAntiSpamConfig[P]>
+  }
+
+
+
+
+  export type AntiSpamConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AntiSpamConfigWhereInput
+    orderBy?: AntiSpamConfigOrderByWithAggregationInput | AntiSpamConfigOrderByWithAggregationInput[]
+    by: AntiSpamConfigScalarFieldEnum[] | AntiSpamConfigScalarFieldEnum
+    having?: AntiSpamConfigScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AntiSpamConfigCountAggregateInputType | true
+    _avg?: AntiSpamConfigAvgAggregateInputType
+    _sum?: AntiSpamConfigSumAggregateInputType
+    _min?: AntiSpamConfigMinAggregateInputType
+    _max?: AntiSpamConfigMaxAggregateInputType
+  }
+
+  export type AntiSpamConfigGroupByOutputType = {
+    id: number
+    guildId: string
+    enabled: boolean
+    burstEnabled: boolean
+    duplicateEnabled: boolean
+    mentionEnabled: boolean
+    linkEnabled: boolean
+    capsEnabled: boolean
+    emojiEnabled: boolean
+    comboEnabled: boolean
+    burstAction: string
+    duplicateAction: string
+    mentionAction: string
+    linkAction: string
+    capsAction: string
+    emojiAction: string
+    comboAction: string
+    escalationEnabled: boolean
+    escalationCount: number
+    notifyOnSpam: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: AntiSpamConfigCountAggregateOutputType | null
+    _avg: AntiSpamConfigAvgAggregateOutputType | null
+    _sum: AntiSpamConfigSumAggregateOutputType | null
+    _min: AntiSpamConfigMinAggregateOutputType | null
+    _max: AntiSpamConfigMaxAggregateOutputType | null
+  }
+
+  type GetAntiSpamConfigGroupByPayload<T extends AntiSpamConfigGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AntiSpamConfigGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AntiSpamConfigGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AntiSpamConfigGroupByOutputType[P]>
+            : GetScalarType<T[P], AntiSpamConfigGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AntiSpamConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    enabled?: boolean
+    burstEnabled?: boolean
+    duplicateEnabled?: boolean
+    mentionEnabled?: boolean
+    linkEnabled?: boolean
+    capsEnabled?: boolean
+    emojiEnabled?: boolean
+    comboEnabled?: boolean
+    burstAction?: boolean
+    duplicateAction?: boolean
+    mentionAction?: boolean
+    linkAction?: boolean
+    capsAction?: boolean
+    emojiAction?: boolean
+    comboAction?: boolean
+    escalationEnabled?: boolean
+    escalationCount?: boolean
+    notifyOnSpam?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["antiSpamConfig"]>
+
+  export type AntiSpamConfigSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    enabled?: boolean
+    burstEnabled?: boolean
+    duplicateEnabled?: boolean
+    mentionEnabled?: boolean
+    linkEnabled?: boolean
+    capsEnabled?: boolean
+    emojiEnabled?: boolean
+    comboEnabled?: boolean
+    burstAction?: boolean
+    duplicateAction?: boolean
+    mentionAction?: boolean
+    linkAction?: boolean
+    capsAction?: boolean
+    emojiAction?: boolean
+    comboAction?: boolean
+    escalationEnabled?: boolean
+    escalationCount?: boolean
+    notifyOnSpam?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["antiSpamConfig"]>
+
+  export type AntiSpamConfigSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    enabled?: boolean
+    burstEnabled?: boolean
+    duplicateEnabled?: boolean
+    mentionEnabled?: boolean
+    linkEnabled?: boolean
+    capsEnabled?: boolean
+    emojiEnabled?: boolean
+    comboEnabled?: boolean
+    burstAction?: boolean
+    duplicateAction?: boolean
+    mentionAction?: boolean
+    linkAction?: boolean
+    capsAction?: boolean
+    emojiAction?: boolean
+    comboAction?: boolean
+    escalationEnabled?: boolean
+    escalationCount?: boolean
+    notifyOnSpam?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["antiSpamConfig"]>
+
+  export type AntiSpamConfigSelectScalar = {
+    id?: boolean
+    guildId?: boolean
+    enabled?: boolean
+    burstEnabled?: boolean
+    duplicateEnabled?: boolean
+    mentionEnabled?: boolean
+    linkEnabled?: boolean
+    capsEnabled?: boolean
+    emojiEnabled?: boolean
+    comboEnabled?: boolean
+    burstAction?: boolean
+    duplicateAction?: boolean
+    mentionAction?: boolean
+    linkAction?: boolean
+    capsAction?: boolean
+    emojiAction?: boolean
+    comboAction?: boolean
+    escalationEnabled?: boolean
+    escalationCount?: boolean
+    notifyOnSpam?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AntiSpamConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "enabled" | "burstEnabled" | "duplicateEnabled" | "mentionEnabled" | "linkEnabled" | "capsEnabled" | "emojiEnabled" | "comboEnabled" | "burstAction" | "duplicateAction" | "mentionAction" | "linkAction" | "capsAction" | "emojiAction" | "comboAction" | "escalationEnabled" | "escalationCount" | "notifyOnSpam" | "createdAt" | "updatedAt", ExtArgs["result"]["antiSpamConfig"]>
+  export type AntiSpamConfigInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }
+  export type AntiSpamConfigIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }
+  export type AntiSpamConfigIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    guild?: boolean | GuildDefaultArgs<ExtArgs>
+  }
+
+  export type $AntiSpamConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AntiSpamConfig"
+    objects: {
+      guild: Prisma.$GuildPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      guildId: string
+      enabled: boolean
+      burstEnabled: boolean
+      duplicateEnabled: boolean
+      mentionEnabled: boolean
+      linkEnabled: boolean
+      capsEnabled: boolean
+      emojiEnabled: boolean
+      comboEnabled: boolean
+      burstAction: string
+      duplicateAction: string
+      mentionAction: string
+      linkAction: string
+      capsAction: string
+      emojiAction: string
+      comboAction: string
+      escalationEnabled: boolean
+      escalationCount: number
+      notifyOnSpam: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["antiSpamConfig"]>
+    composites: {}
+  }
+
+  type AntiSpamConfigGetPayload<S extends boolean | null | undefined | AntiSpamConfigDefaultArgs> = $Result.GetResult<Prisma.$AntiSpamConfigPayload, S>
+
+  type AntiSpamConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AntiSpamConfigFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AntiSpamConfigCountAggregateInputType | true
+    }
+
+  export interface AntiSpamConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AntiSpamConfig'], meta: { name: 'AntiSpamConfig' } }
+    /**
+     * Find zero or one AntiSpamConfig that matches the filter.
+     * @param {AntiSpamConfigFindUniqueArgs} args - Arguments to find a AntiSpamConfig
+     * @example
+     * // Get one AntiSpamConfig
+     * const antiSpamConfig = await prisma.antiSpamConfig.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AntiSpamConfigFindUniqueArgs>(args: SelectSubset<T, AntiSpamConfigFindUniqueArgs<ExtArgs>>): Prisma__AntiSpamConfigClient<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AntiSpamConfig that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AntiSpamConfigFindUniqueOrThrowArgs} args - Arguments to find a AntiSpamConfig
+     * @example
+     * // Get one AntiSpamConfig
+     * const antiSpamConfig = await prisma.antiSpamConfig.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AntiSpamConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, AntiSpamConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AntiSpamConfigClient<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AntiSpamConfig that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamConfigFindFirstArgs} args - Arguments to find a AntiSpamConfig
+     * @example
+     * // Get one AntiSpamConfig
+     * const antiSpamConfig = await prisma.antiSpamConfig.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AntiSpamConfigFindFirstArgs>(args?: SelectSubset<T, AntiSpamConfigFindFirstArgs<ExtArgs>>): Prisma__AntiSpamConfigClient<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AntiSpamConfig that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamConfigFindFirstOrThrowArgs} args - Arguments to find a AntiSpamConfig
+     * @example
+     * // Get one AntiSpamConfig
+     * const antiSpamConfig = await prisma.antiSpamConfig.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AntiSpamConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, AntiSpamConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__AntiSpamConfigClient<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AntiSpamConfigs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamConfigFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AntiSpamConfigs
+     * const antiSpamConfigs = await prisma.antiSpamConfig.findMany()
+     * 
+     * // Get first 10 AntiSpamConfigs
+     * const antiSpamConfigs = await prisma.antiSpamConfig.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const antiSpamConfigWithIdOnly = await prisma.antiSpamConfig.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AntiSpamConfigFindManyArgs>(args?: SelectSubset<T, AntiSpamConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AntiSpamConfig.
+     * @param {AntiSpamConfigCreateArgs} args - Arguments to create a AntiSpamConfig.
+     * @example
+     * // Create one AntiSpamConfig
+     * const AntiSpamConfig = await prisma.antiSpamConfig.create({
+     *   data: {
+     *     // ... data to create a AntiSpamConfig
+     *   }
+     * })
+     * 
+     */
+    create<T extends AntiSpamConfigCreateArgs>(args: SelectSubset<T, AntiSpamConfigCreateArgs<ExtArgs>>): Prisma__AntiSpamConfigClient<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AntiSpamConfigs.
+     * @param {AntiSpamConfigCreateManyArgs} args - Arguments to create many AntiSpamConfigs.
+     * @example
+     * // Create many AntiSpamConfigs
+     * const antiSpamConfig = await prisma.antiSpamConfig.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AntiSpamConfigCreateManyArgs>(args?: SelectSubset<T, AntiSpamConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AntiSpamConfigs and returns the data saved in the database.
+     * @param {AntiSpamConfigCreateManyAndReturnArgs} args - Arguments to create many AntiSpamConfigs.
+     * @example
+     * // Create many AntiSpamConfigs
+     * const antiSpamConfig = await prisma.antiSpamConfig.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AntiSpamConfigs and only return the `id`
+     * const antiSpamConfigWithIdOnly = await prisma.antiSpamConfig.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AntiSpamConfigCreateManyAndReturnArgs>(args?: SelectSubset<T, AntiSpamConfigCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AntiSpamConfig.
+     * @param {AntiSpamConfigDeleteArgs} args - Arguments to delete one AntiSpamConfig.
+     * @example
+     * // Delete one AntiSpamConfig
+     * const AntiSpamConfig = await prisma.antiSpamConfig.delete({
+     *   where: {
+     *     // ... filter to delete one AntiSpamConfig
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AntiSpamConfigDeleteArgs>(args: SelectSubset<T, AntiSpamConfigDeleteArgs<ExtArgs>>): Prisma__AntiSpamConfigClient<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AntiSpamConfig.
+     * @param {AntiSpamConfigUpdateArgs} args - Arguments to update one AntiSpamConfig.
+     * @example
+     * // Update one AntiSpamConfig
+     * const antiSpamConfig = await prisma.antiSpamConfig.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AntiSpamConfigUpdateArgs>(args: SelectSubset<T, AntiSpamConfigUpdateArgs<ExtArgs>>): Prisma__AntiSpamConfigClient<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AntiSpamConfigs.
+     * @param {AntiSpamConfigDeleteManyArgs} args - Arguments to filter AntiSpamConfigs to delete.
+     * @example
+     * // Delete a few AntiSpamConfigs
+     * const { count } = await prisma.antiSpamConfig.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AntiSpamConfigDeleteManyArgs>(args?: SelectSubset<T, AntiSpamConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AntiSpamConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamConfigUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AntiSpamConfigs
+     * const antiSpamConfig = await prisma.antiSpamConfig.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AntiSpamConfigUpdateManyArgs>(args: SelectSubset<T, AntiSpamConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AntiSpamConfigs and returns the data updated in the database.
+     * @param {AntiSpamConfigUpdateManyAndReturnArgs} args - Arguments to update many AntiSpamConfigs.
+     * @example
+     * // Update many AntiSpamConfigs
+     * const antiSpamConfig = await prisma.antiSpamConfig.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AntiSpamConfigs and only return the `id`
+     * const antiSpamConfigWithIdOnly = await prisma.antiSpamConfig.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AntiSpamConfigUpdateManyAndReturnArgs>(args: SelectSubset<T, AntiSpamConfigUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AntiSpamConfig.
+     * @param {AntiSpamConfigUpsertArgs} args - Arguments to update or create a AntiSpamConfig.
+     * @example
+     * // Update or create a AntiSpamConfig
+     * const antiSpamConfig = await prisma.antiSpamConfig.upsert({
+     *   create: {
+     *     // ... data to create a AntiSpamConfig
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AntiSpamConfig we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AntiSpamConfigUpsertArgs>(args: SelectSubset<T, AntiSpamConfigUpsertArgs<ExtArgs>>): Prisma__AntiSpamConfigClient<$Result.GetResult<Prisma.$AntiSpamConfigPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AntiSpamConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamConfigCountArgs} args - Arguments to filter AntiSpamConfigs to count.
+     * @example
+     * // Count the number of AntiSpamConfigs
+     * const count = await prisma.antiSpamConfig.count({
+     *   where: {
+     *     // ... the filter for the AntiSpamConfigs we want to count
+     *   }
+     * })
+    **/
+    count<T extends AntiSpamConfigCountArgs>(
+      args?: Subset<T, AntiSpamConfigCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AntiSpamConfigCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AntiSpamConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AntiSpamConfigAggregateArgs>(args: Subset<T, AntiSpamConfigAggregateArgs>): Prisma.PrismaPromise<GetAntiSpamConfigAggregateType<T>>
+
+    /**
+     * Group by AntiSpamConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamConfigGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AntiSpamConfigGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AntiSpamConfigGroupByArgs['orderBy'] }
+        : { orderBy?: AntiSpamConfigGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AntiSpamConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAntiSpamConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AntiSpamConfig model
+   */
+  readonly fields: AntiSpamConfigFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AntiSpamConfig.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AntiSpamConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    guild<T extends GuildDefaultArgs<ExtArgs> = {}>(args?: Subset<T, GuildDefaultArgs<ExtArgs>>): Prisma__GuildClient<$Result.GetResult<Prisma.$GuildPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AntiSpamConfig model
+   */
+  interface AntiSpamConfigFieldRefs {
+    readonly id: FieldRef<"AntiSpamConfig", 'Int'>
+    readonly guildId: FieldRef<"AntiSpamConfig", 'String'>
+    readonly enabled: FieldRef<"AntiSpamConfig", 'Boolean'>
+    readonly burstEnabled: FieldRef<"AntiSpamConfig", 'Boolean'>
+    readonly duplicateEnabled: FieldRef<"AntiSpamConfig", 'Boolean'>
+    readonly mentionEnabled: FieldRef<"AntiSpamConfig", 'Boolean'>
+    readonly linkEnabled: FieldRef<"AntiSpamConfig", 'Boolean'>
+    readonly capsEnabled: FieldRef<"AntiSpamConfig", 'Boolean'>
+    readonly emojiEnabled: FieldRef<"AntiSpamConfig", 'Boolean'>
+    readonly comboEnabled: FieldRef<"AntiSpamConfig", 'Boolean'>
+    readonly burstAction: FieldRef<"AntiSpamConfig", 'String'>
+    readonly duplicateAction: FieldRef<"AntiSpamConfig", 'String'>
+    readonly mentionAction: FieldRef<"AntiSpamConfig", 'String'>
+    readonly linkAction: FieldRef<"AntiSpamConfig", 'String'>
+    readonly capsAction: FieldRef<"AntiSpamConfig", 'String'>
+    readonly emojiAction: FieldRef<"AntiSpamConfig", 'String'>
+    readonly comboAction: FieldRef<"AntiSpamConfig", 'String'>
+    readonly escalationEnabled: FieldRef<"AntiSpamConfig", 'Boolean'>
+    readonly escalationCount: FieldRef<"AntiSpamConfig", 'Int'>
+    readonly notifyOnSpam: FieldRef<"AntiSpamConfig", 'Boolean'>
+    readonly createdAt: FieldRef<"AntiSpamConfig", 'DateTime'>
+    readonly updatedAt: FieldRef<"AntiSpamConfig", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AntiSpamConfig findUnique
+   */
+  export type AntiSpamConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which AntiSpamConfig to fetch.
+     */
+    where: AntiSpamConfigWhereUniqueInput
+  }
+
+  /**
+   * AntiSpamConfig findUniqueOrThrow
+   */
+  export type AntiSpamConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which AntiSpamConfig to fetch.
+     */
+    where: AntiSpamConfigWhereUniqueInput
+  }
+
+  /**
+   * AntiSpamConfig findFirst
+   */
+  export type AntiSpamConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which AntiSpamConfig to fetch.
+     */
+    where?: AntiSpamConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AntiSpamConfigs to fetch.
+     */
+    orderBy?: AntiSpamConfigOrderByWithRelationInput | AntiSpamConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AntiSpamConfigs.
+     */
+    cursor?: AntiSpamConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AntiSpamConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AntiSpamConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AntiSpamConfigs.
+     */
+    distinct?: AntiSpamConfigScalarFieldEnum | AntiSpamConfigScalarFieldEnum[]
+  }
+
+  /**
+   * AntiSpamConfig findFirstOrThrow
+   */
+  export type AntiSpamConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which AntiSpamConfig to fetch.
+     */
+    where?: AntiSpamConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AntiSpamConfigs to fetch.
+     */
+    orderBy?: AntiSpamConfigOrderByWithRelationInput | AntiSpamConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AntiSpamConfigs.
+     */
+    cursor?: AntiSpamConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AntiSpamConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AntiSpamConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AntiSpamConfigs.
+     */
+    distinct?: AntiSpamConfigScalarFieldEnum | AntiSpamConfigScalarFieldEnum[]
+  }
+
+  /**
+   * AntiSpamConfig findMany
+   */
+  export type AntiSpamConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which AntiSpamConfigs to fetch.
+     */
+    where?: AntiSpamConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AntiSpamConfigs to fetch.
+     */
+    orderBy?: AntiSpamConfigOrderByWithRelationInput | AntiSpamConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AntiSpamConfigs.
+     */
+    cursor?: AntiSpamConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AntiSpamConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AntiSpamConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AntiSpamConfigs.
+     */
+    distinct?: AntiSpamConfigScalarFieldEnum | AntiSpamConfigScalarFieldEnum[]
+  }
+
+  /**
+   * AntiSpamConfig create
+   */
+  export type AntiSpamConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AntiSpamConfig.
+     */
+    data: XOR<AntiSpamConfigCreateInput, AntiSpamConfigUncheckedCreateInput>
+  }
+
+  /**
+   * AntiSpamConfig createMany
+   */
+  export type AntiSpamConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AntiSpamConfigs.
+     */
+    data: AntiSpamConfigCreateManyInput | AntiSpamConfigCreateManyInput[]
+  }
+
+  /**
+   * AntiSpamConfig createManyAndReturn
+   */
+  export type AntiSpamConfigCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * The data used to create many AntiSpamConfigs.
+     */
+    data: AntiSpamConfigCreateManyInput | AntiSpamConfigCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AntiSpamConfig update
+   */
+  export type AntiSpamConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AntiSpamConfig.
+     */
+    data: XOR<AntiSpamConfigUpdateInput, AntiSpamConfigUncheckedUpdateInput>
+    /**
+     * Choose, which AntiSpamConfig to update.
+     */
+    where: AntiSpamConfigWhereUniqueInput
+  }
+
+  /**
+   * AntiSpamConfig updateMany
+   */
+  export type AntiSpamConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AntiSpamConfigs.
+     */
+    data: XOR<AntiSpamConfigUpdateManyMutationInput, AntiSpamConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which AntiSpamConfigs to update
+     */
+    where?: AntiSpamConfigWhereInput
+    /**
+     * Limit how many AntiSpamConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AntiSpamConfig updateManyAndReturn
+   */
+  export type AntiSpamConfigUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * The data used to update AntiSpamConfigs.
+     */
+    data: XOR<AntiSpamConfigUpdateManyMutationInput, AntiSpamConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which AntiSpamConfigs to update
+     */
+    where?: AntiSpamConfigWhereInput
+    /**
+     * Limit how many AntiSpamConfigs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AntiSpamConfig upsert
+   */
+  export type AntiSpamConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AntiSpamConfig to update in case it exists.
+     */
+    where: AntiSpamConfigWhereUniqueInput
+    /**
+     * In case the AntiSpamConfig found by the `where` argument doesn't exist, create a new AntiSpamConfig with this data.
+     */
+    create: XOR<AntiSpamConfigCreateInput, AntiSpamConfigUncheckedCreateInput>
+    /**
+     * In case the AntiSpamConfig was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AntiSpamConfigUpdateInput, AntiSpamConfigUncheckedUpdateInput>
+  }
+
+  /**
+   * AntiSpamConfig delete
+   */
+  export type AntiSpamConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigInclude<ExtArgs> | null
+    /**
+     * Filter which AntiSpamConfig to delete.
+     */
+    where: AntiSpamConfigWhereUniqueInput
+  }
+
+  /**
+   * AntiSpamConfig deleteMany
+   */
+  export type AntiSpamConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AntiSpamConfigs to delete
+     */
+    where?: AntiSpamConfigWhereInput
+    /**
+     * Limit how many AntiSpamConfigs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AntiSpamConfig without action
+   */
+  export type AntiSpamConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamConfig
+     */
+    select?: AntiSpamConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamConfig
+     */
+    omit?: AntiSpamConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AntiSpamConfigInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AntiSpamHistory
+   */
+
+  export type AggregateAntiSpamHistory = {
+    _count: AntiSpamHistoryCountAggregateOutputType | null
+    _avg: AntiSpamHistoryAvgAggregateOutputType | null
+    _sum: AntiSpamHistorySumAggregateOutputType | null
+    _min: AntiSpamHistoryMinAggregateOutputType | null
+    _max: AntiSpamHistoryMaxAggregateOutputType | null
+  }
+
+  export type AntiSpamHistoryAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type AntiSpamHistorySumAggregateOutputType = {
+    id: number | null
+  }
+
+  export type AntiSpamHistoryMinAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    userId: string | null
+    pattern: string | null
+    action: string | null
+    reason: string | null
+    createdAt: Date | null
+  }
+
+  export type AntiSpamHistoryMaxAggregateOutputType = {
+    id: number | null
+    guildId: string | null
+    userId: string | null
+    pattern: string | null
+    action: string | null
+    reason: string | null
+    createdAt: Date | null
+  }
+
+  export type AntiSpamHistoryCountAggregateOutputType = {
+    id: number
+    guildId: number
+    userId: number
+    pattern: number
+    action: number
+    reason: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type AntiSpamHistoryAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type AntiSpamHistorySumAggregateInputType = {
+    id?: true
+  }
+
+  export type AntiSpamHistoryMinAggregateInputType = {
+    id?: true
+    guildId?: true
+    userId?: true
+    pattern?: true
+    action?: true
+    reason?: true
+    createdAt?: true
+  }
+
+  export type AntiSpamHistoryMaxAggregateInputType = {
+    id?: true
+    guildId?: true
+    userId?: true
+    pattern?: true
+    action?: true
+    reason?: true
+    createdAt?: true
+  }
+
+  export type AntiSpamHistoryCountAggregateInputType = {
+    id?: true
+    guildId?: true
+    userId?: true
+    pattern?: true
+    action?: true
+    reason?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type AntiSpamHistoryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AntiSpamHistory to aggregate.
+     */
+    where?: AntiSpamHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AntiSpamHistories to fetch.
+     */
+    orderBy?: AntiSpamHistoryOrderByWithRelationInput | AntiSpamHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AntiSpamHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AntiSpamHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AntiSpamHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AntiSpamHistories
+    **/
+    _count?: true | AntiSpamHistoryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AntiSpamHistoryAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AntiSpamHistorySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AntiSpamHistoryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AntiSpamHistoryMaxAggregateInputType
+  }
+
+  export type GetAntiSpamHistoryAggregateType<T extends AntiSpamHistoryAggregateArgs> = {
+        [P in keyof T & keyof AggregateAntiSpamHistory]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAntiSpamHistory[P]>
+      : GetScalarType<T[P], AggregateAntiSpamHistory[P]>
+  }
+
+
+
+
+  export type AntiSpamHistoryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AntiSpamHistoryWhereInput
+    orderBy?: AntiSpamHistoryOrderByWithAggregationInput | AntiSpamHistoryOrderByWithAggregationInput[]
+    by: AntiSpamHistoryScalarFieldEnum[] | AntiSpamHistoryScalarFieldEnum
+    having?: AntiSpamHistoryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AntiSpamHistoryCountAggregateInputType | true
+    _avg?: AntiSpamHistoryAvgAggregateInputType
+    _sum?: AntiSpamHistorySumAggregateInputType
+    _min?: AntiSpamHistoryMinAggregateInputType
+    _max?: AntiSpamHistoryMaxAggregateInputType
+  }
+
+  export type AntiSpamHistoryGroupByOutputType = {
+    id: number
+    guildId: string
+    userId: string
+    pattern: string
+    action: string
+    reason: string | null
+    createdAt: Date
+    _count: AntiSpamHistoryCountAggregateOutputType | null
+    _avg: AntiSpamHistoryAvgAggregateOutputType | null
+    _sum: AntiSpamHistorySumAggregateOutputType | null
+    _min: AntiSpamHistoryMinAggregateOutputType | null
+    _max: AntiSpamHistoryMaxAggregateOutputType | null
+  }
+
+  type GetAntiSpamHistoryGroupByPayload<T extends AntiSpamHistoryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AntiSpamHistoryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AntiSpamHistoryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AntiSpamHistoryGroupByOutputType[P]>
+            : GetScalarType<T[P], AntiSpamHistoryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AntiSpamHistorySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    userId?: boolean
+    pattern?: boolean
+    action?: boolean
+    reason?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["antiSpamHistory"]>
+
+  export type AntiSpamHistorySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    userId?: boolean
+    pattern?: boolean
+    action?: boolean
+    reason?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["antiSpamHistory"]>
+
+  export type AntiSpamHistorySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    guildId?: boolean
+    userId?: boolean
+    pattern?: boolean
+    action?: boolean
+    reason?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["antiSpamHistory"]>
+
+  export type AntiSpamHistorySelectScalar = {
+    id?: boolean
+    guildId?: boolean
+    userId?: boolean
+    pattern?: boolean
+    action?: boolean
+    reason?: boolean
+    createdAt?: boolean
+  }
+
+  export type AntiSpamHistoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "guildId" | "userId" | "pattern" | "action" | "reason" | "createdAt", ExtArgs["result"]["antiSpamHistory"]>
+
+  export type $AntiSpamHistoryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AntiSpamHistory"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      guildId: string
+      userId: string
+      pattern: string
+      action: string
+      reason: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["antiSpamHistory"]>
+    composites: {}
+  }
+
+  type AntiSpamHistoryGetPayload<S extends boolean | null | undefined | AntiSpamHistoryDefaultArgs> = $Result.GetResult<Prisma.$AntiSpamHistoryPayload, S>
+
+  type AntiSpamHistoryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AntiSpamHistoryFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AntiSpamHistoryCountAggregateInputType | true
+    }
+
+  export interface AntiSpamHistoryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AntiSpamHistory'], meta: { name: 'AntiSpamHistory' } }
+    /**
+     * Find zero or one AntiSpamHistory that matches the filter.
+     * @param {AntiSpamHistoryFindUniqueArgs} args - Arguments to find a AntiSpamHistory
+     * @example
+     * // Get one AntiSpamHistory
+     * const antiSpamHistory = await prisma.antiSpamHistory.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AntiSpamHistoryFindUniqueArgs>(args: SelectSubset<T, AntiSpamHistoryFindUniqueArgs<ExtArgs>>): Prisma__AntiSpamHistoryClient<$Result.GetResult<Prisma.$AntiSpamHistoryPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AntiSpamHistory that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AntiSpamHistoryFindUniqueOrThrowArgs} args - Arguments to find a AntiSpamHistory
+     * @example
+     * // Get one AntiSpamHistory
+     * const antiSpamHistory = await prisma.antiSpamHistory.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AntiSpamHistoryFindUniqueOrThrowArgs>(args: SelectSubset<T, AntiSpamHistoryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AntiSpamHistoryClient<$Result.GetResult<Prisma.$AntiSpamHistoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AntiSpamHistory that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamHistoryFindFirstArgs} args - Arguments to find a AntiSpamHistory
+     * @example
+     * // Get one AntiSpamHistory
+     * const antiSpamHistory = await prisma.antiSpamHistory.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AntiSpamHistoryFindFirstArgs>(args?: SelectSubset<T, AntiSpamHistoryFindFirstArgs<ExtArgs>>): Prisma__AntiSpamHistoryClient<$Result.GetResult<Prisma.$AntiSpamHistoryPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AntiSpamHistory that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamHistoryFindFirstOrThrowArgs} args - Arguments to find a AntiSpamHistory
+     * @example
+     * // Get one AntiSpamHistory
+     * const antiSpamHistory = await prisma.antiSpamHistory.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AntiSpamHistoryFindFirstOrThrowArgs>(args?: SelectSubset<T, AntiSpamHistoryFindFirstOrThrowArgs<ExtArgs>>): Prisma__AntiSpamHistoryClient<$Result.GetResult<Prisma.$AntiSpamHistoryPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AntiSpamHistories that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamHistoryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AntiSpamHistories
+     * const antiSpamHistories = await prisma.antiSpamHistory.findMany()
+     * 
+     * // Get first 10 AntiSpamHistories
+     * const antiSpamHistories = await prisma.antiSpamHistory.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const antiSpamHistoryWithIdOnly = await prisma.antiSpamHistory.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AntiSpamHistoryFindManyArgs>(args?: SelectSubset<T, AntiSpamHistoryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AntiSpamHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AntiSpamHistory.
+     * @param {AntiSpamHistoryCreateArgs} args - Arguments to create a AntiSpamHistory.
+     * @example
+     * // Create one AntiSpamHistory
+     * const AntiSpamHistory = await prisma.antiSpamHistory.create({
+     *   data: {
+     *     // ... data to create a AntiSpamHistory
+     *   }
+     * })
+     * 
+     */
+    create<T extends AntiSpamHistoryCreateArgs>(args: SelectSubset<T, AntiSpamHistoryCreateArgs<ExtArgs>>): Prisma__AntiSpamHistoryClient<$Result.GetResult<Prisma.$AntiSpamHistoryPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AntiSpamHistories.
+     * @param {AntiSpamHistoryCreateManyArgs} args - Arguments to create many AntiSpamHistories.
+     * @example
+     * // Create many AntiSpamHistories
+     * const antiSpamHistory = await prisma.antiSpamHistory.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AntiSpamHistoryCreateManyArgs>(args?: SelectSubset<T, AntiSpamHistoryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AntiSpamHistories and returns the data saved in the database.
+     * @param {AntiSpamHistoryCreateManyAndReturnArgs} args - Arguments to create many AntiSpamHistories.
+     * @example
+     * // Create many AntiSpamHistories
+     * const antiSpamHistory = await prisma.antiSpamHistory.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AntiSpamHistories and only return the `id`
+     * const antiSpamHistoryWithIdOnly = await prisma.antiSpamHistory.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AntiSpamHistoryCreateManyAndReturnArgs>(args?: SelectSubset<T, AntiSpamHistoryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AntiSpamHistoryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AntiSpamHistory.
+     * @param {AntiSpamHistoryDeleteArgs} args - Arguments to delete one AntiSpamHistory.
+     * @example
+     * // Delete one AntiSpamHistory
+     * const AntiSpamHistory = await prisma.antiSpamHistory.delete({
+     *   where: {
+     *     // ... filter to delete one AntiSpamHistory
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AntiSpamHistoryDeleteArgs>(args: SelectSubset<T, AntiSpamHistoryDeleteArgs<ExtArgs>>): Prisma__AntiSpamHistoryClient<$Result.GetResult<Prisma.$AntiSpamHistoryPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AntiSpamHistory.
+     * @param {AntiSpamHistoryUpdateArgs} args - Arguments to update one AntiSpamHistory.
+     * @example
+     * // Update one AntiSpamHistory
+     * const antiSpamHistory = await prisma.antiSpamHistory.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AntiSpamHistoryUpdateArgs>(args: SelectSubset<T, AntiSpamHistoryUpdateArgs<ExtArgs>>): Prisma__AntiSpamHistoryClient<$Result.GetResult<Prisma.$AntiSpamHistoryPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AntiSpamHistories.
+     * @param {AntiSpamHistoryDeleteManyArgs} args - Arguments to filter AntiSpamHistories to delete.
+     * @example
+     * // Delete a few AntiSpamHistories
+     * const { count } = await prisma.antiSpamHistory.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AntiSpamHistoryDeleteManyArgs>(args?: SelectSubset<T, AntiSpamHistoryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AntiSpamHistories.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamHistoryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AntiSpamHistories
+     * const antiSpamHistory = await prisma.antiSpamHistory.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AntiSpamHistoryUpdateManyArgs>(args: SelectSubset<T, AntiSpamHistoryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AntiSpamHistories and returns the data updated in the database.
+     * @param {AntiSpamHistoryUpdateManyAndReturnArgs} args - Arguments to update many AntiSpamHistories.
+     * @example
+     * // Update many AntiSpamHistories
+     * const antiSpamHistory = await prisma.antiSpamHistory.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AntiSpamHistories and only return the `id`
+     * const antiSpamHistoryWithIdOnly = await prisma.antiSpamHistory.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AntiSpamHistoryUpdateManyAndReturnArgs>(args: SelectSubset<T, AntiSpamHistoryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AntiSpamHistoryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AntiSpamHistory.
+     * @param {AntiSpamHistoryUpsertArgs} args - Arguments to update or create a AntiSpamHistory.
+     * @example
+     * // Update or create a AntiSpamHistory
+     * const antiSpamHistory = await prisma.antiSpamHistory.upsert({
+     *   create: {
+     *     // ... data to create a AntiSpamHistory
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AntiSpamHistory we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AntiSpamHistoryUpsertArgs>(args: SelectSubset<T, AntiSpamHistoryUpsertArgs<ExtArgs>>): Prisma__AntiSpamHistoryClient<$Result.GetResult<Prisma.$AntiSpamHistoryPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AntiSpamHistories.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamHistoryCountArgs} args - Arguments to filter AntiSpamHistories to count.
+     * @example
+     * // Count the number of AntiSpamHistories
+     * const count = await prisma.antiSpamHistory.count({
+     *   where: {
+     *     // ... the filter for the AntiSpamHistories we want to count
+     *   }
+     * })
+    **/
+    count<T extends AntiSpamHistoryCountArgs>(
+      args?: Subset<T, AntiSpamHistoryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AntiSpamHistoryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AntiSpamHistory.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamHistoryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AntiSpamHistoryAggregateArgs>(args: Subset<T, AntiSpamHistoryAggregateArgs>): Prisma.PrismaPromise<GetAntiSpamHistoryAggregateType<T>>
+
+    /**
+     * Group by AntiSpamHistory.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AntiSpamHistoryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AntiSpamHistoryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AntiSpamHistoryGroupByArgs['orderBy'] }
+        : { orderBy?: AntiSpamHistoryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AntiSpamHistoryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAntiSpamHistoryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AntiSpamHistory model
+   */
+  readonly fields: AntiSpamHistoryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AntiSpamHistory.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AntiSpamHistoryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AntiSpamHistory model
+   */
+  interface AntiSpamHistoryFieldRefs {
+    readonly id: FieldRef<"AntiSpamHistory", 'Int'>
+    readonly guildId: FieldRef<"AntiSpamHistory", 'String'>
+    readonly userId: FieldRef<"AntiSpamHistory", 'String'>
+    readonly pattern: FieldRef<"AntiSpamHistory", 'String'>
+    readonly action: FieldRef<"AntiSpamHistory", 'String'>
+    readonly reason: FieldRef<"AntiSpamHistory", 'String'>
+    readonly createdAt: FieldRef<"AntiSpamHistory", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AntiSpamHistory findUnique
+   */
+  export type AntiSpamHistoryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+    /**
+     * Filter, which AntiSpamHistory to fetch.
+     */
+    where: AntiSpamHistoryWhereUniqueInput
+  }
+
+  /**
+   * AntiSpamHistory findUniqueOrThrow
+   */
+  export type AntiSpamHistoryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+    /**
+     * Filter, which AntiSpamHistory to fetch.
+     */
+    where: AntiSpamHistoryWhereUniqueInput
+  }
+
+  /**
+   * AntiSpamHistory findFirst
+   */
+  export type AntiSpamHistoryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+    /**
+     * Filter, which AntiSpamHistory to fetch.
+     */
+    where?: AntiSpamHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AntiSpamHistories to fetch.
+     */
+    orderBy?: AntiSpamHistoryOrderByWithRelationInput | AntiSpamHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AntiSpamHistories.
+     */
+    cursor?: AntiSpamHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AntiSpamHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AntiSpamHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AntiSpamHistories.
+     */
+    distinct?: AntiSpamHistoryScalarFieldEnum | AntiSpamHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * AntiSpamHistory findFirstOrThrow
+   */
+  export type AntiSpamHistoryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+    /**
+     * Filter, which AntiSpamHistory to fetch.
+     */
+    where?: AntiSpamHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AntiSpamHistories to fetch.
+     */
+    orderBy?: AntiSpamHistoryOrderByWithRelationInput | AntiSpamHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AntiSpamHistories.
+     */
+    cursor?: AntiSpamHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AntiSpamHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AntiSpamHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AntiSpamHistories.
+     */
+    distinct?: AntiSpamHistoryScalarFieldEnum | AntiSpamHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * AntiSpamHistory findMany
+   */
+  export type AntiSpamHistoryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+    /**
+     * Filter, which AntiSpamHistories to fetch.
+     */
+    where?: AntiSpamHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AntiSpamHistories to fetch.
+     */
+    orderBy?: AntiSpamHistoryOrderByWithRelationInput | AntiSpamHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AntiSpamHistories.
+     */
+    cursor?: AntiSpamHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AntiSpamHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AntiSpamHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AntiSpamHistories.
+     */
+    distinct?: AntiSpamHistoryScalarFieldEnum | AntiSpamHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * AntiSpamHistory create
+   */
+  export type AntiSpamHistoryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+    /**
+     * The data needed to create a AntiSpamHistory.
+     */
+    data: XOR<AntiSpamHistoryCreateInput, AntiSpamHistoryUncheckedCreateInput>
+  }
+
+  /**
+   * AntiSpamHistory createMany
+   */
+  export type AntiSpamHistoryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AntiSpamHistories.
+     */
+    data: AntiSpamHistoryCreateManyInput | AntiSpamHistoryCreateManyInput[]
+  }
+
+  /**
+   * AntiSpamHistory createManyAndReturn
+   */
+  export type AntiSpamHistoryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+    /**
+     * The data used to create many AntiSpamHistories.
+     */
+    data: AntiSpamHistoryCreateManyInput | AntiSpamHistoryCreateManyInput[]
+  }
+
+  /**
+   * AntiSpamHistory update
+   */
+  export type AntiSpamHistoryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+    /**
+     * The data needed to update a AntiSpamHistory.
+     */
+    data: XOR<AntiSpamHistoryUpdateInput, AntiSpamHistoryUncheckedUpdateInput>
+    /**
+     * Choose, which AntiSpamHistory to update.
+     */
+    where: AntiSpamHistoryWhereUniqueInput
+  }
+
+  /**
+   * AntiSpamHistory updateMany
+   */
+  export type AntiSpamHistoryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AntiSpamHistories.
+     */
+    data: XOR<AntiSpamHistoryUpdateManyMutationInput, AntiSpamHistoryUncheckedUpdateManyInput>
+    /**
+     * Filter which AntiSpamHistories to update
+     */
+    where?: AntiSpamHistoryWhereInput
+    /**
+     * Limit how many AntiSpamHistories to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AntiSpamHistory updateManyAndReturn
+   */
+  export type AntiSpamHistoryUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+    /**
+     * The data used to update AntiSpamHistories.
+     */
+    data: XOR<AntiSpamHistoryUpdateManyMutationInput, AntiSpamHistoryUncheckedUpdateManyInput>
+    /**
+     * Filter which AntiSpamHistories to update
+     */
+    where?: AntiSpamHistoryWhereInput
+    /**
+     * Limit how many AntiSpamHistories to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AntiSpamHistory upsert
+   */
+  export type AntiSpamHistoryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+    /**
+     * The filter to search for the AntiSpamHistory to update in case it exists.
+     */
+    where: AntiSpamHistoryWhereUniqueInput
+    /**
+     * In case the AntiSpamHistory found by the `where` argument doesn't exist, create a new AntiSpamHistory with this data.
+     */
+    create: XOR<AntiSpamHistoryCreateInput, AntiSpamHistoryUncheckedCreateInput>
+    /**
+     * In case the AntiSpamHistory was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AntiSpamHistoryUpdateInput, AntiSpamHistoryUncheckedUpdateInput>
+  }
+
+  /**
+   * AntiSpamHistory delete
+   */
+  export type AntiSpamHistoryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+    /**
+     * Filter which AntiSpamHistory to delete.
+     */
+    where: AntiSpamHistoryWhereUniqueInput
+  }
+
+  /**
+   * AntiSpamHistory deleteMany
+   */
+  export type AntiSpamHistoryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AntiSpamHistories to delete
+     */
+    where?: AntiSpamHistoryWhereInput
+    /**
+     * Limit how many AntiSpamHistories to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AntiSpamHistory without action
+   */
+  export type AntiSpamHistoryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AntiSpamHistory
+     */
+    select?: AntiSpamHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AntiSpamHistory
+     */
+    omit?: AntiSpamHistoryOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -28131,6 +33037,27 @@ export namespace Prisma {
   export type LevelRoleScalarFieldEnum = (typeof LevelRoleScalarFieldEnum)[keyof typeof LevelRoleScalarFieldEnum]
 
 
+  export const SocialLinkScalarFieldEnum: {
+    guildId: 'guildId',
+    platform: 'platform',
+    url: 'url'
+  };
+
+  export type SocialLinkScalarFieldEnum = (typeof SocialLinkScalarFieldEnum)[keyof typeof SocialLinkScalarFieldEnum]
+
+
+  export const WelcomeCustomVarScalarFieldEnum: {
+    id: 'id',
+    guildId: 'guildId',
+    name: 'name',
+    value: 'value',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WelcomeCustomVarScalarFieldEnum = (typeof WelcomeCustomVarScalarFieldEnum)[keyof typeof WelcomeCustomVarScalarFieldEnum]
+
+
   export const ModCaseScalarFieldEnum: {
     id: 'id',
     guildId: 'guildId',
@@ -28158,6 +33085,47 @@ export namespace Prisma {
   };
 
   export type WarnThresholdScalarFieldEnum = (typeof WarnThresholdScalarFieldEnum)[keyof typeof WarnThresholdScalarFieldEnum]
+
+
+  export const AntiSpamConfigScalarFieldEnum: {
+    id: 'id',
+    guildId: 'guildId',
+    enabled: 'enabled',
+    burstEnabled: 'burstEnabled',
+    duplicateEnabled: 'duplicateEnabled',
+    mentionEnabled: 'mentionEnabled',
+    linkEnabled: 'linkEnabled',
+    capsEnabled: 'capsEnabled',
+    emojiEnabled: 'emojiEnabled',
+    comboEnabled: 'comboEnabled',
+    burstAction: 'burstAction',
+    duplicateAction: 'duplicateAction',
+    mentionAction: 'mentionAction',
+    linkAction: 'linkAction',
+    capsAction: 'capsAction',
+    emojiAction: 'emojiAction',
+    comboAction: 'comboAction',
+    escalationEnabled: 'escalationEnabled',
+    escalationCount: 'escalationCount',
+    notifyOnSpam: 'notifyOnSpam',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AntiSpamConfigScalarFieldEnum = (typeof AntiSpamConfigScalarFieldEnum)[keyof typeof AntiSpamConfigScalarFieldEnum]
+
+
+  export const AntiSpamHistoryScalarFieldEnum: {
+    id: 'id',
+    guildId: 'guildId',
+    userId: 'userId',
+    pattern: 'pattern',
+    action: 'action',
+    reason: 'reason',
+    createdAt: 'createdAt'
+  };
+
+  export type AntiSpamHistoryScalarFieldEnum = (typeof AntiSpamHistoryScalarFieldEnum)[keyof typeof AntiSpamHistoryScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -28421,6 +33389,8 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Guild"> | Date | string
     updatedAt?: DateTimeFilter<"Guild"> | Date | string
     guildConfigs?: XOR<GuildConfigNullableScalarRelationFilter, GuildConfigWhereInput> | null
+    antiSpamConfig?: XOR<AntiSpamConfigNullableScalarRelationFilter, AntiSpamConfigWhereInput> | null
+    socialLinks?: SocialLinkListRelationFilter
   }
 
   export type GuildOrderByWithRelationInput = {
@@ -28434,6 +33404,8 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     guildConfigs?: GuildConfigOrderByWithRelationInput
+    antiSpamConfig?: AntiSpamConfigOrderByWithRelationInput
+    socialLinks?: SocialLinkOrderByRelationAggregateInput
   }
 
   export type GuildWhereUniqueInput = Prisma.AtLeast<{
@@ -28450,6 +33422,8 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Guild"> | Date | string
     updatedAt?: DateTimeFilter<"Guild"> | Date | string
     guildConfigs?: XOR<GuildConfigNullableScalarRelationFilter, GuildConfigWhereInput> | null
+    antiSpamConfig?: XOR<AntiSpamConfigNullableScalarRelationFilter, AntiSpamConfigWhereInput> | null
+    socialLinks?: SocialLinkListRelationFilter
   }, "id" | "guildId">
 
   export type GuildOrderByWithAggregationInput = {
@@ -29808,6 +34782,112 @@ export namespace Prisma {
     roleId?: StringWithAggregatesFilter<"LevelRole"> | string
   }
 
+  export type SocialLinkWhereInput = {
+    AND?: SocialLinkWhereInput | SocialLinkWhereInput[]
+    OR?: SocialLinkWhereInput[]
+    NOT?: SocialLinkWhereInput | SocialLinkWhereInput[]
+    guildId?: StringFilter<"SocialLink"> | string
+    platform?: StringFilter<"SocialLink"> | string
+    url?: StringFilter<"SocialLink"> | string
+    guild?: XOR<GuildScalarRelationFilter, GuildWhereInput>
+  }
+
+  export type SocialLinkOrderByWithRelationInput = {
+    guildId?: SortOrder
+    platform?: SortOrder
+    url?: SortOrder
+    guild?: GuildOrderByWithRelationInput
+  }
+
+  export type SocialLinkWhereUniqueInput = Prisma.AtLeast<{
+    guildId_platform?: SocialLinkGuildIdPlatformCompoundUniqueInput
+    AND?: SocialLinkWhereInput | SocialLinkWhereInput[]
+    OR?: SocialLinkWhereInput[]
+    NOT?: SocialLinkWhereInput | SocialLinkWhereInput[]
+    guildId?: StringFilter<"SocialLink"> | string
+    platform?: StringFilter<"SocialLink"> | string
+    url?: StringFilter<"SocialLink"> | string
+    guild?: XOR<GuildScalarRelationFilter, GuildWhereInput>
+  }, "guildId_platform">
+
+  export type SocialLinkOrderByWithAggregationInput = {
+    guildId?: SortOrder
+    platform?: SortOrder
+    url?: SortOrder
+    _count?: SocialLinkCountOrderByAggregateInput
+    _max?: SocialLinkMaxOrderByAggregateInput
+    _min?: SocialLinkMinOrderByAggregateInput
+  }
+
+  export type SocialLinkScalarWhereWithAggregatesInput = {
+    AND?: SocialLinkScalarWhereWithAggregatesInput | SocialLinkScalarWhereWithAggregatesInput[]
+    OR?: SocialLinkScalarWhereWithAggregatesInput[]
+    NOT?: SocialLinkScalarWhereWithAggregatesInput | SocialLinkScalarWhereWithAggregatesInput[]
+    guildId?: StringWithAggregatesFilter<"SocialLink"> | string
+    platform?: StringWithAggregatesFilter<"SocialLink"> | string
+    url?: StringWithAggregatesFilter<"SocialLink"> | string
+  }
+
+  export type WelcomeCustomVarWhereInput = {
+    AND?: WelcomeCustomVarWhereInput | WelcomeCustomVarWhereInput[]
+    OR?: WelcomeCustomVarWhereInput[]
+    NOT?: WelcomeCustomVarWhereInput | WelcomeCustomVarWhereInput[]
+    id?: IntFilter<"WelcomeCustomVar"> | number
+    guildId?: StringFilter<"WelcomeCustomVar"> | string
+    name?: StringFilter<"WelcomeCustomVar"> | string
+    value?: StringFilter<"WelcomeCustomVar"> | string
+    createdAt?: DateTimeFilter<"WelcomeCustomVar"> | Date | string
+    updatedAt?: DateTimeFilter<"WelcomeCustomVar"> | Date | string
+  }
+
+  export type WelcomeCustomVarOrderByWithRelationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    name?: SortOrder
+    value?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WelcomeCustomVarWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    guildId_name?: WelcomeCustomVarGuildIdNameCompoundUniqueInput
+    AND?: WelcomeCustomVarWhereInput | WelcomeCustomVarWhereInput[]
+    OR?: WelcomeCustomVarWhereInput[]
+    NOT?: WelcomeCustomVarWhereInput | WelcomeCustomVarWhereInput[]
+    guildId?: StringFilter<"WelcomeCustomVar"> | string
+    name?: StringFilter<"WelcomeCustomVar"> | string
+    value?: StringFilter<"WelcomeCustomVar"> | string
+    createdAt?: DateTimeFilter<"WelcomeCustomVar"> | Date | string
+    updatedAt?: DateTimeFilter<"WelcomeCustomVar"> | Date | string
+  }, "id" | "guildId_name">
+
+  export type WelcomeCustomVarOrderByWithAggregationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    name?: SortOrder
+    value?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WelcomeCustomVarCountOrderByAggregateInput
+    _avg?: WelcomeCustomVarAvgOrderByAggregateInput
+    _max?: WelcomeCustomVarMaxOrderByAggregateInput
+    _min?: WelcomeCustomVarMinOrderByAggregateInput
+    _sum?: WelcomeCustomVarSumOrderByAggregateInput
+  }
+
+  export type WelcomeCustomVarScalarWhereWithAggregatesInput = {
+    AND?: WelcomeCustomVarScalarWhereWithAggregatesInput | WelcomeCustomVarScalarWhereWithAggregatesInput[]
+    OR?: WelcomeCustomVarScalarWhereWithAggregatesInput[]
+    NOT?: WelcomeCustomVarScalarWhereWithAggregatesInput | WelcomeCustomVarScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"WelcomeCustomVar"> | number
+    guildId?: StringWithAggregatesFilter<"WelcomeCustomVar"> | string
+    name?: StringWithAggregatesFilter<"WelcomeCustomVar"> | string
+    value?: StringWithAggregatesFilter<"WelcomeCustomVar"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"WelcomeCustomVar"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WelcomeCustomVar"> | Date | string
+  }
+
   export type ModCaseWhereInput = {
     AND?: ModCaseWhereInput | ModCaseWhereInput[]
     OR?: ModCaseWhereInput[]
@@ -29843,6 +34923,7 @@ export namespace Prisma {
 
   export type ModCaseWhereUniqueInput = Prisma.AtLeast<{
     id?: number
+    guildId_caseNumber?: ModCaseGuildIdCaseNumberCompoundUniqueInput
     AND?: ModCaseWhereInput | ModCaseWhereInput[]
     OR?: ModCaseWhereInput[]
     NOT?: ModCaseWhereInput | ModCaseWhereInput[]
@@ -29857,7 +34938,7 @@ export namespace Prisma {
     messageCount?: IntNullableFilter<"ModCase"> | number | null
     createdAt?: DateTimeFilter<"ModCase"> | Date | string
     updatedAt?: DateTimeFilter<"ModCase"> | Date | string
-  }, "id">
+  }, "id" | "guildId_caseNumber">
 
   export type ModCaseOrderByWithAggregationInput = {
     id?: SortOrder
@@ -29950,6 +35031,212 @@ export namespace Prisma {
     warnCount?: IntWithAggregatesFilter<"WarnThreshold"> | number
     action?: StringWithAggregatesFilter<"WarnThreshold"> | string
     duration?: BigIntNullableWithAggregatesFilter<"WarnThreshold"> | bigint | number | null
+  }
+
+  export type AntiSpamConfigWhereInput = {
+    AND?: AntiSpamConfigWhereInput | AntiSpamConfigWhereInput[]
+    OR?: AntiSpamConfigWhereInput[]
+    NOT?: AntiSpamConfigWhereInput | AntiSpamConfigWhereInput[]
+    id?: IntFilter<"AntiSpamConfig"> | number
+    guildId?: StringFilter<"AntiSpamConfig"> | string
+    enabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    burstEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    duplicateEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    mentionEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    linkEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    capsEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    emojiEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    comboEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    burstAction?: StringFilter<"AntiSpamConfig"> | string
+    duplicateAction?: StringFilter<"AntiSpamConfig"> | string
+    mentionAction?: StringFilter<"AntiSpamConfig"> | string
+    linkAction?: StringFilter<"AntiSpamConfig"> | string
+    capsAction?: StringFilter<"AntiSpamConfig"> | string
+    emojiAction?: StringFilter<"AntiSpamConfig"> | string
+    comboAction?: StringFilter<"AntiSpamConfig"> | string
+    escalationEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    escalationCount?: IntFilter<"AntiSpamConfig"> | number
+    notifyOnSpam?: BoolFilter<"AntiSpamConfig"> | boolean
+    createdAt?: DateTimeFilter<"AntiSpamConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"AntiSpamConfig"> | Date | string
+    guild?: XOR<GuildScalarRelationFilter, GuildWhereInput>
+  }
+
+  export type AntiSpamConfigOrderByWithRelationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    enabled?: SortOrder
+    burstEnabled?: SortOrder
+    duplicateEnabled?: SortOrder
+    mentionEnabled?: SortOrder
+    linkEnabled?: SortOrder
+    capsEnabled?: SortOrder
+    emojiEnabled?: SortOrder
+    comboEnabled?: SortOrder
+    burstAction?: SortOrder
+    duplicateAction?: SortOrder
+    mentionAction?: SortOrder
+    linkAction?: SortOrder
+    capsAction?: SortOrder
+    emojiAction?: SortOrder
+    comboAction?: SortOrder
+    escalationEnabled?: SortOrder
+    escalationCount?: SortOrder
+    notifyOnSpam?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    guild?: GuildOrderByWithRelationInput
+  }
+
+  export type AntiSpamConfigWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    guildId?: string
+    AND?: AntiSpamConfigWhereInput | AntiSpamConfigWhereInput[]
+    OR?: AntiSpamConfigWhereInput[]
+    NOT?: AntiSpamConfigWhereInput | AntiSpamConfigWhereInput[]
+    enabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    burstEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    duplicateEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    mentionEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    linkEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    capsEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    emojiEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    comboEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    burstAction?: StringFilter<"AntiSpamConfig"> | string
+    duplicateAction?: StringFilter<"AntiSpamConfig"> | string
+    mentionAction?: StringFilter<"AntiSpamConfig"> | string
+    linkAction?: StringFilter<"AntiSpamConfig"> | string
+    capsAction?: StringFilter<"AntiSpamConfig"> | string
+    emojiAction?: StringFilter<"AntiSpamConfig"> | string
+    comboAction?: StringFilter<"AntiSpamConfig"> | string
+    escalationEnabled?: BoolFilter<"AntiSpamConfig"> | boolean
+    escalationCount?: IntFilter<"AntiSpamConfig"> | number
+    notifyOnSpam?: BoolFilter<"AntiSpamConfig"> | boolean
+    createdAt?: DateTimeFilter<"AntiSpamConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"AntiSpamConfig"> | Date | string
+    guild?: XOR<GuildScalarRelationFilter, GuildWhereInput>
+  }, "id" | "guildId">
+
+  export type AntiSpamConfigOrderByWithAggregationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    enabled?: SortOrder
+    burstEnabled?: SortOrder
+    duplicateEnabled?: SortOrder
+    mentionEnabled?: SortOrder
+    linkEnabled?: SortOrder
+    capsEnabled?: SortOrder
+    emojiEnabled?: SortOrder
+    comboEnabled?: SortOrder
+    burstAction?: SortOrder
+    duplicateAction?: SortOrder
+    mentionAction?: SortOrder
+    linkAction?: SortOrder
+    capsAction?: SortOrder
+    emojiAction?: SortOrder
+    comboAction?: SortOrder
+    escalationEnabled?: SortOrder
+    escalationCount?: SortOrder
+    notifyOnSpam?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AntiSpamConfigCountOrderByAggregateInput
+    _avg?: AntiSpamConfigAvgOrderByAggregateInput
+    _max?: AntiSpamConfigMaxOrderByAggregateInput
+    _min?: AntiSpamConfigMinOrderByAggregateInput
+    _sum?: AntiSpamConfigSumOrderByAggregateInput
+  }
+
+  export type AntiSpamConfigScalarWhereWithAggregatesInput = {
+    AND?: AntiSpamConfigScalarWhereWithAggregatesInput | AntiSpamConfigScalarWhereWithAggregatesInput[]
+    OR?: AntiSpamConfigScalarWhereWithAggregatesInput[]
+    NOT?: AntiSpamConfigScalarWhereWithAggregatesInput | AntiSpamConfigScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"AntiSpamConfig"> | number
+    guildId?: StringWithAggregatesFilter<"AntiSpamConfig"> | string
+    enabled?: BoolWithAggregatesFilter<"AntiSpamConfig"> | boolean
+    burstEnabled?: BoolWithAggregatesFilter<"AntiSpamConfig"> | boolean
+    duplicateEnabled?: BoolWithAggregatesFilter<"AntiSpamConfig"> | boolean
+    mentionEnabled?: BoolWithAggregatesFilter<"AntiSpamConfig"> | boolean
+    linkEnabled?: BoolWithAggregatesFilter<"AntiSpamConfig"> | boolean
+    capsEnabled?: BoolWithAggregatesFilter<"AntiSpamConfig"> | boolean
+    emojiEnabled?: BoolWithAggregatesFilter<"AntiSpamConfig"> | boolean
+    comboEnabled?: BoolWithAggregatesFilter<"AntiSpamConfig"> | boolean
+    burstAction?: StringWithAggregatesFilter<"AntiSpamConfig"> | string
+    duplicateAction?: StringWithAggregatesFilter<"AntiSpamConfig"> | string
+    mentionAction?: StringWithAggregatesFilter<"AntiSpamConfig"> | string
+    linkAction?: StringWithAggregatesFilter<"AntiSpamConfig"> | string
+    capsAction?: StringWithAggregatesFilter<"AntiSpamConfig"> | string
+    emojiAction?: StringWithAggregatesFilter<"AntiSpamConfig"> | string
+    comboAction?: StringWithAggregatesFilter<"AntiSpamConfig"> | string
+    escalationEnabled?: BoolWithAggregatesFilter<"AntiSpamConfig"> | boolean
+    escalationCount?: IntWithAggregatesFilter<"AntiSpamConfig"> | number
+    notifyOnSpam?: BoolWithAggregatesFilter<"AntiSpamConfig"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"AntiSpamConfig"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AntiSpamConfig"> | Date | string
+  }
+
+  export type AntiSpamHistoryWhereInput = {
+    AND?: AntiSpamHistoryWhereInput | AntiSpamHistoryWhereInput[]
+    OR?: AntiSpamHistoryWhereInput[]
+    NOT?: AntiSpamHistoryWhereInput | AntiSpamHistoryWhereInput[]
+    id?: IntFilter<"AntiSpamHistory"> | number
+    guildId?: StringFilter<"AntiSpamHistory"> | string
+    userId?: StringFilter<"AntiSpamHistory"> | string
+    pattern?: StringFilter<"AntiSpamHistory"> | string
+    action?: StringFilter<"AntiSpamHistory"> | string
+    reason?: StringNullableFilter<"AntiSpamHistory"> | string | null
+    createdAt?: DateTimeFilter<"AntiSpamHistory"> | Date | string
+  }
+
+  export type AntiSpamHistoryOrderByWithRelationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    userId?: SortOrder
+    pattern?: SortOrder
+    action?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AntiSpamHistoryWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    AND?: AntiSpamHistoryWhereInput | AntiSpamHistoryWhereInput[]
+    OR?: AntiSpamHistoryWhereInput[]
+    NOT?: AntiSpamHistoryWhereInput | AntiSpamHistoryWhereInput[]
+    guildId?: StringFilter<"AntiSpamHistory"> | string
+    userId?: StringFilter<"AntiSpamHistory"> | string
+    pattern?: StringFilter<"AntiSpamHistory"> | string
+    action?: StringFilter<"AntiSpamHistory"> | string
+    reason?: StringNullableFilter<"AntiSpamHistory"> | string | null
+    createdAt?: DateTimeFilter<"AntiSpamHistory"> | Date | string
+  }, "id">
+
+  export type AntiSpamHistoryOrderByWithAggregationInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    userId?: SortOrder
+    pattern?: SortOrder
+    action?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: AntiSpamHistoryCountOrderByAggregateInput
+    _avg?: AntiSpamHistoryAvgOrderByAggregateInput
+    _max?: AntiSpamHistoryMaxOrderByAggregateInput
+    _min?: AntiSpamHistoryMinOrderByAggregateInput
+    _sum?: AntiSpamHistorySumOrderByAggregateInput
+  }
+
+  export type AntiSpamHistoryScalarWhereWithAggregatesInput = {
+    AND?: AntiSpamHistoryScalarWhereWithAggregatesInput | AntiSpamHistoryScalarWhereWithAggregatesInput[]
+    OR?: AntiSpamHistoryScalarWhereWithAggregatesInput[]
+    NOT?: AntiSpamHistoryScalarWhereWithAggregatesInput | AntiSpamHistoryScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"AntiSpamHistory"> | number
+    guildId?: StringWithAggregatesFilter<"AntiSpamHistory"> | string
+    userId?: StringWithAggregatesFilter<"AntiSpamHistory"> | string
+    pattern?: StringWithAggregatesFilter<"AntiSpamHistory"> | string
+    action?: StringWithAggregatesFilter<"AntiSpamHistory"> | string
+    reason?: StringNullableWithAggregatesFilter<"AntiSpamHistory"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"AntiSpamHistory"> | Date | string
   }
 
   export type tipoClaseCreateInput = {
@@ -30144,6 +35431,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     guildConfigs?: GuildConfigCreateNestedOneWithoutGuildInput
+    antiSpamConfig?: AntiSpamConfigCreateNestedOneWithoutGuildInput
+    socialLinks?: SocialLinkCreateNestedManyWithoutGuildInput
   }
 
   export type GuildUncheckedCreateInput = {
@@ -30157,6 +35446,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     guildConfigs?: GuildConfigUncheckedCreateNestedOneWithoutGuildInput
+    antiSpamConfig?: AntiSpamConfigUncheckedCreateNestedOneWithoutGuildInput
+    socialLinks?: SocialLinkUncheckedCreateNestedManyWithoutGuildInput
   }
 
   export type GuildUpdateInput = {
@@ -30169,6 +35460,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     guildConfigs?: GuildConfigUpdateOneWithoutGuildNestedInput
+    antiSpamConfig?: AntiSpamConfigUpdateOneWithoutGuildNestedInput
+    socialLinks?: SocialLinkUpdateManyWithoutGuildNestedInput
   }
 
   export type GuildUncheckedUpdateInput = {
@@ -30182,6 +35475,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     guildConfigs?: GuildConfigUncheckedUpdateOneWithoutGuildNestedInput
+    antiSpamConfig?: AntiSpamConfigUncheckedUpdateOneWithoutGuildNestedInput
+    socialLinks?: SocialLinkUncheckedUpdateManyWithoutGuildNestedInput
   }
 
   export type GuildCreateManyInput = {
@@ -31689,6 +36984,107 @@ export namespace Prisma {
     roleId?: StringFieldUpdateOperationsInput | string
   }
 
+  export type SocialLinkCreateInput = {
+    platform: string
+    url: string
+    guild: GuildCreateNestedOneWithoutSocialLinksInput
+  }
+
+  export type SocialLinkUncheckedCreateInput = {
+    guildId: string
+    platform: string
+    url: string
+  }
+
+  export type SocialLinkUpdateInput = {
+    platform?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    guild?: GuildUpdateOneRequiredWithoutSocialLinksNestedInput
+  }
+
+  export type SocialLinkUncheckedUpdateInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    platform?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type SocialLinkCreateManyInput = {
+    guildId: string
+    platform: string
+    url: string
+  }
+
+  export type SocialLinkUpdateManyMutationInput = {
+    platform?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type SocialLinkUncheckedUpdateManyInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    platform?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type WelcomeCustomVarCreateInput = {
+    guildId: string
+    name: string
+    value: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WelcomeCustomVarUncheckedCreateInput = {
+    id?: number
+    guildId: string
+    name: string
+    value: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WelcomeCustomVarUpdateInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WelcomeCustomVarUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WelcomeCustomVarCreateManyInput = {
+    id?: number
+    guildId: string
+    name: string
+    value: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WelcomeCustomVarUpdateManyMutationInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WelcomeCustomVarUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ModCaseCreateInput = {
     guildId: string
     userId: string
@@ -31842,6 +37238,244 @@ export namespace Prisma {
     warnCount?: IntFieldUpdateOperationsInput | number
     action?: StringFieldUpdateOperationsInput | string
     duration?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  }
+
+  export type AntiSpamConfigCreateInput = {
+    enabled?: boolean
+    burstEnabled?: boolean
+    duplicateEnabled?: boolean
+    mentionEnabled?: boolean
+    linkEnabled?: boolean
+    capsEnabled?: boolean
+    emojiEnabled?: boolean
+    comboEnabled?: boolean
+    burstAction?: string
+    duplicateAction?: string
+    mentionAction?: string
+    linkAction?: string
+    capsAction?: string
+    emojiAction?: string
+    comboAction?: string
+    escalationEnabled?: boolean
+    escalationCount?: number
+    notifyOnSpam?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    guild: GuildCreateNestedOneWithoutAntiSpamConfigInput
+  }
+
+  export type AntiSpamConfigUncheckedCreateInput = {
+    id?: number
+    guildId: string
+    enabled?: boolean
+    burstEnabled?: boolean
+    duplicateEnabled?: boolean
+    mentionEnabled?: boolean
+    linkEnabled?: boolean
+    capsEnabled?: boolean
+    emojiEnabled?: boolean
+    comboEnabled?: boolean
+    burstAction?: string
+    duplicateAction?: string
+    mentionAction?: string
+    linkAction?: string
+    capsAction?: string
+    emojiAction?: string
+    comboAction?: string
+    escalationEnabled?: boolean
+    escalationCount?: number
+    notifyOnSpam?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AntiSpamConfigUpdateInput = {
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    burstEnabled?: BoolFieldUpdateOperationsInput | boolean
+    duplicateEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mentionEnabled?: BoolFieldUpdateOperationsInput | boolean
+    linkEnabled?: BoolFieldUpdateOperationsInput | boolean
+    capsEnabled?: BoolFieldUpdateOperationsInput | boolean
+    emojiEnabled?: BoolFieldUpdateOperationsInput | boolean
+    comboEnabled?: BoolFieldUpdateOperationsInput | boolean
+    burstAction?: StringFieldUpdateOperationsInput | string
+    duplicateAction?: StringFieldUpdateOperationsInput | string
+    mentionAction?: StringFieldUpdateOperationsInput | string
+    linkAction?: StringFieldUpdateOperationsInput | string
+    capsAction?: StringFieldUpdateOperationsInput | string
+    emojiAction?: StringFieldUpdateOperationsInput | string
+    comboAction?: StringFieldUpdateOperationsInput | string
+    escalationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    notifyOnSpam?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    guild?: GuildUpdateOneRequiredWithoutAntiSpamConfigNestedInput
+  }
+
+  export type AntiSpamConfigUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    burstEnabled?: BoolFieldUpdateOperationsInput | boolean
+    duplicateEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mentionEnabled?: BoolFieldUpdateOperationsInput | boolean
+    linkEnabled?: BoolFieldUpdateOperationsInput | boolean
+    capsEnabled?: BoolFieldUpdateOperationsInput | boolean
+    emojiEnabled?: BoolFieldUpdateOperationsInput | boolean
+    comboEnabled?: BoolFieldUpdateOperationsInput | boolean
+    burstAction?: StringFieldUpdateOperationsInput | string
+    duplicateAction?: StringFieldUpdateOperationsInput | string
+    mentionAction?: StringFieldUpdateOperationsInput | string
+    linkAction?: StringFieldUpdateOperationsInput | string
+    capsAction?: StringFieldUpdateOperationsInput | string
+    emojiAction?: StringFieldUpdateOperationsInput | string
+    comboAction?: StringFieldUpdateOperationsInput | string
+    escalationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    notifyOnSpam?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AntiSpamConfigCreateManyInput = {
+    id?: number
+    guildId: string
+    enabled?: boolean
+    burstEnabled?: boolean
+    duplicateEnabled?: boolean
+    mentionEnabled?: boolean
+    linkEnabled?: boolean
+    capsEnabled?: boolean
+    emojiEnabled?: boolean
+    comboEnabled?: boolean
+    burstAction?: string
+    duplicateAction?: string
+    mentionAction?: string
+    linkAction?: string
+    capsAction?: string
+    emojiAction?: string
+    comboAction?: string
+    escalationEnabled?: boolean
+    escalationCount?: number
+    notifyOnSpam?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AntiSpamConfigUpdateManyMutationInput = {
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    burstEnabled?: BoolFieldUpdateOperationsInput | boolean
+    duplicateEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mentionEnabled?: BoolFieldUpdateOperationsInput | boolean
+    linkEnabled?: BoolFieldUpdateOperationsInput | boolean
+    capsEnabled?: BoolFieldUpdateOperationsInput | boolean
+    emojiEnabled?: BoolFieldUpdateOperationsInput | boolean
+    comboEnabled?: BoolFieldUpdateOperationsInput | boolean
+    burstAction?: StringFieldUpdateOperationsInput | string
+    duplicateAction?: StringFieldUpdateOperationsInput | string
+    mentionAction?: StringFieldUpdateOperationsInput | string
+    linkAction?: StringFieldUpdateOperationsInput | string
+    capsAction?: StringFieldUpdateOperationsInput | string
+    emojiAction?: StringFieldUpdateOperationsInput | string
+    comboAction?: StringFieldUpdateOperationsInput | string
+    escalationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    notifyOnSpam?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AntiSpamConfigUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    burstEnabled?: BoolFieldUpdateOperationsInput | boolean
+    duplicateEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mentionEnabled?: BoolFieldUpdateOperationsInput | boolean
+    linkEnabled?: BoolFieldUpdateOperationsInput | boolean
+    capsEnabled?: BoolFieldUpdateOperationsInput | boolean
+    emojiEnabled?: BoolFieldUpdateOperationsInput | boolean
+    comboEnabled?: BoolFieldUpdateOperationsInput | boolean
+    burstAction?: StringFieldUpdateOperationsInput | string
+    duplicateAction?: StringFieldUpdateOperationsInput | string
+    mentionAction?: StringFieldUpdateOperationsInput | string
+    linkAction?: StringFieldUpdateOperationsInput | string
+    capsAction?: StringFieldUpdateOperationsInput | string
+    emojiAction?: StringFieldUpdateOperationsInput | string
+    comboAction?: StringFieldUpdateOperationsInput | string
+    escalationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    notifyOnSpam?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AntiSpamHistoryCreateInput = {
+    guildId: string
+    userId: string
+    pattern: string
+    action: string
+    reason?: string | null
+    createdAt?: Date | string
+  }
+
+  export type AntiSpamHistoryUncheckedCreateInput = {
+    id?: number
+    guildId: string
+    userId: string
+    pattern: string
+    action: string
+    reason?: string | null
+    createdAt?: Date | string
+  }
+
+  export type AntiSpamHistoryUpdateInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    pattern?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AntiSpamHistoryUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    pattern?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AntiSpamHistoryCreateManyInput = {
+    id?: number
+    guildId: string
+    userId: string
+    pattern: string
+    action: string
+    reason?: string | null
+    createdAt?: Date | string
+  }
+
+  export type AntiSpamHistoryUpdateManyMutationInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    pattern?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AntiSpamHistoryUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    pattern?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -32064,9 +37698,24 @@ export namespace Prisma {
     isNot?: GuildConfigWhereInput | null
   }
 
+  export type AntiSpamConfigNullableScalarRelationFilter = {
+    is?: AntiSpamConfigWhereInput | null
+    isNot?: AntiSpamConfigWhereInput | null
+  }
+
+  export type SocialLinkListRelationFilter = {
+    every?: SocialLinkWhereInput
+    some?: SocialLinkWhereInput
+    none?: SocialLinkWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
+  }
+
+  export type SocialLinkOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type GuildCountOrderByAggregateInput = {
@@ -33165,6 +38814,69 @@ export namespace Prisma {
     level?: SortOrder
   }
 
+  export type SocialLinkGuildIdPlatformCompoundUniqueInput = {
+    guildId: string
+    platform: string
+  }
+
+  export type SocialLinkCountOrderByAggregateInput = {
+    guildId?: SortOrder
+    platform?: SortOrder
+    url?: SortOrder
+  }
+
+  export type SocialLinkMaxOrderByAggregateInput = {
+    guildId?: SortOrder
+    platform?: SortOrder
+    url?: SortOrder
+  }
+
+  export type SocialLinkMinOrderByAggregateInput = {
+    guildId?: SortOrder
+    platform?: SortOrder
+    url?: SortOrder
+  }
+
+  export type WelcomeCustomVarGuildIdNameCompoundUniqueInput = {
+    guildId: string
+    name: string
+  }
+
+  export type WelcomeCustomVarCountOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    name?: SortOrder
+    value?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WelcomeCustomVarAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type WelcomeCustomVarMaxOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    name?: SortOrder
+    value?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WelcomeCustomVarMinOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    name?: SortOrder
+    value?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WelcomeCustomVarSumOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
   export type BigIntNullableFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel> | null
     in?: bigint[] | number[] | null
@@ -33174,6 +38886,11 @@ export namespace Prisma {
     gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     not?: NestedBigIntNullableFilter<$PrismaModel> | bigint | number | null
+  }
+
+  export type ModCaseGuildIdCaseNumberCompoundUniqueInput = {
+    guildId: string
+    caseNumber: number
   }
 
   export type ModCaseCountOrderByAggregateInput = {
@@ -33290,6 +39007,129 @@ export namespace Prisma {
     id?: SortOrder
     warnCount?: SortOrder
     duration?: SortOrder
+  }
+
+  export type AntiSpamConfigCountOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    enabled?: SortOrder
+    burstEnabled?: SortOrder
+    duplicateEnabled?: SortOrder
+    mentionEnabled?: SortOrder
+    linkEnabled?: SortOrder
+    capsEnabled?: SortOrder
+    emojiEnabled?: SortOrder
+    comboEnabled?: SortOrder
+    burstAction?: SortOrder
+    duplicateAction?: SortOrder
+    mentionAction?: SortOrder
+    linkAction?: SortOrder
+    capsAction?: SortOrder
+    emojiAction?: SortOrder
+    comboAction?: SortOrder
+    escalationEnabled?: SortOrder
+    escalationCount?: SortOrder
+    notifyOnSpam?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AntiSpamConfigAvgOrderByAggregateInput = {
+    id?: SortOrder
+    escalationCount?: SortOrder
+  }
+
+  export type AntiSpamConfigMaxOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    enabled?: SortOrder
+    burstEnabled?: SortOrder
+    duplicateEnabled?: SortOrder
+    mentionEnabled?: SortOrder
+    linkEnabled?: SortOrder
+    capsEnabled?: SortOrder
+    emojiEnabled?: SortOrder
+    comboEnabled?: SortOrder
+    burstAction?: SortOrder
+    duplicateAction?: SortOrder
+    mentionAction?: SortOrder
+    linkAction?: SortOrder
+    capsAction?: SortOrder
+    emojiAction?: SortOrder
+    comboAction?: SortOrder
+    escalationEnabled?: SortOrder
+    escalationCount?: SortOrder
+    notifyOnSpam?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AntiSpamConfigMinOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    enabled?: SortOrder
+    burstEnabled?: SortOrder
+    duplicateEnabled?: SortOrder
+    mentionEnabled?: SortOrder
+    linkEnabled?: SortOrder
+    capsEnabled?: SortOrder
+    emojiEnabled?: SortOrder
+    comboEnabled?: SortOrder
+    burstAction?: SortOrder
+    duplicateAction?: SortOrder
+    mentionAction?: SortOrder
+    linkAction?: SortOrder
+    capsAction?: SortOrder
+    emojiAction?: SortOrder
+    comboAction?: SortOrder
+    escalationEnabled?: SortOrder
+    escalationCount?: SortOrder
+    notifyOnSpam?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AntiSpamConfigSumOrderByAggregateInput = {
+    id?: SortOrder
+    escalationCount?: SortOrder
+  }
+
+  export type AntiSpamHistoryCountOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    userId?: SortOrder
+    pattern?: SortOrder
+    action?: SortOrder
+    reason?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AntiSpamHistoryAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type AntiSpamHistoryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    userId?: SortOrder
+    pattern?: SortOrder
+    action?: SortOrder
+    reason?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AntiSpamHistoryMinOrderByAggregateInput = {
+    id?: SortOrder
+    guildId?: SortOrder
+    userId?: SortOrder
+    pattern?: SortOrder
+    action?: SortOrder
+    reason?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AntiSpamHistorySumOrderByAggregateInput = {
+    id?: SortOrder
   }
 
   export type classesCreateNestedManyWithoutTipoInput = {
@@ -33418,10 +39258,36 @@ export namespace Prisma {
     connect?: GuildConfigWhereUniqueInput
   }
 
+  export type AntiSpamConfigCreateNestedOneWithoutGuildInput = {
+    create?: XOR<AntiSpamConfigCreateWithoutGuildInput, AntiSpamConfigUncheckedCreateWithoutGuildInput>
+    connectOrCreate?: AntiSpamConfigCreateOrConnectWithoutGuildInput
+    connect?: AntiSpamConfigWhereUniqueInput
+  }
+
+  export type SocialLinkCreateNestedManyWithoutGuildInput = {
+    create?: XOR<SocialLinkCreateWithoutGuildInput, SocialLinkUncheckedCreateWithoutGuildInput> | SocialLinkCreateWithoutGuildInput[] | SocialLinkUncheckedCreateWithoutGuildInput[]
+    connectOrCreate?: SocialLinkCreateOrConnectWithoutGuildInput | SocialLinkCreateOrConnectWithoutGuildInput[]
+    createMany?: SocialLinkCreateManyGuildInputEnvelope
+    connect?: SocialLinkWhereUniqueInput | SocialLinkWhereUniqueInput[]
+  }
+
   export type GuildConfigUncheckedCreateNestedOneWithoutGuildInput = {
     create?: XOR<GuildConfigCreateWithoutGuildInput, GuildConfigUncheckedCreateWithoutGuildInput>
     connectOrCreate?: GuildConfigCreateOrConnectWithoutGuildInput
     connect?: GuildConfigWhereUniqueInput
+  }
+
+  export type AntiSpamConfigUncheckedCreateNestedOneWithoutGuildInput = {
+    create?: XOR<AntiSpamConfigCreateWithoutGuildInput, AntiSpamConfigUncheckedCreateWithoutGuildInput>
+    connectOrCreate?: AntiSpamConfigCreateOrConnectWithoutGuildInput
+    connect?: AntiSpamConfigWhereUniqueInput
+  }
+
+  export type SocialLinkUncheckedCreateNestedManyWithoutGuildInput = {
+    create?: XOR<SocialLinkCreateWithoutGuildInput, SocialLinkUncheckedCreateWithoutGuildInput> | SocialLinkCreateWithoutGuildInput[] | SocialLinkUncheckedCreateWithoutGuildInput[]
+    connectOrCreate?: SocialLinkCreateOrConnectWithoutGuildInput | SocialLinkCreateOrConnectWithoutGuildInput[]
+    createMany?: SocialLinkCreateManyGuildInputEnvelope
+    connect?: SocialLinkWhereUniqueInput | SocialLinkWhereUniqueInput[]
   }
 
   export type NullableStringFieldUpdateOperationsInput = {
@@ -33446,6 +39312,30 @@ export namespace Prisma {
     update?: XOR<XOR<GuildConfigUpdateToOneWithWhereWithoutGuildInput, GuildConfigUpdateWithoutGuildInput>, GuildConfigUncheckedUpdateWithoutGuildInput>
   }
 
+  export type AntiSpamConfigUpdateOneWithoutGuildNestedInput = {
+    create?: XOR<AntiSpamConfigCreateWithoutGuildInput, AntiSpamConfigUncheckedCreateWithoutGuildInput>
+    connectOrCreate?: AntiSpamConfigCreateOrConnectWithoutGuildInput
+    upsert?: AntiSpamConfigUpsertWithoutGuildInput
+    disconnect?: AntiSpamConfigWhereInput | boolean
+    delete?: AntiSpamConfigWhereInput | boolean
+    connect?: AntiSpamConfigWhereUniqueInput
+    update?: XOR<XOR<AntiSpamConfigUpdateToOneWithWhereWithoutGuildInput, AntiSpamConfigUpdateWithoutGuildInput>, AntiSpamConfigUncheckedUpdateWithoutGuildInput>
+  }
+
+  export type SocialLinkUpdateManyWithoutGuildNestedInput = {
+    create?: XOR<SocialLinkCreateWithoutGuildInput, SocialLinkUncheckedCreateWithoutGuildInput> | SocialLinkCreateWithoutGuildInput[] | SocialLinkUncheckedCreateWithoutGuildInput[]
+    connectOrCreate?: SocialLinkCreateOrConnectWithoutGuildInput | SocialLinkCreateOrConnectWithoutGuildInput[]
+    upsert?: SocialLinkUpsertWithWhereUniqueWithoutGuildInput | SocialLinkUpsertWithWhereUniqueWithoutGuildInput[]
+    createMany?: SocialLinkCreateManyGuildInputEnvelope
+    set?: SocialLinkWhereUniqueInput | SocialLinkWhereUniqueInput[]
+    disconnect?: SocialLinkWhereUniqueInput | SocialLinkWhereUniqueInput[]
+    delete?: SocialLinkWhereUniqueInput | SocialLinkWhereUniqueInput[]
+    connect?: SocialLinkWhereUniqueInput | SocialLinkWhereUniqueInput[]
+    update?: SocialLinkUpdateWithWhereUniqueWithoutGuildInput | SocialLinkUpdateWithWhereUniqueWithoutGuildInput[]
+    updateMany?: SocialLinkUpdateManyWithWhereWithoutGuildInput | SocialLinkUpdateManyWithWhereWithoutGuildInput[]
+    deleteMany?: SocialLinkScalarWhereInput | SocialLinkScalarWhereInput[]
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -33462,6 +39352,30 @@ export namespace Prisma {
     delete?: GuildConfigWhereInput | boolean
     connect?: GuildConfigWhereUniqueInput
     update?: XOR<XOR<GuildConfigUpdateToOneWithWhereWithoutGuildInput, GuildConfigUpdateWithoutGuildInput>, GuildConfigUncheckedUpdateWithoutGuildInput>
+  }
+
+  export type AntiSpamConfigUncheckedUpdateOneWithoutGuildNestedInput = {
+    create?: XOR<AntiSpamConfigCreateWithoutGuildInput, AntiSpamConfigUncheckedCreateWithoutGuildInput>
+    connectOrCreate?: AntiSpamConfigCreateOrConnectWithoutGuildInput
+    upsert?: AntiSpamConfigUpsertWithoutGuildInput
+    disconnect?: AntiSpamConfigWhereInput | boolean
+    delete?: AntiSpamConfigWhereInput | boolean
+    connect?: AntiSpamConfigWhereUniqueInput
+    update?: XOR<XOR<AntiSpamConfigUpdateToOneWithWhereWithoutGuildInput, AntiSpamConfigUpdateWithoutGuildInput>, AntiSpamConfigUncheckedUpdateWithoutGuildInput>
+  }
+
+  export type SocialLinkUncheckedUpdateManyWithoutGuildNestedInput = {
+    create?: XOR<SocialLinkCreateWithoutGuildInput, SocialLinkUncheckedCreateWithoutGuildInput> | SocialLinkCreateWithoutGuildInput[] | SocialLinkUncheckedCreateWithoutGuildInput[]
+    connectOrCreate?: SocialLinkCreateOrConnectWithoutGuildInput | SocialLinkCreateOrConnectWithoutGuildInput[]
+    upsert?: SocialLinkUpsertWithWhereUniqueWithoutGuildInput | SocialLinkUpsertWithWhereUniqueWithoutGuildInput[]
+    createMany?: SocialLinkCreateManyGuildInputEnvelope
+    set?: SocialLinkWhereUniqueInput | SocialLinkWhereUniqueInput[]
+    disconnect?: SocialLinkWhereUniqueInput | SocialLinkWhereUniqueInput[]
+    delete?: SocialLinkWhereUniqueInput | SocialLinkWhereUniqueInput[]
+    connect?: SocialLinkWhereUniqueInput | SocialLinkWhereUniqueInput[]
+    update?: SocialLinkUpdateWithWhereUniqueWithoutGuildInput | SocialLinkUpdateWithWhereUniqueWithoutGuildInput[]
+    updateMany?: SocialLinkUpdateManyWithWhereWithoutGuildInput | SocialLinkUpdateManyWithWhereWithoutGuildInput[]
+    deleteMany?: SocialLinkScalarWhereInput | SocialLinkScalarWhereInput[]
   }
 
   export type GuildCreateNestedOneWithoutGuildConfigsInput = {
@@ -33730,12 +39644,40 @@ export namespace Prisma {
     update?: XOR<XOR<MusicQueueUpdateToOneWithWhereWithoutItemsInput, MusicQueueUpdateWithoutItemsInput>, MusicQueueUncheckedUpdateWithoutItemsInput>
   }
 
+  export type GuildCreateNestedOneWithoutSocialLinksInput = {
+    create?: XOR<GuildCreateWithoutSocialLinksInput, GuildUncheckedCreateWithoutSocialLinksInput>
+    connectOrCreate?: GuildCreateOrConnectWithoutSocialLinksInput
+    connect?: GuildWhereUniqueInput
+  }
+
+  export type GuildUpdateOneRequiredWithoutSocialLinksNestedInput = {
+    create?: XOR<GuildCreateWithoutSocialLinksInput, GuildUncheckedCreateWithoutSocialLinksInput>
+    connectOrCreate?: GuildCreateOrConnectWithoutSocialLinksInput
+    upsert?: GuildUpsertWithoutSocialLinksInput
+    connect?: GuildWhereUniqueInput
+    update?: XOR<XOR<GuildUpdateToOneWithWhereWithoutSocialLinksInput, GuildUpdateWithoutSocialLinksInput>, GuildUncheckedUpdateWithoutSocialLinksInput>
+  }
+
   export type NullableBigIntFieldUpdateOperationsInput = {
     set?: bigint | number | null
     increment?: bigint | number
     decrement?: bigint | number
     multiply?: bigint | number
     divide?: bigint | number
+  }
+
+  export type GuildCreateNestedOneWithoutAntiSpamConfigInput = {
+    create?: XOR<GuildCreateWithoutAntiSpamConfigInput, GuildUncheckedCreateWithoutAntiSpamConfigInput>
+    connectOrCreate?: GuildCreateOrConnectWithoutAntiSpamConfigInput
+    connect?: GuildWhereUniqueInput
+  }
+
+  export type GuildUpdateOneRequiredWithoutAntiSpamConfigNestedInput = {
+    create?: XOR<GuildCreateWithoutAntiSpamConfigInput, GuildUncheckedCreateWithoutAntiSpamConfigInput>
+    connectOrCreate?: GuildCreateOrConnectWithoutAntiSpamConfigInput
+    upsert?: GuildUpsertWithoutAntiSpamConfigInput
+    connect?: GuildWhereUniqueInput
+    update?: XOR<XOR<GuildUpdateToOneWithWhereWithoutAntiSpamConfigInput, GuildUpdateWithoutAntiSpamConfigInput>, GuildUncheckedUpdateWithoutAntiSpamConfigInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -34255,6 +40197,77 @@ export namespace Prisma {
     create: XOR<GuildConfigCreateWithoutGuildInput, GuildConfigUncheckedCreateWithoutGuildInput>
   }
 
+  export type AntiSpamConfigCreateWithoutGuildInput = {
+    enabled?: boolean
+    burstEnabled?: boolean
+    duplicateEnabled?: boolean
+    mentionEnabled?: boolean
+    linkEnabled?: boolean
+    capsEnabled?: boolean
+    emojiEnabled?: boolean
+    comboEnabled?: boolean
+    burstAction?: string
+    duplicateAction?: string
+    mentionAction?: string
+    linkAction?: string
+    capsAction?: string
+    emojiAction?: string
+    comboAction?: string
+    escalationEnabled?: boolean
+    escalationCount?: number
+    notifyOnSpam?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AntiSpamConfigUncheckedCreateWithoutGuildInput = {
+    id?: number
+    enabled?: boolean
+    burstEnabled?: boolean
+    duplicateEnabled?: boolean
+    mentionEnabled?: boolean
+    linkEnabled?: boolean
+    capsEnabled?: boolean
+    emojiEnabled?: boolean
+    comboEnabled?: boolean
+    burstAction?: string
+    duplicateAction?: string
+    mentionAction?: string
+    linkAction?: string
+    capsAction?: string
+    emojiAction?: string
+    comboAction?: string
+    escalationEnabled?: boolean
+    escalationCount?: number
+    notifyOnSpam?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AntiSpamConfigCreateOrConnectWithoutGuildInput = {
+    where: AntiSpamConfigWhereUniqueInput
+    create: XOR<AntiSpamConfigCreateWithoutGuildInput, AntiSpamConfigUncheckedCreateWithoutGuildInput>
+  }
+
+  export type SocialLinkCreateWithoutGuildInput = {
+    platform: string
+    url: string
+  }
+
+  export type SocialLinkUncheckedCreateWithoutGuildInput = {
+    platform: string
+    url: string
+  }
+
+  export type SocialLinkCreateOrConnectWithoutGuildInput = {
+    where: SocialLinkWhereUniqueInput
+    create: XOR<SocialLinkCreateWithoutGuildInput, SocialLinkUncheckedCreateWithoutGuildInput>
+  }
+
+  export type SocialLinkCreateManyGuildInputEnvelope = {
+    data: SocialLinkCreateManyGuildInput | SocialLinkCreateManyGuildInput[]
+  }
+
   export type GuildConfigUpsertWithoutGuildInput = {
     update: XOR<GuildConfigUpdateWithoutGuildInput, GuildConfigUncheckedUpdateWithoutGuildInput>
     create: XOR<GuildConfigCreateWithoutGuildInput, GuildConfigUncheckedCreateWithoutGuildInput>
@@ -34303,6 +40316,89 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type AntiSpamConfigUpsertWithoutGuildInput = {
+    update: XOR<AntiSpamConfigUpdateWithoutGuildInput, AntiSpamConfigUncheckedUpdateWithoutGuildInput>
+    create: XOR<AntiSpamConfigCreateWithoutGuildInput, AntiSpamConfigUncheckedCreateWithoutGuildInput>
+    where?: AntiSpamConfigWhereInput
+  }
+
+  export type AntiSpamConfigUpdateToOneWithWhereWithoutGuildInput = {
+    where?: AntiSpamConfigWhereInput
+    data: XOR<AntiSpamConfigUpdateWithoutGuildInput, AntiSpamConfigUncheckedUpdateWithoutGuildInput>
+  }
+
+  export type AntiSpamConfigUpdateWithoutGuildInput = {
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    burstEnabled?: BoolFieldUpdateOperationsInput | boolean
+    duplicateEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mentionEnabled?: BoolFieldUpdateOperationsInput | boolean
+    linkEnabled?: BoolFieldUpdateOperationsInput | boolean
+    capsEnabled?: BoolFieldUpdateOperationsInput | boolean
+    emojiEnabled?: BoolFieldUpdateOperationsInput | boolean
+    comboEnabled?: BoolFieldUpdateOperationsInput | boolean
+    burstAction?: StringFieldUpdateOperationsInput | string
+    duplicateAction?: StringFieldUpdateOperationsInput | string
+    mentionAction?: StringFieldUpdateOperationsInput | string
+    linkAction?: StringFieldUpdateOperationsInput | string
+    capsAction?: StringFieldUpdateOperationsInput | string
+    emojiAction?: StringFieldUpdateOperationsInput | string
+    comboAction?: StringFieldUpdateOperationsInput | string
+    escalationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    notifyOnSpam?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AntiSpamConfigUncheckedUpdateWithoutGuildInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    burstEnabled?: BoolFieldUpdateOperationsInput | boolean
+    duplicateEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mentionEnabled?: BoolFieldUpdateOperationsInput | boolean
+    linkEnabled?: BoolFieldUpdateOperationsInput | boolean
+    capsEnabled?: BoolFieldUpdateOperationsInput | boolean
+    emojiEnabled?: BoolFieldUpdateOperationsInput | boolean
+    comboEnabled?: BoolFieldUpdateOperationsInput | boolean
+    burstAction?: StringFieldUpdateOperationsInput | string
+    duplicateAction?: StringFieldUpdateOperationsInput | string
+    mentionAction?: StringFieldUpdateOperationsInput | string
+    linkAction?: StringFieldUpdateOperationsInput | string
+    capsAction?: StringFieldUpdateOperationsInput | string
+    emojiAction?: StringFieldUpdateOperationsInput | string
+    comboAction?: StringFieldUpdateOperationsInput | string
+    escalationEnabled?: BoolFieldUpdateOperationsInput | boolean
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    notifyOnSpam?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SocialLinkUpsertWithWhereUniqueWithoutGuildInput = {
+    where: SocialLinkWhereUniqueInput
+    update: XOR<SocialLinkUpdateWithoutGuildInput, SocialLinkUncheckedUpdateWithoutGuildInput>
+    create: XOR<SocialLinkCreateWithoutGuildInput, SocialLinkUncheckedCreateWithoutGuildInput>
+  }
+
+  export type SocialLinkUpdateWithWhereUniqueWithoutGuildInput = {
+    where: SocialLinkWhereUniqueInput
+    data: XOR<SocialLinkUpdateWithoutGuildInput, SocialLinkUncheckedUpdateWithoutGuildInput>
+  }
+
+  export type SocialLinkUpdateManyWithWhereWithoutGuildInput = {
+    where: SocialLinkScalarWhereInput
+    data: XOR<SocialLinkUpdateManyMutationInput, SocialLinkUncheckedUpdateManyWithoutGuildInput>
+  }
+
+  export type SocialLinkScalarWhereInput = {
+    AND?: SocialLinkScalarWhereInput | SocialLinkScalarWhereInput[]
+    OR?: SocialLinkScalarWhereInput[]
+    NOT?: SocialLinkScalarWhereInput | SocialLinkScalarWhereInput[]
+    guildId?: StringFilter<"SocialLink"> | string
+    platform?: StringFilter<"SocialLink"> | string
+    url?: StringFilter<"SocialLink"> | string
+  }
+
   export type GuildCreateWithoutGuildConfigsInput = {
     guildId: string
     name?: string | null
@@ -34312,6 +40408,8 @@ export namespace Prisma {
     MemberCount?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    antiSpamConfig?: AntiSpamConfigCreateNestedOneWithoutGuildInput
+    socialLinks?: SocialLinkCreateNestedManyWithoutGuildInput
   }
 
   export type GuildUncheckedCreateWithoutGuildConfigsInput = {
@@ -34324,6 +40422,8 @@ export namespace Prisma {
     MemberCount?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    antiSpamConfig?: AntiSpamConfigUncheckedCreateNestedOneWithoutGuildInput
+    socialLinks?: SocialLinkUncheckedCreateNestedManyWithoutGuildInput
   }
 
   export type GuildCreateOrConnectWithoutGuildConfigsInput = {
@@ -34351,6 +40451,8 @@ export namespace Prisma {
     MemberCount?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    antiSpamConfig?: AntiSpamConfigUpdateOneWithoutGuildNestedInput
+    socialLinks?: SocialLinkUpdateManyWithoutGuildNestedInput
   }
 
   export type GuildUncheckedUpdateWithoutGuildConfigsInput = {
@@ -34363,6 +40465,8 @@ export namespace Prisma {
     MemberCount?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    antiSpamConfig?: AntiSpamConfigUncheckedUpdateOneWithoutGuildNestedInput
+    socialLinks?: SocialLinkUncheckedUpdateManyWithoutGuildNestedInput
   }
 
   export type RouletteBetCreateWithoutUserInput = {
@@ -34919,6 +41023,146 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type GuildCreateWithoutSocialLinksInput = {
+    guildId: string
+    name?: string | null
+    prefix?: string | null
+    ownerId?: string | null
+    ownerName?: string | null
+    MemberCount?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    guildConfigs?: GuildConfigCreateNestedOneWithoutGuildInput
+    antiSpamConfig?: AntiSpamConfigCreateNestedOneWithoutGuildInput
+  }
+
+  export type GuildUncheckedCreateWithoutSocialLinksInput = {
+    id?: number
+    guildId: string
+    name?: string | null
+    prefix?: string | null
+    ownerId?: string | null
+    ownerName?: string | null
+    MemberCount?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    guildConfigs?: GuildConfigUncheckedCreateNestedOneWithoutGuildInput
+    antiSpamConfig?: AntiSpamConfigUncheckedCreateNestedOneWithoutGuildInput
+  }
+
+  export type GuildCreateOrConnectWithoutSocialLinksInput = {
+    where: GuildWhereUniqueInput
+    create: XOR<GuildCreateWithoutSocialLinksInput, GuildUncheckedCreateWithoutSocialLinksInput>
+  }
+
+  export type GuildUpsertWithoutSocialLinksInput = {
+    update: XOR<GuildUpdateWithoutSocialLinksInput, GuildUncheckedUpdateWithoutSocialLinksInput>
+    create: XOR<GuildCreateWithoutSocialLinksInput, GuildUncheckedCreateWithoutSocialLinksInput>
+    where?: GuildWhereInput
+  }
+
+  export type GuildUpdateToOneWithWhereWithoutSocialLinksInput = {
+    where?: GuildWhereInput
+    data: XOR<GuildUpdateWithoutSocialLinksInput, GuildUncheckedUpdateWithoutSocialLinksInput>
+  }
+
+  export type GuildUpdateWithoutSocialLinksInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    prefix?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerName?: NullableStringFieldUpdateOperationsInput | string | null
+    MemberCount?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    guildConfigs?: GuildConfigUpdateOneWithoutGuildNestedInput
+    antiSpamConfig?: AntiSpamConfigUpdateOneWithoutGuildNestedInput
+  }
+
+  export type GuildUncheckedUpdateWithoutSocialLinksInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    prefix?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerName?: NullableStringFieldUpdateOperationsInput | string | null
+    MemberCount?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    guildConfigs?: GuildConfigUncheckedUpdateOneWithoutGuildNestedInput
+    antiSpamConfig?: AntiSpamConfigUncheckedUpdateOneWithoutGuildNestedInput
+  }
+
+  export type GuildCreateWithoutAntiSpamConfigInput = {
+    guildId: string
+    name?: string | null
+    prefix?: string | null
+    ownerId?: string | null
+    ownerName?: string | null
+    MemberCount?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    guildConfigs?: GuildConfigCreateNestedOneWithoutGuildInput
+    socialLinks?: SocialLinkCreateNestedManyWithoutGuildInput
+  }
+
+  export type GuildUncheckedCreateWithoutAntiSpamConfigInput = {
+    id?: number
+    guildId: string
+    name?: string | null
+    prefix?: string | null
+    ownerId?: string | null
+    ownerName?: string | null
+    MemberCount?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    guildConfigs?: GuildConfigUncheckedCreateNestedOneWithoutGuildInput
+    socialLinks?: SocialLinkUncheckedCreateNestedManyWithoutGuildInput
+  }
+
+  export type GuildCreateOrConnectWithoutAntiSpamConfigInput = {
+    where: GuildWhereUniqueInput
+    create: XOR<GuildCreateWithoutAntiSpamConfigInput, GuildUncheckedCreateWithoutAntiSpamConfigInput>
+  }
+
+  export type GuildUpsertWithoutAntiSpamConfigInput = {
+    update: XOR<GuildUpdateWithoutAntiSpamConfigInput, GuildUncheckedUpdateWithoutAntiSpamConfigInput>
+    create: XOR<GuildCreateWithoutAntiSpamConfigInput, GuildUncheckedCreateWithoutAntiSpamConfigInput>
+    where?: GuildWhereInput
+  }
+
+  export type GuildUpdateToOneWithWhereWithoutAntiSpamConfigInput = {
+    where?: GuildWhereInput
+    data: XOR<GuildUpdateWithoutAntiSpamConfigInput, GuildUncheckedUpdateWithoutAntiSpamConfigInput>
+  }
+
+  export type GuildUpdateWithoutAntiSpamConfigInput = {
+    guildId?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    prefix?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerName?: NullableStringFieldUpdateOperationsInput | string | null
+    MemberCount?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    guildConfigs?: GuildConfigUpdateOneWithoutGuildNestedInput
+    socialLinks?: SocialLinkUpdateManyWithoutGuildNestedInput
+  }
+
+  export type GuildUncheckedUpdateWithoutAntiSpamConfigInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    guildId?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    prefix?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerName?: NullableStringFieldUpdateOperationsInput | string | null
+    MemberCount?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    guildConfigs?: GuildConfigUncheckedUpdateOneWithoutGuildNestedInput
+    socialLinks?: SocialLinkUncheckedUpdateManyWithoutGuildNestedInput
+  }
+
   export type classesCreateManyTipoInput = {
     rolId: string
     name: string
@@ -34975,6 +41219,26 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SocialLinkCreateManyGuildInput = {
+    platform: string
+    url: string
+  }
+
+  export type SocialLinkUpdateWithoutGuildInput = {
+    platform?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type SocialLinkUncheckedUpdateWithoutGuildInput = {
+    platform?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type SocialLinkUncheckedUpdateManyWithoutGuildInput = {
+    platform?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
   }
 
   export type RouletteBetCreateManyUserInput = {
