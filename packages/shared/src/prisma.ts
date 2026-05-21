@@ -1,18 +1,14 @@
 import { PrismaClient } from './generated/prisma';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-// ESM-compatible __dirname (Node.js doesn't provide it like Bun does)
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const url = process.env.DATABASE_URL;
+if (!url) {
+  throw new Error(
+    'DATABASE_URL is required for PostgreSQL. Set it to postgresql://user:password@host:port/dbname'
+  );
+}
 
-// Default to absolute path relative to this file's directory
-const defaultDbPath = path.resolve(__dirname, '../dev.db');
-const url = process.env.DATABASE_URL || `file:${defaultDbPath}`;
-
-const adapter = new PrismaLibSql({
-  url: url.startsWith('file:') ? url : `file:${url}`,
-});
+const adapter = new PrismaPg({ connectionString: url });
 
 export const prisma = new PrismaClient({
   adapter,

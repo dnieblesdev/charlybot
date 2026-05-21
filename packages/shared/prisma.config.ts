@@ -1,5 +1,4 @@
 import { defineConfig } from "prisma/config";
-import path from "path";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -7,6 +6,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env.DATABASE_URL ?? `file:${path.resolve(__dirname, "dev.db")}`,
+    url: process.env.DATABASE_URL,
   },
 });
