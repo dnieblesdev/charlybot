@@ -28,6 +28,39 @@ services:
       timeout: 3s
       retries: 3
 
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: charlybot
+      POSTGRES_PASSWORD: charlybot
+      POSTGRES_DB: charlybot
+    volumes:
+      - postgres-data-dev:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    networks:
+      - charlybot-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U charlybot"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@charlybot.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - charlybot-net
+    profiles:
+      - debug
+
   # API service — hot reload via tsx --watch
   api:
     build:
@@ -43,6 +76,8 @@ services:
     depends_on:
       valkey:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     networks:
       - charlybot-net
     command: ["pnpm", "--filter", "@charlybot/api", "dev"]
@@ -57,9 +92,10 @@ services:
     volumes:
       - ../apps/bot/src:/app/apps/bot/src
       - ../packages/shared/src:/app/packages/shared/src
-      - ../packages/shared/dev.db:/app/packages/shared/dev.db
     depends_on:
       valkey:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     networks:
       - charlybot-net
@@ -113,3 +149,4 @@ networks:
 
 volumes:
   valkey-data-dev:
+  postgres-data-dev:
