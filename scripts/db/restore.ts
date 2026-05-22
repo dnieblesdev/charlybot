@@ -6,10 +6,13 @@
  * - PostgreSQL: uses psql to restore from .sql or decompresses .sql.gz via gunzip
  */
 
-import { existsSync, copyFileSync, unlinkSync } from "node:fs";
+import { existsSync } from "node:fs";
+import { copyFile, stat, unlink, createReadStream } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
+import { spawn } from "node:child_process";
+import { createGunzip } from "node:zlib";
+import { pipeline } from "node:stream/promises";
 
 import { detectProvider, getBackupDir } from "./provider.js";
 
@@ -33,9 +36,9 @@ function getSQLiteDbPath(): string {
 }
 
 /**
- * Restore SQLite database from backup
+ * Restore SQLite database from backup (async)
  */
-function restoreSQLite(backupPath: string, force: boolean): boolean {
+async function restoreSQLite(backupPath: string, force: boolean): Promise<boolean> {
   const dbPath = getSQLiteDbPath();
 
   // Confirm restoration
@@ -57,13 +60,13 @@ function restoreSQLite(backupPath: string, force: boolean): boolean {
     // If current DB exists, create corrupt backup before replacing
     if (existsSync(dbPath)) {
       const corruptBackup = `${dbPath}.corrupt.${Date.now()}`;
-      copyFileSync(dbPath, corruptBackup);
+      await copyFile(dbPath, corruptBackup);
       console.log(`📦 Current DB backed up to: ${corruptBackup}`);
-      unlinkSync(dbPath);
+      await unlink(dbPath);
     }
 
-    // Copy backup to main DB location
-    copyFileSync(backupPath, dbPath);
+    // Copy backup to main DB location (async)
+    await copyFile(backupPath, dbPath);
     
     console.log("✅ Database restored successfully!");
     console.log(`   From: ${backupPath}`);
@@ -77,9 +80,25 @@ function restoreSQLite(backupPath: string, force: boolean): boolean {
 }
 
 /**
+ * Check if psql is available
+ */
+async function checkPsql(): Promise<boolean> {
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const psql = spawn("psql", ["--version"], { stdio: "pipe" });
+      psql.on("error", () => reject(new Error("not found")));
+      psql.on("close", (code) => (code === 0 ? resolve() : reject(new Error("not found"))));
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Restore PostgreSQL database from SQL backup
  */
-function restorePostgreSQL(backupPath: string, force: boolean): boolean {
+async function restorePostgreSQL(backupPath: string, force: boolean): Promise<boolean> {
   const databaseUrl = process.env.DATABASE_URL;
   
   if (!databaseUrl) {
@@ -96,12 +115,9 @@ function restorePostgreSQL(backupPath: string, force: boolean): boolean {
     return false;
   }
 
-  console.log("🔄 Restoring PostgreSQL database...\n");
-
   // Check for psql
-  try {
-    execSync("psql --version", { stdio: "pipe" });
-  } catch {
+  const psqlAvailable = await checkPsql();
+  if (!psqlAvailable) {
     console.error(
       "❌ psql not found. Install PostgreSQL client tools:\n" +
       "  macOS: brew install postgresql\n" +
@@ -111,22 +127,57 @@ function restorePostgreSQL(backupPath: string, force: boolean): boolean {
     return false;
   }
 
+  console.log("🔄 Restoring PostgreSQL database...\n");
+
   try {
-    let success: boolean;
-    
     if (backupPath.endsWith(".sql.gz")) {
-      // Decompress and pipe to psql
+      // Decompress with Node.js zlib and pipe to psql stdin
       console.log("📦 Decompressing .sql.gz...\n");
-      execSync(
-        `gunzip -c "${backupPath}" | psql "${databaseUrl}"`,
-        { stdio: "inherit", shell: true }
+      
+      const psqlProcess = spawn("psql", [databaseUrl], {
+        stdio: ["pipe", "inherit", "pipe"],
+      });
+
+      const gunzip = createGunzip();
+      const fileStream = createReadStream(backupPath);
+      
+      // Handle psql stderr
+      psqlProcess.stderr.on("data", (data: Buffer) => {
+        const msg = data.toString();
+        if (msg.includes("connection")) {
+          console.error(`❌ PostgreSQL connection failed: ${msg}`);
+        }
+      });
+
+      // Pipeline: file → gunzip → psql stdin
+      await pipeline(
+        fileStream,
+        gunzip,
+        psqlProcess.stdin!
       );
+
+      const exitCode = await new Promise<number>((resolve) => {
+        psqlProcess.on("close", (code) => resolve(code ?? 1));
+      });
+
+      if (exitCode !== 0) {
+        console.error(`❌ Restore failed: psql exited with code ${exitCode}`);
+        return false;
+      }
     } else {
-      // Direct psql restore
-      execSync(
-        `psql "${databaseUrl}" -f "${backupPath}"`,
-        { stdio: "inherit", shell: true }
-      );
+      // Direct psql restore with file argument
+      const psqlProcess = spawn("psql", [databaseUrl, "-f", backupPath], {
+        stdio: "inherit",
+      });
+
+      const exitCode = await new Promise<number>((resolve) => {
+        psqlProcess.on("close", (code) => resolve(code ?? 1));
+      });
+
+      if (exitCode !== 0) {
+        console.error(`❌ Restore failed: psql exited with code ${exitCode}`);
+        return false;
+      }
     }
     
     console.log("✅ Database restored successfully!");
@@ -135,11 +186,6 @@ function restorePostgreSQL(backupPath: string, force: boolean): boolean {
     return true;
   } catch (error: any) {
     console.error(`❌ Restore failed: ${error.message}`);
-    
-    if (error.message.includes("connection")) {
-      console.error("   Is PostgreSQL running? Check DATABASE_URL.");
-    }
-    
     return false;
   }
 }

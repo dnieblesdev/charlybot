@@ -7,9 +7,12 @@
  */
 
 import { mkdir, readdir, stat, unlink, copyFile } from "node:fs/promises";
+import { createWriteStream } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
+import { spawn } from "node:child_process";
+import { createGzip } from "node:zlib";
+import { pipeline } from "node:stream/promises";
 
 import { detectProvider, getBackupDir, isPostgreSQL } from "./provider.js";
 
@@ -96,49 +99,113 @@ async function createSQLiteBackup(
 }
 
 /**
- * Execute pg_dump and capture output
+ * Execute pg_dump and stream output to a file
  */
-function runPgDump(databaseUrl: string, outputFile: string, compress: boolean): void {
-  const env = { ...process.env, PGDATABASE: undefined }; // clear to force connection string
-  
-  const pgDumpCmd = `pg_dump "${databaseUrl}" --format=plain --no-owner --no-acl`;
-  
-  try {
-    if (compress) {
-      // pg_dump | gzip > file.gz
-      execSync(`${pgDumpCmd} | gzip > "${outputFile}"`, {
-        env,
-        stdio: "pipe",
-        shell: true,
+async function runPgDump(
+  databaseUrl: string,
+  outputFile: string,
+  compress: boolean
+): Promise<void> {
+  // Build pg_dump arguments (args array — no shell injection risk)
+  const pgDumpArgs = [
+    "--format=plain",
+    "--no-owner",
+    "--no-acl",
+  ];
+
+  // For pg_dump, the connection string is passed via --dbname or as positional arg
+  // Use --dbname option to avoid splitting on special chars in the URL
+  const urlObj = new URL(databaseUrl);
+  pgDumpArgs.push(`--dbname=${databaseUrl}`);
+
+  if (compress) {
+    // pg_dump stdout → gzip → file
+    const gzip = createGzip();
+    const fileHandle = await createWriteStream(outputFile);
+
+    await new Promise<void>((resolve, reject) => {
+      const pgDump = spawn("pg_dump", pgDumpArgs, {
+        env: { ...process.env }, // Don't clear PGDATABASE — let connection string take precedence
+        stdio: ["ignore", "pipe", "pipe"],
       });
-    } else {
-      // Direct pg_dump output redirect
-      execSync(`${pgDumpCmd} > "${outputFile}"`, {
-        env,
-        stdio: "pipe",
-        shell: true,
+
+      pgDump.on("error", (error: any) => {
+        if (error.code === "ENOENT") {
+          reject(new Error(
+            "❌ pg_dump not found. Install PostgreSQL client tools:\n" +
+            "  macOS: brew install postgresql\n" +
+            "  Ubuntu/Debian: apt-get install postgresql-client\n" +
+            "  Windows: download from postgresql.org or use chocolatey: choco install postgresql"
+          ));
+        } else {
+          reject(new Error(`❌ pg_dump failed: ${error.message}`));
+        }
       });
-    }
-  } catch (error: any) {
-    // Check if pg_dump is not found
-    if (error.code === "ENOENT" || error.message.includes("not found")) {
-      throw new Error(
-        "❌ pg_dump not found. Install PostgreSQL client tools:\n" +
-        "  macOS: brew install postgresql\n" +
-        "  Ubuntu/Debian: apt-get install postgresql-client\n" +
-        "  Windows: download from postgresql.org or use chocolatey: choco install postgresql"
-      );
-    }
-    
-    // Check for connection errors
-    if (error.message.includes("connection")) {
-      throw new Error(
-        `❌ PostgreSQL connection failed: ${error.message}\n` +
-        "  Is PostgreSQL running? Check DATABASE_URL."
-      );
-    }
-    
-    throw new Error(`❌ pg_dump failed: ${error.message}`);
+
+      pgDump.stderr.on("data", (data: Buffer) => {
+        const msg = data.toString();
+        if (msg.includes("connection")) {
+          reject(new Error(`❌ PostgreSQL connection failed: ${msg}`));
+        }
+      });
+
+      pgDump.on("close", (code: number | null) => {
+        if (code !== 0) {
+          reject(new Error(`❌ pg_dump exited with code ${code}`));
+        }
+      });
+
+      // Pipeline: pg_dump stdout → gzip → file
+      pipeline(pgDump.stdout, gzip, fileHandle)
+        .then(() => {
+          fileHandle.close();
+          resolve();
+        })
+        .catch(reject);
+    });
+  } else {
+    // Direct write to file — pg_dump stdout → file
+    const fileHandle = await createWriteStream(outputFile);
+
+    await new Promise<void>((resolve, reject) => {
+      const pgDump = spawn("pg_dump", pgDumpArgs, {
+        env: { ...process.env },
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      pgDump.on("error", (error: any) => {
+        if (error.code === "ENOENT") {
+          reject(new Error(
+            "❌ pg_dump not found. Install PostgreSQL client tools:\n" +
+            "  macOS: brew install postgresql\n" +
+            "  Ubuntu/Debian: apt-get install postgresql-client\n" +
+            "  Windows: download from postgresql.org or use chocolatey: choco install postgresql"
+          ));
+        } else {
+          reject(new Error(`❌ pg_dump failed: ${error.message}`));
+        }
+      });
+
+      pgDump.stderr.on("data", (data: Buffer) => {
+        const msg = data.toString();
+        if (msg.includes("connection")) {
+          reject(new Error(`❌ PostgreSQL connection failed: ${msg}`));
+        }
+      });
+
+      pgDump.on("close", (code: number | null) => {
+        if (code !== 0) {
+          reject(new Error(`❌ pg_dump exited with code ${code}`));
+        }
+      });
+
+      pipeline(pgDump.stdout, fileHandle)
+        .then(() => {
+          fileHandle.close();
+          resolve();
+        })
+        .catch(reject);
+    });
   }
 }
 
@@ -161,7 +228,7 @@ async function createPostgresBackup(
     console.log(`   Compression: enabled (gzip)`);
   }
 
-  runPgDump(databaseUrl, filepath, compress);
+  await runPgDump(databaseUrl, filepath, compress);
 
   // Get file size
   const stats = await stat(filepath);

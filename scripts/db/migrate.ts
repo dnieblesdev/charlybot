@@ -9,7 +9,7 @@
 import { existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
+import { spawn } from "node:child_process";
 
 import { detectProvider, isPostgreSQL } from "./provider.js";
 
@@ -62,60 +62,84 @@ async function dbExists(): Promise<boolean> {
 }
 
 /**
+ * Spawn a command and wait for it to complete (async, non-blocking)
+ */
+function spawnAsync(
+  command: string,
+  args: string[],
+  cwd: string
+): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd,
+      stdio: "inherit",
+    });
+    
+    child.on("error", (error: any) => {
+      reject(new Error(`${command} failed: ${error.message}`));
+    });
+    
+    child.on("close", (code: number | null) => {
+      resolve(code ?? 1);
+    });
+  });
+}
+
+/**
  * Run Prisma migration dev command (creates new migration from schema diff)
  */
 async function runPrismaMigrateDev(args: string[]): Promise<number> {
-  const prismaCmd = `pnpm exec prisma migrate dev --schema=./prisma/schema.prisma ${args.join(" ")}`;
+  const prismaArgs = [
+    "exec",
+    "prisma",
+    "migrate",
+    "dev",
+    `--schema=./prisma/schema.prisma`,
+    ...args,
+  ];
   
-  console.log(`Running: ${prismaCmd}\n`);
+  console.log(`Running: pnpm ${prismaArgs.join(" ")}\n`);
   
-  try {
-    execSync(prismaCmd, { 
-      stdio: "inherit",
-      cwd: join(__dirname, "../../packages/shared"),
-    });
-    return 0;
-  } catch (error: any) {
-    return error.status ?? 1;
-  }
+  const exitCode = await spawnAsync("pnpm", prismaArgs, join(__dirname, "../../packages/shared"));
+  return exitCode;
 }
 
 /**
  * Run Prisma migration command (production deploy)
  */
 async function runPrismaMigrate(args: string[]): Promise<number> {
-  const prismaCmd = `pnpm exec prisma migrate deploy --schema=./prisma/schema.prisma ${args.join(" ")}`;
+  const prismaArgs = [
+    "exec",
+    "prisma",
+    "migrate",
+    "deploy",
+    `--schema=./prisma/schema.prisma`,
+    ...args,
+  ];
   
-  console.log(`Running: ${prismaCmd}\n`);
+  console.log(`Running: pnpm ${prismaArgs.join(" ")}\n`);
   
-  try {
-    execSync(prismaCmd, { 
-      stdio: "inherit",
-      cwd: join(__dirname, "../../packages/shared"),
-    });
-    return 0;
-  } catch (error: any) {
-    return error.status ?? 1;
-  }
+  const exitCode = await spawnAsync("pnpm", prismaArgs, join(__dirname, "../../packages/shared"));
+  return exitCode;
 }
 
 /**
  * Run Prisma db push command
  */
 async function runPrismaPush(args: string[]): Promise<number> {
-  const prismaCmd = `pnpm exec prisma db push --schema=./prisma/schema.prisma ${args.join(" ")}`;
+  const prismaArgs = [
+    "exec",
+    "prisma",
+    "db",
+    "push",
+    `--schema=./prisma/schema.prisma`,
+    ...args,
+  ];
   
-  console.log(`Running: ${prismaCmd}\n`);
+  console.log(`Running: pnpm ${prismaArgs.join(" ")}\n`);
   
-  try {
-    execSync(prismaCmd, { 
-      stdio: "inherit",
-      cwd: join(__dirname, "../../packages/shared"),
-    });
-    return 0;
-  } catch (error: any) {
-    return error.status ?? 1;
-  }
+  const exitCode = await spawnAsync("pnpm", prismaArgs, join(__dirname, "../../packages/shared"));
+  return exitCode;
 }
 
 /**

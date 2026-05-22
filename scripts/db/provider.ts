@@ -18,17 +18,39 @@ export type Provider = "postgresql" | "sqlite";
  * Detect the database provider from DATABASE_URL
  * 
  * PostgreSQL URLs start with postgresql:// or postgres://
- * Everything else (file:, libsql:, relative paths) is treated as SQLite
+ * file: URLs are treated as SQLite
+ * 
+ * @throws Error if DATABASE_URL is empty, missing, or unrecognizable
  */
 export function detectProvider(databaseUrl?: string): Provider {
   const url = databaseUrl ?? process.env.DATABASE_URL ?? "";
+  
+  // Empty URL — throw instead of defaulting to sqlite
+  if (!url) {
+    throw new Error(
+      "DATABASE_URL is not set. Set it to:\n" +
+      "  PostgreSQL: postgresql://user:password@host:port/dbname\n" +
+      "  SQLite: file:./path/to/db.db"
+    );
+  }
   
   // PostgreSQL detection: both postgresql:// and postgres:// schemes
   if (/^postgres(ql)?:\/\//.test(url)) {
     return "postgresql";
   }
   
-  return "sqlite";
+  // SQLite detection: file: scheme
+  if (/^file:\/\//.test(url)) {
+    return "sqlite";
+  }
+  
+  // Unrecognizable URL — throw instead of silently defaulting
+  throw new Error(
+    `Unrecognizable DATABASE_URL: "${url}".\n` +
+    "Expected formats:\n" +
+    "  PostgreSQL: postgresql://user:password@host:port/dbname\n" +
+    "  SQLite: file:./path/to/db.db"
+  );
 }
 
 /** Shorthand: is the provider PostgreSQL? */
@@ -49,12 +71,7 @@ export function isSQLite(databaseUrl?: string): boolean {
  */
 export function getBackupDir(databaseUrl?: string): string {
   const provider = detectProvider(databaseUrl);
-  
-  if (provider === "postgresql") {
-    return join(__dirname, "../../backups/postgres");
-  }
-  
-  return join(__dirname, "../../backups/sqlite");
+  return getBackupDirForProvider(provider);
 }
 
 /**
