@@ -37,7 +37,7 @@ Context for AI agents working on the API. Read this in full before making change
 - Framework: **Hono**.
 - Validation: **zod** + `@hono/zod-validator`.
 - Logs: **Winston** (`src/utils/logger.ts`).
-- DB: Prisma via `@charlybot/shared` (LibSQL adapter). Default: `packages/shared/dev.db`.
+- DB: Prisma via `@charlybot/shared` (PostgreSQL). Set `DATABASE_URL` in `.env`.
 - Auth: `X-API-Key` header required for all `/api/*` routes.
 - Metrics: Prometheus endpoint at `GET /metrics` (line 40 of `src/index.ts`).
 
@@ -50,7 +50,7 @@ Context for AI agents working on the API. Read this in full before making change
 | Validation | Zod + `@hono/zod-validator` |
 | Logger | Winston (`src/utils/logger.ts`) |
 | Metrics | prom-client via `createMetricsRegistry()` |
-| DB | Prisma (LibSQL adapter) via `@charlybot/shared` |
+| DB | Prisma (PostgreSQL) via `@charlybot/shared` |
 
 ## Commands
 
@@ -120,7 +120,7 @@ Tests already have `tests/setup.ts` with a default.
 
 - Import: `import { prisma } from "@charlybot/shared"`.
 - Config: `packages/shared/src/prisma.ts`.
-- Default: `packages/shared/dev.db` if `DATABASE_URL` is not set.
+- `DATABASE_URL` must be set in `.env` (e.g. `postgresql://user:pass@localhost:5432/charlybot`).
 
 **Important**: Both the API and the bot use Prisma directly from `@charlybot/shared`.
 
@@ -160,7 +160,7 @@ Authenticated health check that tests DB and Valkey connectivity:
 - `API_KEY` (required — fails at import if not set)
 - `PORT` (default 3000)
 - `LOG_LEVEL` (default "info")
-- `DATABASE_URL` (optional — default `file:packages/shared/dev.db`)
+- `DATABASE_URL` (required — e.g. `postgresql://user:pass@localhost:5432/charlybot`)
 - `OTEL_ENABLED` (optional — enables OpenTelemetry tracing)
 - `VALKEY_HOST`, `VALKEY_PORT`, `VALKEY_PASSWORD`, `VALKEY_PREFIX`, `VALKEY_MAX_RETRIES`
 

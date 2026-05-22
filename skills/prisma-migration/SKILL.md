@@ -23,7 +23,7 @@ Use when:
 - **ALWAYS** ensure `dotenv.config()` is present in scripts that need env vars (scripts in `scripts/` don't inherit the bot's `.env` automatically)
 - **NEVER** use `await` at top-level in scripts executed by `tsx` — wrap in `(async () => { ... })()`
 - The Prisma schema lives at `packages/shared/prisma/schema.prisma`
-- The SQLite database is `packages/shared/dev.db`
+- The database URL is set via `DATABASE_URL` env var (e.g. `postgresql://user:pass@localhost:5432/charlybot`)
 
 ## Decision Gates
 

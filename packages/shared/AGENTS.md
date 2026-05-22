@@ -31,7 +31,7 @@ Context for AI agents working on the shared package. Read this in full before ma
 ## TL;DR
 
 - **Purpose**: Shared Prisma client, Zod schemas, observability tools, Valkey utilities.
-- **Stack**: TypeScript (ESM), Prisma 7 (LibSQL adapter), ioredis (Valkey), prom-client, Winston, Zod 3.
+- **Stack**: TypeScript (ESM), Prisma 7 (PostgreSQL adapter), ioredis (Valkey), prom-client, Winston, Zod 3.
 - **Entry**: `src/index.ts` exports all modules.
 - **Critical constraint**: Bot does NOT use Prisma directly; it talks to the API over HTTP.
 
@@ -67,13 +67,13 @@ Context for AI agents working on the shared package. Read this in full before ma
 
 ```typescript
 import { prisma } from "@charlybot/shared";
-// Uses LibSQL adapter with file: fallback to dev.db
+// Uses PostgreSQL adapter via pg driver
 ```
 
-- Adapter: `@prisma/adapter-libsql` with `@libsql/client`
-- Default DB: `packages/shared/dev.db` (SQLite)
-- DATABASE_URL env var overrides the default
+- Adapter: `@prisma/adapter-pg` with `pg`
+- Default DB: Set via `DATABASE_URL` env var (e.g. `postgresql://user:pass@localhost:5432/charlybot`)
 - Log levels: `['query', 'error', 'warn']` in development, `['error']` in production
+- Backward compatibility: Scripts support both PostgreSQL and SQLite modes via `DATABASE_URL` detection
 
 ## Schemas
 

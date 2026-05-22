@@ -36,7 +36,7 @@ CharlyBot unifica moderación, verificación, economía, roles automáticos, mú
                     ┌─────────────────┼─────────────────┐
                     │                 │                  │
           ┌─────────▼────────┐ ┌─────▼──────┐  ┌───────▼────────┐
-          │   SQLite (Prisma) │ │  Dashboard │  │   Landing      │
+          │  PostgreSQL (Prisma)│ │  Dashboard │  │   Landing      │
           │ 23 modelos de datos│ │  Angular SPA│  │   Angular SSR  │
           └──────────────────┘ └────────────┘  └────────────────┘
 ```
@@ -51,7 +51,7 @@ El bot procesa interacciones de Discord en tiempo real. Valkey actúa como capa 
 - **Runtime** — Node.js 22 (ESM)
 - **Framework** — Discord.js v14
 - **Audio** — `@discordjs/voice`, play-dl, yt-dlp, libopus
-- **Persistencia** — Prisma (SQLite) vía `@charlybot/shared`
+- **Persistencia** — Prisma (PostgreSQL) vía `@charlybot/shared`
 
 ### API
 - **Runtime** — Node.js 22 (ESM)
@@ -198,7 +198,7 @@ pnpm dev:bot         # Solo Bot
 
 | Variable | Default | Descripción |
 |----------|---------|-------------|
-| `DATABASE_URL` | `file:./dev.db` | Ruta de SQLite |
+| `DATABASE_URL` | — | URL de PostgreSQL (ej. `postgresql://user:pass@localhost:5432/charlybot`)
 
 ### Spotify
 

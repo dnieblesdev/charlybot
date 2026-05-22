@@ -20,7 +20,7 @@ pnpm dev:api
 | Runtime | Node.js 22 |
 | Framework HTTP | Hono |
 | Validación | Zod + `@hono/zod-validator` |
-| Base de datos | SQLite (Prisma + LibSQL adapter) |
+| Base de datos | PostgreSQL (Prisma + pg adapter) |
 | Cache / Locks | Valkey (Redis-compatible) |
 | Logs | Winston |
 
@@ -83,7 +83,7 @@ docker compose -f docker/docker-compose.yml up -d api
 |---|---|---|---|
 | `API_KEY` | ✅ | — | Clave de autenticación (valida al importar) |
 | `PORT` | | `3000` | Puerto HTTP |
-| `DATABASE_URL` | | `file:./dev.db` | Ruta de SQLite |
+| `DATABASE_URL` | ✅ | — | URL de PostgreSQL (ej. `postgresql://user:pass@localhost:5432/db`) |
 | `VALKEY_HOST` | | `valkey` | Host de Valkey |
 | `VALKEY_PORT` | | `6379` | Puerto de Valkey |
 | `LOG_LEVEL` | | `info` | Nivel de logs: debug, info, warn, error |

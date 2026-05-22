@@ -7,7 +7,7 @@ Context for AI agents working on this monorepo. Read this in full before making 
 - Monorepo with **Node.js 22 + TypeScript (ESM)**.
 - Apps: `apps/bot` (Discord.js v14) and `apps/api` (Hono).
 - Shared package: `packages/shared` (Prisma + Zod schemas + observability).
-- Persistence: Prisma (LibSQL/SQLite) via `@charlybot/shared`. Bot and API use Prisma directly.
+- Persistence: Prisma (PostgreSQL) via `@charlybot/shared`. Bot and API use Prisma directly.
 
 ## Start Here
 
