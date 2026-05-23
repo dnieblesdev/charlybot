@@ -27,7 +27,7 @@
   "devDependencies": {
     "concurrently": "9.2.1",
     "@changesets/cli": "2.31.0",
-    "prisma": "latest",
+    "prisma": "7.8.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3"
   },
