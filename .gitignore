@@ -52,6 +52,9 @@ backups/
 # SDD tooling
 .atl/
 
+# Pi settings
+.pi/
+
 nul
 
 #SPEC
