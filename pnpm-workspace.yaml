@@ -1,16 +1,26 @@
 packages:
   - "apps/*"
   - "packages/*"
-allowBuilds:
-  '@discordjs/opus': set this to true or false
-  '@parcel/watcher': set this to true or false
-  '@prisma/engines': set this to true or false
-  esbuild: set this to true or false
-  ffmpeg-static: set this to true or false
-  lmdb: set this to true or false
-  msgpackr-extract: set this to true or false
-  opencode-ai: set this to true or false
-  play-opus: set this to true or false
-  prisma: set this to true or false
-  protobufjs: set this to true or false
-  unrs-resolver: set this to true or false
+
+# pnpm security best practices
+# Source: https://github.com/lirantal/npm-security-best-practices
+
+# SECURITY: no packages require lifecycle scripts (postinstall, etc).
+# If a dependency needs one, add it here with an explicit comment.
+allowBuilds: {}
+
+# SECURITY: fail the install if a dependency wants to run a build
+# script that isn't in the allow-list above
+strictDepBuilds: true
+
+# SECURITY: block packages newer than 30 days (43200 minutes)
+minimumReleaseAge: 43200
+
+# SECURITY: reject a version whose publishing trust signals regressed
+# (e.g., previously published with provenance, now published without)
+trustPolicy: no-downgrade
+
+# SECURITY: reject dependencies sourced from git URLs or raw tarballs
+# in transitive dependencies. Direct dependencies in package.json still
+# allowed if needed.
+blockExoticSubdeps: true
