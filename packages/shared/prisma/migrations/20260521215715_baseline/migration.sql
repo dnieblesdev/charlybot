@@ -3,8 +3,8 @@ CREATE TABLE "tipoClase" (
     "rolId" TEXT NOT NULL,
     "guildId" TEXT NOT NULL,
     "nombre" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "tipoClase_pkey" PRIMARY KEY ("guildId","rolId")
 );
@@ -15,8 +15,8 @@ CREATE TABLE "classes" (
     "guildId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "tipoId" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "classes_pkey" PRIMARY KEY ("guildId","rolId")
 );
@@ -27,8 +27,8 @@ CREATE TABLE "subclass" (
     "guildId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "claseId" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "subclass_pkey" PRIMARY KEY ("guildId","rolId")
 );
@@ -42,8 +42,8 @@ CREATE TABLE "Guild" (
     "ownerId" TEXT,
     "ownerName" TEXT,
     "MemberCount" INTEGER,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "Guild_pkey" PRIMARY KEY ("id")
 );
@@ -65,8 +65,8 @@ CREATE TABLE "GuildConfig" (
     "modLogChannelId" TEXT,
     "modRoleId" TEXT,
     "antispamEnabled" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "GuildConfig_pkey" PRIMARY KEY ("id")
 );
@@ -79,14 +79,14 @@ CREATE TABLE "UserEconomy" (
     "username" TEXT NOT NULL,
     "pocket" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "inJail" BOOLEAN NOT NULL DEFAULT false,
-    "jailReleaseAt" TIMESTAMP(3),
-    "lastWork" TIMESTAMP(3),
-    "lastCrime" TIMESTAMP(3),
-    "lastRob" TIMESTAMP(3),
+    "jailReleaseAt" TIMESTAMPTZ(3),
+    "lastWork" TIMESTAMPTZ(3),
+    "lastCrime" TIMESTAMPTZ(3),
+    "lastRob" TIMESTAMPTZ(3),
     "totalEarned" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "totalLost" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "UserEconomy_pkey" PRIMARY KEY ("id")
 );
@@ -97,8 +97,8 @@ CREATE TABLE "GlobalBank" (
     "userId" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "bank" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "GlobalBank_pkey" PRIMARY KEY ("id")
 );
@@ -112,11 +112,11 @@ CREATE TABLE "RouletteGame" (
     "status" TEXT NOT NULL DEFAULT 'waiting',
     "winningNumber" INTEGER,
     "winningColor" TEXT,
-    "startTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "spinTime" TIMESTAMP(3),
-    "endTime" TIMESTAMP(3),
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "startTime" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "spinTime" TIMESTAMPTZ(3),
+    "endTime" TIMESTAMPTZ(3),
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "RouletteGame_pkey" PRIMARY KEY ("id")
 );
@@ -132,8 +132,8 @@ CREATE TABLE "RouletteBet" (
     "betValue" TEXT NOT NULL,
     "result" TEXT,
     "winAmount" DOUBLE PRECISION,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "RouletteBet_pkey" PRIMARY KEY ("id")
 );
@@ -152,8 +152,8 @@ CREATE TABLE "EconomyConfig" (
     "jailTimeWork" INTEGER NOT NULL DEFAULT 30,
     "jailTimeRob" INTEGER NOT NULL DEFAULT 45,
     "rouletteChannelId" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "EconomyConfig_pkey" PRIMARY KEY ("id")
 );
@@ -165,9 +165,9 @@ CREATE TABLE "Leaderboard" (
     "guildId" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "totalMoney" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "joinedServerAt" TIMESTAMP(3) NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "joinedServerAt" TIMESTAMPTZ(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "Leaderboard_pkey" PRIMARY KEY ("id")
 );
@@ -188,8 +188,8 @@ CREATE TABLE "AutoRole" (
     "embedTimestamp" BOOLEAN,
     "embedAuthor" TEXT,
     "createdBy" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "AutoRole_pkey" PRIMARY KEY ("id")
 );
@@ -204,7 +204,7 @@ CREATE TABLE "RoleMapping" (
     "buttonLabel" TEXT,
     "buttonStyle" TEXT,
     "order" INTEGER NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "RoleMapping_pkey" PRIMARY KEY ("id")
 );
@@ -219,9 +219,9 @@ CREATE TABLE "VerificationRequest" (
     "status" TEXT NOT NULL DEFAULT 'pending',
     "messageId" TEXT,
     "reviewedBy" TEXT,
-    "reviewedAt" TIMESTAMP(3),
-    "requestedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "reviewedAt" TIMESTAMPTZ(3),
+    "requestedAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "VerificationRequest_pkey" PRIMARY KEY ("id")
 );
@@ -236,8 +236,8 @@ CREATE TABLE "MusicQueue" (
     "volume" INTEGER NOT NULL DEFAULT 100,
     "loopMode" TEXT NOT NULL DEFAULT 'none',
     "lastSeek" INTEGER NOT NULL DEFAULT 0,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "MusicQueue_pkey" PRIMARY KEY ("id")
 );
@@ -253,7 +253,7 @@ CREATE TABLE "MusicQueueItem" (
     "position" INTEGER NOT NULL,
     "requesterId" TEXT NOT NULL,
     "requesterName" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "MusicQueueItem_pkey" PRIMARY KEY ("id")
 );
@@ -265,8 +265,8 @@ CREATE TABLE "GuildMusicConfig" (
     "defaultVolume" INTEGER NOT NULL DEFAULT 100,
     "autoCleanup" BOOLEAN NOT NULL DEFAULT true,
     "maxQueueSize" INTEGER NOT NULL DEFAULT 500,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "GuildMusicConfig_pkey" PRIMARY KEY ("id")
 );
@@ -279,9 +279,9 @@ CREATE TABLE "UserXP" (
     "username" TEXT,
     "xp" INTEGER NOT NULL DEFAULT 0,
     "nivel" INTEGER NOT NULL DEFAULT 0,
-    "lastMessageAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "lastMessageAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "UserXP_pkey" PRIMARY KEY ("id")
 );
@@ -294,8 +294,8 @@ CREATE TABLE "XPConfig" (
     "enabled" BOOLEAN NOT NULL DEFAULT true,
     "levelUpChannelId" TEXT,
     "levelUpMessage" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "XPConfig_pkey" PRIMARY KEY ("id")
 );
@@ -325,8 +325,8 @@ CREATE TABLE "WelcomeCustomVar" (
     "guildId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "value" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "WelcomeCustomVar_pkey" PRIMARY KEY ("id")
 );
@@ -343,8 +343,8 @@ CREATE TABLE "ModCase" (
     "duration" BIGINT,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "messageCount" INTEGER,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "ModCase_pkey" PRIMARY KEY ("id")
 );
@@ -382,8 +382,8 @@ CREATE TABLE "AntiSpamConfig" (
     "escalationEnabled" BOOLEAN NOT NULL DEFAULT true,
     "escalationCount" INTEGER NOT NULL DEFAULT 3,
     "notifyOnSpam" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "AntiSpamConfig_pkey" PRIMARY KEY ("id")
 );
@@ -396,7 +396,7 @@ CREATE TABLE "AntiSpamHistory" (
     "pattern" TEXT NOT NULL,
     "action" TEXT NOT NULL,
     "reason" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "AntiSpamHistory_pkey" PRIMARY KEY ("id")
 );

@@ -2,16 +2,12 @@
  * Database Migration Wrapper
  * 
  * Automatically creates a backup before running Prisma migrations.
- * Supports both SQLite and PostgreSQL providers.
  * If migration fails, provides easy rollback to the pre-migration backup.
  */
 
-import { existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
-
-import { detectProvider, isPostgreSQL } from "./provider.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -42,23 +38,11 @@ async function preMigrationBackup(): Promise<string | null> {
 }
 
 /**
- * Check if database exists (SQLite only — PostgreSQL is always "remote" and exists)
+ * Check if database exists.
+ * For PostgreSQL in this repo, we consider the DB configured if DATABASE_URL is set.
  */
 async function dbExists(): Promise<boolean> {
-  const provider = detectProvider();
-  
-  if (provider === "postgresql") {
-    // PostgreSQL is always remote — we assume it exists if DATABASE_URL is set
-    return !!process.env.DATABASE_URL;
-  }
-  
-  // SQLite: check if file exists
-  const dbUrl = process.env.DATABASE_URL ?? "";
-  const dbPath = dbUrl.startsWith("file:") 
-    ? dbUrl.replace(/^file:/, "")
-    : join(__dirname, "../../packages/shared/dev.db");
-  
-  return existsSync(dbPath);
+  return Boolean(process.env.DATABASE_URL);
 }
 
 /**
@@ -69,8 +53,12 @@ function spawnAsync(
   args: string[],
   cwd: string
 ): Promise<number> {
+  // Windows: pnpm is typically a .cmd shim, so spawn needs the .cmd suffix
+  const cmd = process.platform === "win32" && command === "pnpm"
+    ? "pnpm.cmd"
+    : command;
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const child = spawn(cmd, args, {
       cwd,
       stdio: "inherit",
     });
@@ -158,13 +146,11 @@ async function runRotation(): Promise<void> {
  * Dev migration flow — creates a new migration from schema changes
  */
 export async function migrateDev(args: string[] = []): Promise<MigrationResult> {
-  const provider = detectProvider();
-  
-  // Check if database exists (skipped for PostgreSQL — always remote)
+  // Check if database exists FIRST (handles empty DATABASE_URL gracefully)
   const exists = await dbExists();
   
   if (!exists) {
-    console.log(`⚠️  Database doesn't exist (${provider}). Running migration without backup.`);
+    console.log(`⚠️  Database doesn't exist. Running migration without backup.`);
     console.log(`   First time setup — ensure DATABASE_URL is set correctly.\n`);
     
     const exitCode = await runPrismaMigrateDev(args);
@@ -215,13 +201,11 @@ export async function migrateDev(args: string[] = []): Promise<MigrationResult> 
  * Main migration flow (production deploy)
  */
 export async function migrate(args: string[] = []): Promise<MigrationResult> {
-  const provider = detectProvider();
-  
-  // Check if database exists (skipped for PostgreSQL)
+  // Check if database exists FIRST
   const exists = await dbExists();
   
   if (!exists) {
-    console.log(`⚠️  Database doesn't exist (${provider}). Running migration without backup.`);
+    console.log(`⚠️  Database doesn't exist. Running migration without backup.`);
     console.log(`   First time setup — ensure DATABASE_URL is set correctly.\n`);
     
     const exitCode = await runPrismaMigrate(args);
@@ -272,13 +256,11 @@ export async function migrate(args: string[] = []): Promise<MigrationResult> {
  * db push flow — syncs schema without migration file
  */
 export async function dbPush(args: string[] = []): Promise<MigrationResult> {
-  const provider = detectProvider();
-  
-  // Check if database exists (skipped for PostgreSQL)
+  // Check if database exists FIRST
   const exists = await dbExists();
   
   if (!exists) {
-    console.log(`⚠️  Database doesn't exist (${provider}). Running db push without backup.`);
+    console.log(`⚠️  Database doesn't exist. Running db push without backup.`);
     console.log(`   First time setup — ensure DATABASE_URL is set correctly.\n`);
     
     const exitCode = await runPrismaPush(args);

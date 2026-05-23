@@ -1,28 +1,23 @@
 /**
  * Database Backup Module
  * 
- * Provides core backup functionality for SQLite and PostgreSQL databases.
- * - SQLite: uses file copy for atomic, crash-safe copies
+ * Provides core backup functionality for PostgreSQL databases.
  * - PostgreSQL: uses pg_dump for SQL dumps (optionally compressed with gzip)
  */
 
-import { mkdir, readdir, stat, unlink, copyFile } from "node:fs/promises";
+import { mkdir, readdir, stat } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { createGzip } from "node:zlib";
 import { pipeline } from "node:stream/promises";
 
-import { detectProvider, getBackupDir, isPostgreSQL } from "./provider.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { getBackupDirForProvider, getPgEnvVars } from "./provider.js";
 
 export interface BackupOptions {
   type: "daily" | "migration";
-  customPath?: string;
   compress?: boolean;  // PostgreSQL only: gzip the output
+  preserveAcl?: boolean; // PostgreSQL only: preserve ownership/ACLs (NOT recommended for dev)
 }
 
 export interface BackupResult {
@@ -30,8 +25,8 @@ export interface BackupResult {
   filepath: string;
   sizeBytes: number;
   timestamp: Date;
-  provider: "postgresql" | "sqlite";
-  format: "sql" | "sql.gz" | "db";
+  provider: "postgresql";
+  format: "sql" | "sql.gz";
 }
 
 /**
@@ -46,8 +41,8 @@ export function generateTimestamp(): string {
 /**
  * Ensure backup directory exists
  */
-async function ensureBackupDir(provider: "postgresql" | "sqlite"): Promise<string> {
-  const backupDir = getBackupDir();
+async function ensureBackupDir(provider: "postgresql"): Promise<string> {
+  const backupDir = getBackupDirForProvider(provider);
   try {
     await mkdir(backupDir, { recursive: true });
   } catch (error: any) {
@@ -59,154 +54,90 @@ async function ensureBackupDir(provider: "postgresql" | "sqlite"): Promise<strin
 }
 
 /**
- * Create a backup of the SQLite database
- * Uses file copy for atomic, crash-safe operation
- */
-async function createSQLiteBackup(
-  dbPath: string,
-  backupDir: string,
-  type: "daily" | "migration"
-): Promise<BackupResult> {
-  const timestamp = generateTimestamp();
-  const filename = `${timestamp}_${type}_backup.db`;
-  const filepath = join(backupDir, filename);
-
-  // Verify source DB exists
-  try {
-    await stat(dbPath);
-  } catch {
-    throw new Error(`Database file not found: ${dbPath}`);
-  }
-
-  // Copy database file to backup location
-  await copyFile(dbPath, filepath);
-
-  // Get file size
-  const stats = await stat(filepath);
-
-  console.log(`✅ Backup created: ${filename}`);
-  console.log(`   Size: ${(stats.size / 1024).toFixed(2)} KB`);
-  console.log(`   Location: ${filepath}`);
-
-  return {
-    filename,
-    filepath,
-    sizeBytes: stats.size,
-    timestamp: new Date(),
-    provider: "sqlite",
-    format: "db",
-  };
-}
-
-/**
- * Execute pg_dump and stream output to a file
+ * Execute pg_dump and stream output to a file.
+ * Uses spawn + Promise.all to wait for both process exit and pipeline completion,
+ * avoiding race conditions between pgDump.on("close") and pipeline().
  */
 async function runPgDump(
   databaseUrl: string,
   outputFile: string,
-  compress: boolean
+  compress: boolean,
+  preserveAcl: boolean
 ): Promise<void> {
-  // Build pg_dump arguments (args array — no shell injection risk)
+  // Extract credentials into env vars so pg_dump doesn't leak them in argv
+  const pgEnv = getPgEnvVars(databaseUrl);
   const pgDumpArgs = [
     "--format=plain",
-    "--no-owner",
-    "--no-acl",
+    // DEV-ONLY default: avoid restore permission errors across local users/roles.
+    // WARNING: In prod, this DROPS all ownership + GRANT statements from the dump.
+    ...(preserveAcl ? [] : ["--no-owner", "--no-acl"]),
+    "--clean",
+    "--if-exists",
   ];
 
-  // For pg_dump, the connection string is passed via --dbname or as positional arg
-  // Use --dbname option to avoid splitting on special chars in the URL
-  const urlObj = new URL(databaseUrl);
-  pgDumpArgs.push(`--dbname=${databaseUrl}`);
+  const fileHandle = createWriteStream(outputFile);
 
-  if (compress) {
-    // pg_dump stdout → gzip → file
-    const gzip = createGzip();
-    const fileHandle = await createWriteStream(outputFile);
+  return new Promise<void>((resolve, reject) => {
+    const pgDump = spawn("pg_dump", pgDumpArgs, {
+      env: { ...process.env, ...pgEnv },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
 
-    await new Promise<void>((resolve, reject) => {
-      const pgDump = spawn("pg_dump", pgDumpArgs, {
-        env: { ...process.env }, // Don't clear PGDATABASE — let connection string take precedence
-        stdio: ["ignore", "pipe", "pipe"],
-      });
+    let stderrBuffer = "";
 
-      pgDump.on("error", (error: any) => {
-        if (error.code === "ENOENT") {
-          reject(new Error(
+    pgDump.stderr.on("data", (data: Buffer) => {
+      stderrBuffer += data.toString();
+    });
+
+    // Guard: stdout may be null if spawn fails early
+    if (!pgDump.stdout) {
+      fileHandle.close();
+      reject(new Error("❌ pg_dump stdout unavailable (spawn failed)"));
+      return;
+    }
+
+    // Wait for process to exit (or error — reject immediately on spawn failure)
+    const closePromise = new Promise<number | null>((res, rej) => {
+      pgDump.on("close", (code) => res(code));
+      pgDump.on("error", (err: any) => {
+        if (err.code === "ENOENT") {
+          rej(new Error(
             "❌ pg_dump not found. Install PostgreSQL client tools:\n" +
             "  macOS: brew install postgresql\n" +
             "  Ubuntu/Debian: apt-get install postgresql-client\n" +
             "  Windows: download from postgresql.org or use chocolatey: choco install postgresql"
           ));
         } else {
-          reject(new Error(`❌ pg_dump failed: ${error.message}`));
+          rej(new Error(`❌ pg_dump failed: ${err.message}`));
         }
       });
-
-      pgDump.stderr.on("data", (data: Buffer) => {
-        const msg = data.toString();
-        if (msg.includes("connection")) {
-          reject(new Error(`❌ PostgreSQL connection failed: ${msg}`));
-        }
-      });
-
-      pgDump.on("close", (code: number | null) => {
-        if (code !== 0) {
-          reject(new Error(`❌ pg_dump exited with code ${code}`));
-        }
-      });
-
-      // Pipeline: pg_dump stdout → gzip → file
-      pipeline(pgDump.stdout, gzip, fileHandle)
-        .then(() => {
-          fileHandle.close();
-          resolve();
-        })
-        .catch(reject);
     });
-  } else {
-    // Direct write to file — pg_dump stdout → file
-    const fileHandle = await createWriteStream(outputFile);
 
-    await new Promise<void>((resolve, reject) => {
-      const pgDump = spawn("pg_dump", pgDumpArgs, {
-        env: { ...process.env },
-        stdio: ["ignore", "pipe", "pipe"],
-      });
+    // Wait for pipeline to finish (stdout → [gzip] → file)
+    const pipePromise = compress
+      ? pipeline(pgDump.stdout, createGzip(), fileHandle)
+      : pipeline(pgDump.stdout, fileHandle);
 
-      pgDump.on("error", (error: any) => {
-        if (error.code === "ENOENT") {
+    // Evaluate only after both settle — no race conditions
+    Promise.all([closePromise, pipePromise])
+      .then(([exitCode]) => {
+        fileHandle.close();
+        if (exitCode !== 0) {
           reject(new Error(
-            "❌ pg_dump not found. Install PostgreSQL client tools:\n" +
-            "  macOS: brew install postgresql\n" +
-            "  Ubuntu/Debian: apt-get install postgresql-client\n" +
-            "  Windows: download from postgresql.org or use chocolatey: choco install postgresql"
+            `❌ pg_dump exited with code ${exitCode}. stderr: ${stderrBuffer.slice(0, 500)}`
           ));
         } else {
-          reject(new Error(`❌ pg_dump failed: ${error.message}`));
-        }
-      });
-
-      pgDump.stderr.on("data", (data: Buffer) => {
-        const msg = data.toString();
-        if (msg.includes("connection")) {
-          reject(new Error(`❌ PostgreSQL connection failed: ${msg}`));
-        }
-      });
-
-      pgDump.on("close", (code: number | null) => {
-        if (code !== 0) {
-          reject(new Error(`❌ pg_dump exited with code ${code}`));
-        }
-      });
-
-      pipeline(pgDump.stdout, fileHandle)
-        .then(() => {
-          fileHandle.close();
           resolve();
-        })
-        .catch(reject);
-    });
-  }
+        }
+      })
+      .catch((err) => {
+        fileHandle.close();
+        pgDump.kill();
+        reject(new Error(
+          `❌ pg_dump pipeline failed: ${err.message}. stderr: ${stderrBuffer.slice(0, 500)}`
+        ));
+      });
+  });
 }
 
 /**
@@ -216,7 +147,8 @@ async function createPostgresBackup(
   databaseUrl: string,
   backupDir: string,
   type: "daily" | "migration",
-  compress: boolean = false
+  compress: boolean = false,
+  preserveAcl: boolean = false
 ): Promise<BackupResult> {
   const timestamp = generateTimestamp();
   const ext = compress ? ".sql.gz" : ".sql";
@@ -228,7 +160,7 @@ async function createPostgresBackup(
     console.log(`   Compression: enabled (gzip)`);
   }
 
-  await runPgDump(databaseUrl, filepath, compress);
+  await runPgDump(databaseUrl, filepath, compress, preserveAcl);
 
   // Get file size
   const stats = await stat(filepath);
@@ -251,81 +183,64 @@ async function createPostgresBackup(
  * Create a backup of the database (auto-detects provider)
  */
 export async function createBackup(options: BackupOptions): Promise<BackupResult> {
-  const provider = detectProvider();
-  const backupDir = await ensureBackupDir(provider);
-
-  // Get database path or URL based on provider
   const dbUrl = process.env.DATABASE_URL;
 
-  if (provider === "postgresql") {
-    if (!dbUrl) {
-      throw new Error(
-        "DATABASE_URL is required for PostgreSQL backups.\n" +
-        "  Set: postgresql://user:password@host:port/dbname"
-      );
-    }
-    return createPostgresBackup(dbUrl, backupDir, options.type, options.compress ?? false);
-  } else {
-    // SQLite: use the file path from DATABASE_URL or default
-    const dbPath = dbUrl 
-      ? dbUrl.replace(/^file:/, "") 
-      : join(__dirname, "../../packages/shared/dev.db");
-    
-    return createSQLiteBackup(dbPath, backupDir, options.type);
+  if (!dbUrl) {
+    throw new Error(
+      "DATABASE_URL is required for PostgreSQL backups.\n" +
+      "  Set: postgresql://user:password@host:port/dbname"
+    );
   }
+
+  const backupDir = await ensureBackupDir("postgresql");
+  const preserveAcl =
+    options.preserveAcl ??
+    String(process.env.PRESERVE_ACL ?? "").toLowerCase() === "true";
+  return createPostgresBackup(dbUrl, backupDir, options.type, options.compress ?? false, preserveAcl);
 }
 
 /**
  * List all available backups in the backup directory for current provider
  */
 export async function listBackups(): Promise<BackupResult[]> {
-  const provider = detectProvider();
-  const backupDir = getBackupDir();
-
-  // Ensure backup dir exists
-  try {
-    await mkdir(backupDir, { recursive: true });
-  } catch (error: any) {
-    if (error.code !== "EEXIST") {
-      throw error;
-    }
-  }
-
-  const files = await readdir(backupDir);
+  const postgresDir = getBackupDirForProvider("postgresql");
   const backups: BackupResult[] = [];
 
-  for (const file of files) {
-    // Filter by provider-specific extensions
-    let matches = false;
-    let format: "sql" | "sql.gz" | "db" = "db";
-    
-    if (provider === "postgresql") {
-      matches = file.endsWith("_backup.sql") || file.endsWith("_backup.sql.gz");
-      format = file.endsWith(".sql.gz") ? "sql.gz" : "sql";
-    } else {
-      matches = file.endsWith("_backup.db");
-      format = "db";
+  try {
+    const files = await readdir(postgresDir);
+    for (const file of files) {
+      const matches = file.endsWith("_backup.sql") || file.endsWith("_backup.sql.gz");
+      if (!matches) continue;
+
+      const filepath = join(postgresDir, file);
+      const stats = await stat(filepath);
+
+      // Parse timestamp from filename: 20260329_143022_daily_backup.sql
+      const match = file.match(/^(\d{8})_(\d{6})_(\w+)_backup/);
+      const timestamp = match
+        ? new Date(
+            Date.UTC(
+              parseInt(match[1].slice(0, 4)),
+              parseInt(match[1].slice(4, 6)) - 1,
+              parseInt(match[1].slice(6, 8)),
+              parseInt(match[2].slice(0, 2)),
+              parseInt(match[2].slice(2, 4)),
+              parseInt(match[2].slice(4, 6))
+            )
+          )
+        : stats.mtime;
+
+      backups.push({
+        filename: file,
+        filepath,
+        sizeBytes: stats.size,
+        timestamp,
+        provider: "postgresql",
+        format: file.endsWith(".sql.gz") ? "sql.gz" : "sql",
+      });
     }
-    
-    if (!matches) continue;
-
-    const filepath = join(backupDir, file);
-    const stats = await stat(filepath);
-
-    // Parse timestamp from filename: 20260329_143022_daily_backup.db
-    const match = file.match(/^(\d{8}_\d{6})_(\w+)_backup(?:\.(sql|sql\.gz))?$/);
-    const timestamp = match && match[1]
-      ? new Date(`${match[1].replace("_", "T")}`)
-      : stats.mtime;
-
-    backups.push({
-      filename: file,
-      filepath,
-      sizeBytes: stats.size,
-      timestamp,
-      provider,
-      format,
-    });
+  } catch {
+    // Directory doesn't exist yet — skip silently
   }
 
   // Sort by timestamp descending (newest first)
@@ -358,19 +273,19 @@ if (import.meta.main) {
       case "create": {
         const type = (args[1] as "daily" | "migration") || "daily";
         const compress = args.includes("--compress");
+        const preserveAcl = args.includes("--preserve-acl");
         
-        if (isPostgreSQL() && !compress) {
+        if (!compress) {
           console.log(`\n💡 Tip: Use --compress flag to gzip PostgreSQL backups:\n   pnpm db:backup create ${type} --compress\n`);
         }
         
-        await createBackup({ type, compress });
+        await createBackup({ type, compress, preserveAcl });
         break;
       }
       case "list": {
         const backups = await listBackups();
-        const provider = detectProvider();
         
-        console.log(`\n📦 Available backups (${provider}):\n`);
+        console.log(`\n📦 Available backups (postgresql):\n`);
         
         if (backups.length === 0) {
           console.log("   No backups found.\n");
@@ -396,7 +311,7 @@ if (import.meta.main) {
       }
       default:
         console.log("Usage:");
-        console.log("  pnpm db:backup create [daily|migration] [--compress]");
+        console.log("  pnpm db:backup create [daily|migration] [--compress] [--preserve-acl]");
         console.log("  pnpm db:backup list");
         console.log("  pnpm db:backup latest");
     }

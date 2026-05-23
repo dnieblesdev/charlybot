@@ -1,20 +1,18 @@
 /**
  * Backup Rotation Module
- * 
+ *
  * Manages backup retention by removing old backups beyond
- * the configured policy (7 daily, 3 migration per provider).
- * Scans both backups/postgres/ and backups/sqlite/ directories.
+ * the configured policy (7 daily, 3 migration).
+ * Scans backups/postgres/ only.
  */
 
 import { readdir, unlink, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
-import { detectProvider, getBackupDir, getBackupDirForProvider } from "./provider.js";
+import { getBackupDirForProvider } from "./provider.js";
 import type { Provider } from "./provider.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = fileURLToPath(import.meta.url).replace(/[/\\][^/\\]*$/, "");
+const PROVIDER: Provider = "postgresql";
 
 export interface RetentionPolicy {
   daily: number;      // default: 7
@@ -31,23 +29,16 @@ const DEFAULT_POLICY: RetentionPolicy = {
  */
 async function getBackupsByType(
   backupDir: string,
-  type: "daily" | "migration",
-  provider: Provider
+  type: "daily" | "migration"
 ): Promise<string[]> {
   try {
     const files = await readdir(backupDir);
-    
-    // Filter by provider-specific extensions
-    const filtered = files.filter(f => {
+
+    const filtered = files.filter((f) => {
       const hasType = f.includes(`_${type}_`);
-      
-      if (provider === "postgresql") {
-        return hasType && (f.endsWith("_backup.sql") || f.endsWith("_backup.sql.gz"));
-      } else {
-        return hasType && f.endsWith("_backup.db");
-      }
+      return hasType && (f.endsWith("_backup.sql") || f.endsWith("_backup.sql.gz"));
     });
-    
+
     return filtered.sort().reverse(); // Newest first
   } catch {
     // Directory doesn't exist yet
@@ -59,16 +50,15 @@ async function getBackupsByType(
  * Rotate backups for a single provider directory
  */
 async function rotateProviderBackups(
-  provider: Provider,
   policy: RetentionPolicy
 ): Promise<number> {
-  const backupDir = getBackupDirForProvider(provider);
+  const backupDir = getBackupDirForProvider(PROVIDER);
   let deletedCount = 0;
 
-  console.log(`\n${provider === "postgresql" ? "📦 PostgreSQL" : "💾 SQLite"} backups:`);
+  console.log(`\n📦 PostgreSQL backups:`);
 
   // Rotate daily backups
-  const dailyBackups = await getBackupsByType(backupDir, "daily", provider);
+  const dailyBackups = await getBackupsByType(backupDir, "daily");
   if (dailyBackups.length > policy.daily) {
     const toDelete = dailyBackups.slice(policy.daily);
     console.log(`   🗑️  Removing ${toDelete.length} old daily backup(s):`);
@@ -84,7 +74,7 @@ async function rotateProviderBackups(
   }
 
   // Rotate migration backups
-  const migrationBackups = await getBackupsByType(backupDir, "migration", provider);
+  const migrationBackups = await getBackupsByType(backupDir, "migration");
   if (migrationBackups.length > policy.migration) {
     const toDelete = migrationBackups.slice(policy.migration);
     console.log(`   🗑️  Removing ${toDelete.length} old migration backup(s):`);
@@ -110,11 +100,7 @@ export async function rotateBackups(policy: RetentionPolicy = DEFAULT_POLICY): P
 
   let totalDeleted = 0;
 
-  // Rotate PostgreSQL backups
-  totalDeleted += await rotateProviderBackups("postgresql", policy);
-
-  // Rotate SQLite backups
-  totalDeleted += await rotateProviderBackups("sqlite", policy);
+  totalDeleted += await rotateProviderBackups(policy);
 
   console.log(`\n✨ Rotation complete. Deleted ${totalDeleted} backup(s).\n`);
   
@@ -126,15 +112,9 @@ export async function rotateBackups(policy: RetentionPolicy = DEFAULT_POLICY): P
  */
 export async function showRotationStatus(policy: RetentionPolicy = DEFAULT_POLICY): Promise<void> {
   console.log("\n📊 Backup Rotation Status\n");
-  console.log(`Policy: ${policy.daily} daily, ${policy.migration} migration per provider\n`);
+  console.log(`Policy: ${policy.daily} daily, ${policy.migration} migration\n`);
 
-  const currentProvider = detectProvider();
-
-  // Show PostgreSQL backups
-  await showProviderStatus("postgresql", policy, currentProvider);
-
-  // Show SQLite backups
-  await showProviderStatus("sqlite", policy, currentProvider);
+  await showProviderStatus(policy);
 
   console.log("🗑️ = will be removed on next rotation\n");
 }
@@ -143,18 +123,14 @@ export async function showRotationStatus(policy: RetentionPolicy = DEFAULT_POLIC
  * Show status for a single provider
  */
 async function showProviderStatus(
-  provider: Provider,
-  policy: RetentionPolicy,
-  currentProvider: Provider
+  policy: RetentionPolicy
 ): Promise<void> {
-  const backupDir = getBackupDirForProvider(provider);
-  const label = provider === "postgresql" ? "📦 PostgreSQL" : "💾 SQLite";
-  const marker = provider === currentProvider ? " (current)" : "";
+  const backupDir = getBackupDirForProvider(PROVIDER);
 
-  console.log(`${label}${marker} [${backupDir.replace(/\\/g, "/")}]`);
+  console.log(`📦 PostgreSQL (current) [${backupDir.replace(/\\/g, "/")}]`);
 
   // Daily backups
-  const dailyBackups = await getBackupsByType(backupDir, "daily", provider);
+  const dailyBackups = await getBackupsByType(backupDir, "daily");
   console.log(`   Daily: ${dailyBackups.length}/${policy.daily}`);
   
   for (const backup of dailyBackups) {
@@ -170,7 +146,7 @@ async function showProviderStatus(
   }
 
   // Migration backups
-  const migrationBackups = await getBackupsByType(backupDir, "migration", provider);
+  const migrationBackups = await getBackupsByType(backupDir, "migration");
   console.log(`   Migration: ${migrationBackups.length}/${policy.migration}`);
   
   for (const backup of migrationBackups) {

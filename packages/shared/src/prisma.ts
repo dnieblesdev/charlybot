@@ -1,5 +1,17 @@
 import { PrismaClient } from './generated/prisma';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+
+function redactUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    u.password = "***";
+    return u.toString();
+  } catch {
+    // Fallback: regex replace user:pass@ or user@ patterns
+    return url.replace(/^(\w+:\/\/[^:@]+)(?::[^@]+)?@/, "$1:***@");
+  }
+}
 
 /**
  * Lazy initialization: prisma client is created on first access.
@@ -21,7 +33,13 @@ export function getPrisma(): PrismaClient {
         'DATABASE_URL is required for PostgreSQL. Set it to postgresql://user:password@host:port/dbname'
       );
     }
-    adapterInstance = new PrismaPg({ connectionString: url });
+    if (!/^postgres(ql)?:\/\//.test(url)) {
+      throw new Error(
+        `DATABASE_URL must start with postgresql:// or postgres:// (got: "${redactUrl(url)}")`
+      );
+    }
+    const pool = new Pool({ connectionString: url });
+    adapterInstance = new PrismaPg(pool);
     prismaInstance = new PrismaClient({
       adapter: adapterInstance,
       log: getLogLevel(),
@@ -34,9 +52,29 @@ export function getPrisma(): PrismaClient {
  * Backward-compatible prisma export — resolves lazily to avoid import-time errors.
  * Use getPrisma() for explicit control.
  */
+const INSPECT_SYMBOLS = [
+  Symbol.for("nodejs.util.inspect.custom"),
+  Symbol.toStringTag,
+  Symbol.iterator,
+  "then",
+  "constructor",
+  "toString",
+  "valueOf",
+];
+
 export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
   get(_target, prop) {
-    return (getPrisma() as any)[prop];
+    // Avoid initializing Prisma during inspection/introspection
+    if (typeof prop === "symbol" || INSPECT_SYMBOLS.includes(prop as string)) {
+      return undefined;
+    }
+    const instance = getPrisma();
+    const value = (instance as any)[prop];
+    // Bind functions so `this` stays on the real PrismaClient instance
+    if (typeof value === "function") {
+      return value.bind(instance);
+    }
+    return value;
   },
 });
 
@@ -47,7 +85,7 @@ export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
  * (tokens, emails, PII) into logs. Only enable via PRISMA_LOG_QUERIES=1 env var.
  */
 function getLogLevel(): ('error' | 'warn' | 'query')[] {
-  if (process.env.PRISMA_LOG_QUERIES === '1') {
+  if (['1', 'true'].includes(process.env.PRISMA_LOG_QUERIES?.toLowerCase() ?? '')) {
     return ['error', 'warn', 'query'];
   }
   return ['error', 'warn'];

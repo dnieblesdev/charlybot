@@ -36,12 +36,14 @@ services:
       POSTGRES_DB: charlybot
     volumes:
       - postgres-data-dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     expose:
       - "5432"
     networks:
       - charlybot-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U charlybot"]
+      test: ["CMD-SHELL", "pg_isready -h localhost -U charlybot"]
       interval: 5s
       timeout: 3s
       retries: 5
