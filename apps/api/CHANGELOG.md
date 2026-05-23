@@ -1,5 +1,12 @@
 # @charlybot/api
 
+## 3.0.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @charlybot/shared@3.0.1
+
 ## 3.0.0
 
 ### Major Changes

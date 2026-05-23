@@ -1,5 +1,27 @@
 # @charlybot/bot
 
+## 3.1.0
+
+### Minor Changes
+
+- Configurable anti-spam with per-pattern actions and escalation
+- Add /welcome show, test, and var list subcommands
+- Custom welcome variables, pre-fill modal, test-welcome uses formatWelcomeMessage
+- Add /social-link command, dynamic welcome placeholders, and config display
+- Add URL validation and max 25 links limit to /social-link set
+- Redesign /config show with bullet-list layout, fix ephemeral bug
+- Complete /config show embed with all IGuildConfig fields, add /mod antispam toggle
+
+### Patch Changes
+
+- Fix TypeScript errors in welcome var/remove and test
+- Verify fixes for /welcome: admin perms, deferReply, guards, embed color, error messages
+- Remove old /config welcome and /test-welcome commands
+- Defer reply before DB writes in welcome modal to prevent interaction timeout
+- Address judgment day findings: URL validation, case normalization, DB guard, atomic limit
+- Updated dependencies
+  - @charlybot/shared@3.0.1
+
 ## 3.0.0
 
 ### Major Changes

@@ -1,5 +1,27 @@
 # charlybot
 
+## 2026-05-23
+
+### @charlybot/shared (3.0.1)
+- Fix PrismaPg adapter to use pg Pool instance
+- Remove SQLite support from DB scripts (PostgreSQL-only)
+- Fix race conditions in backup/restore scripts
+- Preserve DATABASE_URL query params (sslmode, etc.)
+- Add credential redaction for safe logging
+- Pin Prisma dependencies to ^7.6.0
+- Fix PRISMA_LOG_QUERIES env var handling
+
+### @charlybot/bot (3.1.0)
+- Configurable anti-spam with per-pattern actions and escalation
+- Welcome system: custom variables, show/test subcommands, modal pre-fill
+- Social links: /social-link command with URL validation (max 25 links)
+- Config display: bullet-list layout, antispam toggle, complete IGuildConfig fields
+- Fix TypeScript errors, deferReply guards, ephemeral bugs
+- Updated dependency on @charlybot/shared@3.0.1
+
+### @charlybot/api (3.0.1)
+- Updated dependency on @charlybot/shared@3.0.1
+
 ## 2026-05-05
 
 ### @charlybot/bot (2.11.0)

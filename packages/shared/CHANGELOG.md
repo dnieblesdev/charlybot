@@ -1,5 +1,23 @@
 # @charlybot/shared
 
+## 3.0.1
+
+### Patch Changes
+
+- Fix PrismaPg adapter to use pg Pool instance instead of connection string object
+- Pin Prisma dependencies to ^7.6.0 for version consistency
+- Add dotenv/config to prisma.config.ts for DATABASE_URL loading
+- Fix pg_isready healthcheck to use -h localhost for TCP check
+- Add PostgreSQL port mapping (5432:5432) to docker-compose
+- Fix PRISMA_LOG_QUERIES to accept both '1' and 'true' values
+- Remove SQLite support from all DB scripts (PostgreSQL-only)
+- Fix race conditions in backup.ts (pgDump.kill() on error) and restore.ts (sequential pipeline)
+- Add credential redaction (redactUrl) to prevent password exposure in logs
+- Preserve DATABASE_URL query params (sslmode, etc.) in getPgEnvVars()
+- Add PRESERVE_ACL and PRISMA_LOG_QUERIES documentation to .env.example
+- Guard TRUNCATE in migrate-data.ts with helpful error message
+- Remove dead code (processError, customPath) from backup.ts
+
 ## 3.0.0
 
 ### Major Changes
