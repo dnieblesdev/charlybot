@@ -1,7 +1,7 @@
 {
   "name": "charlybot",
   "private": true,
-  "packageManager": "pnpm@10.14.0",
+  "packageManager": "pnpm@11.2.2",
   "workspaces": [
     "apps/*",
     "packages/*"

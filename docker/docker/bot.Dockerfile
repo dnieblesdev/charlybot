@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsodium23 \
     ca-certificates \
     wget \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Download yt-dlp latest (standalone binary)
@@ -25,18 +26,18 @@ RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/late
 
 WORKDIR /app
 
-# Enable corepack for pnpm
-RUN corepack enable
-
-# Copy workspace root and package files
+# Copy workspace root files FIRST so corepack can read packageManager version
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+
+# Enable corepack for pnpm — now it reads packageManager from package.json
+RUN corepack enable
 COPY apps/bot/package.json ./apps/bot/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/shared/prisma ./packages/shared/prisma/
 COPY apps/api/package.json ./apps/api/
 
-# Install dependencies (build tools present → native modules compile)
-RUN pnpm install --frozen-lockfile
+# Install dependencies for bot only (build tools present → native modules compile)
+RUN pnpm install --frozen-lockfile --silent --filter @charlybot/bot...
 
 # Generate Prisma client
 RUN pnpm exec prisma generate --schema=./packages/shared/prisma/schema.prisma

@@ -28,40 +28,40 @@ services:
       timeout: 3s
       retries: 3
 
-  postgres:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_USER: charlybot
-      POSTGRES_PASSWORD: charlybot
-      POSTGRES_DB: charlybot
-    volumes:
-      - postgres-data-dev:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    expose:
-      - "5432"
-    networks:
-      - charlybot-net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -U charlybot"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+  # postgres:
+  #   image: postgres:17-alpine
+  #   environment:
+  #     POSTGRES_USER: charlybot
+  #     POSTGRES_PASSWORD: charlybot
+  #     POSTGRES_DB: charlybot
+  #   volumes:
+  #     - postgres-data-dev:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   expose:
+  #     - "5432"
+  #   networks:
+  #     - charlybot-net
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -h localhost -U charlybot"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 5
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@charlybot.local
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "5050:80"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - charlybot-net
-    profiles:
-      - debug
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@charlybot.local
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - charlybot-net
+  #   profiles:
+  #     - debug
 
   # API service — hot reload via tsx --watch
   api:
@@ -77,8 +77,6 @@ services:
       - "3000"
     depends_on:
       valkey:
-        condition: service_healthy
-      postgres:
         condition: service_healthy
     networks:
       - charlybot-net
@@ -97,8 +95,6 @@ services:
     depends_on:
       valkey:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
     networks:
       - charlybot-net
     command: ["pnpm", "--filter", "@charlybot/bot", "dev"]
@@ -111,8 +107,7 @@ services:
     env_file:
       - ./.env.landing
     volumes:
-      - ../apps/landing/src:/app/src
-      - /app/node_modules
+      - ../apps/landing/src:/app/apps/landing/src
     expose:
       - "4200"
     networks:
@@ -124,8 +119,7 @@ services:
       context: ..
       dockerfile: docker/docker/dashboard.dev.Dockerfile
     volumes:
-      - ../apps/dashboard/src:/app/src
-      - /app/node_modules
+      - ../apps/dashboard/src:/app/apps/dashboard/src
     expose:
       - "4201"
     networks:
@@ -151,4 +145,4 @@ networks:
 
 volumes:
   valkey-data-dev:
-  postgres-data-dev:
+  # postgres-data-dev:

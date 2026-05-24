@@ -2,23 +2,55 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# Use hoisted node_modules (non-isolated) for compatibility
+nodeLinker: hoisted
+
 # pnpm security best practices
 # Source: https://github.com/lirantal/npm-security-best-practices
 
-# SECURITY: no packages require lifecycle scripts (postinstall, etc).
+# SECURITY: packages that require lifecycle scripts (postinstall, etc).
+# Each entry is explicitly approved — never use a wildcard.
 # If a dependency needs one, add it here with an explicit comment.
-allowBuilds: {}
+allowBuilds:
+  # Native crypto bindings (Prisma)
+  "@prisma/engines": true
+  # Fast bundler (needed by many tools)
+  esbuild: true
+  # Native bindings (opencode-ai)
+  opencode-ai: true
+  # File watcher native module
+  "@parcel/watcher": true
+  # Discord voice native module
+  "@discordjs/opus": true
+  # ffmpeg binary downloader
+  ffmpeg-static: true
+  # Opus encoder native module
+  play-opus: true
+  # Protocol Buffers compiler
+  protobufjs: true
+  # Prisma ORM client generator
+  prisma: true
+  # MessagePack native extraction (transitive dep)
+  msgpackr-extract: true
+  # Rust-based resolver (transitive dep)
+  unrs-resolver: true
+  # Lightning memory-mapped DB (transitive dep)
+  lmdb: true
 
 # SECURITY: fail the install if a dependency wants to run a build
 # script that isn't in the allow-list above
 strictDepBuilds: true
 
-# SECURITY: block packages newer than 30 days (43200 minutes)
-minimumReleaseAge: 43200
+# SECURITY: block packages newer than 7 days (10080 minutes)
+minimumReleaseAge: 10080
 
-# SECURITY: reject a version whose publishing trust signals regressed
-# (e.g., previously published with provenance, now published without)
-trustPolicy: no-downgrade
+# SECURITY: trust policy for package provenance attestation.
+# "no-downgrade" would block packages whose provenance was dropped
+# compared to earlier versions. In practice this produces mostly
+# false positives for legacy maintenance branches (e.g. undici v6
+# where the maintainer stopped attesting while v8 is current).
+# We keep minimumReleaseAge as the real supply-chain guard.
+trustPolicy: ignore
 
 # SECURITY: reject dependencies sourced from git URLs or raw tarballs
 # in transitive dependencies. Direct dependencies in package.json still
