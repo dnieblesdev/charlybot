@@ -31,6 +31,16 @@ logs
 
 # Test
 coverage
+*.spec.ts
+*.test.ts
+vitest.config.*
+tests/
+
+# Scripts (not needed in production images)
+scripts/
+
+# Debug (not needed in production images)
+debug/
 
 # Temp
 tmp

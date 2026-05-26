@@ -30,8 +30,20 @@ RUN pnpm run build
 FROM node:22-slim
 WORKDIR /app
 
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy built artifacts (output is at apps/landing/dist/landing/)
 COPY --from=build /app/apps/landing/dist/landing /app/dist/landing
+
+# Copy node_modules for SSR runtime dependencies
+# SSR may need some runtime node_modules — copy the whole workspace node_modules
+COPY --from=build /app/node_modules ./node_modules
+
+# Set production env
+ENV NODE_ENV=production
 
 # Expose port
 EXPOSE 4200
