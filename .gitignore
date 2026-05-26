@@ -25,10 +25,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .env.local
 
 # Docker per-app env files (local-only, DO NOT COMMIT)
-docker/.env.api
-docker/.env.bot
-docker/.env.landing
-docker/.env.dashboard
+docker/env/*/.env*
+!docker/env/*/.env*.example
 
 # data files
 data/

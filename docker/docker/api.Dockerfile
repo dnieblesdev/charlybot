@@ -1,5 +1,17 @@
 # Multi-stage build for API
-FROM oven/bun:1.3.9 AS builder
+# Stage 1: Build with Node.js + Bun bundler
+FROM node:22-slim AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Bun (needed for bundling, not available in node:22-slim)
+RUN curl -fsSL https://bun.sh/install | bash
+ENV BUN_INSTALL=/root/.bun
+ENV PATH=$BUN_INSTALL/bin:$PATH
 
 WORKDIR /app
 
@@ -14,7 +26,7 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/shared/prisma ./packages/shared/prisma/
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile --silent --filter @charlybot/api...
+RUN pnpm install --frozen-lockfile --ignore-scripts --filter @charlybot/api...
 
 # Generate Prisma client
 RUN pnpm exec prisma generate --schema=./packages/shared/prisma/schema.prisma
