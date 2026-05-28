@@ -52,6 +52,7 @@ backups/
 
 # Pi settings
 .pi/
+.pi-lens/
 
 nul
 
