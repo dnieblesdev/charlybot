@@ -89,6 +89,8 @@ pnpm db:restore
 | `discord-command` | bot | Create slash commands, add subcommands | [SKILL.md](skills/discord-command/SKILL.md) |
 | `changeset-workflow` | root, bot, api, shared | Version, release, changeset add/version | [SKILL.md](skills/changeset-workflow/SKILL.md) |
 | `prisma-migration` | root, shared | Run Prisma migrations with pre-backup, fix tsx/dotenv issues | [SKILL.md](skills/prisma-migration/SKILL.md) |
+| `observability-logging` | api, bot, shared | Add telemetry, structured logs, observability design | [SKILL.md](skills/observability-logging/SKILL.md) |
+| `pino` | api, bot, shared | Configure Pino logger, child loggers, transports, rotation | [SKILL.md](skills/pino/SKILL.md) |
 
 ### Repo Skills
 
@@ -130,6 +132,8 @@ When you perform these actions, load the corresponding skill FIRST:
 | Configure Prisma database provider | `prisma-database-setup` |
 | Work with Prisma Postgres | `prisma-postgres` |
 | Create Zod schemas | `zod` |
+| Add telemetry, structured logs | `observability-logging` |
+| Configure Pino logger, transports, rotation | `pino` |
 | Write Hono routes | `hono` |
 | Write TypeScript, types, utilities | `typescript-advanced-types` |
 | Work on the dashboard (Angular) | `angular-developer` |

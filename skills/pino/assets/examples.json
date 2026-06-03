@@ -1,0 +1,80 @@
+{
+  "description": "Pino logger examples for CharlyBot. Each example shows a specific capability.",
+  "examples": [
+    {
+      "name": "base-config-dev",
+      "description": "Dev config with pino-pretty transport",
+      "code": "import pino from \"pino\";\n\nconst logger = pino({\n  level: \"debug\",\n  transport: {\n    target: \"pino-pretty\",\n    options: {\n      colorize: true,\n      translateTime: \"SYS:standard\",\n      ignore: \"pid,hostname\",\n    },\n  },\n});"
+    },
+    {
+      "name": "base-config-prod",
+      "description": "Production config — sync JSON to stdout",
+      "code": "import pino from \"pino\";\n\nconst logger = pino({\n  level: process.env.LOG_LEVEL ?? \"info\",\n  base: {\n    service: \"api\",\n    environment: process.env.NODE_ENV ?? \"production\",\n    version: process.env.npm_package_version ?? \"0.0.0\",\n  },\n  formatters: {\n    level: (label) => ({ level: label }),\n  },\n  timestamp: pino.stdTimeFunctions.isoTime,\n});"
+    },
+    {
+      "name": "shared-logger-factory",
+      "description": "Shared logger factory for packages/shared",
+      "code": "import pino from \"pino\";\n\nexport interface LoggerConfig {\n  service: string;\n  env: string;\n  version: string;\n}\n\nexport function createLogger({ service, env, version }: LoggerConfig) {\n  return pino({\n    level: process.env.LOG_LEVEL ?? \"info\",\n    base: { service, environment: env, version },\n    formatters: {\n      level: (label) => ({ level: label }),\n    },\n    timestamp: pino.stdTimeFunctions.isoTime,\n    redact: {\n      paths: [\n        \"req.headers.authorization\",\n        \"req.headers.cookie\",\n        \"*.password\",\n        \"*.token\",\n        \"*.secret\",\n        \"*.apiKey\",\n      ],\n      censor: \"[REDACTED]\",\n    },\n  });\n}"
+    },
+    {
+      "name": "pino-http-middleware",
+      "description": "pino-http middleware for Hono",
+      "code": "import { Hono } from \"hono\";\nimport pinoHttp from \"pino-http\";\nimport { logger } from \"@charlybot/shared/observability/pino\";\n\nconst app = new Hono();\n\napp.use(pinoHttp({ logger }));\n\napp.get(\"/health\", (c) => c.json({ ok: true }));\n\nexport default app;"
+    },
+    {
+      "name": "pino-http-custom",
+      "description": "pino-http with custom serializers and attribute keys",
+      "code": "const pinoHttpMiddleware = pinoHttp({\n  logger,\n  customSuccessMessage: (req, res, val) =>\n    `${req.method} ${req.url} → ${res.statusCode}`,\n  customErrorMessage: (req, res, err) =>\n    `${req.method} ${req.url} → ERROR: ${err.message}`,\n  customAttributeKeys: {\n    req: \"request\",\n    res: \"response\",\n    err: \"error\",\n    responseTime: \"latency_ms\",\n  },\n  serializers: {\n    req: (req) => ({\n      method: req.method,\n      url: req.url,\n      headers: {\n        host: req.headers.host,\n        \"user-agent\": req.headers[\"user-agent\"],\n        \"content-type\": req.headers[\"content-type\"],\n      },\n    }),\n    res: (res) => ({ statusCode: res.statusCode }),\n  },\n});"
+    },
+    {
+      "name": "child-logger-discord",
+      "description": "Child logger with Discord interaction context",
+      "code": "import { logger } from \"../../../utils/logger\";\n\nexport async function handlePing(interaction: ChatInputCommandInteraction) {\n  const childLogger = logger.child({\n    interaction_id: interaction.id,\n    user_id: interaction.user.id,\n    guild_id: interaction.guildId,\n    command: \"ping\",\n  });\n\n  childLogger.info(\"Ping command received\");\n\n  try {\n    await interaction.reply({ content: \"Pong!\" });\n    childLogger.info(\"Ping command completed\");\n  } catch (error) {\n    childLogger.error(\n      { error: error instanceof Error ? error.message : String(error) },\n      \"Ping command failed\"\n    );\n  }\n}"
+    },
+    {
+      "name": "child-logger-prisma",
+      "description": "Child logger for Prisma queries",
+      "code": "import { logger } from \"@charlybot/shared/observability\";\n\nconst prismaLogger = logger.child({ component: \"prisma\" });\n\nprisma.$on(\"query\", (event) => {\n  prismaLogger.debug({\n    query: event.query,\n    duration_ms: event.duration,\n    params: event.params,\n  });\n});\n\nprisma.$on(\"error\", (event) => {\n  prismaLogger.error({\n    error: event.target.message,\n    query: event.target.query,\n  });\n});"
+    },
+    {
+      "name": "error-serializer-custom",
+      "description": "Custom error serializer (no stack in prod)",
+      "code": "const logger = pino({\n  serializers: {\n    err: (err: Error) => ({\n      message: err.message,\n      name: err.name,\n      stack: process.env.NODE_ENV === \"development\" ? err.stack : undefined,\n      code: (err as any).code,\n    }),\n  },\n});"
+    },
+    {
+      "name": "redact-config",
+      "description": "Redact paths configuration",
+      "code": "const logger = pino({\n  level: \"info\",\n  redact: {\n    paths: [\n      \"req.headers.authorization\",\n      \"req.headers.cookie\",\n      \"req.headers['x-api-key']\",\n      \"*.password\",\n      \"*.token\",\n      \"*.secret\",\n      \"*.apiKey\",\n      \"body.Authorization\",\n      \"body.cookie\",\n    ],\n    censor: \"[REDACTED]\",\n  },\n});"
+    },
+    {
+      "name": "transport-pino-roll",
+      "description": "pino-roll for file rotation in production",
+      "code": "const logger = pino({\n  level: \"info\",\n  transport: {\n    target: \"pino-roll\",\n    options: {\n      file: \"./logs/app.log\",\n      size: \"10m\",\n      interval: \"1d\",\n      maxFiles: 7,\n      compress: true,\n      mkdir: true,\n    },\n  },\n});"
+    },
+    {
+      "name": "exception-handler",
+      "description": "Uncaught exception handler",
+      "code": "process.on(\"uncaughtException\", (err: Error, origin: string) => {\n  logger.fatal(\n    {\n      err: { message: err.message, stack: err.stack, name: err.name },\n      origin,\n    },\n    \"Uncaught exception — process will exit\"\n  );\n  setTimeout(() => process.exit(1), 1000);\n});"
+    },
+    {
+      "name": "rejection-handler",
+      "description": "Unhandled promise rejection handler",
+      "code": "process.on(\"unhandledRejection\", (reason: unknown, promise: Promise<unknown>) => {\n  logger.error(\n    {\n      reason: reason instanceof Error ? reason.message : String(reason),\n      stack: reason instanceof Error ? reason.stack : undefined,\n    },\n    \"Unhandled promise rejection\"\n  );\n});"
+    },
+    {
+      "name": "conditional-level",
+      "description": "Runtime level change for debugging",
+      "code": "// Enable debug logging at runtime (useful for debugging)\nlogger.level = \"debug\";\nlogger.info(\"Debug logging enabled\");\n\n// Check level before building expensive objects\nif (logger.isLevelEnabled(\"debug\")) {\n  logger.debug(\n    { expensiveState: computeExpensiveState() },\n    \"Debug info\"\n  );\n}"
+    },
+    {
+      "name": "nested-children",
+      "description": "Nested child loggers for granular context",
+      "code": "const base = logger.child({ service: \"api\" });\nconst db = base.child({ component: \"prisma\" });\nconst query = db.child({ operation: \"select\" });\n\nquery.info(\"Executing select query\");\n// Logs include: service=api, component=prisma, operation=select"
+    },
+    {
+      "name": "log-levels-reference",
+      "description": "When to use each log level",
+      "code": "// trace — deepest diagnostic\nlogger.trace({ loopIterations: count }, \"Loop completed\");\n\n// debug — development state\nlogger.debug({ cacheHit: true, cacheKey }, \"Cache lookup\");\n\n// info — normal operations\nlogger.info({ command: \"/ping\", userId }, \"Command received\");\n\n// warn — unexpected but handled\nlogger.warn({ retryCount: 3, maxRetries: 5 }, \"Retry attempt\");\n\n// error — operation failed\nlogger.error({ error: err.message, query }, \"DB query failed\");\n\n// fatal — crash/unrecoverable\nlogger.fatal({ err }, \"Database connection lost — exiting\");"
+    }
+  ]
+}
