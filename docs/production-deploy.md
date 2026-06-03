@@ -203,7 +203,7 @@ Configurar una contraseña fuerte y pasarla via Docker secret (nunca en texto pl
 openssl rand -base64 48 | tr -d '/+=' | head -c 32
 ```
 
-Configurar en `docker/.env.valkey`:
+Configurar en `docker/env/prod/.env.valkey`:
 
 ```env
 VALKEY_PASSWORD=your_strong_random_password_here_min_32_chars
@@ -301,9 +301,9 @@ services:
   api:
     build:
       context: ..
-      dockerfile: docker/docker/api.Dockerfile
+      dockerfile: docker/dockerfiles/api.prod.Dockerfile
     env_file:
-      - ./.env.api
+      - ./env/prod/.env.api
     expose:
       - "3000"
     depends_on:
@@ -316,14 +316,13 @@ services:
       resources:
         limits:
           memory: 512M
-    command: ["bun", "run", "--cwd", "/app/apps/api", "start"]
 
   bot:
     build:
       context: ..
-      dockerfile: docker/docker/bot.Dockerfile
+      dockerfile: docker/dockerfiles/bot.prod.Dockerfile
     env_file:
-      - ./.env.bot
+      - ./env/prod/.env.bot
     depends_on:
       valkey:
         condition: service_healthy
@@ -336,9 +335,8 @@ services:
       resources:
         limits:
           memory: 512M
-    command: ["bun", "run", "--cwd", "/app/apps/bot", "src/index.ts"]
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -f 'bun.*index.ts' || exit 1"]
+      test: ["CMD-SHELL", "pgrep -f 'node.*index' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -347,9 +345,9 @@ services:
   landing:
     build:
       context: ..
-      dockerfile: apps/landing/Dockerfile
+      dockerfile: docker/dockerfiles/landing.prod.Dockerfile
     env_file:
-      - ./.env.landing
+      - ./env/prod/.env.landing
     expose:
       - "4200"
     networks:
@@ -371,7 +369,7 @@ services:
   dashboard:
     build:
       context: ..
-      dockerfile: apps/dashboard/Dockerfile
+      dockerfile: docker/dockerfiles/dashboard.prod.Dockerfile
     expose:
       - "4201"
     networks:
@@ -379,7 +377,7 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - "wget -q --spider http://127.0.0.1:4201/health || exit 1"
+        - "curl -f http://127.0.0.1:4201/health || exit 1"
       interval: 30s
       timeout: 3s
       retries: 3
@@ -426,15 +424,13 @@ volumes:
 Crear estos archivos desde los ejemplos:
 
 ```bash
-cd docker
-cp .env.api.example .env.api        # Fill in API_KEY, DATABASE_URL
-cp .env.bot.example .env.bot         # Fill in DISCORD_TOKEN, CLIENT_ID, GUILD_ID
-cp .env.landing.example .env.landing # Fill in PORT, domain
-cp .env.dashboard.example .env.dashboard
-cp .env.docker.example .env.docker   # Shared vars (Valkey prefix, etc.)
+cp docker/env/prod/.env.api.example docker/env/prod/.env.api         # Fill in API_KEY, DATABASE_URL
+cp docker/env/prod/.env.bot.example docker/env/prod/.env.bot         # Fill in DISCORD_TOKEN, CLIENT_ID, GUILD_ID
+cp docker/env/prod/.env.landing.example docker/env/prod/.env.landing # Fill in PORT if needed
+cp docker/env/prod/.env.valkey.example docker/env/prod/.env.valkey   # Fill in VALKEY_PASSWORD if needed
 ```
 
-Para producción, agregar `VALKEY_PASSWORD` a `.env.docker`:
+Para producción, agregar `VALKEY_PASSWORD` a `docker/env/prod/.env.valkey`:
 
 ```env
 VALKEY_PASSWORD=your_strong_random_password_here_min_32_chars
@@ -933,7 +929,7 @@ bun run rc
 | `docker/docker-compose.yml` | Orquestador de producción |
 | `docker/docker-compose.dev.yml` | Desarrollo con hot reload |
 | `docker/nginx/nginx.conf` | Routing del proxy reverso |
-| `docker/.env.*.example` | Templates de vars de entorno |
+| `docker/env/{dev,prod}/.env.*.example` | Templates de vars de entorno |
 | `packages/shared/prisma/schema.prisma` | Schema de la base de datos |
 | `packages/shared/prisma/backups/` | Almacenamiento de backups |
 | `apps/api/src/index.ts` | Entry point de la API |

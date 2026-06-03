@@ -49,6 +49,8 @@ scripts/
   listRegistered.ts
 docker/
   docker-compose.dev.yml
+  docker-compose.yml
+  dockerfiles/  ← Explicit dev/prod Dockerfiles per service
 skills/        ← repo-specific skills (also see <available_skills> in system prompt)
 ```
 
@@ -72,9 +74,11 @@ pnpm db:restore
 
 - **Logger**: Use Winston (`logger` or `createLogger()`), never `console.log`.
 - **No generated Prisma**: Do not edit files in `packages/shared/src/generated/prisma/`.
-- **Test policy**: NEVER run tests unless the user explicitly requests it.
-  - **EXCEPTION**: in `apps/bot/`, you may run `pnpm --filter @charlybot/bot test` (vitest) when editing commands.
-- **No destructives**: Do not run build/test or destructive commands unless explicitly requested.
+- **Validation policy**: Run relevant, non-destructive validation proactively when it directly matches the change.
+  - Examples: focused tests, typecheck/lint/build for the touched workspace, `docker compose config`, schema/config validation.
+  - Keep validation scoped. Avoid broad repo-wide commands when a focused command proves the change.
+  - Ask first when validation may be slow, costly, require secrets/services, mutate state, run migrations, start long-lived containers, or touch external systems.
+- **No destructives**: Never run destructive commands unless explicitly requested. This includes destructive DB operations, container/volume removal, force pushes, resets, or commands that can overwrite user data.
 
 ## Available Skills
 

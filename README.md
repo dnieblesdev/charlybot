@@ -140,11 +140,50 @@ git clone https://github.com/dnieblesdev/charlybot.git
 cd charlybot
 cp .env.example .env
 
-# Producción — stack completo
-docker compose -f docker/docker-compose.yml up -d
+# Desarrollo — copiar envs locales
+cp docker/env/dev/.env.api.example docker/env/dev/.env.api
+cp docker/env/dev/.env.bot.example docker/env/dev/.env.bot
+cp docker/env/dev/.env.landing.example docker/env/dev/.env.landing
+cp docker/env/dev/.env.valkey.example docker/env/dev/.env.valkey
 
-# Desarrollo — hot reload
-docker compose -f docker/docker-compose.dev.yml up bot api
+# Desarrollo — hot reload usando PostgreSQL local en tu host
+docker compose -f docker/docker-compose.dev.yml up
+
+# Desarrollo autocontenido — incluye PostgreSQL en Docker
+docker compose -f docker/docker-compose.dev.yml --profile db up
+```
+
+Para producción, copiá los envs de `docker/env/prod` y apuntá `DATABASE_URL` a tu PostgreSQL externo/gestionado:
+
+```bash
+cp docker/env/prod/.env.api.example docker/env/prod/.env.api
+cp docker/env/prod/.env.bot.example docker/env/prod/.env.bot
+cp docker/env/prod/.env.landing.example docker/env/prod/.env.landing
+cp docker/env/prod/.env.valkey.example docker/env/prod/.env.valkey
+
+# Producción — app stack + Valkey + Nginx. PostgreSQL es externo/gestionado.
+docker compose -f docker/docker-compose.yml up -d
+```
+
+En desarrollo hay dos modos válidos para PostgreSQL:
+
+- **PostgreSQL local en tu máquina**: es el modo por defecto. Dentro de los contenedores usá `host.docker.internal` en `DATABASE_URL`.
+- **PostgreSQL en Docker**: activá el profile `db` y usá el host `postgres` en `DATABASE_URL`.
+
+Producción no levanta PostgreSQL en Docker Compose. Apuntá `DATABASE_URL` a una instancia externa o gestionada.
+
+Los Dockerfiles viven juntos en `docker/dockerfiles/` con nombre explícito por servicio y entorno:
+
+```text
+docker/dockerfiles/
+├── api.dev.Dockerfile
+├── api.prod.Dockerfile
+├── bot.dev.Dockerfile
+├── bot.prod.Dockerfile
+├── landing.dev.Dockerfile
+├── landing.prod.Dockerfile
+├── dashboard.dev.Dockerfile
+└── dashboard.prod.Dockerfile
 ```
 
 #### Manual
@@ -215,12 +254,29 @@ pnpm dev:bot         # Solo Bot
 
 ```
 docker/
-├── .env.docker     # Variables compartidas (DISCORD_TOKEN, JWT_SECRET, etc.)
-├── .env.api        # Solo API (PORT, LOG_LEVEL)
-├── .env.bot        # Solo Bot (Spotify, OWNER_ID)
-├── .env.landing    # Solo Landing (PORT=4000)
-└── .env.dashboard  # Solo Dashboard (vacío — todo va por proxy)
+└── env/
+    ├── dev/
+    │   ├── .env.api.example
+    │   ├── .env.bot.example
+    │   ├── .env.landing.example
+    │   ├── .env.dashboard.example
+    │   └── .env.valkey.example
+    └── prod/
+        ├── .env.api.example
+        ├── .env.bot.example
+        ├── .env.landing.example
+        ├── .env.dashboard.example
+        └── .env.valkey.example
 ```
+
+Copiá al mismo directorio, sin el sufijo `.example`, los archivos que use el compose que vas a levantar. Los `.env` reales son locales y no se versionan. `dashboard` no usa `env_file` actualmente; sus ejemplos quedan como placeholder documentado.
+
+Para `docker/env/dev/.env.api` y `docker/env/dev/.env.bot`:
+
+- PostgreSQL local del host: `DATABASE_URL=postgresql://...@host.docker.internal:5432/charlybot`
+- PostgreSQL del profile Docker `db`: `DATABASE_URL=postgresql://...@postgres:5432/charlybot`
+
+Para `docker/env/prod/.env.api` y `docker/env/prod/.env.bot`, `DATABASE_URL` debe apuntar a la base PostgreSQL externa de producción.
 
 ---
 

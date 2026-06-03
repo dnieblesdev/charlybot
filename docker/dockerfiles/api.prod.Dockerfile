@@ -67,7 +67,7 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/shared/prisma ./packages/shared/prisma/
 
 # Install runtime dependencies
-RUN pnpm install --frozen-lockfile --silent --ignore-scripts --filter @charlybot/api...
+RUN pnpm install --frozen-lockfile --ignore-scripts --filter @charlybot/api...
 
 # Generate Prisma client at runtime (so native engines are downloaded for this architecture)
 RUN pnpm exec prisma generate --schema=./packages/shared/prisma/schema.prisma

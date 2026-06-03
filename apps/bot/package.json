@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "tsx src/index.ts",
+    "dev": "tsx --watch src/index.ts",
     "rc": "tsx ../../scripts/registerCommands.ts",
     "cc": "tsx ../../scripts/clearCommands.ts",
     "lc": "tsx ../../scripts/listRegistered.ts",

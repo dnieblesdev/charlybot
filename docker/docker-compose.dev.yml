@@ -1,7 +1,10 @@
-# Development harness — uses bind mounts for hot reload
+# Development harness — uses bind mounts for hot reload.
+# Default mode uses PostgreSQL from the host machine via host.docker.internal.
 # Use: docker compose -f docker/docker-compose.dev.yml up
+# Optional Docker PostgreSQL: docker compose -f docker/docker-compose.dev.yml --profile db up
 services:
   valkey:
+    restart: unless-stopped
     image: valkey/valkey:8.0
     env_file:
       - ./env/dev/.env.valkey
@@ -30,25 +33,32 @@ services:
       timeout: 3s
       retries: 3
 
-  # postgres:
-  #   image: postgres:17-alpine
-  #   environment:
-  #     POSTGRES_USER: charlybot
-  #     POSTGRES_PASSWORD: charlybot
-  #     POSTGRES_DB: charlybot
-  #   volumes:
-  #     - postgres-data-dev:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
-  #   expose:
-  #     - "5432"
-  #   networks:
-  #     - charlybot-net
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -h localhost -U charlybot"]
-  #     interval: 5s
-  #     timeout: 3s
-  #     retries: 5
+  # Optional PostgreSQL for contributors who want a self-contained dev stack.
+  # Not enabled by default so local PostgreSQL workflows keep working.
+  # When this profile is active, set DATABASE_URL host to `postgres` in
+  # docker/env/dev/.env.api and docker/env/dev/.env.bot.
+  postgres:
+    restart: unless-stopped
+    image: postgres:17-alpine
+    profiles:
+      - db
+    environment:
+      POSTGRES_USER: charlybot
+      POSTGRES_PASSWORD: charlybot
+      POSTGRES_DB: charlybot
+    volumes:
+      - postgres-data-dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+    networks:
+      - charlybot-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U charlybot -d charlybot"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   # pgadmin:
   #   image: dpage/pgadmin4:latest
@@ -69,9 +79,14 @@ services:
   api:
     build:
       context: ..
-      dockerfile: docker/docker/api.Dockerfile
+      dockerfile: docker/dockerfiles/api.dev.Dockerfile
+    restart: unless-stopped
+    # Ensure the container runs `pnpm ...` directly (no inherited entrypoint)
+    entrypoint: []
     env_file:
       - ./env/dev/.env.api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ../apps/api/src:/app/apps/api/src
       - ../packages/shared/src:/app/packages/shared/src
@@ -84,13 +99,18 @@ services:
       - charlybot-net
     command: ["pnpm", "--filter", "@charlybot/api", "dev"]
 
-  # Bot service — hot reload via tsx
+  # Bot service — hot reload via tsx --watch
   bot:
     build:
       context: ..
-      dockerfile: docker/docker/bot.Dockerfile
+      dockerfile: docker/dockerfiles/bot.dev.Dockerfile
+    # Ensure the container runs `pnpm ...` directly (no inherited entrypoint)
+    entrypoint: []
+    restart: unless-stopped
     env_file:
       - ./env/dev/.env.bot
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ../apps/bot/src:/app/apps/bot/src
       - ../packages/shared/src:/app/packages/shared/src
@@ -105,7 +125,8 @@ services:
   landing:
     build:
       context: ..
-      dockerfile: docker/docker/landing.dev.Dockerfile
+      dockerfile: docker/dockerfiles/landing.dev.Dockerfile
+    restart: unless-stopped
     env_file:
       - ./env/dev/.env.landing
     volumes:
@@ -119,7 +140,8 @@ services:
   dashboard:
     build:
       context: ..
-      dockerfile: docker/docker/dashboard.dev.Dockerfile
+      dockerfile: docker/dockerfiles/dashboard.dev.Dockerfile
+    restart: unless-stopped
     volumes:
       - ../apps/dashboard/src:/app/apps/dashboard/src
     expose:
@@ -147,4 +169,4 @@ networks:
 
 volumes:
   valkey-data-dev:
-  # postgres-data-dev:
+  postgres-data-dev:
