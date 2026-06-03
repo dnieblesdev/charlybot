@@ -58,11 +58,19 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
     return this.useFallback ? 'closed' : this.client.circuitState;
   }
 
+  private shouldUseFallback(): boolean {
+    return this.useFallback && this.fallback !== null;
+  }
+
   // =============================================================================
   // Cache Operations (fallback on failure)
   // =============================================================================
 
   async get<T>(key: string): Promise<T | undefined> {
+    if (this.shouldUseFallback()) {
+      return this.fallback?.get<T>(key);
+    }
+
     try {
       return await this.client.get<T>(key);
     } catch (err) {
@@ -71,6 +79,7 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
         error: err instanceof Error ? err.message : String(err),
       });
       if (this.fallback) {
+        this.useFallback = true;
         return this.fallback.get<T>(key);
       }
       return undefined;
@@ -78,6 +87,11 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
   }
 
   async set<T>(key: string, value: T, ttlSeconds: number): Promise<void> {
+    if (this.shouldUseFallback()) {
+      await this.fallback?.set(key, value, ttlSeconds);
+      return;
+    }
+
     try {
       await this.client.set<T>(key, value, ttlSeconds);
     } catch (err) {
@@ -86,12 +100,18 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
         error: err instanceof Error ? err.message : String(err),
       });
       if (this.fallback) {
+        this.useFallback = true;
         await this.fallback.set(key, value, ttlSeconds);
       }
     }
   }
 
   async del(key: string): Promise<void> {
+    if (this.shouldUseFallback()) {
+      await this.fallback?.del(key);
+      return;
+    }
+
     try {
       await this.client.del(key);
     } catch (err) {
@@ -100,6 +120,7 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
         error: err instanceof Error ? err.message : String(err),
       });
       if (this.fallback) {
+        this.useFallback = true;
         await this.fallback.del(key);
       }
     }
@@ -110,6 +131,17 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
     fetchFn: () => Promise<T>,
     ttlSeconds: number,
   ): Promise<T> {
+    if (this.shouldUseFallback()) {
+      const cached = await this.fallback?.get<T>(key);
+      if (cached !== undefined) {
+        return cached;
+      }
+
+      const value = await fetchFn();
+      await this.fallback?.set<T>(key, value, ttlSeconds);
+      return value;
+    }
+
     try {
       return await this.client.getOrSet<T>(key, fetchFn, ttlSeconds);
     } catch (err) {
@@ -118,6 +150,7 @@ export class ValkeyFallbackWrapper implements IValkeyClient {
         error: err instanceof Error ? err.message : String(err),
       });
       if (this.fallback) {
+        this.useFallback = true;
         const cached = await this.fallback.get<T>(key);
         if (cached !== undefined) {
           return cached;
