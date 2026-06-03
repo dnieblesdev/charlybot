@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { AutoRoleSchema, RoleMappingSchema } from "@charlybot/shared";
 import { z } from "zod";
-import logger from "../utils/logger";
+import { logRouteError } from "../utils/logRouteError";
 import { authMiddleware } from "../middleware/authMiddleware";
 import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
 import { jwtAuth } from "../middleware/jwtMiddleware";
@@ -31,6 +31,7 @@ const UpdateMappingSchema = RoleMappingSchema.partial();
 router.get("/guild/:guildId", async (c) => {
   const guildId = c.req.param("guildId");
   const { page, limit } = PaginationSchema.parse(c.req.query());
+  const logger = c.get("logger");
 
   try {
     const [data, total] = await Promise.all([
@@ -51,7 +52,11 @@ router.get("/guild/:guildId", async (c) => {
       totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
-    logger.error(`Error fetching autoroles for guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "fetch_autoroles" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -61,6 +66,7 @@ router.post("/", jwtAuth, zValidator("json", CreateAutoRoleSchema), async (c) =>
   const data = c.req.valid("json");
   const jwt = c.get("jwt");
   const createdBy = jwt?.userId ?? "unknown";
+  const logger = c.get("logger");
 
   try {
     const autorole = await prisma.autoRole.create({
@@ -96,7 +102,11 @@ router.post("/", jwtAuth, zValidator("json", CreateAutoRoleSchema), async (c) =>
 
     return c.json(autorole, 201);
   } catch (error) {
-    logger.error("Error creating autorole", { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", operation: "create_autorole" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -105,6 +115,7 @@ router.post("/", jwtAuth, zValidator("json", CreateAutoRoleSchema), async (c) =>
 router.patch("/:id", zValidator("json", UpdateAutoRoleSchema), async (c) => {
   const id = parseInt(c.req.param("id"), 10);
   const data = c.req.valid("json");
+  const logger = c.get("logger");
 
   if (isNaN(id)) {
     return c.json({ error: "Invalid autorole ID" }, 400);
@@ -131,7 +142,11 @@ router.patch("/:id", zValidator("json", UpdateAutoRoleSchema), async (c) => {
 
     return c.json(autorole);
   } catch (error) {
-    logger.error(`Error updating autorole ${id}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", operation: "update_autorole" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -139,6 +154,7 @@ router.patch("/:id", zValidator("json", UpdateAutoRoleSchema), async (c) => {
 // DELETE /api/v1/autoroles/:id — delete autorole
 router.delete("/:id", async (c) => {
   const id = parseInt(c.req.param("id"), 10);
+  const logger = c.get("logger");
 
   if (isNaN(id)) {
     return c.json({ error: "Invalid autorole ID" }, 400);
@@ -151,7 +167,11 @@ router.delete("/:id", async (c) => {
 
     return c.json({ success: true });
   } catch (error) {
-    logger.error(`Error deleting autorole ${id}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", operation: "delete_autorole" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -160,6 +180,7 @@ router.delete("/:id", async (c) => {
 router.post("/:id/mappings", zValidator("json", CreateMappingSchema), async (c) => {
   const autoRoleId = parseInt(c.req.param("id"), 10);
   const data = c.req.valid("json");
+  const logger = c.get("logger");
 
   if (isNaN(autoRoleId)) {
     return c.json({ error: "Invalid autorole ID" }, 400);
@@ -180,7 +201,11 @@ router.post("/:id/mappings", zValidator("json", CreateMappingSchema), async (c) 
 
     return c.json(mapping, 201);
   } catch (error) {
-    logger.error(`Error creating role mapping for autorole ${autoRoleId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", operation: "create_role_mapping" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -189,6 +214,7 @@ router.post("/:id/mappings", zValidator("json", CreateMappingSchema), async (c) 
 router.patch("/mappings/:mappingId", zValidator("json", UpdateMappingSchema), async (c) => {
   const mappingId = parseInt(c.req.param("mappingId"), 10);
   const data = c.req.valid("json");
+  const logger = c.get("logger");
 
   if (isNaN(mappingId)) {
     return c.json({ error: "Invalid mapping ID" }, 400);
@@ -209,7 +235,11 @@ router.patch("/mappings/:mappingId", zValidator("json", UpdateMappingSchema), as
 
     return c.json(mapping);
   } catch (error) {
-    logger.error(`Error updating role mapping ${mappingId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", operation: "update_role_mapping" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -217,6 +247,7 @@ router.patch("/mappings/:mappingId", zValidator("json", UpdateMappingSchema), as
 // DELETE /api/v1/autoroles/mappings/:mappingId — remove mapping
 router.delete("/mappings/:mappingId", async (c) => {
   const mappingId = parseInt(c.req.param("mappingId"), 10);
+  const logger = c.get("logger");
 
   if (isNaN(mappingId)) {
     return c.json({ error: "Invalid mapping ID" }, 400);
@@ -229,7 +260,11 @@ router.delete("/mappings/:mappingId", async (c) => {
 
     return c.json({ success: true });
   } catch (error) {
-    logger.error(`Error deleting role mapping ${mappingId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", operation: "delete_role_mapping" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });

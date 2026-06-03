@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { GuildMusicConfigSchema } from "@charlybot/shared";
 import { z } from "zod";
-import logger from "../utils/logger";
+import { logRouteError } from "../utils/logRouteError";
 import { authMiddleware } from "../middleware/authMiddleware";
 import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
 
@@ -16,6 +16,7 @@ router.use("/*", guildAccessMiddleware);
 // GET /api/v1/music/queues/:guildId
 router.get("/queues/:guildId", async (c) => {
   const guildId = c.req.param("guildId");
+  const logger = c.get("logger");
 
   try {
     const queue = await prisma.musicQueue.findUnique({
@@ -33,7 +34,11 @@ router.get("/queues/:guildId", async (c) => {
 
     return c.json(queue);
   } catch (error) {
-    logger.error(`Error fetching music queue for guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "fetch_music_queue" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -41,6 +46,7 @@ router.get("/queues/:guildId", async (c) => {
 // GET /api/v1/music/config/:guildId
 router.get("/config/:guildId", async (c) => {
   const guildId = c.req.param("guildId");
+  const logger = c.get("logger");
 
   try {
     const config = await prisma.guildMusicConfig.findUnique({
@@ -53,7 +59,11 @@ router.get("/config/:guildId", async (c) => {
 
     return c.json(config);
   } catch (error) {
-    logger.error(`Error fetching music config for guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "fetch_music_config" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -62,6 +72,7 @@ router.get("/config/:guildId", async (c) => {
 router.put("/config/:guildId", zValidator("json", GuildMusicConfigSchema.strict().partial()), async (c) => {
   const guildId = c.req.param("guildId");
   const data = c.req.valid("json");
+  const logger = c.get("logger");
 
   try {
     const config = await prisma.guildMusicConfig.upsert({
@@ -72,7 +83,11 @@ router.put("/config/:guildId", zValidator("json", GuildMusicConfigSchema.strict(
 
     return c.json(config);
   } catch (error) {
-    logger.error(`Error updating music config for guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "config_update_failed", guild_id: guildId, operation: "update_music_config" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });

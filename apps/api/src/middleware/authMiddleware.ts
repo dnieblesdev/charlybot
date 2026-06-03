@@ -26,9 +26,12 @@ export const authMiddleware = async (c: Context, next: Next) => {
   // Sanitize host — remove port if present and limit length to avoid log injection
   const rawHost = c.req.header("host") ?? "";
   const sanitizedHost = rawHost.split(":")[0]?.slice(0, 100) ?? "";
-  logger.warn(`Unauthorized access attempt from host: ${sanitizedHost}`, {
-    path: c.req.path,
-    method: c.req.method,
-  });
+  logger.warn(
+    {
+      path: c.req.path,
+      method: c.req.method,
+    },
+    `Unauthorized access attempt from host: ${sanitizedHost}`
+  );
   return c.json({ error: "Unauthorized" }, 401);
 };

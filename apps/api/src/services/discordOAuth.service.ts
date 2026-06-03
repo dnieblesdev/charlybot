@@ -172,14 +172,15 @@ export async function exchangeCodeAndFetchProfile(
   for (const g of botMatchedGuilds) {
     const perms = BigInt(g.permissions);
     const hasAdmin = hasAdminPermissions(g);
-    log.info(`Guild check: ${g.name} (${g.id})`, {
+    log.debug({
+      type: "oauth_guild_check",
       owner: g.owner,
       permissions: g.permissions,
       hasAdminBit: (perms & 0x8n) !== 0n,
       hasManageGuildBit: (perms & 0x20n) !== 0n,
       isAdmin: hasAdmin,
       passed: hasAdmin,
-    });
+    }, `Guild check: ${g.name} (${g.id})`);
   }
 
   // Also log guilds where bot is present but user is NOT a member (shouldn't happen)

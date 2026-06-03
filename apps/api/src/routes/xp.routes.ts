@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { XPConfigSchema } from "@charlybot/shared";
 import { z } from "zod";
-import logger from "../utils/logger";
+import { logRouteError } from "../utils/logRouteError";
 import { authMiddleware } from "../middleware/authMiddleware";
 import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
 
@@ -22,6 +22,7 @@ const PaginationSchema = z.object({
 router.get("/leaderboard/:guildId", async (c) => {
   const guildId = c.req.param("guildId");
   const { page, limit } = PaginationSchema.parse(c.req.query());
+  const logger = c.get("logger");
 
   try {
     const [data, total] = await Promise.all([
@@ -42,7 +43,11 @@ router.get("/leaderboard/:guildId", async (c) => {
       totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
-    logger.error(`Error fetching XP leaderboard for guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "fetch_xp_leaderboard" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -50,6 +55,7 @@ router.get("/leaderboard/:guildId", async (c) => {
 // GET /api/v1/xp/level-roles/:guildId
 router.get("/level-roles/:guildId", async (c) => {
   const guildId = c.req.param("guildId");
+  const logger = c.get("logger");
 
   try {
     const roles = await prisma.levelRole.findMany({
@@ -59,7 +65,11 @@ router.get("/level-roles/:guildId", async (c) => {
 
     return c.json(roles);
   } catch (error) {
-    logger.error(`Error fetching level roles for guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "fetch_level_roles" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -67,6 +77,7 @@ router.get("/level-roles/:guildId", async (c) => {
 // GET /api/v1/xp/:guildId/:userId — user XP + economy data
 router.get("/:guildId/:userId", async (c) => {
   const { guildId, userId } = c.req.param();
+  const logger = c.get("logger");
 
   try {
     const [userXP, userEconomy] = await Promise.all([
@@ -87,7 +98,11 @@ router.get("/:guildId/:userId", async (c) => {
       economy: userEconomy,
     });
   } catch (error) {
-    logger.error(`Error fetching XP and economy for user ${userId} in guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, user_id: userId, operation: "fetch_user_xp" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });

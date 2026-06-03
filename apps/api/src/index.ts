@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { rateLimitMiddleware } from "./middleware/rateLimitMiddleware";
-import logger, { sanitizeUrlPath } from "./utils/logger";
+import { requestId } from "./middleware/requestId";
+import { accessLog } from "./middleware/accessLog";
+import logger from "./utils/logger";
 import { createMetricsRegistry } from "@charlybot/shared";
 import { prisma } from "@charlybot/shared";
 import guildRoutes from "./routes/guilds";
@@ -12,18 +14,31 @@ import musicRoutes from "./routes/music.routes";
 import verificationsRoutes from "./routes/verifications.routes";
 import autorolesRoutes from "./routes/autoroles.routes";
 import classesRoutes from "./routes/classes.routes";
-import { initializeValkey, shutdownValkey } from "./infrastructure/valkey";
+import { initializeValkey } from "./infrastructure/valkey";
 
 const app = new Hono();
 
-// Custom Logger Middleware - log path only, not full URL
-app.use("*", async (c, next) => {
-  const start = Date.now();
-  await next();
-  const ms = Date.now() - start;
-  // Sanitize URL to log path only (strips query params with sensitive data)
-  const sanitizedPath = sanitizeUrlPath(c.req.url);
-  logger.info(`${c.req.method} ${sanitizedPath} - ${c.res.status} [${ms}ms]`);
+// requestId middleware MUST run FIRST — attaches child logger with request_id to context
+app.use(requestId);
+
+// accessLog middleware runs AFTER requestId — emits http_access structured log
+app.use(accessLog);
+
+// Global error handler — catches route crashes, logs unhandled_exception, returns sanitised JSON
+app.onError((err, c) => {
+  const reqLogger = c.get("logger") ?? logger;
+  reqLogger.fatal(
+    {
+      type: "unhandled_exception",
+      request_id: (reqLogger as any)?.bindings?.request_id,
+      error_message: err.message,
+      ...(process.env.NODE_ENV === "development" && {
+        stack: err.stack,
+      }),
+    },
+    "Unhandled exception in route"
+  );
+  return c.json({ error: "Internal server error" }, 500);
 });
 
 // Public liveness health check (no DB/Valkey)
@@ -70,7 +85,7 @@ app.get("/api/v1/health", async (c) => {
     // DB check
     await prisma.$queryRaw`SELECT 1`;
   } catch (error) {
-    logger.error("Database health check failed", { error });
+    logger.error({ error }, "Database health check failed");
     dbStatus = "error";
   }
 
@@ -85,21 +100,28 @@ app.get("/api/v1/health", async (c) => {
       valkeyStatus = "ok";
     }
   } catch (error) {
-    logger.warn("Valkey health check failed", {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.warn(
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      "Valkey health check failed"
+    );
     valkeyStatus = "degraded";
   }
 
-  const overallStatus = dbStatus === "ok" && valkeyStatus === "ok" ? "ok" : "degraded";
+  const overallStatus =
+    dbStatus === "ok" && valkeyStatus === "ok" ? "ok" : "degraded";
 
-  return c.json({
-    status: overallStatus,
-    database: dbStatus,
-    valkey: valkeyStatus,
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-  }, overallStatus === "ok" ? 200 : 503);
+  return c.json(
+    {
+      status: overallStatus,
+      database: dbStatus,
+      valkey: valkeyStatus,
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    },
+    overallStatus === "ok" ? 200 : 503
+  );
 });
 
 // Initialize Valkey before starting server

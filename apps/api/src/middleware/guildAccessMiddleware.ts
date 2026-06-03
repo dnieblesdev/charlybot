@@ -1,10 +1,45 @@
-import type { Context, Next } from 'hono';
-import type { JwtPayload } from '../auth/jwt.types';
-import { getSession } from '../auth/sessionStore';
-import logger from '../utils/logger';
+import type { Context, Next } from "hono";
+import type { JwtPayload } from "../auth/jwt.types";
+import { getSession } from "../auth/sessionStore";
+import logger from "../utils/logger";
 
 // Static path segments that should never be treated as guildId
-const KNOWN_STATIC = new Set(['api', 'v1', 'guilds', 'economy', 'xp', 'music', 'autoroles', 'verifications', 'classes', 'auth', 'config', 'leaderboard', 'level-roles', 'queues', 'user', 'bank', 'roulette', 'game', 'bet', 'transfer', 'deposit', 'withdraw', 'increment', 'items', 'settings', 'position', 'upsert', 'health', 'pending', 'mappings', 'guild', 'users', 'overview', 'nonexistent-id']);
+const KNOWN_STATIC = new Set([
+  "api",
+  "v1",
+  "guilds",
+  "economy",
+  "xp",
+  "music",
+  "autoroles",
+  "verifications",
+  "classes",
+  "auth",
+  "config",
+  "leaderboard",
+  "level-roles",
+  "queues",
+  "user",
+  "bank",
+  "roulette",
+  "game",
+  "bet",
+  "transfer",
+  "deposit",
+  "withdraw",
+  "increment",
+  "items",
+  "settings",
+  "position",
+  "upsert",
+  "health",
+  "pending",
+  "mappings",
+  "guild",
+  "users",
+  "overview",
+  "nonexistent-id",
+]);
 
 /**
  * Extract guildId from URL path.
@@ -16,7 +51,7 @@ const KNOWN_STATIC = new Set(['api', 'v1', 'guilds', 'economy', 'xp', 'music', '
  *   etc.
  */
 function extractGuildId(path: string): string | null {
-  const segments = path.split('/').filter(Boolean);
+  const segments = path.split("/").filter(Boolean);
   // Skip /api/v1/<route-prefix>/ — find first non-static segment after that
   for (let i = 3; i < segments.length; i++) {
     const seg = segments[i];
@@ -49,7 +84,7 @@ export const guildAccessMiddleware = async (c: Context, next: Next) => {
     return;
   }
 
-  const jwt = c.get('jwt') as JwtPayload | undefined;
+  const jwt = c.get("jwt") as JwtPayload | undefined;
 
   // If no JWT (API key mode), skip guild validation — backward compat
   if (!jwt) {
@@ -66,15 +101,21 @@ export const guildAccessMiddleware = async (c: Context, next: Next) => {
   // Fallback: check Valkey session (JWT may be stale if guilds were added after login)
   try {
     const session = await getSession(jwt.userId);
-    if (session?.guilds?.some(g => g.id === guildId)) {
+    if (session?.guilds?.some((g) => g.id === guildId)) {
       await next();
       return;
     }
   } catch (err) {
-    logger.error('[guildAccessMiddleware] Session lookup failed', { error: err });
+    logger.error(
+      { error: err },
+      "[guildAccessMiddleware] Session lookup failed"
+    );
   }
 
-  logger.warn('[guildAccessMiddleware] Access denied', { guildId, userId: jwt.userId, path: new URL(c.req.url).pathname });
+  logger.warn(
+    { guildId, userId: jwt.userId, path: new URL(c.req.url).pathname },
+    "[guildAccessMiddleware] Access denied"
+  );
   c.status(403);
-  return c.json({ error: 'Access denied to this guild' }, 403);
+  return c.json({ error: "Access denied to this guild" }, 403);
 };

@@ -4,6 +4,7 @@
 import { getValkeyClient } from '../infrastructure/valkey';
 import { createValkeyKeys, loadValkeyConfig, BOT_LOCK_TTL, type MusicQueue, type MusicQueueItem, type GuildMusicConfig } from '@charlybot/shared';
 import { withDistributedLock, musicQueueLockKey } from '../infrastructure/valkey';
+import logger from '../utils/logger';
 
 interface CachedMusicQueue {
   id: string;
@@ -134,15 +135,27 @@ export class MusicQueueCacheService {
         // Try to cache - but don't re-fetch if this fails
         try {
           await valkey.set(cacheKey, serializeQueue(queue), TTL_MUSIC_QUEUE);
-        } catch {
+        } catch (err) {
           // Cache set failed - but we already have the data, so return it
           // No need to re-fetch from DB
+          logger.warn({
+            type: "cache_operation_failed",
+            operation: "cache_set",
+            guild_id: guildId,
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       }
 
       return queue;
-    } catch {
+    } catch (err) {
       // Valkey unavailable - fetch directly without caching
+      logger.warn({
+        type: "cache_operation_failed",
+        operation: "get_queue",
+        guild_id: guildId,
+        error: err instanceof Error ? err.message : String(err),
+      });
       return fetchFromDb();
     }
   }
@@ -156,8 +169,14 @@ export class MusicQueueCacheService {
 
     try {
       await valkey.del(cacheKey);
-    } catch {
-      // Ignore cache errors
+    } catch (err) {
+      // Cache invalidation failed - non-critical, log at debug
+      logger.debug({
+        type: "cache_operation_failed",
+        operation: "invalidate_queue",
+        guild_id: guildId,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
@@ -179,18 +198,33 @@ export class MusicQueueCacheService {
       const config = await fetchFromDb();
       if (config !== null) {
         // Cache the result
-        await valkey.set(cacheKey, serializeConfig(config), TTL_GUILD_CONFIG);
+        try {
+          await valkey.set(cacheKey, serializeConfig(config), TTL_GUILD_CONFIG);
+        } catch (err) {
+          logger.warn({
+            type: "cache_operation_failed",
+            operation: "cache_config_set",
+            guild_id: guildId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
       }
 
       return config;
-    } catch {
+    } catch (err) {
       // Fallback: fetch from DB directly if cache fails
+      logger.warn({
+        type: "cache_operation_failed",
+        operation: "get_config",
+        guild_id: guildId,
+        error: err instanceof Error ? err.message : String(err),
+      });
       return fetchFromDb();
     }
   }
 
-/**
- * Invalidate music config cache
+  /**
+   * Invalidate music config cache
    */
   async invalidateConfig(guildId: string): Promise<void> {
     const valkey = getValkeyClient();
@@ -198,8 +232,14 @@ export class MusicQueueCacheService {
 
     try {
       await valkey.del(cacheKey);
-    } catch {
-      // Ignore cache errors
+    } catch (err) {
+      // Cache invalidation failed - non-critical, log at debug
+      logger.debug({
+        type: "cache_operation_failed",
+        operation: "invalidate_config",
+        guild_id: guildId,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 

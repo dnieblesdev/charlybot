@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { SubclassSchema } from "@charlybot/shared";
 import { z } from "zod";
-import logger from "../utils/logger";
+import { logRouteError } from "../utils/logRouteError";
 import { authMiddleware } from "../middleware/authMiddleware";
 import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
 
@@ -31,6 +31,7 @@ const CreateClassSchema = z.object({
 router.get("/guild/:guildId", async (c) => {
   const guildId = c.req.param("guildId");
   const { page, limit } = PaginationSchema.parse(c.req.query());
+  const logger = c.get("logger");
 
   try {
     const [data, total] = await Promise.all([
@@ -51,7 +52,11 @@ router.get("/guild/:guildId", async (c) => {
       totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
-    logger.error(`Error fetching classes for guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "fetch_classes" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -59,6 +64,7 @@ router.get("/guild/:guildId", async (c) => {
 // POST /api/v1/classes — create/update class (replacement-based)
 router.post("/", zValidator("json", CreateClassSchema), async (c) => {
   const data = c.req.valid("json");
+  const logger = c.get("logger");
 
   try {
     const clase = await prisma.classes.upsert({
@@ -102,7 +108,11 @@ router.post("/", zValidator("json", CreateClassSchema), async (c) => {
 
     return c.json(updated, 201);
   } catch (error) {
-    logger.error("Error creating/updating class", { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: data.guildId, operation: "create_update_class" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -110,6 +120,7 @@ router.post("/", zValidator("json", CreateClassSchema), async (c) => {
 // DELETE /api/v1/classes/guild/:guildId/:name — delete class by name
 router.delete("/guild/:guildId/:name", async (c) => {
   const { guildId, name } = c.req.param();
+  const logger = c.get("logger");
 
   try {
     // Find class by guildId and name first
@@ -127,7 +138,11 @@ router.delete("/guild/:guildId/:name", async (c) => {
 
     return c.json({ success: true });
   } catch (error) {
-    logger.error(`Error deleting class ${name} in guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "delete_class" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });

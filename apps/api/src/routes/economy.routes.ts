@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { EconomyConfigSchema } from "@charlybot/shared";
 import { z } from "zod";
-import logger from "../utils/logger";
+import { logRouteError } from "../utils/logRouteError";
 import { authMiddleware } from "../middleware/authMiddleware";
 import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
 
@@ -22,6 +22,7 @@ const PaginationSchema = z.object({
 router.get("/leaderboard/:guildId", async (c) => {
   const guildId = c.req.param("guildId");
   const { page, limit } = PaginationSchema.parse(c.req.query());
+  const logger = c.get("logger");
 
   try {
     const [data, total] = await Promise.all([
@@ -42,7 +43,11 @@ router.get("/leaderboard/:guildId", async (c) => {
       totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
-    logger.error(`Error fetching economy leaderboard for guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "fetch_economy_leaderboard" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -50,6 +55,7 @@ router.get("/leaderboard/:guildId", async (c) => {
 // GET /api/v1/economy/config/:guildId
 router.get("/config/:guildId", async (c) => {
   const guildId = c.req.param("guildId");
+  const logger = c.get("logger");
 
   try {
     const config = await prisma.economyConfig.findUnique({
@@ -62,7 +68,11 @@ router.get("/config/:guildId", async (c) => {
 
     return c.json(config);
   } catch (error) {
-    logger.error(`Error fetching economy config for guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "fetch_economy_config" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -71,6 +81,7 @@ router.get("/config/:guildId", async (c) => {
 router.patch("/config/:guildId", zValidator("json", EconomyConfigSchema.strict().partial()), async (c) => {
   const guildId = c.req.param("guildId");
   const data = c.req.valid("json");
+  const logger = c.get("logger");
 
   try {
     const config = await prisma.economyConfig.upsert({
@@ -81,7 +92,11 @@ router.patch("/config/:guildId", zValidator("json", EconomyConfigSchema.strict()
 
     return c.json(config);
   } catch (error) {
-    logger.error(`Error updating economy config for guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "config_update_failed", guild_id: guildId, operation: "update_economy_config" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });

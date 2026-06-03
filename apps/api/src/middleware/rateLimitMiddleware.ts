@@ -7,15 +7,15 @@ import { getValkeyClient } from "../infrastructure/valkey";
 import logger from "../utils/logger";
 
 interface RateLimitOptions {
-  windowMs: number;       // fixed window duration (default: 60000)
-  maxRequests: number;     // max requests per window (default: 100)
-  keyPrefix: string;       // Valkey key prefix (default: "rl")
-  maxSize?: number;        // in-memory fallback max entries (default: 10000)
+  windowMs: number; // fixed window duration (default: 60000)
+  maxRequests: number; // max requests per window (default: 100)
+  keyPrefix: string; // Valkey key prefix (default: "rl")
+  maxSize?: number; // in-memory fallback max entries (default: 10000)
 }
 
 const DEFAULT_OPTIONS: Required<RateLimitOptions> = {
-  windowMs: 60000,         // 1 minute
-  maxRequests: 100,        // 100 requests per minute
+  windowMs: 60000, // 1 minute
+  maxRequests: 100, // 100 requests per minute
   keyPrefix: "rl",
   maxSize: 10000,
 };
@@ -56,7 +56,9 @@ class InMemoryRateLimiter {
     this.options = options;
   }
 
-  async checkLimit(ip: string): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  async checkLimit(
+    ip: string
+  ): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
     const now = Date.now();
     const { windowMs, maxRequests } = this.options;
     const identifier = `user:${ip}`;
@@ -64,7 +66,11 @@ class InMemoryRateLimiter {
     const entry = this.counters.get(identifier);
     if (!entry || now - entry.windowStart >= windowMs) {
       this.counters.set(identifier, { count: 1, windowStart: now });
-      return { allowed: true, remaining: maxRequests - 1, resetAt: now + windowMs };
+      return {
+        allowed: true,
+        remaining: maxRequests - 1,
+        resetAt: now + windowMs,
+      };
     }
 
     entry.count++;
@@ -87,7 +93,7 @@ class InMemoryRateLimiter {
     if (excess <= 0) return;
     // Evict oldest entries by windowStart
     const sorted = Array.from(this.counters.entries()).sort(
-      (a, b) => a[1].windowStart - b[1].windowStart,
+      (a, b) => a[1].windowStart - b[1].windowStart
     );
     for (let i = 0; i < excess; i++) {
       const entry = sorted[i];
@@ -120,7 +126,9 @@ function deriveIdentifier(c: Context): string {
   // Only trust forwarded headers when behind a known proxy
   if (process.env.TRUST_PROXY === "1") {
     const forwardedFor = c.req.header("x-forwarded-for");
-    const rawIp = forwardedFor ? forwardedFor.split(",")[0]?.trim() ?? null : null;
+    const rawIp = forwardedFor
+      ? forwardedFor.split(",")[0]?.trim() ?? null
+      : null;
     const ip = rawIp || c.req.header("x-real-ip");
     if (ip) {
       return `user:${sanitizeIp(ip)}`;
@@ -130,7 +138,9 @@ function deriveIdentifier(c: Context): string {
   return "user:unknown";
 }
 
-export function createRateLimitMiddleware(options: Partial<RateLimitOptions> = {}) {
+export function createRateLimitMiddleware(
+  options: Partial<RateLimitOptions> = {}
+) {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const inMemoryLimiter = new InMemoryRateLimiter(opts);
 
@@ -169,44 +179,62 @@ export function createRateLimitMiddleware(options: Partial<RateLimitOptions> = {
         c.header("X-RateLimit-Remaining", "0");
         c.header("X-RateLimit-Reset", Math.ceil(windowReset / 1000).toString());
 
-        logger.warn(`Rate limit exceeded for ${identifier}`, {
-          currentCount,
-          maxRequests: opts.maxRequests,
-          identifier,
-          ip: logIp,
-        });
+        logger.warn(
+          {
+            currentCount,
+            maxRequests: opts.maxRequests,
+            identifier,
+            ip: logIp,
+          },
+          `Rate limit exceeded for ${identifier}`
+        );
 
         return c.json({ error: "Too many requests" }, 429);
       }
 
       c.header("X-RateLimit-Limit", opts.maxRequests.toString());
-      c.header("X-RateLimit-Remaining", Math.max(0, opts.maxRequests - currentCount).toString());
+      c.header(
+        "X-RateLimit-Remaining",
+        Math.max(0, opts.maxRequests - currentCount).toString()
+      );
       c.header("X-RateLimit-Reset", Math.ceil(windowReset / 1000).toString());
 
       await next();
     } catch (error) {
       // Log fallback once to avoid log flood during outages
-      logger.warn("Rate limiter falling back to in-memory", {
-        error: error instanceof Error ? error.message : String(error),
-        identifier,
-        ip: logIp,
-      });
+      logger.warn(
+        {
+          error: error instanceof Error ? error.message : String(error),
+          identifier,
+          ip: logIp,
+        },
+        "Rate limiter falling back to in-memory"
+      );
 
       const result = await inMemoryLimiter.checkLimit(logIp);
       inMemoryLimiter.evictIfNeeded();
 
       if (!result.allowed) {
-        const retryAfterSec = Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000));
+        const retryAfterSec = Math.max(
+          1,
+          Math.ceil((result.resetAt - Date.now()) / 1000)
+        );
         c.header("Retry-After", retryAfterSec.toString());
         c.header("X-RateLimit-Limit", opts.maxRequests.toString());
         c.header("X-RateLimit-Remaining", "0");
-        c.header("X-RateLimit-Reset", Math.ceil(result.resetAt / 1000).toString());
+        c.header(
+          "X-RateLimit-Reset",
+          Math.ceil(result.resetAt / 1000).toString()
+        );
         return c.json({ error: "Too many requests" }, 429);
       }
 
       c.header("X-RateLimit-Limit", opts.maxRequests.toString());
       c.header("X-RateLimit-Remaining", result.remaining.toString());
-      c.header("X-RateLimit-Reset", Math.ceil(result.resetAt / 1000).toString());
+      c.header(
+        "X-RateLimit-Reset",
+        Math.ceil(result.resetAt / 1000).toString()
+      );
 
       await next();
     }

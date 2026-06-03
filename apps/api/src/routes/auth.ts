@@ -1,10 +1,7 @@
 import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { jwtAuth } from "../middleware/jwtMiddleware";
-import {
-  signAccessToken,
-  signRefreshToken,
-} from "../auth/jwt";
+import { signAccessToken, signRefreshToken } from "../auth/jwt";
 import {
   setSession,
   getSession,
@@ -22,12 +19,18 @@ import {
   getBotGuildIds,
 } from "../services/discordOAuth.service";
 import type { AuthSession } from "../auth/jwt.types";
-import logger from "../utils/logger";
+import { logRouteError } from "../utils/logRouteError";
+
+const AUTH_ERROR = {
+  REFRESH_TOKEN_MISSING: 401,
+  SESSION_EXPIRED: 401,
+} as const;
 
 const router = new Hono();
 
 // GET /api/v1/auth/login - Redirect to Discord OAuth
 router.get("/login", async (c) => {
+  const logger = c.get("logger");
   try {
     const state = generateState();
     await storeOAuthState(state);
@@ -36,7 +39,11 @@ router.get("/login", async (c) => {
     c.header("Location", authUrl);
     return c.body(null, 302);
   } catch (error) {
-    logger.error("Failed to create OAuth login URL", { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "oauth_error", operation: "create_login_url" },
+    });
     return c.json({ error: "Failed to initiate login" }, 500);
   }
 });
@@ -45,12 +52,16 @@ router.get("/login", async (c) => {
 router.get("/callback", async (c) => {
   const code = c.req.query("code");
   const state = c.req.query("state");
+  const logger = c.get("logger");
 
   if (!code || !state) {
-    logger.warn("Missing code or state in callback", {
-      hasCode: !!code,
-      hasState: !!state,
-    });
+    logger.warn(
+      {
+        hasCode: !!code,
+        hasState: !!state,
+      },
+      "Missing code or state in callback"
+    );
     return c.json({ error: "Missing code or state parameter" }, 400);
   }
 
@@ -63,8 +74,12 @@ router.get("/callback", async (c) => {
     }
 
     // Exchange code for user profile + guilds + tokens
-    const { user, guilds, accessToken: discordAccessToken, refreshToken: discordRefreshToken } =
-      await exchangeCodeAndFetchProfile(code);
+    const {
+      user,
+      guilds,
+      accessToken: discordAccessToken,
+      refreshToken: discordRefreshToken,
+    } = await exchangeCodeAndFetchProfile(code);
 
     // Create session data
     const session: AuthSession = {
@@ -92,11 +107,14 @@ router.get("/callback", async (c) => {
     // Store refresh token mapping
     await setRefreshToken(refreshToken, user.id);
 
-    logger.info("User authenticated successfully", {
-      userId: user.id,
-      username: user.username,
-      guildCount: guilds.length,
-    });
+    logger.info(
+      {
+        userId: user.id,
+        username: user.username,
+        guildCount: guilds.length,
+      },
+      "User authenticated successfully"
+    );
 
     // Set HttpOnly cookies
     const isProduction = process.env.NODE_ENV === "production";
@@ -119,9 +137,10 @@ router.get("/callback", async (c) => {
     c.header("Location", "/dashboard/auth/callback");
     return c.body(null, 302);
   } catch (error) {
-    logger.error("OAuth callback failed", {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "oauth_error", operation: "exchange_code" },
     });
     return c.json({ error: "Authentication failed" }, 500);
   }
@@ -130,21 +149,25 @@ router.get("/callback", async (c) => {
 // GET /api/v1/auth/me - Get current user profile (JWT protected)
 router.get("/me", jwtAuth, async (c) => {
   const jwt = c.get("jwt");
+  const logger = c.get("logger");
 
   try {
     const session = await getSession(jwt.userId);
 
     if (!session) {
-      logger.warn("Session not found for authenticated user", {
-        userId: jwt.userId,
-      });
+      logger.warn(
+        {
+          userId: jwt.userId,
+        },
+        "Session not found for authenticated user"
+      );
       return c.json({ error: "Session expired or invalid" }, 401);
     }
 
     // Refresh JWT with current guilds to prevent stale 403 errors
     const botGuildIds = await getBotGuildIds();
     const currentGuilds = session.guilds.filter((g) =>
-      botGuildIds.includes(g.id),
+      botGuildIds.includes(g.id)
     );
 
     const newAccessToken = await signAccessToken({
@@ -172,7 +195,15 @@ router.get("/me", jwtAuth, async (c) => {
       guilds: currentGuilds,
     });
   } catch (error) {
-    logger.error("Failed to fetch user profile", { error, userId: jwt.userId });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: {
+        type: "auth_error",
+        operation: "fetch_user_profile",
+        user_id: jwt.userId,
+      },
+    });
     return c.json({ error: "Failed to fetch profile" }, 500);
   }
 });
@@ -180,10 +211,14 @@ router.get("/me", jwtAuth, async (c) => {
 // POST /api/v1/auth/refresh - Refresh access token
 router.post("/refresh", async (c) => {
   const refreshToken = getCookie(c, "refreshToken");
+  const logger = c.get("logger");
 
   if (!refreshToken) {
     logger.warn("Missing refreshToken cookie");
-    return c.json({ error: "Missing refreshToken cookie" }, 401);
+    return c.json(
+      { error: "Missing refreshToken cookie" },
+      AUTH_ERROR.REFRESH_TOKEN_MISSING
+    );
   }
 
   try {
@@ -199,7 +234,7 @@ router.post("/refresh", async (c) => {
     const session = await getSession(userId);
 
     if (!session) {
-      logger.warn("Session not found for refresh", { userId });
+      logger.warn({ userId }, "Session not found for refresh");
       return c.json({ error: "Session expired or invalid" }, 401);
     }
 
@@ -224,11 +259,15 @@ router.post("/refresh", async (c) => {
       maxAge: 3600,
     });
 
-    logger.info("Access token refreshed", { userId });
+    logger.info({ userId }, "Access token refreshed");
 
     return c.body(null, 200);
   } catch (error) {
-    logger.error("Token refresh failed", { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "auth_error", operation: "refresh_token" },
+    });
     return c.json({ error: "Failed to refresh token" }, 500);
   }
 });
@@ -236,6 +275,7 @@ router.post("/refresh", async (c) => {
 // POST /api/v1/auth/logout - Invalidate session (JWT protected)
 router.post("/logout", jwtAuth, async (c) => {
   const jwt = c.get("jwt");
+  const logger = c.get("logger");
 
   try {
     // Delete session from Valkey
@@ -259,11 +299,15 @@ router.post("/logout", jwtAuth, async (c) => {
       maxAge: 0,
     });
 
-    logger.info("User logged out", { userId: jwt.userId });
+    logger.info({ userId: jwt.userId }, "User logged out");
 
     return c.json({ success: true });
   } catch (error) {
-    logger.error("Logout failed", { error, userId: jwt.userId });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "auth_error", operation: "logout", user_id: jwt.userId },
+    });
     return c.json({ error: "Logout failed" }, 500);
   }
 });

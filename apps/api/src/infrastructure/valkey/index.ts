@@ -1,8 +1,24 @@
 // Valkey provider for API - singleton lifecycle
 // Follows SDD design: Phase 5
 
-import { createValkeyClient, createValkeyFallbackWrapper, loadValkeyConfig, createValkeyKeys, type IValkeyClient, type IFallbackCache, TTL, acquireDistributedLock as sharedAcquireLock, releaseDistributedLock as sharedReleaseLock, withDistributedLock as sharedWithLock, economyUserLockKey, transferLockKey, rouletteGameLockKey, cooldownLockKey, musicQueueLockKey } from '@charlybot/shared';
-import logger from '../../utils/logger';
+import {
+  createValkeyClient,
+  createValkeyFallbackWrapper,
+  loadValkeyConfig,
+  createValkeyKeys,
+  type IValkeyClient,
+  type IFallbackCache,
+  TTL,
+  acquireDistributedLock as sharedAcquireLock,
+  releaseDistributedLock as sharedReleaseLock,
+  withDistributedLock as sharedWithLock,
+  economyUserLockKey,
+  transferLockKey,
+  rouletteGameLockKey,
+  cooldownLockKey,
+  musicQueueLockKey,
+} from "@charlybot/shared";
+import logger from "../../utils/logger";
 
 // LRU Entry with creation timestamp for eviction
 interface LRUCacheEntry<T> {
@@ -143,34 +159,40 @@ export async function initializeValkey(): Promise<IValkeyClient> {
 
   // Create the raw client
   const client = createValkeyClient(config, {
-    error: (msg, meta) => logger.error(msg, meta),
-    warn: (msg, meta) => logger.warn(msg, meta),
-    info: (msg, meta) => logger.info(msg, meta),
-    debug: (msg, meta) => logger.debug(msg, meta),
+    error: (msg, meta) => logger.error(meta ?? {}, msg),
+    warn: (msg, meta) => logger.warn(meta ?? {}, msg),
+    info: (msg, meta) => logger.info(meta ?? {}, msg),
+    debug: (msg, meta) => logger.debug(meta ?? {}, msg),
   });
 
   // Wrap with fallback
   valkeyClient = createValkeyFallbackWrapper(client, {
     fallback: apiFallback,
     logger: {
-      error: (msg, meta) => logger.error(msg, meta),
-      warn: (msg, meta) => logger.warn(msg, meta),
-      info: (msg, meta) => logger.info(msg, meta),
-      debug: (msg, meta) => logger.debug(msg, meta),
+      error: (msg, meta) => logger.error(meta ?? {}, msg),
+      warn: (msg, meta) => logger.warn(meta ?? {}, msg),
+      info: (msg, meta) => logger.info(meta ?? {}, msg),
+      debug: (msg, meta) => logger.debug(meta ?? {}, msg),
     },
   });
 
   try {
     await valkeyClient.connect();
-    logger.info('Valkey client initialized with fallback', {
-      host: config.host,
-      port: config.port,
-      hasFallback: true,
-    });
+    logger.info(
+      {
+        host: config.host,
+        port: config.port,
+        hasFallback: true,
+      },
+      "Valkey client initialized with fallback"
+    );
   } catch (error) {
-    logger.warn('Failed to connect to Valkey, using fallback only', {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.warn(
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      "Failed to connect to Valkey, using fallback only"
+    );
     // valkeyClient is already configured with fallback, so it's usable
   }
 
@@ -182,7 +204,9 @@ export async function initializeValkey(): Promise<IValkeyClient> {
  */
 export function getValkeyClient(): IValkeyClient {
   if (!valkeyClient) {
-    throw new Error('Valkey client not initialized. Call initializeValkey() first.');
+    throw new Error(
+      "Valkey client not initialized. Call initializeValkey() first."
+    );
   }
   return valkeyClient;
 }
@@ -194,7 +218,7 @@ export async function shutdownValkey(): Promise<void> {
   if (valkeyClient) {
     await valkeyClient.disconnect();
     valkeyClient = null;
-    logger.info('Valkey client disconnected');
+    logger.info("Valkey client disconnected");
   }
 }
 
@@ -209,13 +233,13 @@ export async function shutdownValkey(): Promise<void> {
 export async function acquireDistributedLock(
   domain: string,
   resourceId: string,
-  ttlSeconds: number = TTL.LOCK_DEFAULT,
+  ttlSeconds: number = TTL.LOCK_DEFAULT
 ): Promise<string | null> {
   return sharedAcquireLock(getValkeyClient(), domain, resourceId, ttlSeconds, {
-    error: (msg, meta) => logger.error(msg, meta),
-    warn: (msg, meta) => logger.warn(msg, meta),
-    info: (msg, meta) => logger.info(msg, meta),
-    debug: (msg, meta) => logger.debug(msg, meta),
+    error: (msg, meta) => logger.error(meta ?? {}, msg),
+    warn: (msg, meta) => logger.warn(meta ?? {}, msg),
+    info: (msg, meta) => logger.info(meta ?? {}, msg),
+    debug: (msg, meta) => logger.debug(meta ?? {}, msg),
   });
 }
 
@@ -226,13 +250,13 @@ export async function acquireDistributedLock(
 export async function releaseDistributedLock(
   domain: string,
   resourceId: string,
-  ownerId: string,
+  ownerId: string
 ): Promise<void> {
   return sharedReleaseLock(getValkeyClient(), domain, resourceId, ownerId, {
-    error: (msg, meta) => logger.error(msg, meta),
-    warn: (msg, meta) => logger.warn(msg, meta),
-    info: (msg, meta) => logger.info(msg, meta),
-    debug: (msg, meta) => logger.debug(msg, meta),
+    error: (msg, meta) => logger.error(meta ?? {}, msg),
+    warn: (msg, meta) => logger.warn(meta ?? {}, msg),
+    info: (msg, meta) => logger.info(meta ?? {}, msg),
+    debug: (msg, meta) => logger.debug(meta ?? {}, msg),
   });
 }
 
@@ -245,10 +269,23 @@ export async function withDistributedLock<T>(
   resourceId: string,
   fn: () => Promise<T>,
   ttlSeconds: number = TTL.LOCK_DEFAULT,
-  maxRetries: number = 3,
+  maxRetries: number = 3
 ): Promise<T> {
-  return sharedWithLock(getValkeyClient(), domain, resourceId, fn, ttlSeconds, maxRetries);
+  return sharedWithLock(
+    getValkeyClient(),
+    domain,
+    resourceId,
+    fn,
+    ttlSeconds,
+    maxRetries
+  );
 }
 
 // Re-export domain-specific lock key generators from shared
-export { economyUserLockKey, transferLockKey, rouletteGameLockKey, cooldownLockKey, musicQueueLockKey } from '@charlybot/shared';
+export {
+  economyUserLockKey,
+  transferLockKey,
+  rouletteGameLockKey,
+  cooldownLockKey,
+  musicQueueLockKey,
+} from "@charlybot/shared";

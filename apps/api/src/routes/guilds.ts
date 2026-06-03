@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@charlybot/shared";
 import { GuildConfigSchema } from "@charlybot/shared";
 import { z } from "zod";
-import logger from "../utils/logger";
+import { logRouteError } from "../utils/logRouteError";
 import { guildAccessMiddleware } from "../middleware/guildAccessMiddleware";
 
 const GuildUpdateSchema = z.object({
@@ -23,6 +23,7 @@ router.use("/:id", guildAccessMiddleware);
 
 // GET /api/v1/guilds - List all registered guilds (debug/inspection)
 router.get("/", async (c) => {
+  const logger = c.get("logger");
   try {
     const guilds = await prisma.guild.findMany({
       select: {
@@ -37,7 +38,7 @@ router.get("/", async (c) => {
 
     return c.json({ count: guilds.length, guilds });
   } catch (error) {
-    logger.error("Error fetching guilds list", { error });
+    logRouteError(logger, { c, error, meta: { operation: "list_guilds" } });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -46,6 +47,7 @@ router.get("/", async (c) => {
 router.patch("/:id", zValidator("json", GuildUpdateSchema), async (c) => {
   const guildId = c.req.param("id");
   const data = c.req.valid("json");
+  const logger = c.get("logger");
 
   try {
     const guild = await prisma.guild.upsert({
@@ -56,7 +58,11 @@ router.patch("/:id", zValidator("json", GuildUpdateSchema), async (c) => {
 
     return c.json(guild);
   } catch (error) {
-    logger.error(`Error updating guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "update_guild" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -64,6 +70,7 @@ router.patch("/:id", zValidator("json", GuildUpdateSchema), async (c) => {
 // DELETE /api/v1/guilds/:id - Delete Guild and its config (idempotent, atomic)
 router.delete("/:id", async (c) => {
   const guildId = c.req.param("id");
+  const logger = c.get("logger");
 
   try {
     // Callback transaction: atomic + rollback on failure
@@ -76,7 +83,11 @@ router.delete("/:id", async (c) => {
     logger.info(`Guild and config deleted: ${guildId}`);
     return c.json({ success: true });
   } catch (error) {
-    logger.error(`Error deleting guild ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "delete_guild" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -84,6 +95,7 @@ router.delete("/:id", async (c) => {
 // GET /api/v1/guilds/:id/config
 router.get("/:id/config", async (c) => {
   const guildId = c.req.param("id");
+  const logger = c.get("logger");
 
   try {
     const config = await prisma.guildConfig.findUnique({
@@ -96,7 +108,11 @@ router.get("/:id/config", async (c) => {
 
     return c.json(config);
   } catch (error) {
-    logger.error(`Error fetching guild config for ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "db_query_failed", guild_id: guildId, operation: "fetch_guild_config" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -105,6 +121,7 @@ router.get("/:id/config", async (c) => {
 router.patch("/:id/config", zValidator("json", GuildConfigSchema.strict().partial()), async (c) => {
   const guildId = c.req.param("id");
   const data = c.req.valid("json");
+  const logger = c.get("logger");
 
   try {
     // Ensure Guild exists first
@@ -125,7 +142,11 @@ router.patch("/:id/config", zValidator("json", GuildConfigSchema.strict().partia
 
     return c.json(config);
   } catch (error) {
-    logger.error(`Error updating guild config for ${guildId}`, { error });
+    logRouteError(logger, {
+      c,
+      error,
+      meta: { type: "config_update_failed", guild_id: guildId, operation: "update_guild_config" },
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });

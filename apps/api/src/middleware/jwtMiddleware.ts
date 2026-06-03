@@ -21,20 +21,26 @@ export async function jwtAuth(c: Context, next: Next) {
   }
 
   if (!token) {
-    logger.warn("Missing JWT token", {
-      path: c.req.path,
-      method: c.req.method,
-    });
+    logger.warn(
+      {
+        path: c.req.path,
+        method: c.req.method,
+      },
+      "Missing JWT token"
+    );
     return c.json({ error: "Unauthorized" }, 401);
   }
 
   const payload = await verifyAccessToken(token);
 
   if (!payload) {
-    logger.warn("Invalid or expired JWT token", {
-      path: c.req.path,
-      method: c.req.method,
-    });
+    logger.warn(
+      {
+        path: c.req.path,
+        method: c.req.method,
+      },
+      "Invalid or expired JWT token"
+    );
     return c.json({ error: "Unauthorized" }, 401);
   }
 
@@ -42,13 +48,4 @@ export async function jwtAuth(c: Context, next: Next) {
   c.set("jwt", payload);
 
   await next();
-}
-
-/**
- * Extension for Hono context to include jwt property
- */
-declare module "hono" {
-  interface ContextVariableMap {
-    jwt: JwtPayload;
-  }
 }
