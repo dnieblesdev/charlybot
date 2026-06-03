@@ -11,13 +11,19 @@ export const MUSIC_CHANNELS = {
   getChannel: (guildId: string) => {
     const config = loadValkeyConfig();
     const keys = createValkeyKeys(config);
-    return keys.pubsub('music', guildId);
+    return keys.pubsub("music", guildId);
   },
 } as const;
 
 // Event types
 export interface MusicQueueEvent {
-  type: 'song_added' | 'song_removed' | 'playback_started' | 'playback_stopped' | 'playback_paused' | 'queue_cleared';
+  type:
+    | "song_added"
+    | "song_removed"
+    | "playback_started"
+    | "playback_stopped"
+    | "playback_paused"
+    | "queue_cleared";
   guildId: string;
   data: {
     songTitle?: string;
@@ -38,11 +44,14 @@ export async function publishMusicEvent(event: MusicQueueEvent): Promise<void> {
   try {
     await valkey.publish(channel, event);
   } catch (error) {
-    logger.warn('Failed to publish music event', {
-      channel,
-      eventType: event.type,
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.warn(
+      {
+        channel,
+        eventType: event.type,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      "Failed to publish music event"
+    );
     // Best-effort: silently drop
   }
 }
@@ -53,7 +62,7 @@ export async function publishMusicEvent(event: MusicQueueEvent): Promise<void> {
  */
 export function subscribeMusicEvents(
   guildId: string,
-  handler: (event: MusicQueueEvent) => void,
+  handler: (event: MusicQueueEvent) => void
 ): () => void {
   const channel = MUSIC_CHANNELS.getChannel(guildId);
   const valkey = getValkeyClient();

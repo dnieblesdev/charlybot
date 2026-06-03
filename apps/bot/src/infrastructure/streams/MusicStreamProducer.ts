@@ -1,7 +1,7 @@
 // Music Stream Producer - publishes queue events to Valkey Streams
 // Follows SDD Phase 6 design
 
-import { getValkeyClient } from '../valkey';
+import { getValkeyClient } from "../valkey";
 import {
   MusicStreamKeys,
   createMusicStreamKeys,
@@ -17,20 +17,20 @@ import {
   type RemoveEventData,
   type ClearEventData,
   type NowPlayingEventData,
-} from '@charlybot/shared';
-import { loadValkeyConfig } from '@charlybot/shared';
-import logger from '../../utils/logger';
+} from "@charlybot/shared";
+import { loadValkeyConfig } from "@charlybot/shared";
+import logger from "../../utils/logger";
 
 /**
  * MusicStreamProducer - publishes music queue events to Valkey Streams
- * 
+ *
  * Events published:
  * - music:enqueue - when a song is added to queue
  * - music:dequeue - when a song is removed from queue (play)
  * - music:remove - when a song is removed by position
  * - music:clear - when queue is cleared
  * - music:nowplaying - when current song changes
- * 
+ *
  * Also maintains a registry of active guild streams for consumer discovery.
  */
 class MusicStreamProducer {
@@ -40,14 +40,20 @@ class MusicStreamProducer {
 
   constructor() {
     const config = loadValkeyConfig();
-    this.keys = createMusicStreamKeys(config.prefix ?? 'cb', config.env ?? 'development');
-    this.registryKey = `${config.prefix ?? 'cb'}:${KEYS.STREAM_REGISTRY_MUSIC}`;
+    this.keys = createMusicStreamKeys(
+      config.prefix ?? "cb",
+      config.env ?? "development"
+    );
+    this.registryKey = `${config.prefix ?? "cb"}:${KEYS.STREAM_REGISTRY_MUSIC}`;
     this.enabled = true;
-    logger.info('MusicStreamProducer initialized', {
-      consumerGroup: this.keys.consumerGroup(),
-      enabled: this.enabled,
-      registryKey: this.registryKey,
-    });
+    logger.info(
+      {
+        consumerGroup: this.keys.consumerGroup(),
+        enabled: this.enabled,
+        registryKey: this.registryKey,
+      },
+      "MusicStreamProducer initialized"
+    );
   }
 
   /**
@@ -62,32 +68,36 @@ class MusicStreamProducer {
       // Use sorted set with timestamp as score for TTL
       await client.sortedSetAdd(this.registryKey, Date.now(), guildId);
       // Refresh TTL
-      await client.setAdd(this.registryKey + ':set', guildId);
+      await client.setAdd(this.registryKey + ":set", guildId);
       // We'll clean up expired entries in a background job or let them naturally expire
-      logger.debug('Registered guild stream', { guildId, registry: this.registryKey });
+      logger.debug(
+        { guildId, registry: this.registryKey },
+        "Registered guild stream"
+      );
     } catch (error) {
-      logger.warn('Failed to register guild stream', {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.warn(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Failed to register guild stream"
+      );
     }
   }
 
   /**
    * Publishes an event to the music stream
    */
-  private async publish<T>(
-    eventType: string,
-    data: T,
-  ): Promise<string | null> {
+  private async publish<T>(eventType: string, data: T): Promise<string | null> {
     if (!this.enabled) {
       return null;
     }
 
     // Extract guildId for registry
-    const guildId = data && (data as Record<string, unknown>).guildId
-      ? String((data as Record<string, unknown>).guildId)
-      : null;
+    const guildId =
+      data && (data as Record<string, unknown>).guildId
+        ? String((data as Record<string, unknown>).guildId)
+        : null;
 
     // Register guild stream before publishing
     if (guildId) {
@@ -97,29 +107,35 @@ class MusicStreamProducer {
     try {
       const client = getValkeyClient();
       const event = createStreamEvent(eventType, data);
-      const streamKey = guildId 
+      const streamKey = guildId
         ? this.keys.musicStream(guildId)
-        : this.keys.musicStream('unknown');
-      
+        : this.keys.musicStream("unknown");
+
       const messageId = await client.streamAdd(
         streamKey,
         serializeStreamEvent(event),
-        STREAM_CONFIG.PRODUCER_MAX_LEN,
+        STREAM_CONFIG.PRODUCER_MAX_LEN
       );
 
-      logger.debug('Stream event published', {
-        type: eventType,
-        messageId,
-        stream: streamKey,
-      });
+      logger.debug(
+        {
+          type: eventType,
+          messageId,
+          stream: streamKey,
+        },
+        "Stream event published"
+      );
 
       return messageId;
     } catch (error) {
       // Streams throw on failure per design - log and continue
-      logger.error('Failed to publish stream event', {
-        type: eventType,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          type: eventType,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Failed to publish stream event"
+      );
       // Return null to not crash the bot
       return null;
     }
@@ -172,7 +188,7 @@ class MusicStreamProducer {
    */
   disable(): void {
     this.enabled = false;
-    logger.info('MusicStreamProducer disabled');
+    logger.info("MusicStreamProducer disabled");
   }
 
   /**
@@ -180,7 +196,7 @@ class MusicStreamProducer {
    */
   enable(): void {
     this.enabled = true;
-    logger.info('MusicStreamProducer enabled');
+    logger.info("MusicStreamProducer enabled");
   }
 }
 

@@ -4,23 +4,27 @@ import { getGuildConfig } from "../../config/repositories/GuildConfigRepo.ts";
 import logger from "../../utils/logger.ts";
 import { buildMessageDeleteEmbed } from "../../utils/messageAuditEmbeds.ts";
 import { findMessageDeleteExecutor } from "../../utils/auditLogFetcher.ts";
-import { wasProcessed, markProcessed, setLastEntryId } from "../../infrastructure/valkey/auditCache.ts";
+import {
+  wasProcessed,
+  markProcessed,
+  setLastEntryId,
+} from "../../infrastructure/valkey/auditCache.ts";
 
 /**
  * How to verify this feature:
- * 
+ *
  * 1. Admin deletes a user message:
  *    - Expected: Embed shows "Eliminado por: @AdminName#0000"
- * 
+ *
  * 2. User deletes their own message:
  *    - Expected: Embed shows "Eliminado por: El autor eliminó su propio mensaje"
- * 
+ *
  * 3. Message not cached (partial message):
  *    - Expected: Embed still generates, shows content as "Contenido no disponible"
- * 
+ *
  * 4. Missing audit log permissions:
  *    - Expected: Embed shows "Eliminado por: Desconocido", no errors to user
- * 
+ *
  * 5. Rapid consecutive deletions:
  *    - Expected: Only processes once, no duplicate processing
  */
@@ -45,19 +49,25 @@ export default {
       // Resolve channel
       const channel = message.guild.channels.cache.get(channelId);
       if (!channel) {
-        logger.warn("Canal de logs de mensajes no encontrado en caché", {
-          guildId: message.guild.id,
-          channelId,
-        });
+        logger.warn(
+          {
+            guildId: message.guild.id,
+            channelId,
+          },
+          "Canal de logs de mensajes no encontrado en caché"
+        );
         return;
       }
 
       if (!(channel instanceof TextChannel)) {
-        logger.warn("El canal de logs de mensajes no es un canal de texto", {
-          guildId: message.guild.id,
-          channelId,
-          channelType: channel.type,
-        });
+        logger.warn(
+          {
+            guildId: message.guild.id,
+            channelId,
+            channelType: channel.type,
+          },
+          "El canal de logs de mensajes no es un canal de texto"
+        );
         return;
       }
 
@@ -81,17 +91,20 @@ export default {
             message.guild,
             message.channelId,
             message.author.id,
-            new Date(),
+            new Date()
           );
 
           if (correlation) {
             // Check if this entry was already processed (dedupe)
-            const alreadyProcessed = await wasProcessed(message.guild.id, correlation.entryId);
-            
+            const alreadyProcessed = await wasProcessed(
+              message.guild.id,
+              correlation.entryId
+            );
+
             if (!alreadyProcessed) {
               // Mark as processed and use the correlation result
               await markProcessed(message.guild.id, correlation.entryId);
-              
+
               executorTag = correlation.executor?.tag ?? undefined;
               executorAvatarURL = correlation.executor?.avatarURL;
               isSelfDelete = correlation.isSelfDelete;
@@ -100,35 +113,47 @@ export default {
 
               // Update last entry ID cache
               await setLastEntryId(message.guild.id, correlation.entryId);
-              
-              logger.debug("Audit log correlation successful", {
-                guildId: message.guild.id,
-                messageId: message.id,
-                executorId: correlation.executor?.id,
-                isSelfDelete,
-                entryId: correlation.entryId,
-              });
+
+              logger.debug(
+                {
+                  guildId: message.guild.id,
+                  messageId: message.id,
+                  executorId: correlation.executor?.id,
+                  isSelfDelete,
+                  entryId: correlation.entryId,
+                },
+                "Audit log correlation successful"
+              );
             } else {
-              logger.debug("Audit log entry already processed, skipping", {
-                guildId: message.guild.id,
-                messageId: message.id,
-                entryId: correlation.entryId,
-              });
+              logger.debug(
+                {
+                  guildId: message.guild.id,
+                  messageId: message.id,
+                  entryId: correlation.entryId,
+                },
+                "Audit log entry already processed, skipping"
+              );
             }
           }
         } catch (error) {
           // Graceful degradation - log error but continue with unknown executor
-          logger.warn("Failed to correlate audit log for message deletion", {
-            guildId: message.guild.id,
-            messageId: message.id,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          logger.warn(
+            {
+              guildId: message.guild.id,
+              messageId: message.id,
+              error: error instanceof Error ? error.message : String(error),
+            },
+            "Failed to correlate audit log for message deletion"
+          );
         }
       }
 
       // Build embed - if message is cached, use its content, otherwise show unknown
       const embed = buildMessageDeleteEmbed({
-        authorTag: message.member?.displayName || message.author?.tag || "Usuario Desconocido",
+        authorTag:
+          message.member?.displayName ||
+          message.author?.tag ||
+          "Usuario Desconocido",
         authorAvatarURL:
           message.member?.displayAvatarURL({ size: 256 }) ||
           message.author?.displayAvatarURL({ size: 256 }),
@@ -143,24 +168,30 @@ export default {
 
       await channel.send({ embeds: [embed] });
 
-      logger.info("Mensaje eliminado registrado", {
-        guildId: message.guild.id,
-        channelId,
-        messageId: message.id,
-        authorId: message.author?.id,
-        wasCached: !message.partial,
-        executorId: executorTag ? "correlated" : "unknown",
-        wasCorrelated,
-        entryId,
-        isSelfDelete,
-      });
+      logger.info(
+        {
+          guildId: message.guild.id,
+          channelId,
+          messageId: message.id,
+          authorId: message.author?.id,
+          wasCached: !message.partial,
+          executorId: executorTag ? "correlated" : "unknown",
+          wasCorrelated,
+          entryId,
+          isSelfDelete,
+        },
+        "Mensaje eliminado registrado"
+      );
     } catch (error) {
-      logger.error("Error al registrar mensaje eliminado", {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        guildId: message.guild?.id,
-        messageId: message.id,
-      });
+      logger.error(
+        {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          guildId: message.guild?.id,
+          messageId: message.id,
+        },
+        "Error al registrar mensaje eliminado"
+      );
     }
   },
 };

@@ -1,6 +1,10 @@
 import { prisma, MAX_QUEUE_SIZE } from "@charlybot/shared";
 import logger from "../../utils/logger";
-import type { IMusicQueue, IMusicQueueItem, IGuildMusicConfig } from "@charlybot/shared";
+import type {
+  IMusicQueue,
+  IMusicQueueItem,
+  IGuildMusicConfig,
+} from "@charlybot/shared";
 import type { IMusicRepository } from "../../domain/ports/IMusicRepository";
 import { withDistributedLock, musicQueueLockKey } from "@charlybot/shared";
 import { getValkeyClient } from "../../infrastructure/valkey/index.ts";
@@ -8,7 +12,9 @@ import { getValkeyClient } from "../../infrastructure/valkey/index.ts";
 /**
  * Obtiene la cola de música para un guild, incluyendo sus items.
  */
-export async function getMusicQueue(guildId: string): Promise<IMusicQueue | null> {
+export async function getMusicQueue(
+  guildId: string
+): Promise<IMusicQueue | null> {
   try {
     const queue = await prisma.musicQueue.findUnique({
       where: { guildId },
@@ -104,7 +110,7 @@ export async function addToMusicQueue(
             },
           });
         });
-      },
+      }
     );
 
     logger.info("Track added to music queue via Prisma", {
@@ -170,11 +176,17 @@ export async function removeFromMusicQueue(
       });
 
       // Reorder remaining items
-      await tx.$executeRaw`
-        UPDATE MusicQueueItem 
-        SET position = position - 1 
-        WHERE queueId = ${queue.id} AND position > ${position}
-      `;
+      // Use Prisma updateMany + decrement to avoid raw SQL identifier casing issues
+      // in Postgres (unquoted identifiers are lowercased).
+      await tx.musicQueueItem.updateMany({
+        where: {
+          queueId: queue.id,
+          position: { gt: position },
+        },
+        data: {
+          position: { decrement: 1 },
+        },
+      });
     });
 
     logger.info("Track removed from music queue via Prisma", {
@@ -183,7 +195,10 @@ export async function removeFromMusicQueue(
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (message === "Queue not found" || message === "Item not found at this position") {
+    if (
+      message === "Queue not found" ||
+      message === "Item not found at this position"
+    ) {
       throw error;
     }
     logger.error("Error removing track from music queue via Prisma", {
@@ -231,7 +246,9 @@ export async function clearMusicQueue(guildId: string): Promise<void> {
  */
 export async function updateMusicQueueSettings(
   guildId: string,
-  settings: Partial<Omit<IMusicQueue, "id" | "guildId" | "items" | "updatedAt" | "createdAt">>
+  settings: Partial<
+    Omit<IMusicQueue, "id" | "guildId" | "items" | "updatedAt" | "createdAt">
+  >
 ): Promise<IMusicQueue> {
   try {
     const queue = await prisma.musicQueue.upsert({
@@ -299,7 +316,9 @@ export async function updateMusicQueueSettings(
 /**
  * Obtiene la configuración de música del guild.
  */
-export async function getMusicConfig(guildId: string): Promise<IGuildMusicConfig | null> {
+export async function getMusicConfig(
+  guildId: string
+): Promise<IGuildMusicConfig | null> {
   try {
     const config = await prisma.guildMusicConfig.findUnique({
       where: { guildId },
@@ -330,7 +349,9 @@ export async function getMusicConfig(guildId: string): Promise<IGuildMusicConfig
  */
 export async function upsertMusicConfig(
   guildId: string,
-  config: Partial<Omit<IGuildMusicConfig, "id" | "guildId" | "updatedAt" | "createdAt">>
+  config: Partial<
+    Omit<IGuildMusicConfig, "id" | "guildId" | "updatedAt" | "createdAt">
+  >
 ): Promise<IGuildMusicConfig> {
   try {
     const result = await prisma.guildMusicConfig.upsert({
@@ -370,7 +391,11 @@ export async function upsertMusicConfig(
 // PrismaMusicAdapter - implements IMusicRepository for backward compatibility
 // ============================================================================
 
-import type { GuildMusicConfig, MusicQueue, MusicQueueItem } from "@charlybot/shared";
+import type {
+  GuildMusicConfig,
+  MusicQueue,
+  MusicQueueItem,
+} from "@charlybot/shared";
 
 /**
  * Adapter that implements IMusicRepository using direct Prisma calls.
@@ -398,7 +423,9 @@ export class PrismaMusicAdapter implements IMusicRepository {
 
   async updateSettings(
     guildId: string,
-    settings: Partial<Omit<IMusicQueue, "id" | "guildId" | "items" | "updatedAt" | "createdAt">>
+    settings: Partial<
+      Omit<IMusicQueue, "id" | "guildId" | "items" | "updatedAt" | "createdAt">
+    >
   ): Promise<IMusicQueue> {
     return updateMusicQueueSettings(guildId, settings);
   }
@@ -409,7 +436,9 @@ export class PrismaMusicAdapter implements IMusicRepository {
 
   async upsertConfig(
     guildId: string,
-    config: Partial<Omit<IGuildMusicConfig, "id" | "guildId" | "updatedAt" | "createdAt">>
+    config: Partial<
+      Omit<IGuildMusicConfig, "id" | "guildId" | "updatedAt" | "createdAt">
+    >
   ): Promise<IGuildMusicConfig> {
     return upsertMusicConfig(guildId, config);
   }

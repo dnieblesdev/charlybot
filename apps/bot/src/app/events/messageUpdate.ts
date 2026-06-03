@@ -7,7 +7,10 @@ import { buildMessageEditEmbed } from "../../utils/messageAuditEmbeds.ts";
 export default {
   name: Events.MessageUpdate,
   once: false,
-  async execute(oldMessage: Message | PartialMessage, newMessage: Message | PartialMessage) {
+  async execute(
+    oldMessage: Message | PartialMessage,
+    newMessage: Message | PartialMessage
+  ) {
     try {
       // Guard: Ignore if not in a guild (DMs)
       if (!newMessage.guild) return;
@@ -20,7 +23,12 @@ export default {
       // Guard: Ignore if content didn't actually change (e.g. Discord adding link previews/embeds)
       const oldContent = oldMessage.partial ? null : oldMessage.content;
       const newContent = newMessage.partial ? null : newMessage.content;
-      if (oldContent !== null && newContent !== null && oldContent === newContent) return;
+      if (
+        oldContent !== null &&
+        newContent !== null &&
+        oldContent === newContent
+      )
+        return;
       if (oldContent === null && newContent === null) return;
 
       // Guard: Check config
@@ -32,19 +40,25 @@ export default {
       // Resolve channel
       const channel = newMessage.guild.channels.cache.get(channelId);
       if (!channel) {
-        logger.warn("Canal de logs de mensajes no encontrado en caché", {
-          guildId: newMessage.guild.id,
-          channelId,
-        });
+        logger.warn(
+          {
+            guildId: newMessage.guild.id,
+            channelId,
+          },
+          "Canal de logs de mensajes no encontrado en caché"
+        );
         return;
       }
 
       if (!(channel instanceof TextChannel)) {
-        logger.warn("El canal de logs de mensajes no es un canal de texto", {
-          guildId: newMessage.guild.id,
-          channelId,
-          channelType: channel.type,
-        });
+        logger.warn(
+          {
+            guildId: newMessage.guild.id,
+            channelId,
+            channelType: channel.type,
+          },
+          "El canal de logs de mensajes no es un canal de texto"
+        );
         return;
       }
 
@@ -59,7 +73,10 @@ export default {
 
       // Build embed
       const embed = buildMessageEditEmbed({
-        authorTag: newMessage.member?.displayName || newMessage.author?.tag || "Usuario Desconocido",
+        authorTag:
+          newMessage.member?.displayName ||
+          newMessage.author?.tag ||
+          "Usuario Desconocido",
         authorAvatarURL:
           newMessage.member?.displayAvatarURL({ size: 256 }) ||
           newMessage.author?.displayAvatarURL({ size: 256 }),
@@ -77,19 +94,25 @@ export default {
 
       await channel.send({ embeds: [embed] });
 
-      logger.info("Mensaje editado registrado", {
-        guildId: newMessage.guild.id,
-        channelId,
-        messageId: newMessage.id,
-        authorId: newMessage.author?.id,
-      });
+      logger.info(
+        {
+          guildId: newMessage.guild.id,
+          channelId,
+          messageId: newMessage.id,
+          authorId: newMessage.author?.id,
+        },
+        "Mensaje editado registrado"
+      );
     } catch (error) {
-      logger.error("Error al registrar mensaje editado", {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        guildId: newMessage.guild?.id,
-        messageId: newMessage.id,
-      });
+      logger.error(
+        {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          guildId: newMessage.guild?.id,
+          messageId: newMessage.id,
+        },
+        "Error al registrar mensaje editado"
+      );
     }
   },
 };

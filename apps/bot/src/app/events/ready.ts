@@ -17,7 +17,7 @@ export default {
         const fullGuild = await guild.fetch();
         if (fullGuild.features.includes("COMMUNITY")) {
           logger.info(
-            `✅ Servidor ${fullGuild.vanityURLCode} es un servidor de comunidad`,
+            `✅ Servidor ${fullGuild.vanityURLCode} es un servidor de comunidad`
           );
         }
 
@@ -30,9 +30,12 @@ export default {
           ownerId = owner.id;
           ownerUsername = owner.user.username;
         } catch (err) {
-          logger.warn(`Could not fetch owner for guild ${guild.id}`, {
-            error: err instanceof Error ? err.message : String(err),
-          });
+          logger.warn(
+            {
+              error: err instanceof Error ? err.message : String(err),
+            },
+            `Could not fetch owner for guild ${guild.id}`
+          );
         }
 
         await upsertGuild(guild.id, {
@@ -43,13 +46,19 @@ export default {
           ownerName: ownerUsername,
         });
 
-        logger.info(`✅ Guild sincronizado: ${guild.name}`, {
-          guildId: guild.id,
-        });
+        logger.info(
+          {
+            guildId: guild.id,
+          },
+          `✅ Guild sincronizado: ${guild.name}`
+        );
       } catch (err) {
-        logger.error(`Failed to sync guild ${guild.id}`, {
-          error: err instanceof Error ? err.message : String(err),
-        });
+        logger.error(
+          {
+            error: err instanceof Error ? err.message : String(err),
+          },
+          `Failed to sync guild ${guild.id}`
+        );
       }
     }
   },

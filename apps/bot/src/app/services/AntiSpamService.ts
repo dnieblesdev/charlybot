@@ -1,10 +1,17 @@
 import type { Message, GuildMember } from "discord.js";
-import type { IAntiSpamConfig, IAntiSpamPattern } from "@charlybot/shared/schemas/antispam";
+import type {
+  IAntiSpamConfig,
+  IAntiSpamPattern,
+} from "@charlybot/shared/schemas/antispam";
 import type { IValkeyClient } from "@charlybot/shared";
 import { ANTI_SPAM_KEYS } from "@charlybot/shared";
 import logger from "../../utils/logger.js";
 import * as historyRepo from "../../config/repositories/AntiSpamHistoryRepo.js";
-import { AntiSpamAction, toAntiSpamAction, type SpamCheckResult } from "./SpamCheckResult.js";
+import {
+  AntiSpamAction,
+  toAntiSpamAction,
+  type SpamCheckResult,
+} from "./SpamCheckResult.js";
 
 // URL detection regex
 const URL_REGEX = /https?:\/\//i;
@@ -42,10 +49,7 @@ const DEFAULTS = {
 export class AntiSpamService {
   private config: IAntiSpamConfig | null = null;
 
-  constructor(
-    private valkey: IValkeyClient,
-    config?: IAntiSpamConfig | null,
-  ) {
+  constructor(private valkey: IValkeyClient, config?: IAntiSpamConfig | null) {
     this.config = config ?? null;
   }
 
@@ -58,11 +62,21 @@ export class AntiSpamService {
    */
   async evaluate(message: Message): Promise<SpamCheckResult> {
     if (!message.guildId) {
-      return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+      return {
+        isSpam: false,
+        pattern: "",
+        action: AntiSpamAction.WARN,
+        reason: "",
+      };
     }
 
     if (this.config && !this.config.enabled) {
-      return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+      return {
+        isSpam: false,
+        pattern: "",
+        action: AntiSpamAction.WARN,
+        reason: "",
+      };
     }
 
     // First-trigger guard: if an action was already taken for this user recently,
@@ -72,7 +86,12 @@ export class AntiSpamService {
       const alreadyActed = await this.valkey.get<string>(actionTakenKey);
       if (alreadyActed) {
         // Action already taken for this user recently — skip to avoid duplicate warns/timeouts
-        return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+        return {
+          isSpam: false,
+          pattern: "",
+          action: AntiSpamAction.WARN,
+          reason: "",
+        };
       }
     } catch {
       // fail-open: continue evaluation if Valkey check fails
@@ -129,11 +148,14 @@ export class AntiSpamService {
 
     for (const result of results) {
       if (result.status === "rejected") {
-        logger.warn("AntiSpam check failed, failing open", {
-          error: result.reason,
-          guildId: message.guildId,
-          userId: message.author.id,
-        });
+        logger.warn(
+          {
+            error: result.reason,
+            guildId: message.guildId,
+            userId: message.author.id,
+          },
+          "AntiSpam check failed, failing open"
+        );
         continue;
       }
 
@@ -149,7 +171,12 @@ export class AntiSpamService {
       }
     }
 
-    return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+    return {
+      isSpam: false,
+      pattern: "",
+      action: AntiSpamAction.WARN,
+      reason: "",
+    };
   }
 
   private isEnabled(field: keyof IAntiSpamConfig): boolean {
@@ -160,7 +187,7 @@ export class AntiSpamService {
 
   private getAction(
     actionField: keyof IAntiSpamConfig,
-    fallback: AntiSpamAction,
+    fallback: AntiSpamAction
   ): AntiSpamAction {
     if (!this.config) return fallback;
     const val = this.config[actionField];
@@ -179,7 +206,10 @@ export class AntiSpamService {
     const threshold = DEFAULTS.MESSAGE_THRESHOLD;
     const window = DEFAULTS.MESSAGE_WINDOW;
 
-    const key = ANTI_SPAM_KEYS.userMessages(message.guildId!, message.author.id);
+    const key = ANTI_SPAM_KEYS.userMessages(
+      message.guildId!,
+      message.author.id
+    );
     const now = Date.now();
     const member = `${message.id}:${message.channel.id}`;
 
@@ -188,7 +218,11 @@ export class AntiSpamService {
       await this.valkey.sortedSetRemoveByScore(key, now - window * 1000);
       await this.valkey.expire(key, window);
 
-      const members = await this.valkey.sortedSetRangeByScore(key, now - window * 1000, now);
+      const members = await this.valkey.sortedSetRangeByScore(
+        key,
+        now - window * 1000,
+        now
+      );
 
       if (members.length >= threshold) {
         const messageIds: { id: string; channelId: string }[] = [];
@@ -207,11 +241,19 @@ export class AntiSpamService {
         };
       }
     } catch (err) {
-      logger.warn("Valkey rate limit check failed, failing open", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.warn(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        "Valkey rate limit check failed, failing open"
+      );
     }
-    return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+    return {
+      isSpam: false,
+      pattern: "",
+      action: AntiSpamAction.WARN,
+      reason: "",
+    };
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -219,7 +261,9 @@ export class AntiSpamService {
   // Key: cb:antispam:${guildId}:${userId}:burst:${channelId}
   // Threshold: 3+ messages in 5 seconds in SAME channel
   // ─────────────────────────────────────────────────────────────
-  private async checkBurstPerChannel(message: Message): Promise<SpamCheckResult> {
+  private async checkBurstPerChannel(
+    message: Message
+  ): Promise<SpamCheckResult> {
     const threshold = DEFAULTS.BURST_THRESHOLD;
     const window = DEFAULTS.BURST_WINDOW;
 
@@ -232,7 +276,11 @@ export class AntiSpamService {
       await this.valkey.sortedSetRemoveByScore(key, now - window * 1000);
       await this.valkey.expire(key, window);
 
-      const members = await this.valkey.sortedSetRangeByScore(key, now - window * 1000, now);
+      const members = await this.valkey.sortedSetRangeByScore(
+        key,
+        now - window * 1000,
+        now
+      );
 
       if (members.length >= threshold) {
         const messageIds: { id: string; channelId: string }[] = [];
@@ -251,11 +299,19 @@ export class AntiSpamService {
         };
       }
     } catch (err) {
-      logger.warn("Valkey burst-per-channel check failed, failing open", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.warn(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        "Valkey burst-per-channel check failed, failing open"
+      );
     }
-    return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+    return {
+      isSpam: false,
+      pattern: "",
+      action: AntiSpamAction.WARN,
+      reason: "",
+    };
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -265,7 +321,10 @@ export class AntiSpamService {
   // Uses burstAction as fallback (velocityAction not in config schema)
   // ─────────────────────────────────────────────────────────────
   private async checkVelocity(message: Message): Promise<SpamCheckResult> {
-    const key = ANTI_SPAM_KEYS.userVelocity(message.guildId!, message.author.id);
+    const key = ANTI_SPAM_KEYS.userVelocity(
+      message.guildId!,
+      message.author.id
+    );
     const now = Date.now();
 
     try {
@@ -282,13 +341,25 @@ export class AntiSpamService {
         }
       }
       // Store current timestamp
-      await this.valkey.set(key, now.toString(), Math.ceil(DEFAULTS.VELOCITY_THRESHOLD_MS / 1000));
+      await this.valkey.set(
+        key,
+        now.toString(),
+        Math.ceil(DEFAULTS.VELOCITY_THRESHOLD_MS / 1000)
+      );
     } catch (err) {
-      logger.warn("Valkey velocity check failed, failing open", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.warn(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        "Valkey velocity check failed, failing open"
+      );
     }
-    return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+    return {
+      isSpam: false,
+      pattern: "",
+      action: AntiSpamAction.WARN,
+      reason: "",
+    };
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -297,15 +368,23 @@ export class AntiSpamService {
   private async checkMentionSpam(message: Message): Promise<SpamCheckResult> {
     const mentionCount = message.mentions.users.size;
     if (mentionCount < DEFAULTS.MENTION_THRESHOLD) {
-      return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+      return {
+        isSpam: false,
+        pattern: "",
+        action: AntiSpamAction.WARN,
+        reason: "",
+      };
     }
 
-    const mentionKey = ANTI_SPAM_KEYS.userMentions(message.guildId!, message.author.id);
+    const mentionKey = ANTI_SPAM_KEYS.userMentions(
+      message.guildId!,
+      message.author.id
+    );
     try {
       const mentionOk = await this.valkey.rateLimit(
         mentionKey,
         DEFAULTS.MENTION_THRESHOLD,
-        DEFAULTS.MENTION_WINDOW,
+        DEFAULTS.MENTION_WINDOW
       );
       if (!mentionOk) {
         return {
@@ -316,11 +395,19 @@ export class AntiSpamService {
         };
       }
     } catch (err) {
-      logger.warn("Valkey rateLimit failed for mentions, failing open", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.warn(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        "Valkey rateLimit failed for mentions, failing open"
+      );
     }
-    return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+    return {
+      isSpam: false,
+      pattern: "",
+      action: AntiSpamAction.WARN,
+      reason: "",
+    };
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -329,15 +416,23 @@ export class AntiSpamService {
   private async checkLinkSpam(message: Message): Promise<SpamCheckResult> {
     const content = message.content;
     if (!URL_REGEX.test(content)) {
-      return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+      return {
+        isSpam: false,
+        pattern: "",
+        action: AntiSpamAction.WARN,
+        reason: "",
+      };
     }
 
-    const linkKey = ANTI_SPAM_KEYS.userLinks(message.guildId!, message.author.id);
+    const linkKey = ANTI_SPAM_KEYS.userLinks(
+      message.guildId!,
+      message.author.id
+    );
     try {
       const linkOk = await this.valkey.rateLimit(
         linkKey,
         DEFAULTS.LINK_THRESHOLD,
-        DEFAULTS.LINK_WINDOW,
+        DEFAULTS.LINK_WINDOW
       );
       if (!linkOk) {
         return {
@@ -348,26 +443,41 @@ export class AntiSpamService {
         };
       }
     } catch (err) {
-      logger.warn("Valkey rateLimit failed for links, failing open", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.warn(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        "Valkey rateLimit failed for links, failing open"
+      );
     }
-    return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+    return {
+      isSpam: false,
+      pattern: "",
+      action: AntiSpamAction.WARN,
+      reason: "",
+    };
   }
 
   // ─────────────────────────────────────────────────────────────
   // Pattern: duplicate content
   // ─────────────────────────────────────────────────────────────
-  private async checkDuplicateContent(message: Message): Promise<SpamCheckResult> {
+  private async checkDuplicateContent(
+    message: Message
+  ): Promise<SpamCheckResult> {
     const content = message.content.trim();
     if (!content) {
-      return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+      return {
+        isSpam: false,
+        pattern: "",
+        action: AntiSpamAction.WARN,
+        reason: "",
+      };
     }
 
     const dupKey = ANTI_SPAM_KEYS.userDuplicates(
       message.guildId!,
       message.author.id,
-      this.hashContent(content),
+      this.hashContent(content)
     );
 
     try {
@@ -382,11 +492,19 @@ export class AntiSpamService {
       }
       await this.valkey.set<string>(dupKey, "1", DEFAULTS.DUPLICATE_WINDOW);
     } catch (err) {
-      logger.warn("Valkey duplicate check failed, failing open", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.warn(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        "Valkey duplicate check failed, failing open"
+      );
     }
-    return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+    return {
+      isSpam: false,
+      pattern: "",
+      action: AntiSpamAction.WARN,
+      reason: "",
+    };
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -395,14 +513,24 @@ export class AntiSpamService {
   private checkCapsSpam(message: Message): SpamCheckResult {
     const content = message.content;
     if (content.length < DEFAULTS.CAPS_MIN_LENGTH) {
-      return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+      return {
+        isSpam: false,
+        pattern: "",
+        action: AntiSpamAction.WARN,
+        reason: "",
+      };
     }
 
     const upperCount = content.replace(/[^A-ZÁÉÍÓÚÑÜ]/g, "").length;
     const alphaCount = content.replace(/[^a-zA-ZÁÉÍÓáéíóúÑñüÜ]/g, "").length;
 
     if (alphaCount === 0) {
-      return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+      return {
+        isSpam: false,
+        pattern: "",
+        action: AntiSpamAction.WARN,
+        reason: "",
+      };
     }
 
     const ratio = upperCount / alphaCount;
@@ -415,7 +543,12 @@ export class AntiSpamService {
       };
     }
 
-    return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+    return {
+      isSpam: false,
+      pattern: "",
+      action: AntiSpamAction.WARN,
+      reason: "",
+    };
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -428,7 +561,12 @@ export class AntiSpamService {
     const emojiCount = (content.match(EMOJI_REGEX) ?? []).length;
 
     if (emojiCount < DEFAULTS.EMOJI_COUNT) {
-      return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+      return {
+        isSpam: false,
+        pattern: "",
+        action: AntiSpamAction.WARN,
+        reason: "",
+      };
     }
 
     const key = ANTI_SPAM_KEYS.userEmoji(message.guildId!, message.author.id);
@@ -437,13 +575,16 @@ export class AntiSpamService {
 
     try {
       await this.valkey.sortedSetAdd(key, now, member);
-      await this.valkey.sortedSetRemoveByScore(key, now - DEFAULTS.EMOJI_WINDOW * 1000);
+      await this.valkey.sortedSetRemoveByScore(
+        key,
+        now - DEFAULTS.EMOJI_WINDOW * 1000
+      );
       await this.valkey.expire(key, DEFAULTS.EMOJI_WINDOW);
 
       const members = await this.valkey.sortedSetRangeByScore(
         key,
         now - DEFAULTS.EMOJI_WINDOW * 1000,
-        now,
+        now
       );
 
       if (members.length >= DEFAULTS.EMOJI_THRESHOLD) {
@@ -453,7 +594,9 @@ export class AntiSpamService {
             if (!id || !channelId) return null;
             return { id, channelId };
           })
-          .filter((item): item is { id: string; channelId: string } => item !== null);
+          .filter(
+            (item): item is { id: string; channelId: string } => item !== null
+          );
         return {
           isSpam: true,
           pattern: "emoji",
@@ -463,11 +606,19 @@ export class AntiSpamService {
         };
       }
     } catch (err) {
-      logger.warn("Valkey emoji spam check failed, failing open", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.warn(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        "Valkey emoji spam check failed, failing open"
+      );
     }
-    return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+    return {
+      isSpam: false,
+      pattern: "",
+      action: AntiSpamAction.WARN,
+      reason: "",
+    };
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -482,7 +633,12 @@ export class AntiSpamService {
     const hasLink = URL_REGEX.test(content);
 
     if (!hasMention || !hasLink) {
-      return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+      return {
+        isSpam: false,
+        pattern: "",
+        action: AntiSpamAction.WARN,
+        reason: "",
+      };
     }
 
     // Single-message trigger: 3+ mentions + 1 link
@@ -503,13 +659,16 @@ export class AntiSpamService {
 
     try {
       await this.valkey.sortedSetAdd(key, now, member);
-      await this.valkey.sortedSetRemoveByScore(key, now - DEFAULTS.COMBO_WINDOW * 1000);
+      await this.valkey.sortedSetRemoveByScore(
+        key,
+        now - DEFAULTS.COMBO_WINDOW * 1000
+      );
       await this.valkey.expire(key, DEFAULTS.COMBO_WINDOW);
 
       const members = await this.valkey.sortedSetRangeByScore(
         key,
         now - DEFAULTS.COMBO_WINDOW * 1000,
-        now,
+        now
       );
 
       if (members.length >= DEFAULTS.COMBO_THRESHOLD) {
@@ -519,7 +678,9 @@ export class AntiSpamService {
             if (!id || !channelId) return null;
             return { id, channelId };
           })
-          .filter((item): item is { id: string; channelId: string } => item !== null);
+          .filter(
+            (item): item is { id: string; channelId: string } => item !== null
+          );
         return {
           isSpam: true,
           pattern: "combo",
@@ -529,11 +690,19 @@ export class AntiSpamService {
         };
       }
     } catch (err) {
-      logger.warn("Valkey combo check failed, failing open", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.warn(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        "Valkey combo check failed, failing open"
+      );
     }
-    return { isSpam: false, pattern: "", action: AntiSpamAction.WARN, reason: "" };
+    return {
+      isSpam: false,
+      pattern: "",
+      action: AntiSpamAction.WARN,
+      reason: "",
+    };
   }
 
   private hashContent(content: string): string {
@@ -554,7 +723,7 @@ export class AntiSpamService {
   async applyAction(
     result: SpamCheckResult,
     message: Message,
-    member: GuildMember,
+    member: GuildMember
   ): Promise<{ action: AntiSpamAction; escalated: boolean }> {
     if (!result.isSpam || !message.guildId) {
       return { action: AntiSpamAction.WARN, escalated: false };
@@ -564,24 +733,29 @@ export class AntiSpamService {
 
     // Escalation check
     if (this.config?.escalationEnabled) {
-      const lookback = new Date(Date.now() - DEFAULTS.ESCALATION_LOOKBACK_HOURS * 60 * 60 * 1000);
+      const lookback = new Date(
+        Date.now() - DEFAULTS.ESCALATION_LOOKBACK_HOURS * 60 * 60 * 1000
+      );
       const recentCount = await historyRepo.countRecentByUser(
         message.guildId,
         message.author.id,
-        lookback,
+        lookback
       );
 
       if (recentCount >= this.getEscalationCount()) {
         const escalated = this.escalateAction(action);
         if (escalated !== action) {
-          logger.info("Escalating anti-spam action", {
-            guildId: message.guildId,
-            userId: message.author.id,
-            pattern: result.pattern,
-            from: action,
-            to: escalated,
-            recentCount,
-          });
+          logger.info(
+            {
+              guildId: message.guildId,
+              userId: message.author.id,
+              pattern: result.pattern,
+              from: action,
+              to: escalated,
+              recentCount,
+            },
+            "Escalating anti-spam action"
+          );
           action = escalated;
         }
       }

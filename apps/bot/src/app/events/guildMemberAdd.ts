@@ -19,7 +19,7 @@ export function formatWelcomeMessage(
   template: string,
   member: GuildMember,
   customVars: Map<string, string>,
-  socialLinks: Map<string, string>,
+  socialLinks: Map<string, string>
 ) {
   return template
     .replace(/{user}/g, member.toString())
@@ -59,18 +59,24 @@ export default {
       const channel = member.guild.channels.cache.get(channelId);
 
       if (!channel) {
-        logger.warn("Canal de bienvenida no encontrado en caché", {
-          guildId,
-          channelId,
-        });
+        logger.warn(
+          {
+            guildId,
+            channelId,
+          },
+          "Canal de bienvenida no encontrado en caché"
+        );
         return;
       }
 
       if (!(channel instanceof TextChannel) && !channel.isThread()) {
-        logger.warn("El canal de bienvenida no es un canal de texto", {
-          guildId,
-          channelId,
-        });
+        logger.warn(
+          {
+            guildId,
+            channelId,
+          },
+          "El canal de bienvenida no es un canal de texto"
+        );
         return;
       }
 
@@ -82,14 +88,22 @@ export default {
           listSocialLinks(guildId),
         ]);
 
-        logger.debug("formatWelcomeMessage inputs", {
-          guildId,
-          customVarsKeys: [...customVars.keys()],
-          socialLinksKeys: [...socialLinks.keys()],
-          template: messageTemplate,
-        });
+        logger.debug(
+          {
+            guildId,
+            customVarsKeys: [...customVars.keys()],
+            socialLinksKeys: [...socialLinks.keys()],
+            template: messageTemplate,
+          },
+          "formatWelcomeMessage inputs"
+        );
 
-        const finalMessage = formatWelcomeMessage(messageTemplate, member, customVars, socialLinks);
+        const finalMessage = formatWelcomeMessage(
+          messageTemplate,
+          member,
+          customVars,
+          socialLinks
+        );
         await (channel as TextChannel).send({ content: finalMessage });
       } else {
         // Si no hay mensaje personalizado, usar embed por defecto
@@ -104,7 +118,7 @@ export default {
           })
           .setThumbnail(userAvatar)
           .setDescription(
-            `🎉 ¡Bienvenido/a **${member.user.tag}** a **${member.guild.name}**!`,
+            `🎉 ¡Bienvenido/a **${member.user.tag}** a **${member.guild.name}**!`
           )
           .addFields(
             {
@@ -126,7 +140,7 @@ export default {
               name: "📅 Cuenta creada",
               value: `<t:${accountCreated}:R>`,
               inline: false,
-            },
+            }
           )
           .setFooter({
             text: `¡Esperamos que disfrutes tu estancia!`,
@@ -137,18 +151,24 @@ export default {
         await (channel as TextChannel).send({ embeds: [embed] });
       }
 
-      logger.info("Mensaje de bienvenida enviado correctamente", {
-        guildId,
-        channelId,
-        userId: member.id,
-        userTag: member.user.tag,
-        hasCustomMessage: !!messageTemplate,
-      });
+      logger.info(
+        {
+          guildId,
+          channelId,
+          userId: member.id,
+          userTag: member.user.tag,
+          hasCustomMessage: !!messageTemplate,
+        },
+        "Mensaje de bienvenida enviado correctamente"
+      );
     } catch (error) {
-      logger.error("Error al enviar mensaje de bienvenida", {
-        error: error instanceof Error ? error.message : String(error),
-        guildId: member.guild?.id,
-      });
+      logger.error(
+        {
+          error: error instanceof Error ? error.message : String(error),
+          guildId: member.guild?.id,
+        },
+        "Error al enviar mensaje de bienvenida"
+      );
     }
   },
 };

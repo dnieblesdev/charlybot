@@ -14,7 +14,7 @@ export default {
   once: false,
   async execute(
     reaction: MessageReaction | PartialMessageReaction,
-    user: User | PartialUser,
+    user: User | PartialUser
   ) {
     try {
       // Ignorar reacciones del bot
@@ -25,10 +25,13 @@ export default {
         try {
           await reaction.fetch();
         } catch (error) {
-          logger.error("Error fetching reaction", {
-            error: error instanceof Error ? error.message : String(error),
-            messageId: reaction.message.id,
-          });
+          logger.error(
+            {
+              error: error instanceof Error ? error.message : String(error),
+              messageId: reaction.message.id,
+            },
+            "Error fetching reaction"
+          );
           return;
         }
       }
@@ -37,10 +40,13 @@ export default {
         try {
           await reaction.message.fetch();
         } catch (error) {
-          logger.error("Error fetching message", {
-            error: error instanceof Error ? error.message : String(error),
-            messageId: reaction.message.id,
-          });
+          logger.error(
+            {
+              error: error instanceof Error ? error.message : String(error),
+              messageId: reaction.message.id,
+            },
+            "Error fetching message"
+          );
           return;
         }
       }
@@ -51,7 +57,10 @@ export default {
       if (!guild) return;
 
       // Buscar si este mensaje tiene configuración de auto-roles
-      const autoRole = await AutoRoleRepo.getAutoRoleByMessageId(guild.id, message.id);
+      const autoRole = await AutoRoleRepo.getAutoRoleByMessageId(
+        guild.id,
+        message.id
+      );
 
       if (!autoRole) return;
 
@@ -66,25 +75,31 @@ export default {
           m.type === "reaction" &&
           (m.emoji === emoji ||
             m.emoji === reaction.emoji.name ||
-            m.emoji === reaction.emoji.id),
+            m.emoji === reaction.emoji.id)
       );
 
       if (!mapping) {
-        logger.debug("No mapping found for reaction", {
-          emoji,
-          messageId: message.id,
-          autoRoleId: autoRole.id,
-        });
+        logger.debug(
+          {
+            emoji,
+            messageId: message.id,
+            autoRoleId: autoRole.id,
+          },
+          "No mapping found for reaction"
+        );
         return;
       }
 
       // Obtener el miembro del servidor
       const member = await guild.members.fetch(user.id);
       if (!member) {
-        logger.error("Could not fetch member", {
-          userId: user.id,
-          guildId: guild.id,
-        });
+        logger.error(
+          {
+            userId: user.id,
+            guildId: guild.id,
+          },
+          "Could not fetch member"
+        );
         return;
       }
 
@@ -92,48 +107,57 @@ export default {
       const result = await AutoRoleService.assignRole(
         member,
         mapping.roleId,
-        autoRole,
+        autoRole
       );
 
       if (!result.success) {
-        logger.error("Failed to assign role via reaction", {
-          error: result.error,
-          userId: user.id,
-          roleId: mapping.roleId,
-          messageId: message.id,
-          autoRoleId: autoRole.id,
-        });
+        logger.error(
+          {
+            error: result.error,
+            userId: user.id,
+            roleId: mapping.roleId,
+            messageId: message.id,
+            autoRoleId: autoRole.id,
+          },
+          "Failed to assign role via reaction"
+        );
 
         // Intentar quitar la reacción si falló
         try {
           await reaction.users.remove(user.id);
         } catch (error) {
           logger.error(
-            "Failed to remove reaction after role assignment failure",
             {
               error: error instanceof Error ? error.message : String(error),
               userId: user.id,
               messageId: message.id,
             },
+            "Failed to remove reaction after role assignment failure"
           );
         }
       } else {
-        logger.info("Role assigned via reaction", {
-          userId: user.id,
-          username: user.username,
-          roleId: mapping.roleId,
-          guildId: guild.id,
-          messageId: message.id,
-          autoRoleId: autoRole.id,
-          emoji,
-        });
+        logger.info(
+          {
+            userId: user.id,
+            username: user.username,
+            roleId: mapping.roleId,
+            guildId: guild.id,
+            messageId: message.id,
+            autoRoleId: autoRole.id,
+            emoji,
+          },
+          "Role assigned via reaction"
+        );
       }
     } catch (error) {
-      logger.error("Error in messageReactionAdd handler", {
-        error: error instanceof Error ? error.message : String(error),
-        messageId: reaction.message.id,
-        userId: user.id,
-      });
+      logger.error(
+        {
+          error: error instanceof Error ? error.message : String(error),
+          messageId: reaction.message.id,
+          userId: user.id,
+        },
+        "Error in messageReactionAdd handler"
+      );
     }
   },
 };

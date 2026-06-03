@@ -7,6 +7,40 @@ import type { IGuildConfig, Guild } from "@charlybot/shared";
 const CACHE_TTL_CONFIG = 5 * 60 * 1000; // 5 minutes
 const makeCacheKey = (guildId: string) => `${KEYS.GUILD_CONFIG}:${guildId}`;
 
+interface MemoryGuildConfigCacheEntry {
+  value: IGuildConfig | null;
+  expiresAt: number;
+}
+
+const memoryGuildConfigCache = new Map<string, MemoryGuildConfigCacheEntry>();
+
+function getMemoryGuildConfig(key: string): IGuildConfig | null | undefined {
+  const cached = memoryGuildConfigCache.get(key);
+  if (!cached) return undefined;
+
+  if (cached.expiresAt <= Date.now()) {
+    memoryGuildConfigCache.delete(key);
+    return undefined;
+  }
+
+  return cached.value;
+}
+
+function setMemoryGuildConfig(key: string, value: IGuildConfig | null): void {
+  memoryGuildConfigCache.set(key, {
+    value,
+    expiresAt: Date.now() + CACHE_TTL_CONFIG,
+  });
+}
+
+async function invalidateGuildConfigCache(
+  key: string,
+  valkey: ReturnType<typeof getValkeyClient>,
+): Promise<void> {
+  memoryGuildConfigCache.delete(key);
+  await valkey.del(key);
+}
+
 /**
  * Obtiene la configuración de un servidor
  */
@@ -14,9 +48,15 @@ export async function getGuildConfig(guildId: string): Promise<IGuildConfig | nu
   const key = makeCacheKey(guildId);
   const valkey = getValkeyClient();
 
+  const memoryCached = getMemoryGuildConfig(key);
+  if (memoryCached !== undefined) {
+    return memoryCached;
+  }
+
   // Check distributed cache first
   const cached = await valkey.get<IGuildConfig | null>(key);
   if (cached !== undefined) {
+    setMemoryGuildConfig(key, cached);
     return cached;
   }
 
@@ -26,6 +66,7 @@ export async function getGuildConfig(guildId: string): Promise<IGuildConfig | nu
   });
 
   if (!config) {
+    setMemoryGuildConfig(key, null);
     await valkey.set<null>(key, null, CACHE_TTL_CONFIG / 1000);
     return null;
   }
@@ -47,6 +88,7 @@ export async function getGuildConfig(guildId: string): Promise<IGuildConfig | nu
     antispamEnabled: config.antispamEnabled,
   };
 
+  setMemoryGuildConfig(key, result);
   await valkey.set<IGuildConfig>(key, result, CACHE_TTL_CONFIG / 1000);
   return result;
 }
@@ -74,7 +116,7 @@ export async function setImagenChannel(
     create: { guildId, targetChannelId },
   });
 
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(
     `✅ Configuración guardada: Guild ${guildId} -> Canal ${targetChannelId}`,
   );
@@ -102,7 +144,7 @@ export async function setVoiceLogChannel(
     create: { guildId, voiceLogChannelId },
   });
 
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(
     `✅ Canal de logs de voz configurado: Guild ${guildId} -> Canal ${voiceLogChannelId}`,
   );
@@ -130,7 +172,7 @@ export async function setWelcomeChannel(
     create: { guildId, welcomeChannelId },
   });
 
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(
     `✅ Canal de bienvenida configurado: Guild ${guildId} -> Canal ${welcomeChannelId}`,
   );
@@ -158,7 +200,7 @@ export async function setWelcomeMessage(
     create: { guildId, welcomeMessage },
   });
 
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(
     `✅ Mensaje de bienvenida configurado: Guild ${guildId} -> Message ${welcomeMessage}`,
   );
@@ -186,7 +228,7 @@ export async function setLeaveLogChannel(
     create: { guildId, leaveLogChannelId },
   });
 
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(
     `✅ Canal de logs de salida configurado: Guild ${guildId} -> Canal ${leaveLogChannelId}`,
   );
@@ -214,7 +256,7 @@ export async function setMessageLogChannel(
     create: { guildId, messageLogChannelId },
   });
 
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(
     `✅ Canal de logs de mensajes configurado: Guild ${guildId} -> Canal ${messageLogChannelId}`,
   );
@@ -228,7 +270,7 @@ export async function removeGuildConfig(guildId: string): Promise<void> {
   const valkey = getValkeyClient();
 
   await prisma.guildConfig.deleteMany({ where: { guildId } });
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(`🗑️ Configuración eliminada: Guild ${guildId}`);
 }
 
@@ -244,7 +286,7 @@ export async function deleteGuild(guildId: string): Promise<void> {
     await tx.guild.deleteMany({ where: { guildId } });
   });
 
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(`🗑️ Guild eliminado: ${guildId}`);
 }
 
@@ -270,7 +312,7 @@ export async function setVerificationChannel(
     create: { guildId, verificationChannelId },
   });
 
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(
     `✅ Canal de verificación configurado: Guild ${guildId} -> Canal ${verificationChannelId}`,
   );
@@ -298,7 +340,7 @@ export async function setVerificationReviewChannel(
     create: { guildId, verificationReviewChannelId: verificationReviewChannelId },
   });
 
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(
     `✅ Canal de revisión de verificación configurado: Guild ${guildId} -> Canal ${verificationReviewChannelId}`,
   );
@@ -326,7 +368,7 @@ export async function setVerifiedRole(
     create: { guildId, verifiedRoleId },
   });
 
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(
     `✅ Rol de verificado configurado: Guild ${guildId} -> Rol ${verifiedRoleId}`,
   );
@@ -384,7 +426,7 @@ export async function update(
     create: { guildId, ...updateData },
   });
 
-  await valkey.del(key);
+  await invalidateGuildConfigCache(key, valkey);
   logger.info(`GuildConfig updated`, { guildId, fields: Object.keys(updateData) });
 }
 

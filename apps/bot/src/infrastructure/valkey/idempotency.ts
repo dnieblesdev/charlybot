@@ -28,10 +28,15 @@ const IDEMPOTENCY_VALKEY_TIMEOUT_MS = 250;
  * Fail-open: if Valkey is unreachable or slow, allows the interaction to proceed.
  * The local Set still provides same-process protection.
  */
-export async function isDuplicateInteraction(interactionId: string): Promise<boolean> {
+export async function isDuplicateInteraction(
+  interactionId: string
+): Promise<boolean> {
   // Layer 1: Local in-memory check (sub-millisecond, no I/O)
   if (processingLocal.has(interactionId)) {
-    logger.debug("Idempotency: duplicate detected in local set", { interactionId });
+    logger.debug(
+      { interactionId },
+      "Idempotency: duplicate detected in local set"
+    );
     return true;
   }
 
@@ -44,23 +49,31 @@ export async function isDuplicateInteraction(interactionId: string): Promise<boo
 
     const lockResult = await Promise.race([
       valkey.acquireLock(key, IDEMPOTENCY_TTL),
-      new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), IDEMPOTENCY_VALKEY_TIMEOUT_MS)),
+      new Promise<"timeout">((resolve) =>
+        setTimeout(() => resolve("timeout"), IDEMPOTENCY_VALKEY_TIMEOUT_MS)
+      ),
     ]);
 
     if (lockResult === "timeout") {
       // Valkey did not respond in time — fail open to not risk the 3-second Discord window
       processingLocal.add(interactionId);
-      logger.warn("Idempotency: Valkey acquireLock timed out, failing open", {
-        interactionId,
-        timeoutMs: IDEMPOTENCY_VALKEY_TIMEOUT_MS,
-      });
+      logger.warn(
+        {
+          interactionId,
+          timeoutMs: IDEMPOTENCY_VALKEY_TIMEOUT_MS,
+        },
+        "Idempotency: Valkey acquireLock timed out, failing open"
+      );
       return false;
     }
 
     if (!lockResult) {
       // Lock not acquired — this is a genuine retry (key exists in Valkey from first execution)
       // Block the interaction. The error/exception path below handles Valkey being truly unreachable.
-      logger.debug("Idempotency: duplicate detected in Valkey", { interactionId });
+      logger.debug(
+        { interactionId },
+        "Idempotency: duplicate detected in Valkey"
+      );
       return true;
     }
 
@@ -70,10 +83,13 @@ export async function isDuplicateInteraction(interactionId: string): Promise<boo
   } catch (error) {
     // Unexpected error → fail-open
     processingLocal.add(interactionId);
-    logger.warn("Idempotency: error checking duplicate, failing open", {
-      interactionId,
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.warn(
+      {
+        interactionId,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      "Idempotency: error checking duplicate, failing open"
+    );
     return false;
   }
 }

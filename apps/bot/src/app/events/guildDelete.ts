@@ -8,20 +8,28 @@ export default {
   async execute(guild: Guild) {
     // Skip unavailable guilds (Discord outage) — don't delete data
     if (!guild.available) {
-      logger.info(`⏭️ Guild unavailable (outage), skipping deletion: ${guild.id}`);
+      logger.info(
+        `⏭️ Guild unavailable (outage), skipping deletion: ${guild.id}`
+      );
       return;
     }
 
     try {
       await deleteGuild(guild.id);
 
-      logger.info(`🗑️ Guild eliminado: ${guild.name}`, {
-        guildId: guild.id,
-      });
+      logger.info(
+        {
+          guildId: guild.id,
+        },
+        `🗑️ Guild eliminado: ${guild.name}`
+      );
     } catch (err) {
-      logger.error(`Error al eliminar guild ${guild.id}`, {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.error(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        `Error al eliminar guild ${guild.id}`
+      );
     }
   },
 };

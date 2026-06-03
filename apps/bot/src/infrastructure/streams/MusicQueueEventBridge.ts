@@ -1,19 +1,19 @@
 // Music Queue Event Bridge - integrates stream producer with QueueManagementService
 // Follows SDD Phase 6 design - connects queue events to streams
 
-import { getMusicStreamProducer } from './index';
+import { getMusicStreamProducer } from "./index";
 import {
   type EnqueueEventData,
   type DequeueEventData,
   type RemoveEventData,
   type ClearEventData,
   type NowPlayingEventData,
-} from '@charlybot/shared';
-import logger from '../../utils/logger';
+} from "@charlybot/shared";
+import logger from "../../utils/logger";
 
 /**
  * Bridge that publishes queue events to Valkey Streams
- * 
+ *
  * This is a lightweight integration that wraps the stream producer
  * and handles the bridge between in-memory queue operations and stream events.
  */
@@ -34,7 +34,7 @@ class MusicQueueEventBridge {
       requesterId: string;
       requesterName: string;
     },
-    queuePosition: number,
+    queuePosition: number
   ): Promise<void> {
     if (!this.enabled) return;
 
@@ -47,10 +47,13 @@ class MusicQueueEventBridge {
       await this.producer.enqueue(eventData);
     } catch (error) {
       // Don't crash - just log
-      logger.warn('Failed to publish enqueue event', {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.warn(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Failed to publish enqueue event"
+      );
     }
   }
 
@@ -64,7 +67,7 @@ class MusicQueueEventBridge {
       url: string;
       duration: number;
     },
-    remaining: number,
+    remaining: number
   ): Promise<void> {
     if (!this.enabled) return;
 
@@ -76,10 +79,13 @@ class MusicQueueEventBridge {
       };
       await this.producer.dequeue(eventData);
     } catch (error) {
-      logger.warn('Failed to publish dequeue event', {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.warn(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Failed to publish dequeue event"
+      );
     }
   }
 
@@ -93,7 +99,7 @@ class MusicQueueEventBridge {
       title: string;
       url: string;
     },
-    remaining: number,
+    remaining: number
   ): Promise<void> {
     if (!this.enabled) return;
 
@@ -106,10 +112,13 @@ class MusicQueueEventBridge {
       };
       await this.producer.remove(eventData);
     } catch (error) {
-      logger.warn('Failed to publish remove event', {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.warn(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Failed to publish remove event"
+      );
     }
   }
 
@@ -126,10 +135,13 @@ class MusicQueueEventBridge {
       };
       await this.producer.clear(eventData);
     } catch (error) {
-      logger.warn('Failed to publish clear event', {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.warn(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Failed to publish clear event"
+      );
     }
   }
 
@@ -146,7 +158,7 @@ class MusicQueueEventBridge {
       requesterId: string;
       requesterName: string;
     },
-    queueLength: number,
+    queueLength: number
   ): Promise<void> {
     if (!this.enabled) return;
 
@@ -158,10 +170,13 @@ class MusicQueueEventBridge {
       };
       await this.producer.nowPlaying(eventData);
     } catch (error) {
-      logger.warn('Failed to publish nowplaying event', {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.warn(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Failed to publish nowplaying event"
+      );
     }
   }
 
@@ -170,7 +185,7 @@ class MusicQueueEventBridge {
    */
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
-    logger.info('MusicQueueEventBridge enabled', { enabled });
+    logger.info({ enabled }, "MusicQueueEventBridge enabled");
   }
 
   /**

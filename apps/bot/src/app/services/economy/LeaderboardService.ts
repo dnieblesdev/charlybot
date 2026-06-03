@@ -1,6 +1,10 @@
-import { getValkeyClient } from '../../../infrastructure/valkey';
-import { createLeaderboardStreamKeys, LEADERBOARD_STREAM_CONFIG, type LeaderboardStreamEvent } from '@charlybot/shared';
-import { loadValkeyConfig } from '@charlybot/shared';
+import { getValkeyClient } from "../../../infrastructure/valkey";
+import {
+  createLeaderboardStreamKeys,
+  LEADERBOARD_STREAM_CONFIG,
+  type LeaderboardStreamEvent,
+} from "@charlybot/shared";
+import { loadValkeyConfig } from "@charlybot/shared";
 import { Guild } from "discord.js";
 import logger from "../../../utils/logger.js";
 import * as EconomyRepo from "../../../config/repositories/EconomyRepo";
@@ -13,17 +17,20 @@ class LeaderboardService {
     userId: string,
     guildId: string,
     username: string,
-    guild: Guild,
+    guild: Guild
   ): Promise<void> {
     try {
       // 1. Obtener estadísticas del usuario en este servidor (totalEarned - totalLost)
       const userEconomy = await EconomyRepo.getEconomyUser(guildId, userId);
 
       if (!userEconomy) {
-        logger.warn("No se encontró usuario para actualizar leaderboard via API", {
-          userId,
-          guildId,
-        });
+        logger.warn(
+          {
+            userId,
+            guildId,
+          },
+          "No se encontró usuario para actualizar leaderboard via API"
+        );
         return;
       }
 
@@ -31,7 +38,10 @@ class LeaderboardService {
       const netProfit = userEconomy.totalEarned - userEconomy.totalLost;
 
       // 2. Verificar si ya existe el registro
-      const existingRecord = await EconomyRepo.getLeaderboardEntry(guildId, userId);
+      const existingRecord = await EconomyRepo.getLeaderboardEntry(
+        guildId,
+        userId
+      );
 
       // 3. Si no existe, obtener joinedAt de Discord
       let joinedServerAt: Date | null = null;
@@ -41,12 +51,12 @@ class LeaderboardService {
           joinedServerAt = member.joinedAt || new Date();
         } catch (error) {
           logger.warn(
-            "No se pudo obtener fecha de ingreso del servidor para usuario",
             {
               userId,
               guildId,
               error: error instanceof Error ? error.message : String(error),
             },
+            "No se pudo obtener fecha de ingreso del servidor para usuario"
           );
           joinedServerAt = new Date(); // Fecha actual como fallback
         }
@@ -58,22 +68,30 @@ class LeaderboardService {
         guildId,
         username,
         totalMoney: netProfit,
-        joinedServerAt: existingRecord ? undefined : (joinedServerAt || new Date()),
+        joinedServerAt: existingRecord
+          ? undefined
+          : joinedServerAt || new Date(),
         updatedAt: new Date(),
       });
 
-      logger.debug("Leaderboard actualizado para usuario via API", {
-        userId,
-        guildId,
-        username,
-        netProfit,
-      });
+      logger.debug(
+        {
+          userId,
+          guildId,
+          username,
+          netProfit,
+        },
+        "Leaderboard actualizado para usuario via API"
+      );
     } catch (error) {
-      logger.error("Error al actualizar leaderboard via API", {
-        userId,
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          userId,
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error al actualizar leaderboard via API"
+      );
     }
   }
 
@@ -81,17 +99,21 @@ class LeaderboardService {
    * Publish a leaderboard update event to Valkey stream (fire-and-forget).
    * The actual DB update happens asynchronously in LeaderboardStreamConsumer.
    */
-  static async publishUpdate(userId: string, guildId: string, username: string): Promise<void> {
+  static async publishUpdate(
+    userId: string,
+    guildId: string,
+    username: string
+  ): Promise<void> {
     try {
       const valkey = getValkeyClient();
       if (!valkey.isConnected()) return; // Silently skip if Valkey down
 
       const config = loadValkeyConfig();
-      const keys = createLeaderboardStreamKeys(config.env ?? 'development');
+      const keys = createLeaderboardStreamKeys(config.env ?? "development");
 
       const event: LeaderboardStreamEvent = {
         v: 1,
-        type: 'leaderboard:update',
+        type: "leaderboard:update",
         ts: Date.now(),
         data: { guildId, userId, username },
       };
@@ -99,13 +121,17 @@ class LeaderboardService {
       await valkey.streamAdd(
         keys.stream,
         { payload: JSON.stringify(event) },
-        LEADERBOARD_STREAM_CONFIG.MAX_LEN,
+        LEADERBOARD_STREAM_CONFIG.MAX_LEN
       );
     } catch (error) {
-      logger.warn('Failed to publish leaderboard update', {
-        userId, guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.warn(
+        {
+          userId,
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Failed to publish leaderboard update"
+      );
     }
   }
 
@@ -113,16 +139,26 @@ class LeaderboardService {
    * Process a leaderboard update (called by the stream consumer).
    * Does not require a Discord Guild object — uses new Date() as fallback for joinedAt.
    */
-  static async processUpdate(userId: string, guildId: string, username: string): Promise<void> {
+  static async processUpdate(
+    userId: string,
+    guildId: string,
+    username: string
+  ): Promise<void> {
     try {
       const userEconomy = await EconomyRepo.getEconomyUser(guildId, userId);
       if (!userEconomy) {
-        logger.warn('processUpdate: user economy not found', { userId, guildId });
+        logger.warn(
+          { userId, guildId },
+          "processUpdate: user economy not found"
+        );
         return;
       }
 
       const netProfit = userEconomy.totalEarned - userEconomy.totalLost;
-      const existingRecord = await EconomyRepo.getLeaderboardEntry(guildId, userId);
+      const existingRecord = await EconomyRepo.getLeaderboardEntry(
+        guildId,
+        userId
+      );
 
       const data: any = {
         userId,
@@ -137,10 +173,14 @@ class LeaderboardService {
 
       await EconomyRepo.upsertLeaderboard(guildId, data);
     } catch (error) {
-      logger.error('processUpdate: failed to update leaderboard', {
-        userId, guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          userId,
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "processUpdate: failed to update leaderboard"
+      );
       throw error; // Re-throw for consumer to handle retry/DLQ
     }
   }
@@ -150,7 +190,7 @@ class LeaderboardService {
    */
   static async getLeaderboard(
     guildId: string,
-    limit: number = 10,
+    limit: number = 10
   ): Promise<
     Array<{
       position: number;
@@ -172,10 +212,13 @@ class LeaderboardService {
         joinedServerAt: new Date(entry.joinedServerAt),
       }));
     } catch (error) {
-      logger.error("Error al obtener leaderboard via API", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error al obtener leaderboard via API"
+      );
       return [];
     }
   }
@@ -185,16 +228,19 @@ class LeaderboardService {
    */
   static async getUserPosition(
     userId: string,
-    guildId: string,
+    guildId: string
   ): Promise<number | null> {
     try {
       return await EconomyRepo.getUserPosition(guildId, userId);
     } catch (error) {
-      logger.error("Error al obtener posición de usuario en leaderboard via API", {
-        userId,
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          userId,
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error al obtener posición de usuario en leaderboard via API"
+      );
       return null;
     }
   }
@@ -204,12 +250,14 @@ class LeaderboardService {
    */
   static async initializeLeaderboard(
     guildId: string,
-    guild: Guild,
+    guild: Guild
   ): Promise<{ success: number; failed: number }> {
     // This one is tricky because it involves getting all users.
     // We don't have a getAllUsers endpoint yet.
     // For now, we skip it or assume it's done during manual migration.
-    logger.warn("initializeLeaderboard is not fully implemented in API-only mode.");
+    logger.warn(
+      "initializeLeaderboard is not fully implemented in API-only mode."
+    );
     return { success: 0, failed: 0 };
   }
 
@@ -218,20 +266,26 @@ class LeaderboardService {
    */
   static async removeFromLeaderboard(
     userId: string,
-    guildId: string,
+    guildId: string
   ): Promise<void> {
     try {
       await EconomyRepo.removeFromLeaderboard(guildId, userId);
-      logger.debug("Usuario eliminado del leaderboard via API", {
-        userId,
-        guildId,
-      });
+      logger.debug(
+        {
+          userId,
+          guildId,
+        },
+        "Usuario eliminado del leaderboard via API"
+      );
     } catch (error) {
-      logger.error("Error al eliminar usuario del leaderboard via API", {
-        userId,
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          userId,
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error al eliminar usuario del leaderboard via API"
+      );
     }
   }
 }

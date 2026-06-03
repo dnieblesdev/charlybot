@@ -11,7 +11,12 @@ import {
 } from "discord.js";
 import logger from "../../utils/logger.js";
 import * as AutoRoleRepo from "../../config/repositories/AutoRoleRepo.js";
-import type { AutoRole, RoleMapping, IAutoRole, IRoleMapping } from "@charlybot/shared";
+import type {
+  AutoRole,
+  RoleMapping,
+  IAutoRole,
+  IRoleMapping,
+} from "@charlybot/shared";
 import { CUSTOM_IDS } from "../interactions/customIds.ts";
 import type { AutoRoleWithMappings } from "../../domain/ports/IAutoRoleRepository.ts";
 
@@ -20,7 +25,7 @@ import type { AutoRoleWithMappings } from "../../domain/ports/IAutoRoleRepositor
  */
 export async function validateRoleHierarchy(
   guild: Guild,
-  roleId: string,
+  roleId: string
 ): Promise<{ valid: boolean; error?: string }> {
   try {
     const role = await guild.roles.fetch(roleId);
@@ -47,11 +52,14 @@ export async function validateRoleHierarchy(
 
     return { valid: true };
   } catch (error) {
-    logger.error("Error validating role hierarchy", {
-      error: error instanceof Error ? error.message : String(error),
-      roleId,
-      guildId: guild.id,
-    });
+    logger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        roleId,
+        guildId: guild.id,
+      },
+      "Error validating role hierarchy"
+    );
     return {
       valid: false,
       error: "Error al validar la jerarquía de roles.",
@@ -69,7 +77,7 @@ export async function validateConfiguration(
     type: string;
     emoji?: string;
     buttonLabel?: string;
-  }>,
+  }>
 ): Promise<{ valid: boolean; errors: string[] }> {
   const errors: string[] = [];
 
@@ -95,7 +103,7 @@ export async function validateConfiguration(
     // Validar tipo
     if (mapping.type !== "reaction" && mapping.type !== "button") {
       errors.push(
-        `Rol ${i + 1}: Tipo inválido (debe ser 'reaction' o 'button').`,
+        `Rol ${i + 1}: Tipo inválido (debe ser 'reaction' o 'button').`
       );
     }
 
@@ -114,7 +122,7 @@ export async function validateConfiguration(
     .filter((m) => m.type === "reaction" && m.emoji)
     .map((m) => m.emoji);
   const duplicateEmojis = emojis.filter(
-    (emoji, index) => emojis.indexOf(emoji) !== index,
+    (emoji, index) => emojis.indexOf(emoji) !== index
   );
   if (duplicateEmojis.length > 0) {
     errors.push(`Emojis duplicados: ${duplicateEmojis.join(", ")}`);
@@ -132,7 +140,7 @@ export async function validateConfiguration(
 export async function assignRole(
   member: GuildMember,
   roleId: string,
-  autoRole: AutoRoleWithMappings,
+  autoRole: AutoRoleWithMappings
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const role = await member.guild.roles.fetch(roleId);
@@ -146,15 +154,17 @@ export async function assignRole(
         .filter((m: RoleMapping) => m.roleId !== roleId)
         .map((m: RoleMapping) => m.roleId);
 
-
       for (const otherRoleId of otherRoles) {
         if (member.roles.cache.has(otherRoleId)) {
           await member.roles.remove(otherRoleId);
-          logger.info("Role removed (unique mode)", {
-            userId: member.id,
-            roleId: otherRoleId,
-            guildId: member.guild.id,
-          });
+          logger.info(
+            {
+              userId: member.id,
+              roleId: otherRoleId,
+              guildId: member.guild.id,
+            },
+            "Role removed (unique mode)"
+          );
         }
       }
     }
@@ -162,22 +172,28 @@ export async function assignRole(
     // Asignar el rol
     await member.roles.add(role);
 
-    logger.info("Role assigned via AutoRole", {
-      userId: member.id,
-      username: member.user.username,
-      roleId: role.id,
-      roleName: role.name,
-      guildId: member.guild.id,
-      messageId: autoRole.messageId,
-    });
+    logger.info(
+      {
+        userId: member.id,
+        username: member.user.username,
+        roleId: role.id,
+        roleName: role.name,
+        guildId: member.guild.id,
+        messageId: autoRole.messageId,
+      },
+      "Role assigned via AutoRole"
+    );
 
     return { success: true };
   } catch (error) {
-    logger.error("Error assigning role", {
-      error: error instanceof Error ? error.message : String(error),
-      userId: member.id,
-      roleId,
-    });
+    logger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        userId: member.id,
+        roleId,
+      },
+      "Error assigning role"
+    );
     return {
       success: false,
       error: "Error al asignar el rol.",
@@ -190,7 +206,7 @@ export async function assignRole(
  */
 export async function removeRole(
   member: GuildMember,
-  roleId: string,
+  roleId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const role = await member.guild.roles.fetch(roleId);
@@ -204,21 +220,27 @@ export async function removeRole(
 
     await member.roles.remove(role);
 
-    logger.info("Role removed via AutoRole", {
-      userId: member.id,
-      username: member.user.username,
-      roleId: role.id,
-      roleName: role.name,
-      guildId: member.guild.id,
-    });
+    logger.info(
+      {
+        userId: member.id,
+        username: member.user.username,
+        roleId: role.id,
+        roleName: role.name,
+        guildId: member.guild.id,
+      },
+      "Role removed via AutoRole"
+    );
 
     return { success: true };
   } catch (error) {
-    logger.error("Error removing role", {
-      error: error instanceof Error ? error.message : String(error),
-      userId: member.id,
-      roleId,
-    });
+    logger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        userId: member.id,
+        roleId,
+      },
+      "Error removing role"
+    );
     return {
       success: false,
       error: "Error al quitar el rol.",
@@ -247,7 +269,7 @@ export async function createMessageWithRoles(
       buttonLabel?: string;
       buttonStyle?: string;
     }>;
-  },
+  }
 ): Promise<{ success: boolean; message?: Message; error?: string }> {
   try {
     const guild = channel.guild;
@@ -309,7 +331,7 @@ export async function createMessageWithRoles(
     const actionRows: ActionRowBuilder<ButtonBuilder>[] = [];
     for (let i = 0; i < buttons.length; i += 5) {
       const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        buttons.slice(i, i + 5),
+        buttons.slice(i, i + 5)
       );
       actionRows.push(row);
     }
@@ -327,27 +349,36 @@ export async function createMessageWithRoles(
         try {
           await message.react(mapping.emoji);
         } catch (error) {
-          logger.error("Error adding reaction", {
-            error: error instanceof Error ? error.message : String(error),
-            emoji: mapping.emoji,
-            messageId: message.id,
-          });
+          logger.error(
+            {
+              error: error instanceof Error ? error.message : String(error),
+              emoji: mapping.emoji,
+              messageId: message.id,
+            },
+            "Error adding reaction"
+          );
         }
       }
     }
 
-    logger.info("AutoRole message created", {
-      messageId: message.id,
-      channelId: channel.id,
-      guildId: guild.id,
-    });
+    logger.info(
+      {
+        messageId: message.id,
+        channelId: channel.id,
+        guildId: guild.id,
+      },
+      "AutoRole message created"
+    );
 
     return { success: true, message };
   } catch (error) {
-    logger.error("Error creating message with roles", {
-      error: error instanceof Error ? error.message : String(error),
-      channelId: channel.id,
-    });
+    logger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        channelId: channel.id,
+      },
+      "Error creating message with roles"
+    );
     return {
       success: false,
       error: "Error al crear el mensaje.",
@@ -376,7 +407,7 @@ export async function updateMessageWithRoles(
       buttonLabel?: string;
       buttonStyle?: string;
     }>;
-  },
+  }
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const guild = message.guild;
@@ -451,7 +482,7 @@ export async function updateMessageWithRoles(
     const actionRows: ActionRowBuilder<ButtonBuilder>[] = [];
     for (let i = 0; i < buttons.length; i += 5) {
       const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        buttons.slice(i, i + 5),
+        buttons.slice(i, i + 5)
       );
       actionRows.push(row);
     }
@@ -472,27 +503,36 @@ export async function updateMessageWithRoles(
         try {
           await message.react(mapping.emoji);
         } catch (error) {
-          logger.error("Error adding reaction", {
-            error: error instanceof Error ? error.message : String(error),
-            emoji: mapping.emoji,
-            messageId: message.id,
-          });
+          logger.error(
+            {
+              error: error instanceof Error ? error.message : String(error),
+              emoji: mapping.emoji,
+              messageId: message.id,
+            },
+            "Error adding reaction"
+          );
         }
       }
     }
 
-    logger.info("AutoRole message updated", {
-      messageId: message.id,
-      channelId: message.channelId,
-      guildId: guild.id,
-    });
+    logger.info(
+      {
+        messageId: message.id,
+        channelId: message.channelId,
+        guildId: guild.id,
+      },
+      "AutoRole message updated"
+    );
 
     return { success: true };
   } catch (error) {
-    logger.error("Error updating message with roles", {
-      error: error instanceof Error ? error.message : String(error),
-      messageId: message.id,
-    });
+    logger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        messageId: message.id,
+      },
+      "Error updating message with roles"
+    );
     return {
       success: false,
       error: "Error al actualizar el mensaje.",

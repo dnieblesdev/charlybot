@@ -24,11 +24,7 @@ export const logCommand = (
   guildId: string,
   command: string,
 ) => {
-  logger.info(`Command executed: ${command}`, {
-    userId,
-    guildId,
-    type: "command",
-  });
+  logger.info({ userId, guildId, type: "command" }, `Command executed: ${command}`);
 };
 
 export const logVoice = (
@@ -37,31 +33,22 @@ export const logVoice = (
   action: string,
   channelId?: string,
 ) => {
-  logger.info(`Voice action: ${action}`, {
-    userId,
-    guildId,
-    channelId,
-    type: "voice",
-  });
+  logger.info({ userId, guildId, channelId, type: "voice" }, `Voice action: ${action}`);
 };
 
-export const logError = (error: Error, context?: Record<string, any>) => {
-  logger.error(error.message, {
-    stack: error.stack,
-    ...context,
-  });
+export const logError = (error: Error, context?: Record<string, unknown>) => {
+  logger.error(
+    { stack: error.stack, ...context },
+    error.message,
+  );
 };
 
 export const logMusic = (
   guildId: string,
   action: string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
 ) => {
-  logger.info(`Music action: ${action}`, {
-    guildId,
-    type: "music",
-    ...details,
-  });
+  logger.info({ guildId, type: "music", ...details }, `Music action: ${action}`);
 };
 
 // Export the logger instance as default

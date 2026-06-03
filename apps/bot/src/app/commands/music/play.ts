@@ -64,7 +64,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await musicService.join(
         interaction.guildId,
         voiceChannel,
-        textChannel as any,
+        textChannel as any
       );
     } else if (queue.voiceChannel.id !== voiceChannel.id) {
       // Verificar que el usuario esté en el mismo canal que el bot
@@ -87,8 +87,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         let requesterDisplayName = song.requester.username;
         if (interaction.guild && interaction.member) {
           try {
-            const member = await interaction.guild.members.fetch(interaction.user.id);
-            requesterDisplayName = member?.displayName || song.requester.username;
+            const member = await interaction.guild.members.fetch(
+              interaction.user.id
+            );
+            requesterDisplayName =
+              member?.displayName || song.requester.username;
           } catch {
             // Si no se puede obtener el miembro, usar el username
           }
@@ -97,7 +100,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const embed = new EmbedBuilder()
           .setColor(result.playing ? 0x00ff00 : 0x0099ff)
           .setTitle(
-            result.playing ? "🎵 Reproduciendo" : "➕ Agregado a la cola",
+            result.playing ? "🎵 Reproduciendo" : "➕ Agregado a la cola"
           )
           .setDescription(`**${song.title}**`)
           .addFields(
@@ -110,7 +113,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               name: "Solicitado por",
               value: requesterDisplayName,
               inline: true,
-            },
+            }
           )
           .setURL(song.url);
 
@@ -125,8 +128,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       let requesterDisplayName = interaction.user.username;
       if (interaction.guild && interaction.member) {
         try {
-          const member = await interaction.guild.members.fetch(interaction.user.id);
-          requesterDisplayName = member?.displayName || interaction.user.username;
+          const member = await interaction.guild.members.fetch(
+            interaction.user.id
+          );
+          requesterDisplayName =
+            member?.displayName || interaction.user.username;
         } catch {
           // Si no se puede obtener el miembro, usar el username
         }
@@ -136,7 +142,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         .setColor(0x0099ff)
         .setTitle("📋 Playlist agregada")
         .setDescription(
-          `Se agregaron **${result.added.length}** canciones a la cola`,
+          `Se agregaron **${result.added.length}** canciones a la cola`
         )
         .addFields({
           name: "Solicitado por",
@@ -151,20 +157,26 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await interaction.editReply({ embeds: [embed] });
     }
 
-    logger.info("Play command executed successfully", {
-      userId: interaction.user.id,
-      guildId: interaction.guildId,
-      query,
-      songsAdded: result.added.length,
-      playing: result.playing,
-    });
+    logger.info(
+      {
+        userId: interaction.user.id,
+        guildId: interaction.guildId,
+        query,
+        songsAdded: result.added.length,
+        playing: result.playing,
+      },
+      "Play command executed successfully"
+    );
   } catch (error) {
-    logger.error("Error executing play command", {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      userId: interaction.user.id,
-      guildId: interaction.guildId,
-    });
+    logger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: interaction.user.id,
+        guildId: interaction.guildId,
+      },
+      "Error executing play command"
+    );
 
     // If the interaction token is already dead (expired or already used),
     // Discord returns "Unknown interaction" — we can't respond to the user.
@@ -172,10 +184,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       error instanceof Error && error.message === "Unknown interaction";
 
     if (isUnknownInteraction) {
-      logger.warn("Interaction token expired — cannot send error reply", {
-        userId: interaction.user.id,
-        guildId: interaction.guildId,
-      });
+      logger.warn(
+        {
+          userId: interaction.user.id,
+          guildId: interaction.guildId,
+        },
+        "Interaction token expired — cannot send error reply"
+      );
       return;
     }
 
@@ -191,12 +206,18 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         await interaction.reply({ content: errorMessage });
       }
     } catch (replyError) {
-      logger.error("Failed to send error reply to user", {
-        error: replyError instanceof Error ? replyError.message : String(replyError),
-        commandName: "music play",
-        userId: interaction.user.id,
-        guildId: interaction.guildId,
-      });
+      logger.error(
+        {
+          error:
+            replyError instanceof Error
+              ? replyError.message
+              : String(replyError),
+          commandName: "music play",
+          userId: interaction.user.id,
+          guildId: interaction.guildId,
+        },
+        "Failed to send error reply to user"
+      );
     }
   }
 }
@@ -207,7 +228,9 @@ function formatDuration(seconds: number): string {
   const secs = seconds % 60;
 
   if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   }
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 }

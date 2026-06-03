@@ -1,13 +1,13 @@
 /**
  * AudioStreamService - Resolución y stream de audio
- * 
+ *
  * Responsabilidades:
  * - Resolver queries (URLs de YouTube/Spotify o texto de búsqueda) a StreamSource
  * - Crear streams de audio usando play-dl (primario) o yt-dlp (fallback)
  * - Validar formatos y límites
  * - Manejo de errores con retry
  * - Cleanup de recursos
- * 
+ *
  * Este servicio forma parte de la arquitectura de servicios de música:
  * - VoiceConnectionService: conexiones de voz
  * - AudioStreamService: resolución y stream de audio
@@ -25,9 +25,19 @@ import playdl, {
   type SpotifyTrack,
   type SpotifyPlaylist,
 } from "play-dl";
-import YTDlpWrap from "yt-dlp-wrap";
+import { createRequire } from "node:module";
 import type { StreamSource, StreamOptions, Song } from "./types";
 import logger from "../../../utils/logger";
+
+type YtDlpWrapInstance = {
+  getVideoInfo: (url: string) => Promise<any>;
+};
+
+const require = createRequire(import.meta.url);
+const ytDlpWrapModule = require("yt-dlp-wrap") as any;
+const YTDlpWrapCtor = (ytDlpWrapModule.default ?? ytDlpWrapModule) as {
+  new (ytDlpPath?: string): YtDlpWrapInstance;
+};
 import {
   DEFAULT_MUSIC_CONFIG,
   MUSIC_MESSAGES,
@@ -40,7 +50,7 @@ import {
 
 interface StreamState {
   activeStreams: Map<string, ReadableStream>;
-  ytDlp: YTDlpWrap;
+  ytDlp: YtDlpWrapInstance;
   config: MusicConfig;
 }
 
@@ -82,8 +92,14 @@ function findExecutable(name: string): string | null {
 const getYtDlpPath = (): string => {
   const systemYtDlp = findExecutable("yt-dlp");
   if (systemYtDlp) return systemYtDlp;
-  // Fallback: buscar en bin/ del proyecto
-  return path.join(process.cwd(), "bin", "yt-dlp.exe");
+
+  // Fallback: buscar en bin/ del proyecto (Windows/Linux)
+  const localName = process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp";
+  const localPath = path.join(process.cwd(), "bin", localName);
+  if (existsSync(localPath)) return localPath;
+
+  // Último fallback: dejar que `spawn()` resuelva por PATH
+  return process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp";
 };
 
 /**
@@ -117,10 +133,13 @@ const cleanSearchQuery = (query: string): string => {
 
     return cleaned;
   } catch (error) {
-    logger.warn("Error cleaning search query, using original", {
-      query,
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.warn(
+      {
+        query,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      "Error cleaning search query, using original"
+    );
     return query;
   }
 };
@@ -199,15 +218,18 @@ class AudioStreamServiceImpl {
     const ytDlpPath = getYtDlpPath();
     this.state = {
       activeStreams: new Map(),
-      ytDlp: new YTDlpWrap(ytDlpPath),
+      ytDlp: new YTDlpWrapCtor(ytDlpPath),
       config,
     };
 
-    logger.info("🎵 AudioStreamService inicializado", {
-      retryMaxAttempts,
-      retryDelayMs,
-      ytDlpPath,
-    });
+    logger.info(
+      {
+        retryMaxAttempts,
+        retryDelayMs,
+        ytDlpPath,
+      },
+      "🎵 AudioStreamService inicializado"
+    );
   }
 
   // ============================================================================
@@ -227,7 +249,7 @@ class AudioStreamServiceImpl {
   setConfig(config: MusicConfig): void {
     this.config = config;
     this.state.config = config;
-    logger.debug("AudioStreamService config actualizada", { config });
+    logger.debug({ config }, "AudioStreamService config actualizada");
   }
 
   // ============================================================================
@@ -236,16 +258,13 @@ class AudioStreamServiceImpl {
 
   /**
    * Busca canciones desde YouTube o Spotify y retorna un array de StreamSource
-   * 
+   *
    * @param query - Query de búsqueda (URL o texto)
    * @param guildId - ID del servidor (para logging)
    * @returns Promise<StreamSource[]> - Array de fuentes de stream encontradas
    */
-  async searchSongs(
-    query: string,
-    guildId: string
-  ): Promise<StreamSource[]> {
-    logger.info("🔍 Buscando canciones", { query, guildId });
+  async searchSongs(query: string, guildId: string): Promise<StreamSource[]> {
+    logger.info({ query, guildId }, "🔍 Buscando canciones");
 
     const cleanQuery = cleanSearchQuery(query);
 
@@ -281,13 +300,16 @@ class AudioStreamServiceImpl {
     query: string,
     guildId: string
   ): Promise<StreamSource[]> {
-    logger.info("🎵 Detectado track de Spotify", { url: query, guildId });
+    logger.info({ url: query, guildId }, "🎵 Detectado track de Spotify");
 
     try {
       // Timeout para evitar bloqueos
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(
-          () => reject(new Error("Timeout: playdl.spotify() tardó más de 10 segundos")),
+          () =>
+            reject(
+              new Error("Timeout: playdl.spotify() tardó más de 10 segundos")
+            ),
           10000
         );
       });
@@ -297,8 +319,10 @@ class AudioStreamServiceImpl {
         timeoutPromise,
       ]);
 
-      const searchQuery = `${spotifyInfo.name} ${spotifyInfo.artists?.[0]?.name || ""}`;
-      logger.debug("🔍 Buscando en YouTube", { searchQuery, guildId });
+      const searchQuery = `${spotifyInfo.name} ${
+        spotifyInfo.artists?.[0]?.name || ""
+      }`;
+      logger.debug({ searchQuery, guildId }, "🔍 Buscando en YouTube");
 
       // Buscar en YouTube
       const searchResult = await this.retrySearch(() =>
@@ -320,19 +344,25 @@ class AudioStreamServiceImpl {
         {
           url: video.url,
           title: video.title || spotifyInfo.name,
-          duration: video.durationInSec || Math.floor(spotifyInfo.durationInMs / 1000),
+          duration:
+            video.durationInSec || Math.floor(spotifyInfo.durationInMs / 1000),
           thumbnail: video.thumbnails?.[0]?.url,
           platform: "youtube",
         },
       ];
     } catch (error) {
-      logger.error("💥 Error procesando track de Spotify", {
-        query,
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          query,
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "💥 Error procesando track de Spotify"
+      );
       throw new SearchError(
-        `Error procesando track de Spotify: ${error instanceof Error ? error.message : String(error)}`,
+        `Error procesando track de Spotify: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         error instanceof Error ? error : undefined
       );
     }
@@ -345,10 +375,10 @@ class AudioStreamServiceImpl {
     query: string,
     guildId: string
   ): Promise<StreamSource[]> {
-    logger.info("🎵 Detectada playlist de Spotify", { url: query, guildId });
+    logger.info({ url: query, guildId }, "🎵 Detectada playlist de Spotify");
 
     try {
-      const playlist = await playdl.spotify(query) as SpotifyPlaylist;
+      const playlist = (await playdl.spotify(query)) as SpotifyPlaylist;
       const videos: StreamSource[] = [];
 
       // Limitar número de tracks - use page() method to get tracks
@@ -358,7 +388,7 @@ class AudioStreamServiceImpl {
 
       for (const track of tracks) {
         const searchQuery = `${track.name} ${track.artists?.[0]?.name || ""}`;
-        
+
         try {
           const searchResult = await this.retrySearch(() =>
             playdl.search(searchQuery, {
@@ -370,7 +400,11 @@ class AudioStreamServiceImpl {
           if (searchResult.length > 0) {
             const video = searchResult[0];
             // Evitar streams y videos muy largos
-            if (video && video.durationInSec > 0 && video.durationInSec <= 7200) {
+            if (
+              video &&
+              video.durationInSec > 0 &&
+              video.durationInSec <= 7200
+            ) {
               videos.push({
                 url: video.url,
                 title: video.title || track.name,
@@ -381,33 +415,46 @@ class AudioStreamServiceImpl {
             }
           }
         } catch (error) {
-          logger.warn("Error buscando track de playlist en YouTube", {
-            track: track.name,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          logger.warn(
+            {
+              track: track.name,
+              error: error instanceof Error ? error.message : String(error),
+            },
+            "Error buscando track de playlist en YouTube"
+          );
         }
 
         // Delay entre búsquedas para evitar rate limiting
         if (tracks.indexOf(track) % this.config.playlistBatchSize === 0) {
-          await new Promise((resolve) => setTimeout(resolve, this.config.batchDelayMs));
+          await new Promise((resolve) =>
+            setTimeout(resolve, this.config.batchDelayMs)
+          );
         }
       }
 
-      logger.info("✅ Playlist de Spotify procesada", {
-        guildId,
-        totalTracks: tracks.length,
-        foundVideos: videos.length,
-      });
+      logger.info(
+        {
+          guildId,
+          totalTracks: tracks.length,
+          foundVideos: videos.length,
+        },
+        "✅ Playlist de Spotify procesada"
+      );
 
       return videos;
     } catch (error) {
-      logger.error("💥 Error procesando playlist de Spotify", {
-        query,
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          query,
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "💥 Error procesando playlist de Spotify"
+      );
       throw new SearchError(
-        `Error procesando playlist de Spotify: ${error instanceof Error ? error.message : String(error)}`,
+        `Error procesando playlist de Spotify: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         error instanceof Error ? error : undefined
       );
     }
@@ -420,7 +467,7 @@ class AudioStreamServiceImpl {
     query: string,
     guildId: string
   ): Promise<StreamSource[]> {
-    logger.info("🎵 Detectada playlist de YouTube", { url: query, guildId });
+    logger.info({ url: query, guildId }, "🎵 Detectada playlist de YouTube");
 
     try {
       const playlist = await playdl.playlist_info(query, {
@@ -440,13 +487,18 @@ class AudioStreamServiceImpl {
           platform: "youtube" as const,
         }));
     } catch (error) {
-      logger.error("💥 Error procesando playlist de YouTube", {
-        query,
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          query,
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "💥 Error procesando playlist de YouTube"
+      );
       throw new SearchError(
-        `Error procesando playlist de YouTube: ${error instanceof Error ? error.message : String(error)}`,
+        `Error procesando playlist de YouTube: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         error instanceof Error ? error : undefined
       );
     }
@@ -459,7 +511,7 @@ class AudioStreamServiceImpl {
     query: string,
     guildId: string
   ): Promise<StreamSource[]> {
-    logger.debug("🎵 Detectado video de YouTube", { url: query, guildId });
+    logger.debug({ url: query, guildId }, "🎵 Detectado video de YouTube");
 
     try {
       const info = await playdl.video_basic_info(query);
@@ -479,11 +531,14 @@ class AudioStreamServiceImpl {
         },
       ];
     } catch (error) {
-      logger.error("💥 Error obteniendo info de video de YouTube", {
-        query,
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          query,
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "💥 Error obteniendo info de video de YouTube"
+      );
 
       // Fallback: usar URL directamente
       return [
@@ -505,7 +560,7 @@ class AudioStreamServiceImpl {
     query: string,
     guildId: string
   ): Promise<StreamSource[]> {
-    logger.debug("🔍 Buscando en YouTube", { query, guildId });
+    logger.debug({ query, guildId }, "🔍 Buscando en YouTube");
 
     try {
       const searchResult = await this.retrySearch(() =>
@@ -516,7 +571,7 @@ class AudioStreamServiceImpl {
       );
 
       if (searchResult.length === 0) {
-        logger.warn("No se encontraron resultados", { query, guildId });
+        logger.warn({ query, guildId }, "No se encontraron resultados");
         return [];
       }
 
@@ -550,13 +605,18 @@ class AudioStreamServiceImpl {
         },
       ];
     } catch (error) {
-      logger.error("💥 Error en búsqueda de YouTube", {
-        query,
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          query,
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "💥 Error en búsqueda de YouTube"
+      );
       throw new SearchError(
-        `Error en búsqueda de YouTube: ${error instanceof Error ? error.message : String(error)}`,
+        `Error en búsqueda de YouTube: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         error instanceof Error ? error : undefined
       );
     }
@@ -568,13 +628,13 @@ class AudioStreamServiceImpl {
 
   /**
    * Resuelve una query a un StreamSource listo para streaming
-   * 
+   *
    * @param query - Query de búsqueda (URL o texto)
    * @param guildId - ID del servidor
    * @returns Promise<StreamSource> - Fuente de stream resuelta
    */
   async resolve(query: string, guildId: string): Promise<StreamSource> {
-    logger.info("🎵 Resolviendo stream source", { query, guildId });
+    logger.info({ query, guildId }, "🎵 Resolviendo stream source");
 
     const sources = await this.searchSongs(query, guildId);
 
@@ -587,12 +647,15 @@ class AudioStreamServiceImpl {
     if (!source) {
       throw new SearchError("No se encontraron resultados para la búsqueda");
     }
-    logger.info("✅ Stream source resuelto", {
-      guildId,
-      title: source.title,
-      url: source.url,
-      platform: source.platform,
-    });
+    logger.info(
+      {
+        guildId,
+        title: source.title,
+        url: source.url,
+        platform: source.platform,
+      },
+      "✅ Stream source resuelto"
+    );
 
     return source;
   }
@@ -603,7 +666,7 @@ class AudioStreamServiceImpl {
 
   /**
    * Crea un stream de audio desde un StreamSource
-   * 
+   *
    * @param source - Fuente de stream resuelta
    * @param options - Opciones adicionales para el stream
    * @returns Promise<ReadableStream> - Stream de audio listo para reproducir
@@ -615,12 +678,15 @@ class AudioStreamServiceImpl {
     const { url, title } = source;
     const guildId = options?.seeking ? "seek" : "stream";
 
-    logger.info("🎵 Creando audio stream", {
-      url,
-      title,
-      platform: source.platform,
-      guildId,
-    });
+    logger.info(
+      {
+        url,
+        title,
+        platform: source.platform,
+        guildId,
+      },
+      "🎵 Creando audio stream"
+    );
 
     try {
       // Detectar la plataforma y crear el stream apropiado
@@ -639,13 +705,18 @@ class AudioStreamServiceImpl {
       // Fallback: intentar como YouTube
       return await this.createYouTubeStream(url, guildId, options);
     } catch (error) {
-      logger.error("💥 Error creando stream", {
-        url,
-        title,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          url,
+          title,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "💥 Error creando stream"
+      );
       throw new StreamCreationError(
-        `Error creando stream: ${error instanceof Error ? error.message : String(error)}`,
+        `Error creando stream: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         error instanceof Error ? error : undefined
       );
     }
@@ -659,7 +730,7 @@ class AudioStreamServiceImpl {
     guildId: string,
     options?: StreamOptions
   ): Promise<ReadableStream> {
-    logger.debug("🎵 Creando stream de Spotify", { url, guildId });
+    logger.debug({ url, guildId }, "🎵 Creando stream de Spotify");
 
     const qualities = [2, 1, 0];
 
@@ -687,13 +758,16 @@ class AudioStreamServiceImpl {
           throw new Error(`Stream is null for quality ${quality}`);
         }
 
-        logger.info("✅ Spotify stream creado", { guildId, quality });
+        logger.info({ guildId, quality }, "✅ Spotify stream creado");
         return stream as ReadableStream;
       } catch (error) {
-        logger.debug(`Quality ${quality} failed, trying next`, {
-          guildId,
-          error: error instanceof Error ? error.message : String(error),
-        });
+        logger.debug(
+          {
+            guildId,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          `Quality ${quality} failed, trying next`
+        );
 
         // Delay entre intentos
         await new Promise((resolve) =>
@@ -713,16 +787,19 @@ class AudioStreamServiceImpl {
     guildId: string,
     options?: StreamOptions
   ): Promise<ReadableStream> {
-    logger.debug("🎵 Creando stream de YouTube", { url, guildId });
+    logger.debug({ url, guildId }, "🎵 Creando stream de YouTube");
 
     // Intentar con yt-dlp + ffmpeg directo
     try {
       return await this.createYtDlpStream(url, guildId, options);
     } catch (error) {
-      logger.warn("yt-dlp directo falló, intentando con video info", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.warn(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "yt-dlp directo falló, intentando con video info"
+      );
 
       // Fallback: obtener info del video y usar la URL directa
       try {
@@ -742,13 +819,16 @@ class AudioStreamServiceImpl {
           });
         }
       } catch (videoInfoError) {
-        logger.error("yt-dlp video info también falló", {
-          guildId,
-          error:
-            videoInfoError instanceof Error
-              ? videoInfoError.message
-              : String(videoInfoError),
-        });
+        logger.error(
+          {
+            guildId,
+            error:
+              videoInfoError instanceof Error
+                ? videoInfoError.message
+                : String(videoInfoError),
+          },
+          "yt-dlp video info también falló"
+        );
       }
 
       throw error;
@@ -824,25 +904,42 @@ class AudioStreamServiceImpl {
         if (!hasData) {
           hasData = true;
           clearTimeout(timeout);
-          logger.debug("ffmpeg first chunk received", { url, guildId, size: chunk.length });
+          logger.debug(
+            {
+              url,
+              guildId,
+              size: chunk.length,
+            },
+            "ffmpeg first chunk received"
+          );
         }
         // Escribir cada chunk al passthrough
         passthroughStream.write(chunk);
       });
 
       ffmpegProcess.stdout.on("end", () => {
-        logger.debug("ffmpeg stream ended", { url, guildId });
+        logger.debug({ url, guildId }, "ffmpeg stream ended");
         passthroughStream.end();
         this.state.activeStreams.delete(streamId);
       });
 
       ffmpegProcess.stdout.on("error", (err: Error) => {
-        logger.error("ffmpeg stdout error", { url, guildId, error: err.message });
+        logger.error(
+          {
+            url,
+            guildId,
+            error: err.message,
+          },
+          "ffmpeg stdout error"
+        );
         passthroughStream.destroy(err);
       });
 
       // Registrar stream activo
-      this.state.activeStreams.set(streamId, passthroughStream as unknown as ReadableStream);
+      this.state.activeStreams.set(
+        streamId,
+        passthroughStream as unknown as ReadableStream
+      );
 
       // Resolver cuando el passthrough esté listo
       setImmediate(() => {
@@ -850,11 +947,11 @@ class AudioStreamServiceImpl {
       });
 
       ytDlpProcess.stderr.on("data", (data) => {
-        logger.debug("yt-dlp stderr", { data: data.toString() });
+        logger.debug({ data: data.toString() }, "yt-dlp stderr");
       });
 
       ffmpegProcess.stderr.on("data", (data) => {
-        logger.debug("ffmpeg stderr", { data: data.toString() });
+        logger.debug({ data: data.toString() }, "ffmpeg stderr");
       });
 
       ytDlpProcess.on("error", (error) => {
@@ -871,7 +968,7 @@ class AudioStreamServiceImpl {
 
       ytDlpProcess.on("exit", (code) => {
         if (code !== 0) {
-          logger.warn("yt-dlp exited with code", { code, url });
+          logger.warn({ code, url }, "yt-dlp exited with code");
         }
       });
 
@@ -894,7 +991,7 @@ class AudioStreamServiceImpl {
     thumbnail?: string;
   } | null> {
     try {
-      logger.debug("Getting video info with yt-dlp", { url });
+      logger.debug({ url }, "Getting video info with yt-dlp");
 
       const info = await this.state.ytDlp.getVideoInfo(url);
 
@@ -905,15 +1002,23 @@ class AudioStreamServiceImpl {
       // Get best audio format URL
       const audioFormats =
         info.formats?.filter(
-          (f: { acodec?: string; vcodec?: string; abr?: number; url?: string }) =>
-            f.acodec && f.acodec !== "none" && !f.vcodec
+          (f: {
+            acodec?: string;
+            vcodec?: string;
+            abr?: number;
+            url?: string;
+          }) => f.acodec && f.acodec !== "none" && !f.vcodec
         ) || [];
 
       if (audioFormats.length === 0) {
         const mixedFormats =
           info.formats?.filter(
-            (f: { acodec?: string; vcodec?: string; abr?: number; url?: string }) =>
-              f.acodec && f.acodec !== "none"
+            (f: {
+              acodec?: string;
+              vcodec?: string;
+              abr?: number;
+              url?: string;
+            }) => f.acodec && f.acodec !== "none"
           ) || [];
 
         if (mixedFormats.length === 0) {
@@ -921,7 +1026,8 @@ class AudioStreamServiceImpl {
         }
 
         const bestMixed = mixedFormats.sort(
-          (a: { abr?: number }, b: { abr?: number }) => (b.abr || 0) - (a.abr || 0)
+          (a: { abr?: number }, b: { abr?: number }) =>
+            (b.abr || 0) - (a.abr || 0)
         )[0];
 
         return {
@@ -933,7 +1039,8 @@ class AudioStreamServiceImpl {
       }
 
       const bestAudio = audioFormats.sort(
-        (a: { abr?: number }, b: { abr?: number }) => (b.abr || 0) - (a.abr || 0)
+        (a: { abr?: number }, b: { abr?: number }) =>
+          (b.abr || 0) - (a.abr || 0)
       )[0];
 
       return {
@@ -943,10 +1050,13 @@ class AudioStreamServiceImpl {
         thumbnail: info.thumbnail,
       };
     } catch (error) {
-      logger.error("Error with yt-dlp", {
-        url,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          url,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error with yt-dlp"
+      );
       return null;
     }
   }
@@ -980,7 +1090,7 @@ class AudioStreamServiceImpl {
 
         if (attempt < maxAttempts) {
           const delay = this.retryDelayMs * attempt;
-          logger.debug("Retry attempt", { attempt, maxAttempts, delay });
+          logger.debug({ attempt, maxAttempts, delay }, "Retry attempt");
           await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
@@ -993,11 +1103,14 @@ class AudioStreamServiceImpl {
    * Valida un StreamSource antes de crear el stream
    */
   async validate(source: StreamSource): Promise<void> {
-    logger.debug("Validando StreamSource", {
-      title: source.title,
-      url: source.url,
-      platform: source.platform,
-    });
+    logger.debug(
+      {
+        title: source.title,
+        url: source.url,
+        platform: source.platform,
+      },
+      "Validando StreamSource"
+    );
 
     // Validar que tiene URL
     if (!source.url || typeof source.url !== "string") {
@@ -1010,7 +1123,9 @@ class AudioStreamServiceImpl {
     }
 
     // Validar plataforma
-    if (!["youtube", "spotify", "soundcloud", "other"].includes(source.platform)) {
+    if (
+      !["youtube", "spotify", "soundcloud", "other"].includes(source.platform)
+    ) {
       throw new ValidationError("Plataforma no soportada");
     }
 
@@ -1019,7 +1134,7 @@ class AudioStreamServiceImpl {
       throw new ValidationError("La duración máxima es de 2 horas");
     }
 
-    logger.debug("✅ StreamSource validado", { title: source.title });
+    logger.debug({ title: source.title }, "✅ StreamSource validado");
   }
 
   // ============================================================================
@@ -1033,16 +1148,22 @@ class AudioStreamServiceImpl {
     const stream = this.state.activeStreams.get(streamId);
     if (stream) {
       try {
-        if (typeof (stream as unknown as { destroy?: () => void }).destroy === "function") {
+        if (
+          typeof (stream as unknown as { destroy?: () => void }).destroy ===
+          "function"
+        ) {
           (stream as unknown as { destroy: () => void }).destroy();
         }
         this.state.activeStreams.delete(streamId);
-        logger.debug("Stream limpiado", { streamId });
+        logger.debug({ streamId }, "Stream limpiado");
       } catch (error) {
-        logger.warn("Error limpiando stream", {
-          streamId,
-          error: error instanceof Error ? error.message : String(error),
-        });
+        logger.warn(
+          {
+            streamId,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          "Error limpiando stream"
+        );
       }
     }
   }
@@ -1051,20 +1172,29 @@ class AudioStreamServiceImpl {
    * Limpia todos los streams activos
    */
   cleanupAllStreams(): void {
-    logger.info("🧹 Limpiando todos los streams activos", {
-      count: this.state.activeStreams.size,
-    });
+    logger.info(
+      {
+        count: this.state.activeStreams.size,
+      },
+      "🧹 Limpiando todos los streams activos"
+    );
 
     for (const [streamId, stream] of this.state.activeStreams) {
       try {
-        if (typeof (stream as unknown as { destroy?: () => void }).destroy === "function") {
+        if (
+          typeof (stream as unknown as { destroy?: () => void }).destroy ===
+          "function"
+        ) {
           (stream as unknown as { destroy: () => void }).destroy();
         }
       } catch (error) {
-        logger.warn("Error limpiando stream", {
-          streamId,
-          error: error instanceof Error ? error.message : String(error),
-        });
+        logger.warn(
+          {
+            streamId,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          "Error limpiando stream"
+        );
       }
     }
 
@@ -1129,8 +1259,9 @@ export const AudioStreamService = {
     getAudioStreamService().validate(...args),
 
   // 3.6 Cleanup
-  cleanupStream: (...args: Parameters<AudioStreamServiceImpl["cleanupStream"]>) =>
-    getAudioStreamService().cleanupStream(...args),
+  cleanupStream: (
+    ...args: Parameters<AudioStreamServiceImpl["cleanupStream"]>
+  ) => getAudioStreamService().cleanupStream(...args),
   cleanupAllStreams: () => getAudioStreamService().cleanupAllStreams(),
   getActiveStreamCount: () => getAudioStreamService().getActiveStreamCount(),
   getActiveStreamIds: () => getAudioStreamService().getActiveStreamIds(),

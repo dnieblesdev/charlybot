@@ -12,7 +12,10 @@ import * as ModCaseRepository from "../../config/repositories/modCaseRepository.
 import { logModAction } from "../services/ModLogService.ts";
 import { getValkeyClient } from "../../infrastructure/valkey/index.ts";
 import { ANTI_SPAM_KEYS } from "@charlybot/shared";
-import { AntiSpamAction, type SpamCheckResult } from "../services/SpamCheckResult.ts";
+import {
+  AntiSpamAction,
+  type SpamCheckResult,
+} from "../services/SpamCheckResult.ts";
 
 const MOD_LOG_NOTIFY_TTL_SECONDS = 30;
 
@@ -23,11 +26,13 @@ async function notifySpamToModLog(
   spamResult: SpamCheckResult,
   member: GuildMember,
   actionsTaken: string[],
-  actionsFailed: string[],
+  actionsFailed: string[]
 ): Promise<void> {
   // ===== Task 2: Mod log deduplication (per pattern) =====
   const valkey = getValkeyClient();
-  const notifiedKey = `${ANTI_SPAM_KEYS.userNotified(guildId, userId)}:${spamResult.pattern}`;
+  const notifiedKey = `${ANTI_SPAM_KEYS.userNotified(guildId, userId)}:${
+    spamResult.pattern
+  }`;
   try {
     const alreadyNotified = await valkey.get<string>(notifiedKey);
     if (alreadyNotified !== null) {
@@ -37,35 +42,54 @@ async function notifySpamToModLog(
     // Mark as notified before sending (prevents duplicate sends on crash)
     await valkey.set(notifiedKey, "1", MOD_LOG_NOTIFY_TTL_SECONDS);
   } catch (err) {
-    logger.warn("Failed to set antispam notified key, will send anyway", {
-      error: err instanceof Error ? err.message : String(err),
-      guildId,
-      userId,
-    });
+    logger.warn(
+      {
+        error: err instanceof Error ? err.message : String(err),
+        guildId,
+        userId,
+      },
+      "Failed to set antispam notified key, will send anyway"
+    );
   }
 
   const guildConfig = await getGuildConfig(guildId);
   const modLogChannelId = guildConfig?.modLogChannelId;
   if (!modLogChannelId) return;
 
-  const channel = await client.channels.fetch(modLogChannelId).catch(() => null);
+  const channel = await client.channels
+    .fetch(modLogChannelId)
+    .catch(() => null);
   if (!channel || !("send" in channel)) return;
 
   const embed = new EmbedBuilder()
     .setTitle("Spam detectado")
     .setColor(0xff6600)
-    .setDescription(`El usuario ${member.user.tag} fue detectado enviando spam.`)
+    .setDescription(
+      `El usuario ${member.user.tag} fue detectado enviando spam.`
+    )
     .addFields(
-      { name: "Usuario", value: `<@${member.id}> (${member.user.tag})`, inline: true },
-      { name: "Razón", value: spamResult.reason, inline: true },
+      {
+        name: "Usuario",
+        value: `<@${member.id}> (${member.user.tag})`,
+        inline: true,
+      },
+      { name: "Razón", value: spamResult.reason, inline: true }
     )
     .setTimestamp();
 
   if (actionsTaken.length > 0) {
-    embed.addFields({ name: "Acciones realizadas", value: actionsTaken.join("\n"), inline: false });
+    embed.addFields({
+      name: "Acciones realizadas",
+      value: actionsTaken.join("\n"),
+      inline: false,
+    });
   }
   if (actionsFailed.length > 0) {
-    embed.addFields({ name: "Acciones que no se pudieron realizar", value: actionsFailed.join("\n"), inline: false });
+    embed.addFields({
+      name: "Acciones que no se pudieron realizar",
+      value: actionsFailed.join("\n"),
+      inline: false,
+    });
   }
 
   if (spamResult.messageIds && spamResult.messageIds.length > 0) {
@@ -76,15 +100,22 @@ async function notifySpamToModLog(
     const channelInfo = Array.from(channelCounts.entries())
       .map(([channelId, count]) => `<#${channelId}>: ${count} mensaje(s)`)
       .join("\n");
-    embed.addFields({ name: "Canales afectados", value: channelInfo, inline: false });
+    embed.addFields({
+      name: "Canales afectados",
+      value: channelInfo,
+      inline: false,
+    });
   }
 
   await channel.send({ embeds: [embed] }).catch((err) => {
-    logger.warn("No se pudo enviar notificación de spam al canal de mod", {
-      error: err instanceof Error ? err.message : String(err),
-      guildId,
-      channelId: modLogChannelId,
-    });
+    logger.warn(
+      {
+        error: err instanceof Error ? err.message : String(err),
+        guildId,
+        channelId: modLogChannelId,
+      },
+      "No se pudo enviar notificación de spam al canal de mod"
+    );
   });
 }
 
@@ -98,7 +129,9 @@ export default {
     // ========== ANTI-SPAM CHECK ==========
     let spamResult: SpamCheckResult | null = null;
     let antiSpam: AntiSpamService | null = null;
-    let antiSpamConfig: Awaited<ReturnType<typeof AntiSpamConfigRepo.getByGuildId>> = null;
+    let antiSpamConfig: Awaited<
+      ReturnType<typeof AntiSpamConfigRepo.getByGuildId>
+    > = null;
 
     // Task 1: Load config BEFORE evaluating spam
     try {
@@ -111,11 +144,14 @@ export default {
       }
       // If enabled === false, skip silently — antiSpam stays null, spamResult stays null
     } catch (err) {
-      logger.error("Falló la evaluación anti spam, continuando sin bloquear", {
-        error: err instanceof Error ? err.message : String(err),
-        guildId,
-        userId: message.author.id,
-      });
+      logger.error(
+        {
+          error: err instanceof Error ? err.message : String(err),
+          guildId,
+          userId: message.author.id,
+        },
+        "Falló la evaluación anti spam, continuando sin bloquear"
+      );
     }
 
     if (spamResult?.isSpam) {
@@ -128,14 +164,21 @@ export default {
       let finalAction = spamResult.action;
       if (member && antiSpam) {
         try {
-          const result = await antiSpam.applyAction(spamResult, message, member);
+          const result = await antiSpam.applyAction(
+            spamResult,
+            message,
+            member
+          );
           finalAction = result.action;
         } catch (err) {
-          logger.error("Error al aplicar escalado anti spam", {
-            error: err instanceof Error ? err.message : String(err),
-            guildId,
-            userId: message.author.id,
-          });
+          logger.error(
+            {
+              error: err instanceof Error ? err.message : String(err),
+              guildId,
+              userId: message.author.id,
+            },
+            "Error al aplicar escalado anti spam"
+          );
         }
       }
 
@@ -145,45 +188,65 @@ export default {
           // Bulk delete all burst messages
           const deletePromises = spamResult.messageIds.map(async (msg) => {
             try {
-              const channel = message.client.channels.cache.get(msg.channelId)
-                || await message.client.channels.fetch(msg.channelId).catch(() => null);
+              const channel =
+                message.client.channels.cache.get(msg.channelId) ||
+                (await message.client.channels
+                  .fetch(msg.channelId)
+                  .catch(() => null));
               if (!channel) {
-                logger.warn("No se encontró el canal para borrar mensaje de spam", {
-                  messageId: msg.id,
-                  channelId: msg.channelId,
-                });
+                logger.warn(
+                  {
+                    messageId: msg.id,
+                    channelId: msg.channelId,
+                  },
+                  "No se encontró el canal para borrar mensaje de spam"
+                );
                 return;
               }
               if (!("messages" in channel)) {
-                logger.warn("El canal no soporta mensajes (posiblemente es un DM o voz)", {
-                  messageId: msg.id,
-                  channelId: msg.channelId,
-                  channelType: (channel as any).type,
-                });
+                logger.warn(
+                  {
+                    messageId: msg.id,
+                    channelId: msg.channelId,
+                    channelType: (channel as any).type,
+                  },
+                  "El canal no soporta mensajes (posiblemente es un DM o voz)"
+                );
                 return;
               }
-              const msgObj = await channel.messages.fetch(msg.id).catch((err) => {
-                logger.debug("No se pudo obtener el mensaje para borrar", {
-                  messageId: msg.id,
-                  channelId: msg.channelId,
-                  error: err instanceof Error ? err.message : String(err),
+              const msgObj = await channel.messages
+                .fetch(msg.id)
+                .catch((err) => {
+                  logger.debug(
+                    {
+                      messageId: msg.id,
+                      channelId: msg.channelId,
+                      error: err instanceof Error ? err.message : String(err),
+                    },
+                    "No se pudo obtener el mensaje para borrar"
+                  );
+                  return null;
                 });
-                return null;
-              });
               if (!msgObj) {
-                logger.warn("Mensaje no encontrado (ya fue borrado o no accesible)", {
-                  messageId: msg.id,
-                  channelId: msg.channelId,
-                });
+                logger.warn(
+                  {
+                    messageId: msg.id,
+                    channelId: msg.channelId,
+                  },
+                  "Mensaje no encontrado (ya fue borrado o no accesible)"
+                );
                 return;
               }
               await msgObj.delete();
             } catch (err) {
-              logger.error("Error inesperado al borrar mensaje de spam", {
-                messageId: msg.id,
-                channelId: msg.channelId,
-                error: err instanceof Error ? err.message : String(err),
-              });
+              logger.error(
+                {
+                  messageId: msg.id,
+                  channelId: msg.channelId,
+                  error: err instanceof Error ? err.message : String(err),
+                },
+                "Error inesperado al borrar mensaje de spam"
+              );
             }
           });
           await Promise.allSettled(deletePromises);
@@ -192,11 +255,14 @@ export default {
           try {
             await message.delete();
           } catch (err) {
-            logger.debug("No se pudo borrar mensaje de spam (current)", {
-              messageId: message.id,
-              channelId: message.channel.id,
-              error: err instanceof Error ? err.message : String(err),
-            });
+            logger.debug(
+              {
+                messageId: message.id,
+                channelId: message.channel.id,
+                error: err instanceof Error ? err.message : String(err),
+              },
+              "No se pudo borrar mensaje de spam (current)"
+            );
           }
         }
       }
@@ -229,7 +295,9 @@ export default {
                 });
                 actionsTaken.push("Timeout de 5 minutos aplicado");
               } else {
-                actionsFailed.push("No se pudo aplicar timeout de 5 minutos: el usuario tiene un rol igual o superior al del bot");
+                actionsFailed.push(
+                  "No se pudo aplicar timeout de 5 minutos: el usuario tiene un rol igual o superior al del bot"
+                );
               }
               break;
             }
@@ -246,7 +314,9 @@ export default {
                 });
                 actionsTaken.push("Timeout de 30 minutos aplicado");
               } else {
-                actionsFailed.push("No se pudo aplicar timeout de 30 minutos: el usuario tiene un rol igual o superior al del bot");
+                actionsFailed.push(
+                  "No se pudo aplicar timeout de 30 minutos: el usuario tiene un rol igual o superior al del bot"
+                );
               }
               break;
             }
@@ -275,26 +345,36 @@ export default {
           }
 
           // Only log mod action and create ModCase for non-notify-only/delete-only actions
-          if (finalAction !== AntiSpamAction.NOTIFY_ONLY && finalAction !== AntiSpamAction.DELETE_ONLY) {
+          if (
+            finalAction !== AntiSpamAction.NOTIFY_ONLY &&
+            finalAction !== AntiSpamAction.DELETE_ONLY
+          ) {
             if (modCase) {
               await logModAction(
                 message.client,
                 guildId,
                 modCase,
                 "AutoMod",
-                message.author.username,
+                message.author.username
               );
               actionsTaken.push("Caso registrado en el log de moderación");
             }
           }
         } catch (err) {
-          logger.error("No se pudo ejecutar la acción de moderación anti spam", {
-            error: err instanceof Error ? err.message : String(err),
-            guildId,
-            userId: message.author.id,
-            pattern: spamResult.pattern,
-          });
-          actionsFailed.push(`Error al aplicar sanción: ${err instanceof Error ? err.message : String(err)}`);
+          logger.error(
+            {
+              error: err instanceof Error ? err.message : String(err),
+              guildId,
+              userId: message.author.id,
+              pattern: spamResult.pattern,
+            },
+            "No se pudo ejecutar la acción de moderación anti spam"
+          );
+          actionsFailed.push(
+            `Error al aplicar sanción: ${
+              err instanceof Error ? err.message : String(err)
+            }`
+          );
         }
       }
 
@@ -307,18 +387,21 @@ export default {
           spamResult,
           member,
           actionsTaken,
-          actionsFailed,
+          actionsFailed
         );
       }
 
-      logger.info("Acción anti spam ejecutada", {
-        pattern: spamResult.pattern,
-        reason: spamResult.reason,
-        guildId,
-        userId: message.author.id,
-        actionsTaken,
-        actionsFailed,
-      });
+      logger.info(
+        {
+          pattern: spamResult.pattern,
+          reason: spamResult.reason,
+          guildId,
+          userId: message.author.id,
+          actionsTaken,
+          actionsFailed,
+        },
+        "Acción anti spam ejecutada"
+      );
 
       // Don't continue to XP tracking for spam messages
       return;
@@ -328,7 +411,7 @@ export default {
     // ========== XP TRACKING (independiente de imágenes) ==========
     // No contar como XP mensajes de interacciones (comandos slash)
     if (message.interaction) return;
-    
+
     // Early return silencioso si XP no está habilitado o no hay config
     let xpConfig;
     try {
@@ -338,7 +421,7 @@ export default {
       return;
     }
     if (!xpConfig?.enabled) return;
-    
+
     try {
       const userId = message.author.id;
       const userXP = await XPRepo.getUserXP(guildId, userId);
@@ -346,9 +429,10 @@ export default {
       // Rate limit: si el último mensaje fue hace menos de 5 segundos, skip
       let shouldTrack = true;
       if (userXP?.lastMessageAt) {
-        const lastMessageTime = userXP.lastMessageAt instanceof Date
-          ? userXP.lastMessageAt.getTime()
-          : new Date(userXP.lastMessageAt).getTime();
+        const lastMessageTime =
+          userXP.lastMessageAt instanceof Date
+            ? userXP.lastMessageAt.getTime()
+            : new Date(userXP.lastMessageAt).getTime();
         if (Date.now() - lastMessageTime < 5000) {
           shouldTrack = false;
         }
@@ -363,11 +447,26 @@ export default {
         const newNivel = Math.floor(Math.sqrt(newXP / 100));
 
         // Usar incremento atómico para evitar race conditions
-        await XPRepo.incrementUserXP(guildId, userId, xpIncrement, newNivel, message.author.username);
+        await XPRepo.incrementUserXP(
+          guildId,
+          userId,
+          xpIncrement,
+          newNivel,
+          message.author.username
+        );
 
         // Verificar si hubo level up
         if (newNivel > previousNivel) {
-          logger.info("User leveled up", { userId, guildId, previousLevel: previousNivel, newLevel: newNivel, xp: newXP });
+          logger.info(
+            {
+              userId,
+              guildId,
+              previousLevel: previousNivel,
+              newLevel: newNivel,
+              xp: newXP,
+            },
+            "User leveled up"
+          );
 
           const levelRoles = await XPRepo.getLevelRoles(guildId);
           if (levelRoles.length > 0 && message.member) {
@@ -376,10 +475,27 @@ export default {
                 try {
                   if (!message.member.roles.cache.has(levelRole.roleId)) {
                     await message.member.roles.add(levelRole.roleId);
-                    logger.debug("Added level role to user", { userId, guildId, roleId: levelRole.roleId, level: levelRole.level });
+                    logger.debug(
+                      {
+                        userId,
+                        guildId,
+                        roleId: levelRole.roleId,
+                        level: levelRole.level,
+                      },
+                      "Added level role to user"
+                    );
                   }
                 } catch (error) {
-                  logger.error("Failed to add level role", { error: error instanceof Error ? error.message : String(error), userId, guildId, roleId: levelRole.roleId });
+                  logger.error(
+                    {
+                      error:
+                        error instanceof Error ? error.message : String(error),
+                      userId,
+                      guildId,
+                      roleId: levelRole.roleId,
+                    },
+                    "Failed to add level role"
+                  );
                 }
               }
             }
@@ -387,10 +503,15 @@ export default {
 
           // Enviar mensaje de level up si está configurado
           if (xpConfig.levelUpChannelId) {
-            const levelUpChannel = message.guild?.channels.cache.get(xpConfig.levelUpChannelId);
+            const levelUpChannel = message.guild?.channels.cache.get(
+              xpConfig.levelUpChannelId
+            );
             if (levelUpChannel && levelUpChannel instanceof TextChannel) {
               const messageText = xpConfig.levelUpMessage
-                ? xpConfig.levelUpMessage.replace(/{user}/g, message.author.username).replace(/{level}/g, String(newNivel)).replace(/{xp}/g, String(newXP))
+                ? xpConfig.levelUpMessage
+                    .replace(/{user}/g, message.author.username)
+                    .replace(/{level}/g, String(newNivel))
+                    .replace(/{xp}/g, String(newXP))
                 : `🎉 ¡${message.author.username} ha subido al nivel ${newNivel}!`;
               await levelUpChannel.send({ content: messageText });
             }
@@ -398,11 +519,14 @@ export default {
         }
       }
     } catch (err) {
-      logger.error("Error in XP tracking", {
-        error: err instanceof Error ? err.message : String(err),
-        userId: message.author?.id,
-        guildId,
-      });
+      logger.error(
+        {
+          error: err instanceof Error ? err.message : String(err),
+          userId: message.author?.id,
+          guildId,
+        },
+        "Error in XP tracking"
+      );
     }
     // ========== END XP TRACKING ==========
 
@@ -417,31 +541,61 @@ export default {
 
       if (!config || message.channel.id !== config.targetChannelId) return;
 
-      if (!(message.channel instanceof TextChannel) && !message.channel.isThread()) return;
+      if (
+        !(message.channel instanceof TextChannel) &&
+        !message.channel.isThread()
+      )
+        return;
 
       const validImageUrls = attachments
         .filter(isValidImageAttachment)
         .map((a) => a.url);
 
       if (validImageUrls.length === 0) {
-        logger.debug("No valid image attachments found for repost", { userId: message.author.id, guildId, totalAttachments: attachments.length });
+        logger.debug(
+          {
+            userId: message.author.id,
+            guildId,
+            totalAttachments: attachments.length,
+          },
+          "No valid image attachments found for repost"
+        );
         return;
       }
 
-      logger.debug("Processing image message for repost", { userId: message.author.id, guildId, channelId: message.channel.id, imageCount: validImageUrls.length });
+      logger.debug(
+        {
+          userId: message.author.id,
+          guildId,
+          channelId: message.channel.id,
+          imageCount: validImageUrls.length,
+        },
+        "Processing image message for repost"
+      );
 
       await message.channel.send({ files: validImageUrls });
       await message.delete();
 
-      logger.info("Images reposted successfully", { userId: message.author.id, guildId, channelId: message.channel.id, imageCount: validImageUrls.length });
+      logger.info(
+        {
+          userId: message.author.id,
+          guildId,
+          channelId: message.channel.id,
+          imageCount: validImageUrls.length,
+        },
+        "Images reposted successfully"
+      );
     } catch (err) {
-      logger.error("Error reposting images", {
-        error: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined,
-        userId: message.author?.id,
-        guildId,
-        channelId: message.channel?.id,
-      });
+      logger.error(
+        {
+          error: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+          userId: message.author?.id,
+          guildId,
+          channelId: message.channel?.id,
+        },
+        "Error reposting images"
+      );
     }
   },
 };

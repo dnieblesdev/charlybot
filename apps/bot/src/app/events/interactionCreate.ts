@@ -6,8 +6,14 @@ import * as verificationHandler from "../interactions/handlers/verification.hand
 import * as autoroleHandler from "../interactions/handlers/autorole.handler.ts";
 import { handleModalSubmit as handleAutoroleModal } from "../commands/autorole/setup.ts";
 import * as welcomeHandler from "../interactions/handlers/welcome.handler.ts";
-import { isDuplicateInteraction, clearInteractionId } from "../../infrastructure/valkey/idempotency";
-import { commandDuration, commandTotal } from "../../infrastructure/monitoring/health.ts";
+import {
+  isDuplicateInteraction,
+  clearInteractionId,
+} from "../../infrastructure/valkey/idempotency";
+import {
+  commandDuration,
+  commandTotal,
+} from "../../infrastructure/monitoring/health.ts";
 
 export default {
   name: Events.InteractionCreate,
@@ -16,17 +22,22 @@ export default {
     // ── Autocomplete ───────────────────────────────────────────────────────────
     if (interaction.isAutocomplete()) {
       try {
-        const command = interaction.client.commands.get(interaction.commandName);
+        const command = interaction.client.commands.get(
+          interaction.commandName
+        );
         if (command && (command as any).autocomplete) {
           await (command as any).autocomplete(interaction);
         }
       } catch (err) {
-        logger.error("Error procesando autocompletado", {
-          error: err instanceof Error ? err.message : String(err),
-          commandName: interaction.commandName,
-          userId: interaction.user.id,
-          guildId: interaction.guildId,
-        });
+        logger.error(
+          {
+            error: err instanceof Error ? err.message : String(err),
+            commandName: interaction.commandName,
+            userId: interaction.user.id,
+            guildId: interaction.guildId,
+          },
+          "Error procesando autocompletado"
+        );
       }
       return;
     }
@@ -36,17 +47,26 @@ export default {
     if (!interaction.isAutocomplete()) {
       const isDuplicate = await isDuplicateInteraction(interaction.id);
       if (isDuplicate) {
-        logger.warn("Blocked duplicate interaction", {
-          interactionId: interaction.id,
-          type: interaction.isChatInputCommand() ? "command"
-            : interaction.isButton() ? "button"
-            : interaction.isModalSubmit() ? "modal"
-            : interaction.isStringSelectMenu() ? "select"
-            : "unknown",
-          commandName: interaction.isChatInputCommand() ? interaction.commandName : undefined,
-          userId: interaction.user?.id,
-          guildId: interaction.guildId,
-        });
+        logger.warn(
+          {
+            interactionId: interaction.id,
+            type: interaction.isChatInputCommand()
+              ? "command"
+              : interaction.isButton()
+              ? "button"
+              : interaction.isModalSubmit()
+              ? "modal"
+              : interaction.isStringSelectMenu()
+              ? "select"
+              : "unknown",
+            commandName: interaction.isChatInputCommand()
+              ? interaction.commandName
+              : undefined,
+            userId: interaction.user?.id,
+            guildId: interaction.guildId,
+          },
+          "Blocked duplicate interaction"
+        );
 
         // Try to inform the user if possible
         try {
@@ -83,20 +103,26 @@ export default {
               await autoroleHandler.handleButton(interaction);
               break;
             default:
-              logger.warn("interactionCreate: unrecognized button feature", {
-                feature,
-                customId: interaction.customId,
-                userId: interaction.user.id,
-                guildId: interaction.guildId,
-              });
+              logger.warn(
+                {
+                  feature,
+                  customId: interaction.customId,
+                  userId: interaction.user.id,
+                  guildId: interaction.guildId,
+                },
+                "interactionCreate: unrecognized button feature"
+              );
           }
         } catch (err) {
-          logger.error("Error procesando botón", {
-            error: err instanceof Error ? err.message : String(err),
-            customId: interaction.customId,
-            userId: interaction.user.id,
-            guildId: interaction.guildId,
-          });
+          logger.error(
+            {
+              error: err instanceof Error ? err.message : String(err),
+              customId: interaction.customId,
+              userId: interaction.user.id,
+              guildId: interaction.guildId,
+            },
+            "Error procesando botón"
+          );
         }
         return;
       }
@@ -113,20 +139,26 @@ export default {
               await autoroleHandler.handleSelect(interaction);
               break;
             default:
-              logger.warn("interactionCreate: unrecognized select feature", {
-                feature,
-                customId: interaction.customId,
-                userId: interaction.user.id,
-                guildId: interaction.guildId,
-              });
+              logger.warn(
+                {
+                  feature,
+                  customId: interaction.customId,
+                  userId: interaction.user.id,
+                  guildId: interaction.guildId,
+                },
+                "interactionCreate: unrecognized select feature"
+              );
           }
         } catch (err) {
-          logger.error("Error procesando select menu", {
-            error: err instanceof Error ? err.message : String(err),
-            customId: interaction.customId,
-            userId: interaction.user.id,
-            guildId: interaction.guildId,
-          });
+          logger.error(
+            {
+              error: err instanceof Error ? err.message : String(err),
+              customId: interaction.customId,
+              userId: interaction.user.id,
+              guildId: interaction.guildId,
+            },
+            "Error procesando select menu"
+          );
         }
         return;
       }
@@ -147,20 +179,26 @@ export default {
               await handleAutoroleModal(interaction);
               break;
             default:
-              logger.warn("interactionCreate: unrecognized modal feature", {
-                feature,
-                customId: interaction.customId,
-                userId: interaction.user.id,
-                guildId: interaction.guildId,
-              });
+              logger.warn(
+                {
+                  feature,
+                  customId: interaction.customId,
+                  userId: interaction.user.id,
+                  guildId: interaction.guildId,
+                },
+                "interactionCreate: unrecognized modal feature"
+              );
           }
         } catch (err) {
-          logger.error("Error procesando modal", {
-            error: err instanceof Error ? err.message : String(err),
-            customId: interaction.customId,
-            userId: interaction.user.id,
-            guildId: interaction.guildId,
-          });
+          logger.error(
+            {
+              error: err instanceof Error ? err.message : String(err),
+              customId: interaction.customId,
+              userId: interaction.user.id,
+              guildId: interaction.guildId,
+            },
+            "Error procesando modal"
+          );
         }
         return;
       }
@@ -171,11 +209,14 @@ export default {
       const command = interaction.client.commands.get(interaction.commandName);
 
       if (!command) {
-        logger.error(`Command not found: ${interaction.commandName}`, {
-          commandName: interaction.commandName,
-          userId: interaction.user.id,
-          guildId: interaction.guildId,
-        });
+        logger.error(
+          {
+            commandName: interaction.commandName,
+            userId: interaction.user.id,
+            guildId: interaction.guildId,
+          },
+          `Command not found: ${interaction.commandName}`
+        );
         return;
       }
 
@@ -190,27 +231,43 @@ export default {
       try {
         const tCommand = Date.now();
         const msSinceCreation = tCommand - interaction.createdTimestamp;
-        childLogger.info(`Command started: ${interaction.commandName}`, {
-          msSinceCreation,
-          deferred: interaction.deferred,
-          replied: interaction.replied,
+        childLogger.info(
+          {
+            msSinceCreation,
+            deferred: interaction.deferred,
+            replied: interaction.replied,
+          },
+          `Command started: ${interaction.commandName}`
+        );
+        const end = commandDuration.startTimer({
+          command: interaction.commandName,
         });
-        const end = commandDuration.startTimer({ command: interaction.commandName });
         try {
           await command.execute(interaction);
-          commandTotal.inc({ command: interaction.commandName, status: 'success' });
+          commandTotal.inc({
+            command: interaction.commandName,
+            status: "success",
+          });
         } catch (error) {
-          commandTotal.inc({ command: interaction.commandName, status: 'error' });
+          commandTotal.inc({
+            command: interaction.commandName,
+            status: "error",
+          });
           throw error;
         } finally {
           end();
         }
-        childLogger.debug(`Command executed successfully: ${interaction.commandName}`);
+        childLogger.debug(
+          `Command executed successfully: ${interaction.commandName}`
+        );
       } catch (error) {
-        childLogger.error(`Error executing command: ${interaction.commandName}`, {
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-        });
+        childLogger.error(
+          {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          `Error executing command: ${interaction.commandName}`
+        );
 
         const replyOptions: InteractionReplyOptions = {
           content: "❌ Hubo un error ejecutando este comando.",
@@ -226,15 +283,22 @@ export default {
         } catch (replyError) {
           // "Unknown interaction" means the token is dead — just log, don't rethrow
           const isUnknownInteraction =
-            replyError instanceof Error && replyError.message === "Unknown interaction";
+            replyError instanceof Error &&
+            replyError.message === "Unknown interaction";
 
-          logger.error("Failed to send error reply to user", {
-            error: replyError instanceof Error ? replyError.message : String(replyError),
-            commandName: interaction.commandName,
-            userId: interaction.user.id,
-            guildId: interaction.guildId,
-            interactionExpired: isUnknownInteraction,
-          });
+          logger.error(
+            {
+              error:
+                replyError instanceof Error
+                  ? replyError.message
+                  : String(replyError),
+              commandName: interaction.commandName,
+              userId: interaction.user.id,
+              guildId: interaction.guildId,
+              interactionExpired: isUnknownInteraction,
+            },
+            "Failed to send error reply to user"
+          );
         }
       }
     } finally {

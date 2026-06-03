@@ -15,9 +15,12 @@ export default {
       ownerId = owner.id;
       ownerUsername = owner.user.username;
     } catch (err) {
-      logger.warn(`Could not fetch owner for guild ${guild.id}`, {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.warn(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        `Could not fetch owner for guild ${guild.id}`
+      );
     }
 
     try {
@@ -29,14 +32,20 @@ export default {
         ownerName: ownerUsername,
       });
 
-      logger.info(`✅ Guild registrado: ${guild.name}`, {
-        guildId: guild.id,
-        memberCount: guild.memberCount ?? 0,
-      });
+      logger.info(
+        {
+          guildId: guild.id,
+          memberCount: guild.memberCount ?? 0,
+        },
+        `✅ Guild registrado: ${guild.name}`
+      );
     } catch (err) {
-      logger.error(`Error al registrar guild ${guild.id}`, {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.error(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        `Error al registrar guild ${guild.id}`
+      );
     }
   },
 };

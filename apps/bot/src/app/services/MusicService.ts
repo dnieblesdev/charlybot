@@ -1,13 +1,13 @@
 /**
  * MusicService - Fachada de delegación a servicios especializados
- * 
+ *
  * Esta clase actúa como una fachada delgada que delega todas las operaciones
  * a los 4 servicios especializados:
  * - VoiceConnectionService: gestión de conexiones de voz
- * - AudioStreamService: resolución y stream de audio  
+ * - AudioStreamService: resolución y stream de audio
  * - QueueManagementService: gestión de colas
  * - PlayerService: control de reproducción
- * 
+ *
  * Mantiene backward compatibility con todos los comandos existentes.
  */
 
@@ -38,27 +38,33 @@ class MusicService {
   async join(
     guildId: string,
     voiceChannel: VoiceChannel | StageChannel,
-    textChannel: TextChannel,
+    textChannel: TextChannel
   ): Promise<VoiceConnection> {
     try {
       // Usar VoiceConnectionService para establecer conexión
       const session = await VoiceConnectionService.join(
         guildId,
         voiceChannel,
-        textChannel,
+        textChannel
       );
-      
-      logger.info("Bot joined voice channel via facade", {
-        guildId,
-        channelId: voiceChannel.id,
-      });
-      
+
+      logger.info(
+        {
+          guildId,
+          channelId: voiceChannel.id,
+        },
+        "Bot joined voice channel via facade"
+      );
+
       return session.connection;
     } catch (error) {
-      logger.error("Error joining voice channel via facade", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error joining voice channel via facade"
+      );
       throw error;
     }
   }
@@ -70,12 +76,15 @@ class MusicService {
   async leave(guildId: string): Promise<void> {
     try {
       await VoiceConnectionService.leave(guildId);
-      logger.info("Bot left voice channel via facade", { guildId });
+      logger.info({ guildId }, "Bot left voice channel via facade");
     } catch (error) {
-      logger.error("Error leaving voice channel via facade", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error leaving voice channel via facade"
+      );
       throw error;
     }
   }
@@ -87,7 +96,7 @@ class MusicService {
   async play(
     guildId: string,
     query: string,
-    requester: { id: string; username: string },
+    requester: { id: string; username: string }
   ): Promise<{ added: Song[]; playing: boolean }> {
     try {
       // Verificar que hay sesión de voz activa
@@ -115,20 +124,29 @@ class MusicService {
       };
 
       // Agregar a la cola
-      const updatedSnapshot = await QueueManagementService.enqueue(guildId, track);
+      const updatedSnapshot = await QueueManagementService.enqueue(
+        guildId,
+        track
+      );
 
       // Publish enqueue event to stream
       const bridge = getMusicQueueEventBridge();
-      bridge.publishEnqueue(guildId, {
-        title: source.title,
-        url: source.url,
-        duration: source.duration,
-        thumbnail: source.thumbnail,
-        requesterId: requester.id,
-        requesterName: requester.username,
-      }, updatedSnapshot.songs.length).catch((err) => {
-        logger.warn('Stream enqueue event failed', { error: err.message });
-      });
+      bridge
+        .publishEnqueue(
+          guildId,
+          {
+            title: source.title,
+            url: source.url,
+            duration: source.duration,
+            thumbnail: source.thumbnail,
+            requesterId: requester.id,
+            requesterName: requester.username,
+          },
+          updatedSnapshot.songs.length
+        )
+        .catch((err) => {
+          logger.warn({ error: err.message }, "Stream enqueue event failed");
+        });
 
       let playing = false;
       // Solo iniciar reproducción si NO está actualmente reproduciendo
@@ -136,14 +154,17 @@ class MusicService {
         const nextSong = await QueueManagementService.dequeue(guildId);
         if (nextSong) {
           // Buscar el source para el stream
-          const streamSource = await AudioStreamService.resolve(nextSong.url, guildId);
+          const streamSource = await AudioStreamService.resolve(
+            nextSong.url,
+            guildId
+          );
           const stream = await AudioStreamService.createStream(streamSource, {
             volume: (updatedSnapshot.volume ?? 100) / 100,
           });
-          
+
           // IMPORTANTE: Actualizar estado en la cola para que los comandos funcionen
           QueueManagementService.setPlaybackState(guildId, { isPlaying: true });
-          
+
           // Actualizar currentSong para /nowplaying y otros comandos
           QueueManagementService.setCurrentSong(guildId, {
             title: nextSong.title,
@@ -154,36 +175,51 @@ class MusicService {
           });
 
           // Publish nowplaying event to stream
-          bridge.publishNowPlaying(guildId, {
-            title: nextSong.title,
-            url: nextSong.url,
-            duration: nextSong.duration,
-            thumbnail: nextSong.thumbnail,
-            requesterId: nextSong.requester.id,
-            requesterName: nextSong.requester.username,
-          }, updatedSnapshot.songs.length - 1).catch((err) => {
-            logger.warn('Stream nowplaying event failed', { error: err.message });
-          });
-          
+          bridge
+            .publishNowPlaying(
+              guildId,
+              {
+                title: nextSong.title,
+                url: nextSong.url,
+                duration: nextSong.duration,
+                thumbnail: nextSong.thumbnail,
+                requesterId: nextSong.requester.id,
+                requesterName: nextSong.requester.username,
+              },
+              updatedSnapshot.songs.length - 1
+            )
+            .catch((err) => {
+              logger.warn(
+                { error: err.message },
+                "Stream nowplaying event failed"
+              );
+            });
+
           await PlayerService.play(session, nextSong, stream);
           playing = true;
         }
       } else {
         // Ya estaba reproduciendo - solo agregar a la cola
-        logger.info("Song added to queue (already playing)", {
-          guildId,
-          title: source.title,
-          queueLength: updatedSnapshot.songs.length,
-        });
+        logger.info(
+          {
+            guildId,
+            title: source.title,
+            queueLength: updatedSnapshot.songs.length,
+          },
+          "Song added to queue (already playing)"
+        );
       }
 
-      logger.info("Song added via facade", {
-        guildId,
-        query,
-        title: source.title,
-        isCurrentlyPlaying,
-        nowPlaying: playing,
-      });
+      logger.info(
+        {
+          guildId,
+          query,
+          title: source.title,
+          isCurrentlyPlaying,
+          nowPlaying: playing,
+        },
+        "Song added via facade"
+      );
 
       const addedSong: Song = {
         title: source.title,
@@ -195,11 +231,14 @@ class MusicService {
 
       return { added: [addedSong], playing };
     } catch (error) {
-      logger.error("Error in play via facade", {
-        guildId,
-        query,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          query,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error in play via facade"
+      );
       throw error;
     }
   }
@@ -211,13 +250,16 @@ class MusicService {
   stop(guildId: string): boolean {
     try {
       PlayerService.stop(guildId);
-      logger.info("Playback stopped via facade", { guildId });
+      logger.info({ guildId }, "Playback stopped via facade");
       return true;
     } catch (error) {
-      logger.error("Error stopping via facade", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error stopping via facade"
+      );
       return false;
     }
   }
@@ -237,21 +279,24 @@ class MusicService {
 
       // Obtener siguiente canción de la cola
       const nextSong = await QueueManagementService.dequeue(guildId);
-      
+
       // Get remaining count before publishing event
       const snapshot = QueueManagementService.getSnapshot(guildId);
       const remaining = snapshot.songs.length;
-      
+
       let nowPlaying: Song | null = null;
-      
+
       if (nextSong) {
-        const streamSource = await AudioStreamService.resolve(nextSong.url, guildId);
+        const streamSource = await AudioStreamService.resolve(
+          nextSong.url,
+          guildId
+        );
         const stream = await AudioStreamService.createStream(streamSource);
         await PlayerService.play(session, nextSong, stream);
-        
+
         // Actualizar estado de la cola
         QueueManagementService.setPlaybackState(guildId, { isPlaying: true });
-        
+
         // Actualizar currentSong para /nowplaying y otros comandos
         QueueManagementService.setCurrentSong(guildId, {
           title: nextSong.title,
@@ -263,14 +308,20 @@ class MusicService {
 
         // Publish dequeue event to stream
         const bridge = getMusicQueueEventBridge();
-        bridge.publishDequeue(guildId, {
-          title: nextSong.title,
-          url: nextSong.url,
-          duration: nextSong.duration,
-        }, remaining).catch((err) => {
-          logger.warn('Stream dequeue event failed', { error: err.message });
-        });
-        
+        bridge
+          .publishDequeue(
+            guildId,
+            {
+              title: nextSong.title,
+              url: nextSong.url,
+              duration: nextSong.duration,
+            },
+            remaining
+          )
+          .catch((err) => {
+            logger.warn({ error: err.message }, "Stream dequeue event failed");
+          });
+
         // Convertir a formato Song para retornar
         nowPlaying = {
           title: nextSong.title,
@@ -281,13 +332,16 @@ class MusicService {
         };
       }
 
-      logger.info("Song skipped via facade", { guildId });
+      logger.info({ guildId }, "Song skipped via facade");
       return nowPlaying;
     } catch (error) {
-      logger.error("Error skipping via facade", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error skipping via facade"
+      );
       return null;
     }
   }
@@ -299,13 +353,16 @@ class MusicService {
   pause(guildId: string): boolean {
     try {
       PlayerService.pause(guildId);
-      logger.info("Playback paused via facade", { guildId });
+      logger.info({ guildId }, "Playback paused via facade");
       return true;
     } catch (error) {
-      logger.error("Error pausing via facade", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error pausing via facade"
+      );
       return false;
     }
   }
@@ -317,13 +374,16 @@ class MusicService {
   resume(guildId: string): boolean {
     try {
       PlayerService.resume(guildId);
-      logger.info("Playback resumed via facade", { guildId });
+      logger.info({ guildId }, "Playback resumed via facade");
       return true;
     } catch (error) {
-      logger.error("Error resuming via facade", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error resuming via facade"
+      );
       return false;
     }
   }
@@ -335,20 +395,26 @@ class MusicService {
   setVolume(guildId: string, volume: number): boolean {
     try {
       const normalizedVolume = Math.max(0, Math.min(200, volume));
-      
+
       // Actualizar en QueueManagementService
       QueueManagementService.setVolume(guildId, normalizedVolume);
-      
+
       // Aplicar volumen en PlayerService
       PlayerService.setVolume(guildId, normalizedVolume / 100);
-      
-      logger.info("Volume set via facade", { guildId, volume: normalizedVolume });
+
+      logger.info(
+        { guildId, volume: normalizedVolume },
+        "Volume set via facade"
+      );
       return true;
     } catch (error) {
-      logger.error("Error setting volume via facade", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error setting volume via facade"
+      );
       return false;
     }
   }
@@ -360,13 +426,16 @@ class MusicService {
   setLoop(guildId: string, mode: LoopMode): boolean {
     try {
       QueueManagementService.setLoopMode(guildId, mode);
-      logger.info("Loop mode set via facade", { guildId, mode });
+      logger.info({ guildId, mode }, "Loop mode set via facade");
       return true;
     } catch (error) {
-      logger.error("Error setting loop mode via facade", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error setting loop mode via facade"
+      );
       return false;
     }
   }
@@ -382,7 +451,7 @@ class MusicService {
 
       // Usar getSnapshot que es síncrono para mantener backward compatibility
       const queueSnapshot = QueueManagementService.getSnapshot(guildId);
-      
+
       // Reconstruct legacy MusicQueue format for backward compatibility
       const queue: MusicQueue = {
         guildId,
@@ -401,10 +470,13 @@ class MusicService {
 
       return queue;
     } catch (error) {
-      logger.error("Error getting queue via facade", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error getting queue via facade"
+      );
       return undefined;
     }
   }
@@ -417,22 +489,25 @@ class MusicService {
     try {
       const snapshot = await QueueManagementService.serialize(guildId);
       const count = snapshot?.songs.length ?? 0;
-      
+
       await QueueManagementService.clear(guildId);
-      
+
       // Publish clear event to stream
       const bridge = getMusicQueueEventBridge();
       bridge.publishClear(guildId, count).catch((err) => {
-        logger.warn('Stream clear event failed', { error: err.message });
+        logger.warn({ error: err.message }, "Stream clear event failed");
       });
-      
-      logger.info("Queue cleared via facade", { guildId, count });
+
+      logger.info({ guildId, count }, "Queue cleared via facade");
       return count;
     } catch (error) {
-      logger.error("Error clearing songs via facade", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error clearing songs via facade"
+      );
       return 0;
     }
   }
@@ -452,26 +527,39 @@ class MusicService {
     try {
       const snapshot = QueueManagementService.getSnapshot(guildId);
       const removed = await QueueManagementService.remove(guildId, index);
-      
+
       // Publish remove event to stream
       if (removed) {
         const bridge = getMusicQueueEventBridge();
-        bridge.publishRemove(guildId, index, {
-          title: removed.title,
-          url: removed.url,
-        }, snapshot.songs.length - 1).catch((err) => {
-          logger.warn('Stream remove event failed', { error: err.message });
-        });
+        bridge
+          .publishRemove(
+            guildId,
+            index,
+            {
+              title: removed.title,
+              url: removed.url,
+            },
+            snapshot.songs.length - 1
+          )
+          .catch((err) => {
+            logger.warn({ error: err.message }, "Stream remove event failed");
+          });
       }
-      
-      logger.info("Song removed via facade", { guildId, index, title: removed?.title });
+
+      logger.info(
+        { guildId, index, title: removed?.title },
+        "Song removed via facade"
+      );
       return removed;
     } catch (error) {
-      logger.error("Error removing song via facade", {
-        guildId,
-        index,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          index,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error removing song via facade"
+      );
       return null;
     }
   }
@@ -485,17 +573,20 @@ class MusicService {
       // Usar getSnapshot que es síncrono para mantener backward compatibility
       const snapshot = QueueManagementService.getSnapshot(guildId);
       if (!snapshot || snapshot.songs.length < 2) return false;
-      
+
       // Delegar al método shuffle del servicio
       QueueManagementService.shuffle(guildId);
-      
-      logger.info("Queue shuffled via facade", { guildId });
+
+      logger.info({ guildId }, "Queue shuffled via facade");
       return true;
     } catch (error) {
-      logger.error("Error shuffling queue via facade", {
-        guildId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        {
+          guildId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        "Error shuffling queue via facade"
+      );
       return false;
     }
   }

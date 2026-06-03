@@ -17,8 +17,14 @@ import { spawn } from "child_process";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { initializeValkey, shutdownValkey } from "../../infrastructure/valkey";
-import { startMusicStreamConsumer, stopMusicStreamConsumer } from "../../infrastructure/streams/MusicStreamConsumer";
-import { startLeaderboardStreamConsumer, stopLeaderboardStreamConsumer } from "../../infrastructure/streams/LeaderboardStreamConsumer";
+import {
+  startMusicStreamConsumer,
+  stopMusicStreamConsumer,
+} from "../../infrastructure/streams/MusicStreamConsumer";
+import {
+  startLeaderboardStreamConsumer,
+  stopLeaderboardStreamConsumer,
+} from "../../infrastructure/streams/LeaderboardStreamConsumer";
 import { startHealthServer } from "../../infrastructure/monitoring/health";
 import { AlertManager } from "@charlybot/shared";
 
@@ -27,11 +33,17 @@ let ffmpegPath: string | undefined;
 
 if (ffmpeg && existsSync(ffmpeg)) {
   ffmpegPath = ffmpeg;
-  logger.info("✅ ffmpeg-static configurado para @discordjs/voice", { path: ffmpegPath });
+  logger.info(
+    { path: ffmpegPath },
+    "✅ ffmpeg-static configurado para @discordjs/voice"
+  );
 } else if (process.platform === "win32") {
   // Windows: buscar en PATH
   ffmpegPath = "ffmpeg";
-  logger.info("✅ ffmpeg del sistema (Windows PATH) configurado", { path: ffmpegPath });
+  logger.info(
+    { path: ffmpegPath },
+    "✅ ffmpeg del sistema (Windows PATH) configurado"
+  );
 } else {
   // Linux/Docker: rutas típicas del sistema
   const systemPaths = [
@@ -46,7 +58,7 @@ if (ffmpeg && existsSync(ffmpeg)) {
     }
   }
   if (ffmpegPath) {
-    logger.info("✅ ffmpeg del sistema configurado", { path: ffmpegPath });
+    logger.info({ path: ffmpegPath }, "✅ ffmpeg del sistema configurado");
   }
 }
 
@@ -77,13 +89,16 @@ const initializePlayDl = async () => {
       logger.info("✅ play-dl configurado con Spotify");
     } else {
       logger.warn(
-        "⚠️ Credenciales de Spotify no configuradas, solo funcionará YouTube",
+        "⚠️ Credenciales de Spotify no configuradas, solo funcionará YouTube"
       );
     }
   } catch (error) {
-    logger.warn("⚠️ Error al configurar play-dl", {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.warn(
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      "⚠️ Error al configurar play-dl"
+    );
   }
 };
 
@@ -95,7 +110,7 @@ await initializeValkey();
 
 // Initialize alert manager (Discord webhook, opt-in via DISCORD_ALERT_WEBHOOK)
 const alertManager = new AlertManager({
-  webhookUrl: process.env.DISCORD_ALERT_WEBHOOK || '',
+  webhookUrl: process.env.DISCORD_ALERT_WEBHOOK || "",
   enabled: !!process.env.DISCORD_ALERT_WEBHOOK,
 });
 
@@ -114,7 +129,7 @@ const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 if (!DISCORD_TOKEN) {
   logger.error("❌ DISCORD_TOKEN no está definido en las variables de entorno");
   logger.error(
-    "💡 Asegúrate de tener un archivo .env con DISCORD_TOKEN=tu_token",
+    "💡 Asegúrate de tener un archivo .env con DISCORD_TOKEN=tu_token"
   );
   process.exit(1);
 }
@@ -125,22 +140,10 @@ const bot = new DiscordClient();
 // Comenzar el bot con error handling
 bot.start(DISCORD_TOKEN).catch((error) => {
   logger.error("💥 Error fatal al iniciar el bot");
-  logError(error, { context: "main_startup" });
-  process.exit(1);
-});
-
-// Capturar errores no manejados
-process.on("unhandledRejection", (reason, promise) => {
-  logger.error("⚠️ Unhandled Rejection detectado");
-  logError(new Error(String(reason)), {
-    context: "unhandledRejection",
-    promise: String(promise),
-  });
-});
-
-process.on("uncaughtException", (error) => {
-  logger.error("⚠️ Uncaught Exception detectado");
-  logError(error, { context: "uncaughtException" });
+  logger.error(
+    { type: "bot_startup_error", context: "main_startup", stack: error.stack },
+    error.message
+  );
   process.exit(1);
 });
 
@@ -164,7 +167,7 @@ const shutdown = async (signal: string) => {
 
 // Múltiples métodos para capturar Ctrl+C (compatibilidad con Bun)
 process.on("SIGINT", () => {
-  console.log("\n"); // Nueva línea después de ^C
+  process.stdout.write("\n"); // Nueva línea después de ^C
   shutdown("SIGINT");
 });
 
@@ -177,7 +180,7 @@ if (process.stdin.isTTY && process.stdin.setRawMode) {
   process.stdin.on("data", (key) => {
     // Detectar Ctrl+C (código 3)
     if (key.toString() === "\x03") {
-      console.log("\n");
+      process.stdout.write("\n");
       shutdown("SIGINT (stdin)");
     }
   });

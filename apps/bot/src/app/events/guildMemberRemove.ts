@@ -18,19 +18,25 @@ export default {
       const channel = member.guild.channels.cache.get(channelId);
 
       if (!channel) {
-        logger.warn("Canal de logs de salida no encontrado en caché", {
-          guildId,
-          channelId,
-        });
+        logger.warn(
+          {
+            guildId,
+            channelId,
+          },
+          "Canal de logs de salida no encontrado en caché"
+        );
         return;
       }
 
       if (!(channel instanceof TextChannel) && !channel.isThread()) {
-        logger.warn("El canal de logs de salida no es un canal de texto", {
-          guildId,
-          channelId,
-          channelType: channel.type,
-        });
+        logger.warn(
+          {
+            guildId,
+            channelId,
+            channelType: channel.type,
+          },
+          "El canal de logs de salida no es un canal de texto"
+        );
         return;
       }
 
@@ -49,10 +55,14 @@ export default {
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays > 0) {
-          joinedTimestamp = `Estuvo **${diffDays}** día${diffDays !== 1 ? "s" : ""} en el servidor`;
+          joinedTimestamp = `Estuvo **${diffDays}** día${
+            diffDays !== 1 ? "s" : ""
+          } en el servidor`;
         } else {
           const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-          joinedTimestamp = `Estuvo **${diffHours}** hora${diffHours !== 1 ? "s" : ""} en el servidor`;
+          joinedTimestamp = `Estuvo **${diffHours}** hora${
+            diffHours !== 1 ? "s" : ""
+          } en el servidor`;
         }
       }
 
@@ -80,7 +90,7 @@ export default {
             name: "📊 Total de miembros",
             value: `${member.guild.memberCount}`,
             inline: true,
-          },
+          }
         )
         .setFooter({
           text: `${member.guild.name}`,
@@ -99,19 +109,25 @@ export default {
 
       await (channel as TextChannel).send({ embeds: [embed] });
 
-      logger.info("Mensaje de salida enviado correctamente", {
-        guildId,
-        channelId,
-        userId: userId,
-        userTag: userTag,
-      });
+      logger.info(
+        {
+          guildId,
+          channelId,
+          userId: userId,
+          userTag: userTag,
+        },
+        "Mensaje de salida enviado correctamente"
+      );
     } catch (error) {
-      logger.error("Error al enviar mensaje de salida", {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        guildId: member.guild?.id,
-        userId: member.id,
-      });
+      logger.error(
+        {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          guildId: member.guild?.id,
+          userId: member.id,
+        },
+        "Error al enviar mensaje de salida"
+      );
     }
   },
 };
