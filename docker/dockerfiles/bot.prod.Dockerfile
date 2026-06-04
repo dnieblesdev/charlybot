@@ -65,12 +65,10 @@ RUN pnpm exec prisma generate \
 RUN bun build \
     --target=node \
     --outfile=apps/bot/dist/index.js \
-    --packages=external \
     --external play-opus \
     --external @discordjs/opus \
     --external opusscript \
     --external sodium-native \
-    --external @charlybot/shared \
     --external @prisma/client \
     apps/bot/src/index.ts
 

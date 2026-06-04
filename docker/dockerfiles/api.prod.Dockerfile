@@ -36,12 +36,10 @@ COPY apps/api/ ./apps/api/
 COPY packages/shared/ ./packages/shared/
 
 # Build: Compile TypeScript to vanilla JS
-# @charlybot/shared stays external (workspace reference)
+# Bundle @charlybot/shared so runtime does not resolve TS workspace source.
 RUN pnpm exec bun build \
     --target=node \
     --outfile=apps/api/dist/index.js \
-    --packages=external \
-    -e @charlybot/shared \
     -e @prisma/client \
     apps/api/src/index.ts
 

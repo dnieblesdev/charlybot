@@ -38,7 +38,8 @@ const COMPAT_LOGGER = Symbol.for("@charlybot/compat-logger");
 
 type CompatLogFn = pino.LogFn &
   ((msg: string, meta: Record<string, unknown>) => void) &
-  ((msg: string, err: Error) => void);
+  ((msg: string, err: Error) => void) &
+  ((msg: string, value: unknown) => void);
 
 export type CompatLogger = pino.Logger & {
   trace: CompatLogFn;
@@ -72,6 +73,11 @@ function toCompatLogger(logger: pino.Logger): CompatLogger {
         if (second && typeof second === "object" && !Array.isArray(second)) {
           return original(second, args[0], ...args.slice(2));
         }
+
+        // (message, unknown) → ({ value }, message)
+        // Keeps legacy `catch (error) { logger.error("...", error) }` calls
+        // type-safe even when TypeScript correctly types catch values as unknown.
+        return original({ value: second }, args[0], ...args.slice(2));
       }
 
       return original(...args);
