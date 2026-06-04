@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { AntiSpamService } from "../../src/app/services/AntiSpamService";
+import type { IAntiSpamConfig } from "@charlybot/shared/schemas/antispam";
+import {
+  AntiSpamService,
+  getCapsRatio,
+  isCapsSpamContent,
+  isUppercaseLaughterOnly,
+} from "../../src/app/services/AntiSpamService";
 import { AntiSpamAction } from "../../src/app/services/SpamCheckResult";
 import type { Message } from "discord.js";
 
@@ -175,6 +181,66 @@ describe("AntiSpamService", () => {
       expect(result.reason).toContain("Caps spam");
     });
 
+    it("does not flag uppercase laughter by caps alone", async () => {
+      const valkey = createMockValkeyClient({
+        sortedSetRangeByScore: vi.fn(() => Promise.resolve([])),
+        get: vi.fn(() => Promise.resolve(undefined)),
+      });
+      service = new AntiSpamService(valkey);
+
+      const message = createMockMessage({
+        content: "AJAJJAJJJJAJAA",
+        mentions: { users: { size: 0 } },
+      });
+      const result = await service.evaluate(message);
+
+      expect(result.isSpam).toBe(false);
+      expect(result.pattern).toBe("");
+    });
+
+    it("still flags shouting mixed with uppercase laughter", async () => {
+      const valkey = createMockValkeyClient({
+        sortedSetRangeByScore: vi.fn(() => Promise.resolve([])),
+        get: vi.fn(() => Promise.resolve(undefined)),
+        set: vi.fn(() => Promise.resolve()),
+      });
+      service = new AntiSpamService(valkey);
+
+      const message = createMockMessage({
+        content: "JAJAJA CALLATE AHORA",
+        mentions: { users: { size: 0 } },
+      });
+      const result = await service.evaluate(message);
+
+      expect(result.isSpam).toBe(true);
+      expect(result.pattern).toBe("caps");
+    });
+
+    it("does not run caps detection when caps are disabled", async () => {
+      const valkey = createMockValkeyClient({
+        sortedSetRangeByScore: vi.fn(() => Promise.resolve([])),
+      });
+      service = new AntiSpamService(valkey, {
+        enabled: true,
+        burstEnabled: false,
+        duplicateEnabled: false,
+        mentionEnabled: false,
+        linkEnabled: false,
+        capsEnabled: false,
+        emojiEnabled: false,
+        comboEnabled: false,
+      } as IAntiSpamConfig);
+
+      const message = createMockMessage({
+        content: "CALLATE AHORA MISMO",
+        mentions: { users: { size: 0 } },
+      });
+      const result = await service.evaluate(message);
+
+      expect(result.isSpam).toBe(false);
+      expect(result.pattern).toBe("");
+    });
+
     it("fails open when Valkey throws", async () => {
       const valkey = createMockValkeyClient({
         sortedSetAdd: vi.fn(() => Promise.reject(new Error("Valkey down"))),
@@ -251,6 +317,24 @@ describe("AntiSpamService", () => {
       const result = await service.evaluate(message);
 
       expect(result.isSpam).toBe(false);
+    });
+
+    it("recognizes uppercase laughter-only content", () => {
+      expect(isUppercaseLaughterOnly("JAJAJAJA")).toBe(true);
+      expect(isUppercaseLaughterOnly("HAHAHAHA")).toBe(true);
+      expect(isUppercaseLaughterOnly("AJAJJAJJJJAJAA")).toBe(true);
+    });
+
+    it("keeps genuine shouting eligible for caps spam", () => {
+      expect(getCapsRatio("CALLATE AHORA MISMO")).toBeGreaterThan(0.7);
+      expect(isUppercaseLaughterOnly("CALLATE AHORA MISMO")).toBe(false);
+      expect(isCapsSpamContent("CALLATE AHORA MISMO")).toBe(true);
+    });
+
+    it("keeps normal mixed or lowercase messages out of caps spam", () => {
+      expect(getCapsRatio("Hola che, todo bien?")).toBeLessThanOrEqual(0.7);
+      expect(isCapsSpamContent("Hola che, todo bien?")).toBe(false);
+      expect(isCapsSpamContent("jajaja todo normal")).toBe(false);
     });
   });
 });

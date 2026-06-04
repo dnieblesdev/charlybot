@@ -22,6 +22,11 @@ const EMOJI_REGEX = /[\u{1F600}-\u{1F64F}]/gu;
 // Mention detection (any @user reference)
 const MENTION_REGEX = /<@\d+>/;
 
+const CAPS_UPPERCASE_REGEX = /[^A-ZÁÉÍÓÚÑÜ]/g;
+const CAPS_ALPHA_REGEX = /[^a-zA-ZÁÉÍÓáéíóúÑñüÜ]/g;
+const CAPS_LAUGHTER_COMPRESSED_REGEX =
+  /^(?:[AJHE])?(?:(?:JA)|(?:AJ)|(?:HA)|(?:AH)|(?:HE)|(?:EH))+(?:[AJHE])?$/;
+
 /**
  * Hardcoded defaults for backward compatibility when config is null.
  */
@@ -45,6 +50,49 @@ const DEFAULTS = {
   VELOCITY_THRESHOLD_MS: 1000,
   ESCALATION_LOOKBACK_HOURS: 1,
 } as const;
+
+function normalizeAlphabeticContent(content: string): string {
+  return content
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(CAPS_ALPHA_REGEX, "")
+    .toUpperCase();
+}
+
+function compressRepeatedLetters(content: string): string {
+  return content.replace(/(.)\1+/g, "$1");
+}
+
+export function getCapsRatio(content: string): number {
+  const upperCount = content.replace(CAPS_UPPERCASE_REGEX, "").length;
+  const alphaCount = content.replace(CAPS_ALPHA_REGEX, "").length;
+
+  if (alphaCount === 0) {
+    return 0;
+  }
+
+  return upperCount / alphaCount;
+}
+
+export function isUppercaseLaughterOnly(content: string): boolean {
+  const normalized = normalizeAlphabeticContent(content);
+
+  const compressed = compressRepeatedLetters(normalized);
+
+  return CAPS_LAUGHTER_COMPRESSED_REGEX.test(compressed);
+}
+
+export function isCapsSpamContent(content: string): boolean {
+  if (content.length < DEFAULTS.CAPS_MIN_LENGTH) {
+    return false;
+  }
+
+  if (isUppercaseLaughterOnly(content)) {
+    return false;
+  }
+
+  return getCapsRatio(content) > DEFAULTS.CAPS_RATIO;
+}
 
 export class AntiSpamService {
   private config: IAntiSpamConfig | null = null;
@@ -512,29 +560,9 @@ export class AntiSpamService {
   // ─────────────────────────────────────────────────────────────
   private checkCapsSpam(message: Message): SpamCheckResult {
     const content = message.content;
-    if (content.length < DEFAULTS.CAPS_MIN_LENGTH) {
-      return {
-        isSpam: false,
-        pattern: "",
-        action: AntiSpamAction.WARN,
-        reason: "",
-      };
-    }
+    const ratio = getCapsRatio(content);
 
-    const upperCount = content.replace(/[^A-ZÁÉÍÓÚÑÜ]/g, "").length;
-    const alphaCount = content.replace(/[^a-zA-ZÁÉÍÓáéíóúÑñüÜ]/g, "").length;
-
-    if (alphaCount === 0) {
-      return {
-        isSpam: false,
-        pattern: "",
-        action: AntiSpamAction.WARN,
-        reason: "",
-      };
-    }
-
-    const ratio = upperCount / alphaCount;
-    if (ratio > DEFAULTS.CAPS_RATIO) {
+    if (isCapsSpamContent(content)) {
       return {
         isSpam: true,
         pattern: "caps",
