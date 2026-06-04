@@ -1,6 +1,7 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 import { EmbedBuilder } from "discord.js";
 
+import { canModerate, MODERATION_ACTION } from "../../services/ModGuardService.js";
 import * as ModCaseRepository from "../../../config/repositories/modCaseRepository.js";
 import logger from "../../../utils/logger.js";
 
@@ -25,12 +26,18 @@ export default async function cases(interaction: ChatInputCommandInteraction) {
     const targetUser = interaction.options.getUser("usuario");
     const caseId = interaction.options.getInteger("id");
 
+    const modCheck = await canModerate(interaction, MODERATION_ACTION.CASES);
+    if (!modCheck.allowed) {
+      await interaction.editReply({ content: `❌ ${modCheck.reason}` });
+      return;
+    }
+
     // Mode 1: Specific case by ID
     if (caseId !== null) {
-      const modCase = await ModCaseRepository.findById(caseId);
+      const modCase = await ModCaseRepository.findByGuildAndCaseNumber(interaction.guildId, caseId);
       if (!modCase) {
         await interaction.editReply({
-          content: `❌ No se encontró el caso #${caseId}.`,
+          content: `❌ No se encontró el caso #${caseId} en este servidor.`,
         });
         return;
       }
@@ -46,7 +53,6 @@ export default async function cases(interaction: ChatInputCommandInteraction) {
           { name: "Fecha", value: modCase.createdAt?.toLocaleString("es-AR") ?? "N/A", inline: true },
           { name: "Estado", value: modCase.active ? "✅ Activo" : "❌ Inactivo", inline: true },
         )
-        .setFooter({ text: `ID: ${modCase.id}` })
         .setTimestamp(modCase.createdAt ?? new Date());
 
       if (modCase.duration) {

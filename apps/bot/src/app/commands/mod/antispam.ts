@@ -1,6 +1,7 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 import { PermissionFlagsBits } from "discord.js";
 
+import * as AntiSpamConfigRepo from "../../../config/repositories/AntiSpamConfigRepo.js";
 import { update as updateGuildConfig } from "../../../config/repositories/GuildConfigRepo.js";
 import logger from "../../../utils/logger.js";
 
@@ -24,6 +25,7 @@ export default async function antispam(interaction: ChatInputCommandInteraction)
     const estado = interaction.options.getString("estado", true);
     const activar = estado === "true";
 
+    await AntiSpamConfigRepo.update(interaction.guildId, { enabled: activar });
     await updateGuildConfig(interaction.guildId, { antispamEnabled: activar });
 
     const label = activar ? "activado" : "desactivado";

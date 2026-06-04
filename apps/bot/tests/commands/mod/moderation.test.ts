@@ -14,6 +14,16 @@ const mockLogModAction = vi.fn();
 const mockModCaseCreate = vi.fn();
 const mockModCaseFindByUser = vi.fn();
 const mockModCaseDeactivate = vi.fn();
+const MOCK_MODERATION_ACTION = {
+  WARN: "warn",
+  TIMEOUT: "timeout",
+  KICK: "kick",
+  BAN: "ban",
+  UNBAN: "unban",
+  REASON: "reason",
+  CASES: "cases",
+  CONFIG: "config",
+} as const;
 
 // =============================================================================
 // vi.mock() — hoisted, runs BEFORE imports
@@ -24,6 +34,7 @@ vi.mock("../../../src/app/services/ModGuardService.js", () => ({
   canTargetSelf: (...args: unknown[]) => mockCanTargetSelf(...args),
   canTargetModerator: (...args: unknown[]) => mockCanTargetModerator(...args),
   canBotAct: (...args: unknown[]) => mockCanBotAct(...args),
+  MODERATION_ACTION: MOCK_MODERATION_ACTION,
 }));
 
 vi.mock("../../../src/app/services/ModLogService.js", () => ({
@@ -201,7 +212,7 @@ describe("/mod warn", () => {
 
     await warnHandler(interaction);
 
-    expect(mockCanModerate).toHaveBeenCalled();
+    expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.WARN);
     expect(mockCanTargetSelf).toHaveBeenCalledWith("mod-1", "target-1");
     expect(mockCanTargetModerator).toHaveBeenCalled();
     expect(mockCanBotAct).toHaveBeenCalled();
@@ -286,6 +297,14 @@ describe("/mod warn", () => {
     );
   });
 
+  it("should pass warn action to the guard", async () => {
+    const interaction = createMockInteraction();
+
+    await warnHandler(interaction);
+
+    expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.WARN);
+  });
+
   it("should handle errors gracefully", async () => {
     mockModCaseCreate.mockRejectedValue(new Error("DB error"));
 
@@ -325,6 +344,7 @@ describe("/mod timeout", () => {
         duration: BigInt(3_600_000),
       }),
     );
+    expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.TIMEOUT);
     expect(interaction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({ content: expect.stringContaining("silenciado") }),
     );
@@ -387,6 +407,7 @@ describe("/mod kick", () => {
 
     await kickHandler(interaction);
 
+    expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.KICK);
     expect(mockModCaseCreate).toHaveBeenCalledWith(
       expect.objectContaining({ type: "kick" }),
     );
@@ -441,6 +462,7 @@ describe("/mod ban", () => {
 
     await banHandler(interaction);
 
+    expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.BAN);
     expect(mockModCaseCreate).toHaveBeenCalledWith(
       expect.objectContaining({ type: "ban" }),
     );
@@ -515,6 +537,7 @@ describe("/mod unban", () => {
 
     await unbanHandler(interaction);
 
+    expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.UNBAN);
     expect(mockModCaseCreate).toHaveBeenCalledWith(
       expect.objectContaining({ type: "unban" }),
     );

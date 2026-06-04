@@ -10,6 +10,7 @@ import {
   canTargetModerator,
   canTargetSelf,
   canBotAct,
+  MODERATION_ACTION,
 } from "../../services/ModGuardService.js";
 import { logModAction } from "../../services/ModLogService.js";
 import * as ModCaseRepository from "../../../config/repositories/modCaseRepository.js";
@@ -35,9 +36,7 @@ export async function execute(interaction: UserContextMenuCommandInteraction) {
     const modMember = await interaction.guild.members.fetch(interaction.user.id);
 
     // Guard checks
-    const modCheck = await canModerate(
-      interaction as unknown as Parameters<typeof canModerate>[0],
-    );
+    const modCheck = await canModerate(interaction, MODERATION_ACTION.WARN);
     if (!modCheck.allowed) {
       await interaction.editReply({ content: `❌ ${modCheck.reason}` });
       return;

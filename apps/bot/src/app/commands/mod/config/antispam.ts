@@ -2,7 +2,8 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import { EmbedBuilder, MessageFlags, PermissionFlagsBits } from "discord.js";
 
 import * as AntiSpamConfigRepo from "../../../../config/repositories/AntiSpamConfigRepo.js";
-import { canModerate } from "../../../services/ModGuardService.js";
+import { update as updateGuildConfig } from "../../../../config/repositories/GuildConfigRepo.js";
+import { canModerate, MODERATION_ACTION } from "../../../services/ModGuardService.js";
 import logger from "../../../../utils/logger.js";
 
 // Map pattern keys to human-readable names
@@ -74,7 +75,7 @@ export default async function antispam(interaction: ChatInputCommandInteraction)
 }
 
 async function viewConfig(interaction: ChatInputCommandInteraction) {
-  const modCheck = await canModerate(interaction);
+  const modCheck = await canModerate(interaction, MODERATION_ACTION.CONFIG);
   if (!modCheck.allowed) {
     await interaction.editReply({ content: `❌ ${modCheck.reason}` });
     return;
@@ -135,6 +136,7 @@ async function toggleMaster(interaction: ChatInputCommandInteraction) {
   const enabled = estado === "Activar";
 
   await AntiSpamConfigRepo.update(guildId, { enabled });
+  await updateGuildConfig(guildId, { antispamEnabled: enabled });
 
   await interaction.editReply({
     content: `${enabled ? "✅" : "🛑"} Sistema anti-spam ${enabled ? "activado" : "desactivado"} correctamente.`,

@@ -1,7 +1,6 @@
 import {
   ChatInputCommandInteraction,
   MessageFlags,
-  PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
 
@@ -10,7 +9,6 @@ import logger from "../../../utils/logger.js";
 export const data = new SlashCommandBuilder()
   .setName("mod")
   .setDescription("Comandos de moderación")
-  .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
 
   // subcomando: warn
   .addSubcommand((sub) =>

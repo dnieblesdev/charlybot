@@ -1,6 +1,6 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 
-import { canModerate } from "../../services/ModGuardService.js";
+import { canModerate, MODERATION_ACTION } from "../../services/ModGuardService.js";
 import { logModAction } from "../../services/ModLogService.js";
 import * as ModCaseRepository from "../../../config/repositories/modCaseRepository.js";
 import logger from "../../../utils/logger.js";
@@ -15,7 +15,7 @@ export default async function reason(interaction: ChatInputCommandInteraction) {
     }
 
     // Guard: canModerate
-    const guardResult = await canModerate(interaction);
+    const guardResult = await canModerate(interaction, MODERATION_ACTION.REASON);
     if (!guardResult.allowed) {
       await interaction.editReply({ content: `❌ ${guardResult.reason}` });
       return;

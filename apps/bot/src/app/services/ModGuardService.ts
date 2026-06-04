@@ -1,13 +1,49 @@
-import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
+import type {
+  ChatInputCommandInteraction,
+  GuildMember,
+  UserContextMenuCommandInteraction,
+} from "discord.js";
 import { PermissionFlagsBits } from "discord.js";
 import { getGuildConfig } from "../../config/repositories/GuildConfigRepo";
 import logger from "../../utils/logger";
+
+export const MODERATION_ACTION = {
+  WARN: "warn",
+  TIMEOUT: "timeout",
+  KICK: "kick",
+  BAN: "ban",
+  UNBAN: "unban",
+  REASON: "reason",
+  CASES: "cases",
+  CONFIG: "config",
+} as const;
+
+export type ModerationAction = (typeof MODERATION_ACTION)[keyof typeof MODERATION_ACTION];
+
+type ModerationInteraction =
+  | ChatInputCommandInteraction
+  | UserContextMenuCommandInteraction;
+
+const ACTION_PERMISSION_REQUIREMENTS: Partial<Record<ModerationAction, bigint>> = {
+  [MODERATION_ACTION.TIMEOUT]: PermissionFlagsBits.ModerateMembers,
+  [MODERATION_ACTION.KICK]: PermissionFlagsBits.KickMembers,
+  [MODERATION_ACTION.BAN]: PermissionFlagsBits.BanMembers,
+  [MODERATION_ACTION.UNBAN]: PermissionFlagsBits.BanMembers,
+};
+
+const ACTION_PERMISSION_LABELS: Partial<Record<ModerationAction, string>> = {
+  [MODERATION_ACTION.TIMEOUT]: "Moderate Members",
+  [MODERATION_ACTION.KICK]: "Kick Members",
+  [MODERATION_ACTION.BAN]: "Ban Members",
+  [MODERATION_ACTION.UNBAN]: "Ban Members",
+};
 
 /**
  * Verifica que el miembro tenga el rol de mod configurado O sea admin.
  */
 export async function canModerate(
-  interaction: ChatInputCommandInteraction,
+  interaction: ModerationInteraction,
+  action: ModerationAction = MODERATION_ACTION.WARN,
 ): Promise<{ allowed: boolean; reason?: string }> {
   const member = await interaction.guild?.members.fetch(interaction.user.id);
   if (!member) {
@@ -16,23 +52,34 @@ export async function canModerate(
 
   const guildConfig = await getGuildConfig(interaction.guildId!);
   const modRoleId = guildConfig?.modRoleId;
+  const isAdmin = member.permissions.has(PermissionFlagsBits.Administrator);
+
+  if (isAdmin) {
+    return { allowed: true };
+  }
 
   // Si no hay modRoleId configurado, solo admins pueden moderar
   if (!modRoleId) {
-    const isAdmin = member.permissions.has(PermissionFlagsBits.Administrator);
-    if (!isAdmin) {
-      return {
-        allowed: false,
-        reason: "No hay rol de moderador configurado y no sos administrador",
-      };
-    }
-    return { allowed: true };
+    return {
+      allowed: false,
+      reason: "No hay rol de moderador configurado y no sos administrador",
+    };
   }
 
   // Si hay modRoleId, verificar que el miembro lo tenga
   const hasModRole = member.roles.cache.has(modRoleId);
   if (!hasModRole) {
     return { allowed: false, reason: "No tenés permisos de moderador" };
+  }
+
+  const requiredPermission = ACTION_PERMISSION_REQUIREMENTS[action];
+  if (requiredPermission && !member.permissions.has(requiredPermission)) {
+    const permissionLabel = ACTION_PERMISSION_LABELS[action] ?? "correspondiente";
+
+    return {
+      allowed: false,
+      reason: `Necesitás el permiso **${permissionLabel}** para esta acción de moderación`,
+    };
   }
 
   return { allowed: true };

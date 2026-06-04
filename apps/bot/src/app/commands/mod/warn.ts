@@ -5,6 +5,7 @@ import {
   canTargetModerator,
   canTargetSelf,
   canBotAct,
+  MODERATION_ACTION,
 } from "../../services/ModGuardService.js";
 import { logModAction } from "../../services/ModLogService.js";
 import * as ModCaseRepository from "../../../config/repositories/modCaseRepository.js";
@@ -26,7 +27,7 @@ export default async function warn(interaction: ChatInputCommandInteraction) {
     const targetMember = await interaction.guild.members.fetch(targetUser.id);
 
     // Guard checks
-    const modCheck = await canModerate(interaction);
+    const modCheck = await canModerate(interaction, MODERATION_ACTION.WARN);
     if (!modCheck.allowed) {
       await interaction.editReply({ content: `❌ ${modCheck.reason}` });
       return;

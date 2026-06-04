@@ -1,6 +1,6 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 
-import { canModerate } from "../../services/ModGuardService.js";
+import { canModerate, MODERATION_ACTION } from "../../services/ModGuardService.js";
 import { logModAction } from "../../services/ModLogService.js";
 import * as ModCaseRepository from "../../../config/repositories/modCaseRepository.js";
 import logger from "../../../utils/logger.js";
@@ -18,7 +18,7 @@ export default async function unban(interaction: ChatInputCommandInteraction) {
     const reason = interaction.options.getString("razon") ?? "Sin razón especificada";
 
     // Guard: canModerate
-    const modCheck = await canModerate(interaction);
+    const modCheck = await canModerate(interaction, MODERATION_ACTION.UNBAN);
     if (!modCheck.allowed) {
       await interaction.editReply({ content: `❌ ${modCheck.reason}` });
       return;
@@ -38,7 +38,7 @@ export default async function unban(interaction: ChatInputCommandInteraction) {
     // Deactivate active ModCase for this user's ban
     const cases = await ModCaseRepository.findByUser(interaction.guildId, userId);
     const activeBanCase = cases.find((c) => c.type === "ban" && c.active);
-    if (activeBanCase) {
+    if (activeBanCase?.id !== undefined) {
       await ModCaseRepository.deactivate(activeBanCase.id);
     }
 

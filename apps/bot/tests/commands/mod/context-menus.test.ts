@@ -24,6 +24,16 @@ const mockModCaseCreate = vi.fn(() =>
   }),
 );
 const mockGetGuildConfig = vi.fn(() => Promise.resolve(null));
+const MOCK_MODERATION_ACTION = {
+  WARN: "warn",
+  TIMEOUT: "timeout",
+  KICK: "kick",
+  BAN: "ban",
+  UNBAN: "unban",
+  REASON: "reason",
+  CASES: "cases",
+  CONFIG: "config",
+} as const;
 
 // =============================================================================
 // vi.mock() — hoisted, runs BEFORE imports
@@ -34,6 +44,7 @@ vi.mock("../../../src/app/services/ModGuardService.js", () => ({
   canTargetSelf: (...args: unknown[]) => mockCanTargetSelf(...args),
   canTargetModerator: (...args: unknown[]) => mockCanTargetModerator(...args),
   canBotAct: (...args: unknown[]) => mockCanBotAct(...args),
+  MODERATION_ACTION: MOCK_MODERATION_ACTION,
 }));
 
 vi.mock("../../../src/app/services/ModLogService.js", () => ({
@@ -81,8 +92,6 @@ const { execute: executeKick, data: dataKick } = await import(
 const { execute: executeTimeout, data: dataTimeout } = await import(
   "../../../src/app/context-menus/mod/timeout-user.js"
 );
-
-import type { UserContextMenuCommandInteraction, Guild, GuildMember, User, Client } from "discord.js";
 
 function createMockContextInteraction(overrides?: {
   userId?: string;
@@ -176,6 +185,7 @@ describe("Context Menu Commands", () => {
       expect(interaction.deferReply).toHaveBeenCalledWith({
         flags: [MessageFlags.Ephemeral],
       });
+      expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.WARN);
       expect(mockModCaseCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           type: "warn",
@@ -238,6 +248,7 @@ describe("Context Menu Commands", () => {
       expect(interaction.deferReply).toHaveBeenCalledWith({
         flags: [MessageFlags.Ephemeral],
       });
+      expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.BAN);
       expect(mockModCaseCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           type: "ban",
@@ -265,6 +276,7 @@ describe("Context Menu Commands", () => {
       expect(interaction.deferReply).toHaveBeenCalledWith({
         flags: [MessageFlags.Ephemeral],
       });
+      expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.KICK);
       expect(mockModCaseCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           type: "kick",
@@ -292,6 +304,7 @@ describe("Context Menu Commands", () => {
       expect(interaction.deferReply).toHaveBeenCalledWith({
         flags: [MessageFlags.Ephemeral],
       });
+      expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.TIMEOUT);
       expect(mockModCaseCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           type: "timeout",

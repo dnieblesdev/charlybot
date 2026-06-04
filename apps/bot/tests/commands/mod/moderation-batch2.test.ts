@@ -19,6 +19,16 @@ const mockGuildConfigGet = vi.fn();
 const mockGuildConfigUpdate = vi.fn();
 const mockWarnThresholdCreate = vi.fn();
 const mockWarnThresholdFindAll = vi.fn();
+const MOCK_MODERATION_ACTION = {
+  WARN: "warn",
+  TIMEOUT: "timeout",
+  KICK: "kick",
+  BAN: "ban",
+  UNBAN: "unban",
+  REASON: "reason",
+  CASES: "cases",
+  CONFIG: "config",
+} as const;
 
 // =============================================================================
 // vi.mock() — hoisted, runs BEFORE imports
@@ -26,6 +36,7 @@ const mockWarnThresholdFindAll = vi.fn();
 
 vi.mock("../../../src/app/services/ModGuardService.js", () => ({
   canModerate: (...args: unknown[]) => mockCanModerate(...args),
+  MODERATION_ACTION: MOCK_MODERATION_ACTION,
 }));
 
 vi.mock("../../../src/app/services/ModLogService.js", () => ({
@@ -303,6 +314,7 @@ describe("/mod clear", () => {
 describe("/mod cases", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCanModerate.mockResolvedValue({ allowed: true });
   });
 
   it("should show last 10 cases when no arguments", async () => {
@@ -342,7 +354,7 @@ describe("/mod cases", () => {
   });
 
   it("should show detail for a specific case id", async () => {
-    mockModCaseFindById.mockResolvedValue(MOCK_CASE);
+    mockModCaseFindByGuildAndCaseNumber.mockResolvedValue(MOCK_CASE);
 
     const interaction = createMockInteraction({
       options: { optionMap: { id: 42 } },
@@ -350,13 +362,15 @@ describe("/mod cases", () => {
 
     await casesHandler(interaction);
 
-    expect(mockModCaseFindById).toHaveBeenCalledWith(42);
+    expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.CASES);
+    expect(mockModCaseFindByGuildAndCaseNumber).toHaveBeenCalledWith("guild-1", 42);
     const replyArg = (interaction.editReply as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
     expect(replyArg).toBeDefined();
+    expect(replyArg.embeds?.[0]?.data?.footer).toBeUndefined();
   });
 
   it("should handle case not found", async () => {
-    mockModCaseFindById.mockResolvedValue(null);
+    mockModCaseFindByGuildAndCaseNumber.mockResolvedValue(null);
 
     const interaction = createMockInteraction({
       options: { optionMap: { id: 999 } },
@@ -365,8 +379,23 @@ describe("/mod cases", () => {
     await casesHandler(interaction);
 
     expect(interaction.editReply).toHaveBeenCalledWith(
-      expect.objectContaining({ content: expect.stringContaining("No se encontró") }),
+      expect.objectContaining({ content: expect.stringContaining("en este servidor") }),
     );
+  });
+
+  it("should reject case lookup when user cannot moderate", async () => {
+    mockCanModerate.mockResolvedValue({ allowed: false, reason: "No tenés permisos" });
+
+    const interaction = createMockInteraction({
+      options: { optionMap: { id: 42 } },
+    });
+
+    await casesHandler(interaction);
+
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining("permisos") }),
+    );
+    expect(mockModCaseFindByGuildAndCaseNumber).not.toHaveBeenCalled();
   });
 
   it("should handle empty case list", async () => {
@@ -406,7 +435,7 @@ describe("/mod reason", () => {
 
     await reasonHandler(interaction);
 
-    expect(mockCanModerate).toHaveBeenCalled();
+    expect(mockCanModerate).toHaveBeenCalledWith(interaction, MOCK_MODERATION_ACTION.REASON);
     expect(mockModCaseFindByGuildAndCaseNumber).toHaveBeenCalledWith("guild-1", 42);
     expect(mockModCaseUpdateReason).toHaveBeenCalledWith(1, "Nueva razón");
     expect(mockLogModAction).toHaveBeenCalled();

@@ -1,10 +1,11 @@
-import type { ChatInputCommandInteraction } from "discord.js";
+import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
 
 import {
   canModerate,
   canTargetModerator,
   canTargetSelf,
   canBotAct,
+  MODERATION_ACTION,
 } from "../../services/ModGuardService.js";
 import { logModAction } from "../../services/ModLogService.js";
 import * as ModCaseRepository from "../../../config/repositories/modCaseRepository.js";
@@ -26,7 +27,7 @@ export default async function ban(interaction: ChatInputCommandInteraction) {
     const modMember = await interaction.guild.members.fetch(interaction.user.id);
 
     // For ban, target might not be in guild, so only fetch if they are
-    let targetMember: Awaited<ReturnType<typeof interaction.guild.members.fetch>> | null = null;
+    let targetMember: GuildMember | null = null;
     try {
       targetMember = await interaction.guild.members.fetch(targetUser.id);
     } catch {
@@ -34,7 +35,7 @@ export default async function ban(interaction: ChatInputCommandInteraction) {
     }
 
     // Guard checks
-    const modCheck = await canModerate(interaction);
+    const modCheck = await canModerate(interaction, MODERATION_ACTION.BAN);
     if (!modCheck.allowed) {
       await interaction.editReply({ content: `❌ ${modCheck.reason}` });
       return;

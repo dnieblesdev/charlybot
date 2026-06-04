@@ -1,7 +1,7 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 import { EmbedBuilder } from "discord.js";
 
-import { canModerate } from "../../../services/ModGuardService.js";
+import { canModerate, MODERATION_ACTION } from "../../../services/ModGuardService.js";
 import { getGuildConfig } from "../../../../config/repositories/GuildConfigRepo.js";
 import * as WarnThresholdRepository from "../../../../config/repositories/warnThresholdRepository.js";
 import logger from "../../../../utils/logger.js";
@@ -16,7 +16,7 @@ export default async function view(interaction: ChatInputCommandInteraction) {
     }
 
     // Any mod can view config
-    const modCheck = await canModerate(interaction);
+    const modCheck = await canModerate(interaction, MODERATION_ACTION.CONFIG);
     if (!modCheck.allowed) {
       await interaction.editReply({ content: `❌ ${modCheck.reason}` });
       return;
