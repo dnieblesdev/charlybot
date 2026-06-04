@@ -8,6 +8,7 @@ import {
   MODERATION_ACTION,
 } from "../../services/ModGuardService.js";
 import { logModAction } from "../../services/ModLogService.js";
+import { enforceWarnThreshold } from "../../services/WarnThresholdService.js";
 import * as ModCaseRepository from "../../../config/repositories/modCaseRepository.js";
 import logger from "../../../utils/logger.js";
 
@@ -77,8 +78,42 @@ export default async function warn(interaction: ChatInputCommandInteraction) {
       });
     }
 
+    let thresholdMessage = "";
+
+    try {
+      const thresholdResult = await enforceWarnThreshold({
+        client: interaction.client,
+        guild: interaction.guild,
+        guildId: interaction.guildId,
+        targetMember,
+        targetUser,
+        moderatorId: interaction.user.id,
+        moderatorTag: modTag,
+        userTag,
+      });
+
+      if (thresholdResult.matched && thresholdResult.message) {
+        thresholdMessage = thresholdResult.ok
+          ? `\n🔁 ${thresholdResult.message}`
+          : `\n⚠️ Warn registrado, pero ${thresholdResult.message}`;
+      }
+    } catch (thresholdError) {
+      const errorMessage = thresholdError instanceof Error
+        ? thresholdError.message
+        : String(thresholdError);
+
+      logger.warn("Warn threshold enforcement failed after warn creation", {
+        guildId: interaction.guildId,
+        userId: targetUser.id,
+        caseNumber: modCase.caseNumber,
+        error: errorMessage,
+      });
+
+      thresholdMessage = `\n⚠️ Warn registrado, pero la escalada automática falló: ${errorMessage}`;
+    }
+
     await interaction.editReply({
-      content: `✅ ${userTag} advertido. Case #${modCase.caseNumber}`,
+      content: `✅ ${userTag} advertido. Case #${modCase.caseNumber}${thresholdMessage}`,
     });
   } catch (error) {
     logger.error("Error executing /mod warn", {

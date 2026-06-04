@@ -11,6 +11,7 @@ const mockCanTargetSelf = vi.fn();
 const mockCanTargetModerator = vi.fn();
 const mockCanBotAct = vi.fn();
 const mockLogModAction = vi.fn();
+const mockEnforceWarnThreshold = vi.fn();
 const mockModCaseCreate = vi.fn();
 const mockModCaseFindByUser = vi.fn();
 const mockModCaseDeactivate = vi.fn();
@@ -39,6 +40,10 @@ vi.mock("../../../src/app/services/ModGuardService.js", () => ({
 
 vi.mock("../../../src/app/services/ModLogService.js", () => ({
   logModAction: (...args: unknown[]) => mockLogModAction(...args),
+}));
+
+vi.mock("../../../src/app/services/WarnThresholdService.js", () => ({
+  enforceWarnThreshold: (...args: unknown[]) => mockEnforceWarnThreshold(...args),
 }));
 
 vi.mock("../../../src/config/repositories/modCaseRepository.js", () => ({
@@ -198,6 +203,7 @@ describe("/mod warn", () => {
     setGuardDefaults();
     mockModCaseCreate.mockResolvedValue(MOCK_CASE);
     mockLogModAction.mockResolvedValue(undefined);
+    mockEnforceWarnThreshold.mockResolvedValue({ matched: false });
   });
 
   it("should warn a user successfully", async () => {
@@ -225,8 +231,57 @@ describe("/mod warn", () => {
       }),
     );
     expect(mockLogModAction).toHaveBeenCalled();
+    expect(mockEnforceWarnThreshold).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guildId: "guild-1",
+        moderatorId: "mod-1",
+        userTag: "TargetUser",
+      }),
+    );
     expect(interaction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({ content: expect.stringContaining("advertido") }),
+    );
+  });
+
+  it("keeps warn-only response when no threshold matches", async () => {
+    const interaction = createMockInteraction();
+    await warnHandler(interaction);
+    expect(interaction.editReply).toHaveBeenCalledWith({
+      content: "✅ TargetUser advertido. Case #42",
+    });
+  });
+
+  it("should surface automatic escalation success", async () => {
+    mockEnforceWarnThreshold.mockResolvedValue({
+      matched: true,
+      ok: true,
+      action: "timeout",
+      message: "Threshold aplicado: timeout por 1h.",
+    });
+    const interaction = createMockInteraction();
+    await warnHandler(interaction);
+
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining("Threshold aplicado") }),
+    );
+  });
+
+  it("should surface partial success when automatic escalation fails", async () => {
+    mockEnforceWarnThreshold.mockResolvedValue({
+      matched: true,
+      ok: false,
+      action: "kick",
+      message: "la escalada automática (kick) falló: Missing Permissions",
+    });
+
+    const interaction = createMockInteraction();
+
+    await warnHandler(interaction);
+
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining("Warn registrado, pero la escalada automática (kick) falló"),
+      }),
     );
   });
 
