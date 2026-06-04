@@ -191,13 +191,42 @@ export const data = new SlashCommandBuilder()
               ),
           )
           .addStringOption((o) =>
-            o.setName("nombre").setDescription("Nombre del patrón").setRequired(false),
+            o
+              .setName("nombre")
+              .setDescription("Nombre del patrón")
+              .setRequired(false)
+              .addChoices(
+                { name: "Ráfaga de mensajes", value: "burst" },
+                { name: "Mensajes duplicados", value: "duplicate" },
+                { name: "Menciones excesivas", value: "mention" },
+                { name: "Enlaces", value: "link" },
+                { name: "MAYÚSCULAS", value: "caps" },
+                { name: "Emojis excesivos", value: "emoji" },
+                { name: "Combo de patrones", value: "combo" },
+              ),
           )
           .addStringOption((o) =>
-            o.setName("estado").setDescription("Activar o desactivar").setRequired(false),
+            o
+              .setName("estado")
+              .setDescription("Activar o desactivar")
+              .setRequired(false)
+              .addChoices(
+                { name: "Habilitado", value: "enabled" },
+                { name: "Deshabilitado", value: "disabled" },
+              ),
           )
           .addStringOption((o) =>
-            o.setName("accion").setDescription("Acción a aplicar").setRequired(false),
+            o
+              .setName("accion")
+              .setDescription("Acción a aplicar")
+              .setRequired(false)
+              .addChoices(
+                { name: "Warn", value: "warn" },
+                { name: "Timeout 5 min", value: "timeout_5min" },
+                { name: "Timeout 30 min", value: "timeout_30min" },
+                { name: "Solo notificar", value: "notify_only" },
+                { name: "Solo eliminar", value: "delete_only" },
+              ),
           )
           .addIntegerOption((o) =>
             o.setName("cantidad").setDescription("Cantidad de infracciones").setRequired(false).setMinValue(1).setMaxValue(100),

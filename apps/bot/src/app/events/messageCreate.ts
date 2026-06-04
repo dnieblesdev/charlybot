@@ -130,13 +130,13 @@ export default {
     let spamResult: SpamCheckResult | null = null;
     let antiSpam: AntiSpamService | null = null;
     let antiSpamConfig: Awaited<
-      ReturnType<typeof AntiSpamConfigRepo.getByGuildId>
+      ReturnType<typeof AntiSpamConfigRepo.getCachedByGuildId>
     > = null;
 
     // Task 1: Load config BEFORE evaluating spam
     try {
-      antiSpamConfig = await AntiSpamConfigRepo.getByGuildId(guildId);
-      // antispamEnabled is true by default (null/undefined means enabled)
+      antiSpamConfig = await AntiSpamConfigRepo.getCachedByGuildId(guildId);
+      // Canonical default: null/undefined config means anti-spam stays enabled.
       if (antiSpamConfig?.enabled !== false) {
         const valkey = getValkeyClient();
         antiSpam = new AntiSpamService(valkey, antiSpamConfig);

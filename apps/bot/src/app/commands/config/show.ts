@@ -3,6 +3,7 @@ import {
   MessageFlags,
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
+import * as AntiSpamConfigRepo from "../../../config/repositories/AntiSpamConfigRepo.ts";
 import { getGuildConfig } from "../../../config/repositories/GuildConfigRepo.ts";
 import { listSocialLinks } from "../../../config/repositories/SocialLinkRepo.ts";
 import logger, { logCommand } from "../../../utils/logger.ts";
@@ -37,7 +38,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       flags: isPublic ? undefined : [MessageFlags.Ephemeral],
     });
 
-    const config = await getGuildConfig(interaction.guild.id);
+    const [config, antiSpamConfig] = await Promise.all([
+      getGuildConfig(interaction.guild.id),
+      AntiSpamConfigRepo.getCachedByGuildId(interaction.guild.id),
+    ]);
 
     if (!config) {
       await interaction.editReply({
@@ -98,7 +102,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (config.modLogChannelId) {
       moderacion.push(["Logs", `<#${config.modLogChannelId}>`]);
     }
-    moderacion.push(["Anti-spam", config.antispamEnabled ? "✅ Activado" : "❌ Desactivado"]);
+    const antiSpamEnabled = antiSpamConfig?.enabled !== false;
+    moderacion.push(["Anti-spam", antiSpamEnabled ? "✅ Activado" : "❌ Desactivado"]);
     embed.addFields({ name: "🛡️ Moderación", value: drawList(moderacion), inline: false });
 
     // ── 🔗 Redes ──
@@ -121,7 +126,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       hasLeaveLog: !!config.leaveLogChannelId,
       hasVerification: !!config.verificationChannelId,
       hasModRole: !!config.modRoleId,
-      antispamEnabled: config.antispamEnabled,
+      antispamEnabled: antiSpamEnabled,
     });
 
     await interaction.editReply({

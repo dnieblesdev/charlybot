@@ -1,6 +1,77 @@
 import { prisma } from "@charlybot/shared";
 import logger from "../../utils/logger";
-import type { IAntiSpamConfig } from "@charlybot/shared/schemas/antispam";
+import type { IAntiSpamAction, IAntiSpamConfig } from "@charlybot/shared/schemas/antispam";
+
+export const ANTI_SPAM_CONFIG_CACHE_TTL_MS = 60_000;
+
+export const DEFAULT_ANTI_SPAM_PATTERN_ACTIONS = {
+  burst: "warn",
+  duplicate: "warn",
+  mention: "timeout_5min",
+  link: "timeout_5min",
+  caps: "warn",
+  emoji: "warn",
+  combo: "timeout_5min",
+} as const satisfies Record<string, IAntiSpamAction>;
+
+interface AntiSpamConfigCacheEntry {
+  expiresAt: number;
+  value: IAntiSpamConfig | null;
+}
+
+const antiSpamConfigCache = new Map<string, AntiSpamConfigCacheEntry>();
+
+function toAntiSpamConfig(config: NonNullable<Awaited<ReturnType<typeof prisma.antiSpamConfig.findUnique>>>): IAntiSpamConfig {
+  return {
+    id: config.id,
+    guildId: config.guildId,
+    enabled: config.enabled,
+    burstEnabled: config.burstEnabled,
+    duplicateEnabled: config.duplicateEnabled,
+    mentionEnabled: config.mentionEnabled,
+    linkEnabled: config.linkEnabled,
+    capsEnabled: config.capsEnabled,
+    emojiEnabled: config.emojiEnabled,
+    comboEnabled: config.comboEnabled,
+    burstAction: config.burstAction as IAntiSpamConfig["burstAction"],
+    duplicateAction: config.duplicateAction as IAntiSpamConfig["duplicateAction"],
+    mentionAction: config.mentionAction as IAntiSpamConfig["mentionAction"],
+    linkAction: config.linkAction as IAntiSpamConfig["linkAction"],
+    capsAction: config.capsAction as IAntiSpamConfig["capsAction"],
+    emojiAction: config.emojiAction as IAntiSpamConfig["emojiAction"],
+    comboAction: config.comboAction as IAntiSpamConfig["comboAction"],
+    escalationEnabled: config.escalationEnabled,
+    escalationCount: config.escalationCount,
+    notifyOnSpam: config.notifyOnSpam,
+    createdAt: config.createdAt ?? undefined,
+    updatedAt: config.updatedAt ?? undefined,
+  };
+}
+
+function setCachedConfig(guildId: string, value: IAntiSpamConfig | null): void {
+  antiSpamConfigCache.set(guildId, {
+    expiresAt: Date.now() + ANTI_SPAM_CONFIG_CACHE_TTL_MS,
+    value,
+  });
+}
+
+export function invalidate(guildId: string): void {
+  antiSpamConfigCache.delete(guildId);
+}
+
+export async function getCachedByGuildId(
+  guildId: string,
+): Promise<IAntiSpamConfig | null> {
+  const cached = antiSpamConfigCache.get(guildId);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
+  const config = await getByGuildId(guildId);
+  setCachedConfig(guildId, config);
+  return config;
+}
 
 /**
  * Get anti-spam configuration for a guild.
@@ -18,30 +89,7 @@ export async function getByGuildId(
       return null;
     }
 
-    return {
-      id: config.id,
-      guildId: config.guildId,
-      enabled: config.enabled,
-      burstEnabled: config.burstEnabled,
-      duplicateEnabled: config.duplicateEnabled,
-      mentionEnabled: config.mentionEnabled,
-      linkEnabled: config.linkEnabled,
-      capsEnabled: config.capsEnabled,
-      emojiEnabled: config.emojiEnabled,
-      comboEnabled: config.comboEnabled,
-      burstAction: config.burstAction as IAntiSpamConfig["burstAction"],
-      duplicateAction: config.duplicateAction as IAntiSpamConfig["duplicateAction"],
-      mentionAction: config.mentionAction as IAntiSpamConfig["mentionAction"],
-      linkAction: config.linkAction as IAntiSpamConfig["linkAction"],
-      capsAction: config.capsAction as IAntiSpamConfig["capsAction"],
-      emojiAction: config.emojiAction as IAntiSpamConfig["emojiAction"],
-      comboAction: config.comboAction as IAntiSpamConfig["comboAction"],
-      escalationEnabled: config.escalationEnabled,
-      escalationCount: config.escalationCount,
-      notifyOnSpam: config.notifyOnSpam,
-      createdAt: config.createdAt ?? undefined,
-      updatedAt: config.updatedAt ?? undefined,
-    };
+    return toAntiSpamConfig(config);
   } catch (error) {
     logger.error("Error getting AntiSpamConfig by guildId", {
       error: error instanceof Error ? error.message : String(error),
@@ -73,13 +121,13 @@ export async function create(
         capsEnabled: data.capsEnabled ?? true,
         emojiEnabled: data.emojiEnabled ?? false,
         comboEnabled: data.comboEnabled ?? false,
-        burstAction: data.burstAction ?? "warn",
-        duplicateAction: data.duplicateAction ?? "warn",
-        mentionAction: data.mentionAction ?? "timeout_5min",
-        linkAction: data.linkAction ?? "timeout_5min",
-        capsAction: data.capsAction ?? "warn",
-        emojiAction: data.emojiAction ?? "warn",
-        comboAction: data.comboAction ?? "timeout_5min",
+        burstAction: data.burstAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.burst,
+        duplicateAction: data.duplicateAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.duplicate,
+        mentionAction: data.mentionAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.mention,
+        linkAction: data.linkAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.link,
+        capsAction: data.capsAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.caps,
+        emojiAction: data.emojiAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.emoji,
+        comboAction: data.comboAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.combo,
         escalationEnabled: data.escalationEnabled ?? true,
         escalationCount: data.escalationCount ?? 3,
         notifyOnSpam: data.notifyOnSpam ?? true,
@@ -88,30 +136,9 @@ export async function create(
 
     logger.info("AntiSpamConfig created", { guildId: config.guildId });
 
-    return {
-      id: config.id,
-      guildId: config.guildId,
-      enabled: config.enabled,
-      burstEnabled: config.burstEnabled,
-      duplicateEnabled: config.duplicateEnabled,
-      mentionEnabled: config.mentionEnabled,
-      linkEnabled: config.linkEnabled,
-      capsEnabled: config.capsEnabled,
-      emojiEnabled: config.emojiEnabled,
-      comboEnabled: config.comboEnabled,
-      burstAction: config.burstAction as IAntiSpamConfig["burstAction"],
-      duplicateAction: config.duplicateAction as IAntiSpamConfig["duplicateAction"],
-      mentionAction: config.mentionAction as IAntiSpamConfig["mentionAction"],
-      linkAction: config.linkAction as IAntiSpamConfig["linkAction"],
-      capsAction: config.capsAction as IAntiSpamConfig["capsAction"],
-      emojiAction: config.emojiAction as IAntiSpamConfig["emojiAction"],
-      comboAction: config.comboAction as IAntiSpamConfig["comboAction"],
-      escalationEnabled: config.escalationEnabled,
-      escalationCount: config.escalationCount,
-      notifyOnSpam: config.notifyOnSpam,
-      createdAt: config.createdAt ?? undefined,
-      updatedAt: config.updatedAt ?? undefined,
-    };
+    const mappedConfig = toAntiSpamConfig(config);
+    setCachedConfig(config.guildId, mappedConfig);
+    return mappedConfig;
   } catch (error) {
     logger.error("Error creating AntiSpamConfig", {
       error: error instanceof Error ? error.message : String(error),
@@ -164,13 +191,13 @@ export async function update(
         capsEnabled: data.capsEnabled ?? true,
         emojiEnabled: data.emojiEnabled ?? false,
         comboEnabled: data.comboEnabled ?? false,
-        burstAction: data.burstAction ?? "warn",
-        duplicateAction: data.duplicateAction ?? "warn",
-        mentionAction: data.mentionAction ?? "timeout_5min",
-        linkAction: data.linkAction ?? "timeout_5min",
-        capsAction: data.capsAction ?? "warn",
-        emojiAction: data.emojiAction ?? "warn",
-        comboAction: data.comboAction ?? "timeout_5min",
+        burstAction: data.burstAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.burst,
+        duplicateAction: data.duplicateAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.duplicate,
+        mentionAction: data.mentionAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.mention,
+        linkAction: data.linkAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.link,
+        capsAction: data.capsAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.caps,
+        emojiAction: data.emojiAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.emoji,
+        comboAction: data.comboAction ?? DEFAULT_ANTI_SPAM_PATTERN_ACTIONS.combo,
         escalationEnabled: data.escalationEnabled ?? true,
         escalationCount: data.escalationCount ?? 3,
         notifyOnSpam: data.notifyOnSpam ?? true,
@@ -179,30 +206,9 @@ export async function update(
 
     logger.info("AntiSpamConfig updated", { guildId, fields: Object.keys(updateData) });
 
-    return {
-      id: config.id,
-      guildId: config.guildId,
-      enabled: config.enabled,
-      burstEnabled: config.burstEnabled,
-      duplicateEnabled: config.duplicateEnabled,
-      mentionEnabled: config.mentionEnabled,
-      linkEnabled: config.linkEnabled,
-      capsEnabled: config.capsEnabled,
-      emojiEnabled: config.emojiEnabled,
-      comboEnabled: config.comboEnabled,
-      burstAction: config.burstAction as IAntiSpamConfig["burstAction"],
-      duplicateAction: config.duplicateAction as IAntiSpamConfig["duplicateAction"],
-      mentionAction: config.mentionAction as IAntiSpamConfig["mentionAction"],
-      linkAction: config.linkAction as IAntiSpamConfig["linkAction"],
-      capsAction: config.capsAction as IAntiSpamConfig["capsAction"],
-      emojiAction: config.emojiAction as IAntiSpamConfig["emojiAction"],
-      comboAction: config.comboAction as IAntiSpamConfig["comboAction"],
-      escalationEnabled: config.escalationEnabled,
-      escalationCount: config.escalationCount,
-      notifyOnSpam: config.notifyOnSpam,
-      createdAt: config.createdAt ?? undefined,
-      updatedAt: config.updatedAt ?? undefined,
-    };
+    const mappedConfig = toAntiSpamConfig(config);
+    setCachedConfig(guildId, mappedConfig);
+    return mappedConfig;
   } catch (error) {
     logger.error("Error updating AntiSpamConfig", {
       error: error instanceof Error ? error.message : String(error),

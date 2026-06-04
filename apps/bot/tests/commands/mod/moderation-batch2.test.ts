@@ -15,6 +15,8 @@ const mockModCaseFindByUser = vi.fn();
 const mockModCaseFindById = vi.fn();
 const mockModCaseFindByGuildAndCaseNumber = vi.fn();
 const mockModCaseUpdateReason = vi.fn();
+const mockAntiSpamConfigGetCachedByGuildId = vi.fn();
+const mockAntiSpamConfigUpdate = vi.fn();
 const mockGuildConfigGet = vi.fn();
 const mockGuildConfigUpdate = vi.fn();
 const mockWarnThresholdCreate = vi.fn();
@@ -57,6 +59,11 @@ vi.mock("../../../src/config/repositories/GuildConfigRepo.js", () => ({
   update: (...args: unknown[]) => mockGuildConfigUpdate(...args),
 }));
 
+vi.mock("../../../src/config/repositories/AntiSpamConfigRepo.js", () => ({
+  getCachedByGuildId: (...args: unknown[]) => mockAntiSpamConfigGetCachedByGuildId(...args),
+  update: (...args: unknown[]) => mockAntiSpamConfigUpdate(...args),
+}));
+
 vi.mock("../../../src/config/repositories/warnThresholdRepository.js", () => ({
   create: (...args: unknown[]) => mockWarnThresholdCreate(...args),
   findAll: (...args: unknown[]) => mockWarnThresholdFindAll(...args),
@@ -82,6 +89,7 @@ const modRoleHandler = (await import("../../../src/app/commands/mod/config/mod-r
 const modLogHandler = (await import("../../../src/app/commands/mod/config/mod-log.js")).default;
 const warnThresholdHandler = (await import("../../../src/app/commands/mod/config/warn-threshold.js")).default;
 const viewHandler = (await import("../../../src/app/commands/mod/config/view.js")).default;
+const antiSpamConfigHandler = (await import("../../../src/app/commands/mod/config/antispam.js")).default;
 
 // =============================================================================
 // Helpers
@@ -604,6 +612,7 @@ describe("/mod config view", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCanModerate.mockResolvedValue({ allowed: true });
+    mockAntiSpamConfigGetCachedByGuildId.mockResolvedValue(null);
   });
 
   it("should show current configuration", async () => {
@@ -614,6 +623,7 @@ describe("/mod config view", () => {
       antispamEnabled: true,
     };
     mockGuildConfigGet.mockResolvedValue(config);
+    mockAntiSpamConfigGetCachedByGuildId.mockResolvedValue({ enabled: true });
     mockWarnThresholdFindAll.mockResolvedValue([
       { id: 1, guildId: "guild-1", warnCount: 3, action: "timeout", duration: BigInt(3_600_000) },
     ]);
@@ -625,6 +635,26 @@ describe("/mod config view", () => {
     expect(mockCanModerate).toHaveBeenCalled();
     expect(mockGuildConfigGet).toHaveBeenCalledWith("guild-1");
     expect(interaction.editReply).toHaveBeenCalled();
+  });
+
+  it("shows canonical anti-spam state instead of stale guild mirror", async () => {
+    mockGuildConfigGet.mockResolvedValue({
+      guildId: "guild-1",
+      antispamEnabled: false,
+    });
+    mockAntiSpamConfigGetCachedByGuildId.mockResolvedValue({ enabled: true });
+    mockWarnThresholdFindAll.mockResolvedValue([]);
+
+    const interaction = createMockInteraction();
+
+    await viewHandler(interaction);
+
+    const replyArg = (interaction.editReply as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as {
+      embeds: Array<{ data?: { fields?: Array<{ name?: string; value?: string }> } }>;
+    };
+    const antiSpamField = replyArg.embeds[0]?.data?.fields?.find((field) => field.name === "Anti-spam");
+
+    expect(antiSpamField?.value).toContain("Habilitado");
   });
 
   it("should show not configured when no config exists", async () => {
@@ -648,6 +678,51 @@ describe("/mod config view", () => {
 
     expect(interaction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({ content: expect.stringContaining("permisos") }),
+    );
+  });
+});
+
+describe("/mod config antispam", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockCanModerate.mockResolvedValue({ allowed: true });
+    mockAntiSpamConfigGetCachedByGuildId.mockResolvedValue(null);
+  });
+
+  it("updates canonical enabled state and mirrors guild config on master toggle", async () => {
+    const interaction = createMockInteraction({
+      options: {
+        optionMap: {
+          subcomando: "toggle",
+          estado: "disabled",
+        },
+      },
+    });
+
+    await antiSpamConfigHandler(interaction);
+
+    expect(mockAntiSpamConfigUpdate).toHaveBeenCalledWith("guild-1", { enabled: false });
+    expect(mockGuildConfigUpdate).toHaveBeenCalledWith("guild-1", { antispamEnabled: false });
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining("desactivado") }),
+    );
+  });
+
+  it("rejects invalid explicit state values", async () => {
+    const interaction = createMockInteraction({
+      options: {
+        optionMap: {
+          subcomando: "toggle",
+          estado: "Activar",
+        },
+      },
+    });
+
+    await antiSpamConfigHandler(interaction);
+
+    expect(mockAntiSpamConfigUpdate).not.toHaveBeenCalled();
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining("Estado no válido") }),
     );
   });
 });

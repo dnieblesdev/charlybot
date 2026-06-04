@@ -55,6 +55,9 @@ vi.mock("@charlybot/shared", async (importOriginal) => {
       count: vi.fn(() => Promise.resolve(0)), create: vi.fn(),
       findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(),
     },
+    antiSpamConfig: {
+      findUnique: vi.fn(), create: vi.fn(), upsert: vi.fn(),
+    },
     socialLink: {
       findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(),
       update: vi.fn(), upsert: vi.fn(), delete: vi.fn(), count: vi.fn(),

@@ -2,6 +2,7 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import { EmbedBuilder } from "discord.js";
 
 import { canModerate, MODERATION_ACTION } from "../../../services/ModGuardService.js";
+import * as AntiSpamConfigRepo from "../../../../config/repositories/AntiSpamConfigRepo.js";
 import { getGuildConfig } from "../../../../config/repositories/GuildConfigRepo.js";
 import * as WarnThresholdRepository from "../../../../config/repositories/warnThresholdRepository.js";
 import logger from "../../../../utils/logger.js";
@@ -22,8 +23,11 @@ export default async function view(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    const config = await getGuildConfig(interaction.guildId);
-    const thresholds = await WarnThresholdRepository.findAll(interaction.guildId);
+    const [config, antiSpamConfig, thresholds] = await Promise.all([
+      getGuildConfig(interaction.guildId),
+      AntiSpamConfigRepo.getCachedByGuildId(interaction.guildId),
+      WarnThresholdRepository.findAll(interaction.guildId),
+    ]);
 
     const embed = new EmbedBuilder()
       .setTitle("⚙️ Configuración de moderación")
@@ -44,7 +48,11 @@ export default async function view(interaction: ChatInputCommandInteraction) {
     }
 
     // Anti-spam
-    const antispamStatus = config?.antispamEnabled ? "✅ Habilitado" : "❌ Deshabilitado";
+    const antispamStatus = antiSpamConfig?.enabled !== false
+      ? antiSpamConfig
+        ? "✅ Habilitado"
+        : "✅ Habilitado (predeterminado)"
+      : "❌ Deshabilitado";
     embed.addFields({ name: "Anti-spam", value: antispamStatus, inline: true });
 
     // Warn thresholds
