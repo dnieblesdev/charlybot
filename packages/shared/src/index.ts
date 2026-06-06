@@ -12,6 +12,7 @@ export * from './schemas/antispam';
 export * from './schemas/pagination';
 export * from './utils/truncate';
 export * from './utils/const';
+export * from './utils/money';
 export * from './valkey';
 export * from './observability';
 export * from './errors';

@@ -1,41 +1,49 @@
 import { z } from 'zod';
+import {
+  MoneyAmountSchema,
+  NonNegativeMoneyAmountSchema,
+  PositiveMoneyAmountSchema,
+} from '../utils/money';
 
+// Economy money fields keep their existing names but now represent whole integer bot currency amounts.
 // Helper para aceptar Date o string ISO
 const dateSchema = z.union([z.date(), z.string().datetime()]).transform(val => 
   val instanceof Date ? val : new Date(val)
 ).nullable().optional();
 
+const IntegerConfigValueSchema = z.number().int();
+
 export const UserEconomySchema = z.object({
   userId: z.string(),
   guildId: z.string(),
   username: z.string(),
-  pocket: z.number().default(0),
+  pocket: NonNegativeMoneyAmountSchema.default(0),
   inJail: z.boolean().default(false),
   jailReleaseAt: dateSchema,
   lastWork: dateSchema,
   lastCrime: dateSchema,
   lastRob: dateSchema,
-  totalEarned: z.number().default(0),
-  totalLost: z.number().default(0),
+  totalEarned: NonNegativeMoneyAmountSchema.default(0),
+  totalLost: NonNegativeMoneyAmountSchema.default(0),
 });
 
 export const GlobalBankSchema = z.object({
   userId: z.string(),
   username: z.string(),
-  bank: z.number().default(0),
+  bank: NonNegativeMoneyAmountSchema.default(0),
 });
 
 export const EconomyConfigSchema = z.object({
   guildId: z.string(),
-  workCooldown: z.number().default(300000),
-  crimeCooldown: z.number().default(900000),
-  robCooldown: z.number().default(1800000),
-  workMinAmount: z.number().default(100),
-  workMaxAmount: z.number().default(300),
-  crimeMultiplier: z.number().default(3),
-  startingMoney: z.number().default(1000),
-  jailTimeWork: z.number().default(30),
-  jailTimeRob: z.number().default(45),
+  workCooldown: IntegerConfigValueSchema.default(300000),
+  crimeCooldown: IntegerConfigValueSchema.default(900000),
+  robCooldown: IntegerConfigValueSchema.default(1800000),
+  workMinAmount: IntegerConfigValueSchema.default(100),
+  workMaxAmount: IntegerConfigValueSchema.default(300),
+  crimeMultiplier: IntegerConfigValueSchema.default(3),
+  startingMoney: IntegerConfigValueSchema.default(1000),
+  jailTimeWork: IntegerConfigValueSchema.default(30),
+  jailTimeRob: IntegerConfigValueSchema.default(45),
   rouletteChannelId: z.string().nullable().optional(),
 });
 
@@ -61,11 +69,11 @@ export const RouletteGameSchema = z.object({
 export const RouletteBetSchema = z.object({
   userId: z.string(),
   guildId: z.string(),
-  amount: z.number().positive(),
+  amount: PositiveMoneyAmountSchema,
   betType: z.enum(["color", "number"]),
   betValue: z.string(), // "red", "black", "green" or "0"-"36"
   result: z.string().nullable().optional(), // "win" or "lose"
-  winAmount: z.number().nullable().optional(),
+  winAmount: NonNegativeMoneyAmountSchema.nullable().optional(),
 });
 
 // --- Atomic Roulette Schemas ---
@@ -74,7 +82,7 @@ export const AtomicRouletteBetSchema = z.object({
   userId: z.string(),
   guildId: z.string(),
   gameId: z.number(),
-  amount: z.number().positive(),
+  amount: PositiveMoneyAmountSchema,
   betType: z.enum(["color", "number"]),
   betValue: z.string(),
 });
@@ -96,7 +104,7 @@ export const LeaderboardUpsertSchema = z.object({
   userId: z.string(),
   guildId: z.string(),
   username: z.string(),
-  totalMoney: z.number().default(0),
+  totalMoney: MoneyAmountSchema.default(0),
   joinedServerAt: z.union([z.date(), z.string().datetime()]).transform(val => 
     val instanceof Date ? val : new Date(val)
   ),
@@ -107,7 +115,7 @@ export const TransferSchema = z.object({
   fromUserId: z.string(),
   toUserId: z.string(),
   guildId: z.string(),
-  amount: z.number().positive(),
+  amount: PositiveMoneyAmountSchema,
   fromUsername: z.string(),
   toUsername: z.string(),
 });
@@ -116,14 +124,14 @@ export const DepositSchema = z.object({
   userId: z.string(),
   guildId: z.string(),
   username: z.string(),
-  amount: z.number().positive(),
+  amount: PositiveMoneyAmountSchema,
 });
 
 export const WithdrawSchema = z.object({
   userId: z.string(),
   guildId: z.string(),
   username: z.string(),
-  amount: z.number().positive(),
+  amount: PositiveMoneyAmountSchema,
 });
 
 // --- Atomic Economy Operations Schemas ---
@@ -131,14 +139,14 @@ export const WithdrawSchema = z.object({
 export const AddPocketSchema = z.object({
   userId: z.string(),
   guildId: z.string(),
-  amount: z.number().positive(),
+  amount: PositiveMoneyAmountSchema,
   cooldownType: z.enum(["work", "crime", "rob"]).optional(),
 });
 
 export const SubtractPocketSchema = z.object({
   userId: z.string(),
   guildId: z.string(),
-  amount: z.number().positive(),
+  amount: PositiveMoneyAmountSchema,
   cooldownType: z.enum(["work", "crime", "rob"]).optional(),
 });
 

@@ -65,6 +65,11 @@ apps/bot/scripts/
 
 # prisma generated
 prisma/
+!packages/shared/prisma/
+packages/shared/prisma/backups/
+!packages/shared/prisma/schema.prisma
+!packages/shared/prisma/migrations/
+!packages/shared/prisma/migrations/**
 
 # docs (PDFs and documents)
 docs/

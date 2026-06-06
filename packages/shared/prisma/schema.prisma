@@ -86,14 +86,14 @@ model UserEconomy {
   userId          String
   guildId         String
   username        String
-  pocket          Float    @default(0)     // Dinero en bolsillo (por servidor)
+  pocket          Int      @default(0)     // Whole stored money amount in pocket (per guild)
   inJail          Boolean  @default(false) // Si está en prisión (por servidor)
   jailReleaseAt   DateTime?                // Cuando sale de prisión
   lastWork        DateTime?                // Última vez que trabajó (por servidor)
   lastCrime       DateTime?                // Último crimen (por servidor)
   lastRob         DateTime?                // Último robo (por servidor)
-  totalEarned     Float    @default(0)     // Total ganado (por servidor)
-  totalLost       Float    @default(0)     // Total perdido (por servidor)
+  totalEarned     Int      @default(0)     // Whole stored money amount earned (per guild)
+  totalLost       Int      @default(0)     // Whole stored money amount lost (per guild)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   bets            RouletteBet[]
@@ -106,7 +106,7 @@ model GlobalBank {
   id              Int      @id @default(autoincrement())
   userId          String   @unique
   username        String
-  bank            Float    @default(0)     // Dinero en banco (global)
+  bank            Int      @default(0)     // Whole stored money amount in bank (global)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -132,11 +132,11 @@ model RouletteBet {
   gameId          Int
   userId          String
   guildId         String
-  amount          Float
+  amount          Int
   betType         String   // "color" o "number"
   betValue        String   // "red", "black", "green" o número "0"-"36"
   result          String?  // "win" o "lose"
-  winAmount       Float?   // Cantidad ganada (si gana)
+  winAmount       Int?     // Whole stored money amount won (if any)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   game            RouletteGame @relation(fields: [gameId], references: [id])
@@ -167,7 +167,7 @@ model Leaderboard {
   userId          String
   guildId         String
   username        String
-  totalMoney      Float    @default(0)     // netProfit = totalEarned - totalLost (por servidor)
+  totalMoney      Int      @default(0)     // Cached whole money amount netProfit = totalEarned - totalLost (per guild)
   joinedServerAt  DateTime                 // Fecha de ingreso al servidor (de Discord API)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
