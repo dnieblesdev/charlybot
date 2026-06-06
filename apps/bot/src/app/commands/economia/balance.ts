@@ -8,6 +8,7 @@ import logger, { logCommand } from "../../../utils/logger.js";
 import { EconomyService } from "../../services/economy/EconomyService.js";
 import LeaderboardService from "../../services/economy/LeaderboardService.js";
 import { rateLimitCommand } from "../../../infrastructure/valkey/rate-limit.js";
+import { formatEconomyAmount } from "../../services/economy/money.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -94,25 +95,25 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       .addFields(
         {
           name: "👛 Bolsillo",
-          value: `$${balance.pocket.toFixed(2)}`,
+          value: formatEconomyAmount(balance.pocket),
           inline: true,
         },
         {
           name: "🏦 Banco (Global)",
-          value: `$${balance.bank.toFixed(2)}`,
+          value: formatEconomyAmount(balance.bank),
           inline: true,
         },
         {
           name: "💵 Total",
-          value: `$${balance.total.toFixed(2)}`,
+          value: formatEconomyAmount(balance.total),
           inline: true,
         },
         {
           name: "📊 Estadísticas",
           value:
-            `📈 Total Ganado: $${stats.totalEarned.toFixed(2)}\n` +
-            `📉 Total Perdido: $${stats.totalLost.toFixed(2)}\n` +
-            `💹 Ganancia Neta: $${stats.netProfit.toFixed(2)}\n` +
+            `📈 Total Ganado: ${formatEconomyAmount(stats.totalEarned)}\n` +
+            `📉 Total Perdido: ${formatEconomyAmount(stats.totalLost)}\n` +
+            `💹 Ganancia Neta: ${formatEconomyAmount(stats.netProfit)}\n` +
             `🏆 Posición: ${leaderboardPosition ? `#${leaderboardPosition}` : "Sin ranking"}`,
           inline: false,
         },

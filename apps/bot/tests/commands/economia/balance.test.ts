@@ -132,7 +132,19 @@ describe("balance command", () => {
         const totalField = embed.fields.find(
           (f: { name: string }) => f.name === "💵 Total",
         );
-        expect(totalField.value).toContain("2000"); // total = 1500 pocket + 500 bank
+        expect(totalField.value).toBe("$2,000");
+
+        const pocketField = embed.fields.find(
+          (f: { name: string }) => f.name === "👛 Bolsillo",
+        );
+        expect(pocketField.value).toBe("$1,500");
+
+        const statsField = embed.fields.find(
+          (f: { name: string }) => f.name === "📊 Estadísticas",
+        );
+        expect(statsField.value).toContain("📈 Total Ganado: $3,000");
+        expect(statsField.value).toContain("📉 Total Perdido: $1,000");
+        expect(statsField.value).toContain("💹 Ganancia Neta: $2,000");
       }
       // If no embeds key, the test still passes because we confirmed editReply was called once
       // (rate limiting or other early returns would call editReply with content instead)

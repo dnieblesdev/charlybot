@@ -16,6 +16,7 @@ import { RouletteService } from "../../services/economy/RouletteService.js";
 import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
 import type { RouletteBet } from "@charlybot/shared";
 import { rateLimitCommand } from "../../../infrastructure/valkey/rate-limit.js";
+import { formatEconomyAmount } from "../../services/economy/money.js";
 
 // Mapa para almacenar los juegos activos por canal
 const activeGames = new Map<
@@ -52,13 +53,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     // Obtener parámetros
-    const betType = interaction.options.get("tipo")?.value as
+    const betType = interaction.options.getString("tipo", true) as
       | "color"
       | "number";
-    const betValue = (
-      interaction.options.get("apuesta")?.value as string
-    ).toLowerCase();
-    const amount = interaction.options.get("cantidad")?.value as number;
+    const betValue = interaction.options.getString("apuesta", true).toLowerCase();
+    const amount = interaction.options.getInteger("cantidad", true);
 
     // Validar que el usuario no esté en prisión
     const inJail = await EconomyService.isInJail(userId, guildId);
@@ -100,7 +99,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Verificar fondos
     if (user.pocket < amount) {
       await interaction.editReply({
-        content: `❌ No tienes suficiente dinero en tu bolsillo. Tienes: $${user.pocket.toFixed(2)}`,
+        content: `❌ No tienes suficiente dinero en tu bolsillo. Tienes: ${formatEconomyAmount(user.pocket)}`,
       });
       return;
     }
@@ -154,7 +153,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       .addFields(
         {
           name: "💰 Apuestas Totales",
-          value: `$${totalBets.toFixed(2)}`,
+          value: formatEconomyAmount(totalBets),
           inline: true,
         },
         {
@@ -176,7 +175,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               ? "⚫ Negro"
               : "🟢 Verde"
           : `#️⃣ ${bet.betValue}`;
-      betsInfo += `<@${bet.userId}>: ${betDisplay} - $${bet.amount}\n`;
+      betsInfo += `<@${bet.userId}>: ${betDisplay} - ${formatEconomyAmount(bet.amount)}\n`;
     }
     embed.addFields({
       name: "📋 Apuestas",
@@ -308,9 +307,9 @@ async function spinRoulette(gameId: number, interaction: CommandInteraction) {
           : `#️⃣ ${result.betValue}`;
 
       if (result.won) {
-        winnersInfo += `<@${result.userId}>: ${betDisplay} - Ganó **$${result.winAmount?.toFixed(2)}** (apostó $${result.amount})\n`;
+        winnersInfo += `<@${result.userId}>: ${betDisplay} - Ganó **${formatEconomyAmount(result.winAmount ?? 0)}** (apostó ${formatEconomyAmount(result.amount)})\n`;
       } else {
-        losersInfo += `<@${result.userId}>: ${betDisplay} - Perdió $${result.amount}\n`;
+        losersInfo += `<@${result.userId}>: ${betDisplay} - Perdió ${formatEconomyAmount(result.amount)}\n`;
       }
     }
 

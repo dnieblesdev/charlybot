@@ -80,6 +80,14 @@ describe("RouletteService", () => {
         expect(RouletteService.validateBet("number", "abc")).toBe(false);
         expect(RouletteService.validateBet("number", "")).toBe(false);
       });
+
+      it("should reject malformed numeric strings while accepting valid bounds", () => {
+        expect(RouletteService.validateBet("number", "0")).toBe(true);
+        expect(RouletteService.validateBet("number", "36")).toBe(true);
+        expect(RouletteService.validateBet("number", "1.5")).toBe(false);
+        expect(RouletteService.validateBet("number", "1abc")).toBe(false);
+        expect(RouletteService.validateBet("number", "37")).toBe(false);
+      });
     });
 
     describe("unknown betType", () => {

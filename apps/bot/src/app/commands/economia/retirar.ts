@@ -2,6 +2,7 @@ import { EmbedBuilder, MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import { EconomyService } from "../../services/economy/EconomyService.js";
+import { formatEconomyAmount } from "../../services/economy/money.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -47,7 +48,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     );
 
     // Obtener cantidad a retirar
-    let amount = interaction.options.get("cantidad")?.value as number;
+    let amount = interaction.options.getInteger("cantidad", true);
 
     // Obtener banco global
     const globalBank = await EconomyService.getOrCreateGlobalBank(
@@ -86,22 +87,22 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       .setColor(0x00aaff)
       .setTitle("🏦 Retiro Exitoso")
       .setDescription(
-        `**${username}** retiró **$${amount.toFixed(2)}** del banco.`,
+        `**${username}** retiró **${formatEconomyAmount(amount)}** del banco.`,
       )
       .addFields(
         {
           name: "💵 Retirado",
-          value: `$${amount.toFixed(2)}`,
+          value: formatEconomyAmount(amount),
           inline: true,
         },
         {
           name: "👛 Bolsillo",
-          value: `$${balance.pocket.toFixed(2)}`,
+          value: formatEconomyAmount(balance.pocket),
           inline: true,
         },
         {
           name: "🏦 Banco (Global)",
-          value: `$${balance.bank.toFixed(2)}`,
+          value: formatEconomyAmount(balance.bank),
           inline: true,
         },
       )

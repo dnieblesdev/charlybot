@@ -5,6 +5,10 @@ import { EconomyService } from "../../services/economy/EconomyService.js";
 import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
 import { rateLimitCommand } from "../../../infrastructure/valkey/rate-limit.js";
 import { CooldownError } from "@charlybot/shared";
+import {
+  calculateWholeAmountPercentage,
+  formatEconomyAmount,
+} from "../../services/economy/money.js";
 
 // Lista de crímenes posibles
 const crimes = [
@@ -150,22 +154,22 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         .setColor(0x00ff00)
         .setTitle("🎭 Crimen Exitoso")
         .setDescription(
-          `${crime!.emoji} **${interaction.user.username}** ${message} **${crime!.name}** y ganó **$${earnings.toFixed(2)}**!`,
+          `${crime!.emoji} **${interaction.user.username}** ${message} **${crime!.name}** y ganó **${formatEconomyAmount(earnings)}**!`,
         )
         .addFields(
           {
             name: "💰 Ganancia",
-            value: `$${earnings.toFixed(2)}`,
+            value: formatEconomyAmount(earnings),
             inline: true,
           },
           {
             name: "👛 Bolsillo",
-            value: `$${balance.pocket.toFixed(2)}`,
+            value: formatEconomyAmount(balance.pocket),
             inline: true,
           },
           {
             name: "🏦 Banco",
-            value: `$${balance.bank.toFixed(2)}`,
+            value: formatEconomyAmount(balance.bank),
             inline: true,
           },
         )
@@ -186,7 +190,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     } else {
       // FALLO: Pierde la mitad de su dinero en el bolsillo (solo del servidor actual)
       const balance = await EconomyService.getBalance(userId, guildId);
-      const fine = user.pocket / 2;
+      const fine = calculateWholeAmountPercentage(user.pocket, 0.5);
 
       // Obtener tiempo de prisión de la configuración
       const config = await EconomyConfigService.getOrCreateConfig(guildId);
@@ -263,19 +267,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           .addFields(
             {
               name: "⚖️ Multa Pagada",
-              value: `$${fine.toFixed(2)}`,
-              inline: true,
-            },
-            {
-              name: "👛 Bolsillo Restante",
-              value: `$${balance.pocket.toFixed(2)}`,
-              inline: true,
-            },
-            {
-              name: "🏦 Banco Restante",
-              value: `$${balance.bank.toFixed(2)}`,
-              inline: true,
-            },
+               value: formatEconomyAmount(fine),
+               inline: true,
+             },
+             {
+               name: "👛 Bolsillo Restante",
+               value: formatEconomyAmount(balance.pocket),
+               inline: true,
+             },
+             {
+               name: "🏦 Banco Restante",
+               value: formatEconomyAmount(balance.bank),
+               inline: true,
+             },
           )
           .setFooter({
             text: "¡Tuviste suerte de no ir a prisión! Podrás intentar otro crimen en 1 hora",

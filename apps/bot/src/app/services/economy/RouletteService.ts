@@ -5,6 +5,8 @@ import * as EconomyRepo from "../../../config/repositories/EconomyRepo";
 import type { RouletteGame, RouletteBet } from "@charlybot/shared";
 
 export class RouletteService {
+  private static readonly ROULETTE_NUMBER_BET_PATTERN = /^(?:0|[1-9]|[1-2]\d|3[0-6])$/;
+
   // Números rojos y negros de la ruleta
   private static readonly RED_NUMBERS = [
     1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36,
@@ -260,8 +262,7 @@ export class RouletteService {
     if (betType === "color") {
       return ["red", "black", "green"].includes(betValue.toLowerCase());
     } else if (betType === "number") {
-      const num = parseInt(betValue);
-      return !isNaN(num) && num >= 0 && num <= 36;
+      return this.ROULETTE_NUMBER_BET_PATTERN.test(betValue);
     }
     return false;
   }

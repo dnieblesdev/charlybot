@@ -6,6 +6,7 @@ import {
 import type { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
+import { formatEconomyAmount } from "../../services/economy/money.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -262,7 +263,7 @@ async function handleSetStartingMoney(
     .setColor(0x00ff00)
     .setTitle("✅ Configuración Actualizada")
     .setDescription(
-      `El dinero inicial para nuevos usuarios se ha establecido en **$${amount}**.\n\n` +
+      `El dinero inicial para nuevos usuarios se ha establecido en **${formatEconomyAmount(amount)}**.\n\n` +
         `⚠️ Esto solo afecta a usuarios que se registren a partir de ahora.`,
     )
     .setTimestamp();

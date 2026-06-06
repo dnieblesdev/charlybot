@@ -2,7 +2,11 @@ import { EmbedBuilder, MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import { EconomyService } from "../../services/economy/EconomyService.js";
-import * as EconomyRepo from "../../../config/repositories/EconomyRepo.ts";
+import * as EconomyRepo from "../../../config/repositories/EconomyRepo.js";
+import {
+  calculateWholeAmountPercentage,
+  formatEconomyAmount,
+} from "../../services/economy/money.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -41,7 +45,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const balance = await EconomyService.getBalance(userId, guildId);
 
     // Calcular la fianza (20% del total)
-    const bailAmount = (balance.pocket + balance.bank) * 0.2;
+    const bailAmount = calculateWholeAmountPercentage(
+      balance.pocket + balance.bank,
+      0.2,
+    );
 
     // Verificar si tiene suficiente dinero en el banco
     if (balance.bank < bailAmount) {
@@ -56,12 +63,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         .addFields(
           {
             name: "⚖️ Fianza Requerida",
-            value: `$${bailAmount.toFixed(2)}`,
+            value: formatEconomyAmount(bailAmount),
             inline: true,
           },
           {
             name: "🏦 Tu Banco",
-            value: `$${balance.bank.toFixed(2)}`,
+            value: formatEconomyAmount(balance.bank),
             inline: true,
           },
           {
@@ -97,22 +104,22 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       .setColor(0x00ff00)
       .setTitle("🔓 ¡Libre!")
       .setDescription(
-        `Has pagado tu fianza de **$${bailAmount.toFixed(2)}** y saliste de prisión.`,
+        `Has pagado tu fianza de **${formatEconomyAmount(bailAmount)}** y saliste de prisión.`,
       )
       .addFields(
         {
           name: "💰 Fianza Pagada",
-          value: `$${bailAmount.toFixed(2)}`,
+          value: formatEconomyAmount(bailAmount),
           inline: true,
         },
         {
           name: "🏦 Banco Restante",
-          value: `$${newBalance.bank.toFixed(2)}`,
+          value: formatEconomyAmount(newBalance.bank),
           inline: true,
         },
         {
           name: "👛 Bolsillo",
-          value: `$${newBalance.pocket.toFixed(2)}`,
+          value: formatEconomyAmount(newBalance.pocket),
           inline: true,
         },
       )

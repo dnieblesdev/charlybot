@@ -2,6 +2,7 @@ import { EmbedBuilder, MessageFlags } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import { EconomyService } from "../../services/economy/EconomyService.js";
 import type { ChatInputCommandInteraction } from "discord.js";
+import { formatEconomyAmount } from "../../services/economy/money.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -47,7 +48,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     );
 
     // Obtener cantidad a depositar
-    let amount = interaction.options.get("cantidad")?.value as number;
+    let amount = interaction.options.getInteger("cantidad", true);
 
     // Verificar que tenga dinero en el bolsillo
     if (user.pocket <= 0) {
@@ -79,22 +80,22 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       .setColor(0x00ff00)
       .setTitle("🏦 Depósito Exitoso")
       .setDescription(
-        `**${username}** depositó **$${amount.toFixed(2)}** en el banco.`,
+        `**${username}** depositó **${formatEconomyAmount(amount)}** en el banco.`,
       )
       .addFields(
         {
           name: "💵 Depositado",
-          value: `$${amount.toFixed(2)}`,
+          value: formatEconomyAmount(amount),
           inline: true,
         },
         {
           name: "👛 Bolsillo",
-          value: `$${balance.pocket.toFixed(2)}`,
+          value: formatEconomyAmount(balance.pocket),
           inline: true,
         },
         {
           name: "🏦 Banco (Global)",
-          value: `$${balance.bank.toFixed(2)}`,
+          value: formatEconomyAmount(balance.bank),
           inline: true,
         },
       )

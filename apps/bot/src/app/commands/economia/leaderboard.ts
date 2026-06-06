@@ -5,6 +5,7 @@ import {
 } from "discord.js";
 import logger, { logCommand } from "../../../utils/logger.js";
 import LeaderboardService from "../../services/economy/LeaderboardService.js";
+import { formatEconomyAmount } from "../../services/economy/money.js";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   try {
@@ -64,7 +65,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       const highlight = isCurrentUser ? "**➜ " : "";
       const highlightEnd = isCurrentUser ? "**" : "";
 
-      rankingText += `${highlight}${medal} **#${entry.position}** - <@${entry.userId}>${highlightEnd}\n\n`;
+      rankingText += `${highlight}${medal} **#${entry.position}** - <@${entry.userId}> · ${formatEconomyAmount(entry.netProfit)}${highlightEnd}\n\n`;
     }
 
     embed.addFields({

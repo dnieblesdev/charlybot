@@ -3,6 +3,7 @@ import { EconomyConfigService } from "./EconomyConfigService.js";
 import LeaderboardService from "./LeaderboardService.js";
 import { Guild } from "discord.js";
 import * as EconomyRepo from "../../../config/repositories/EconomyRepo.js";
+import { calculateNetProfitSnapshot, formatEconomyAmount } from "./money.js";
 
 export class EconomyService {
   // Obtener o crear usuario en la economía (por servidor)
@@ -29,7 +30,7 @@ export class EconomyService {
           inJail: false,
         });
         logger.info(
-          `Created new economy user: ${username} (${userId}) in guild ${guildId} with $${startingMoney}`,
+          `Created new economy user: ${username} (${userId}) in guild ${guildId} with ${formatEconomyAmount(startingMoney)}`,
         );
       }
 
@@ -363,7 +364,7 @@ export class EconomyService {
       return {
         totalEarned: user.totalEarned,
         totalLost: user.totalLost,
-        netProfit: user.totalEarned - user.totalLost,
+        netProfit: calculateNetProfitSnapshot(user.totalEarned, user.totalLost),
       };
     } catch (error) {
       logger.error("Error getting stats:", error);

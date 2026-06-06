@@ -5,6 +5,7 @@ import { EconomyService } from "../../services/economy/EconomyService.js";
 import { EconomyConfigService } from "../../services/economy/EconomyConfigService.js";
 import { rateLimitCommand } from "../../../infrastructure/valkey/rate-limit.js";
 import { CooldownError } from "@charlybot/shared";
+import { formatEconomyAmount } from "../../services/economy/money.js";
 
 // Lista de trabajos posibles con sus descripciones
 const jobs = [
@@ -126,7 +127,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       .setColor(0x00ff00)
       .setTitle("💼 Trabajo Completado")
       .setDescription(
-        `${job.emoji} **${interaction.user.username}** ${message} **${job.name}** y ganó **$${earnings.toFixed(2)}**!`,
+        `${job.emoji} **${interaction.user.username}** ${message} **${job.name}** y ganó **${formatEconomyAmount(earnings)}**!`,
       )
 
       .setFooter({ text: `Podrás trabajar de nuevo más tarde` })

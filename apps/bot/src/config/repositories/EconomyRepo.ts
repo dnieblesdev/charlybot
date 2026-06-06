@@ -2,7 +2,19 @@
 // Follows SDD design: Phase 7 (Economy domain — most complex)
 // All function signatures remain identical; only implementation changes.
 
-import { prisma, BOT_LOCK_TTL, ValidationError, NotFoundError, InsufficientFundsError, CooldownError, LockContentionError } from "@charlybot/shared";
+import {
+  prisma,
+  BOT_LOCK_TTL,
+  ValidationError,
+  NotFoundError,
+  InsufficientFundsError,
+  CooldownError,
+  LockContentionError,
+  assertMoneyAmount,
+  assertNonNegativeMoneyAmount,
+  toMoneyAmount,
+  toNonNegativeMoneyAmount,
+} from "@charlybot/shared";
 import { randomUUID } from "crypto";
 import {
   withDistributedLock,
@@ -21,6 +33,130 @@ import type {
   RouletteGame,
   RouletteBet,
 } from "@charlybot/shared";
+
+interface GuildWriteClient {
+  guild: {
+    upsert(args: {
+      where: { guildId: string };
+      update: Record<string, never>;
+      create: { guildId: string };
+    } | object): Promise<unknown>;
+  };
+}
+
+async function ensureGuildExists(client: GuildWriteClient, guildId: string): Promise<void> {
+  await client.guild.upsert({
+    where: { guildId },
+    update: {},
+    create: { guildId },
+  });
+}
+
+function normalizePositiveMoneyAmount(amount: number): number {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new ValidationError("amount", "must be positive finite number");
+  }
+
+  const normalizedAmount = toMoneyAmount(amount);
+  if (normalizedAmount <= 0) {
+    throw new ValidationError("amount", "must round to a positive whole amount");
+  }
+
+  return normalizedAmount;
+}
+
+function normalizeOptionalMoneyAmount(amount: number | undefined): number | undefined {
+  return amount === undefined ? undefined : toMoneyAmount(amount);
+}
+
+function normalizeOptionalIntegerMoneyAmount(
+  field: string,
+  amount: number | undefined,
+): number | undefined {
+  if (amount === undefined) {
+    return undefined;
+  }
+
+  try {
+    return assertMoneyAmount(amount);
+  } catch {
+    throw new ValidationError(field, "must be a finite whole amount");
+  }
+}
+
+function normalizeOptionalPositiveIntegerMoneyAmount(
+  field: string,
+  amount: number | undefined,
+): number | undefined {
+  const normalizedAmount = normalizeOptionalIntegerMoneyAmount(field, amount);
+
+  if (normalizedAmount === undefined) {
+    return undefined;
+  }
+
+  if (normalizedAmount <= 0) {
+    throw new ValidationError(field, "must be a positive whole amount");
+  }
+
+  return normalizedAmount;
+}
+
+function normalizeOptionalNullableNonNegativeIntegerMoneyAmount(
+  field: string,
+  amount: number | null | undefined,
+): number | null | undefined {
+  if (amount === undefined || amount === null) {
+    return amount;
+  }
+
+  try {
+    return assertNonNegativeMoneyAmount(amount);
+  } catch {
+    throw new ValidationError(field, "must be a non-negative finite whole amount");
+  }
+}
+
+function normalizeOptionalNonNegativeMoneyAmount(
+  field: string,
+  amount: number | undefined,
+): number | undefined {
+  if (amount === undefined) {
+    return undefined;
+  }
+
+  try {
+    return toNonNegativeMoneyAmount(amount);
+  } catch {
+    throw new ValidationError(field, "must be a non-negative finite whole amount");
+  }
+}
+
+function normalizeOptionalPositiveMoneyAmount(amount: number | undefined): number | undefined {
+  return amount === undefined ? undefined : normalizePositiveMoneyAmount(amount);
+}
+
+function normalizeEconomyUserData<T extends Partial<IUserEconomy>>(data: T): T {
+  return {
+    ...data,
+    pocket: normalizeOptionalNonNegativeMoneyAmount("pocket", data.pocket),
+    totalEarned: normalizeOptionalNonNegativeMoneyAmount("totalEarned", data.totalEarned),
+    totalLost: normalizeOptionalNonNegativeMoneyAmount("totalLost", data.totalLost),
+  } as T;
+}
+
+function normalizeGlobalBankData<T extends Partial<IGlobalBank>>(data: T): T {
+  return {
+    ...data,
+    bank: normalizeOptionalNonNegativeMoneyAmount("bank", data.bank),
+  } as T;
+}
+
+function normalizeLeaderboardData<T extends Partial<Leaderboard>>(data: T): T {
+  return {
+    ...data,
+    totalMoney: normalizeOptionalIntegerMoneyAmount("totalMoney", data.totalMoney),
+  } as T;
+}
 
 // Result types for atomic operations
 export interface TransferResult {
@@ -58,8 +194,10 @@ export async function createEconomyUser(
   guildId: string,
   data: IUserEconomy,
 ): Promise<IUserEconomy> {
+  await ensureGuildExists(prisma, guildId);
+
   return await prisma.userEconomy.create({
-    data: { ...data, guildId },
+    data: { ...normalizeEconomyUserData(data), guildId },
   });
 }
 
@@ -70,7 +208,7 @@ export async function updateEconomyUser(
 ): Promise<IUserEconomy> {
   return await prisma.userEconomy.update({
     where: { userId_guildId: { userId, guildId } },
-    data,
+    data: normalizeEconomyUserData(data),
   });
 }
 
@@ -93,7 +231,7 @@ export async function createGlobalBank(
   data: IGlobalBank,
 ): Promise<IGlobalBank> {
   return await prisma.globalBank.create({
-    data,
+    data: normalizeGlobalBankData(data),
   });
 }
 
@@ -104,7 +242,7 @@ export async function updateGlobalBank(
 ): Promise<IGlobalBank> {
   return await prisma.globalBank.update({
     where: { userId },
-    data,
+    data: normalizeGlobalBankData(data),
   });
 }
 
@@ -124,6 +262,8 @@ export async function createEconomyConfig(
   guildId: string,
   data: IEconomyConfig,
 ): Promise<IEconomyConfig> {
+  await ensureGuildExists(prisma, guildId);
+
   return await prisma.economyConfig.create({
     data: { ...data, guildId },
   });
@@ -168,7 +308,11 @@ export async function upsertLeaderboard(
   guildId: string,
   data: Partial<Leaderboard>,
 ): Promise<Leaderboard> {
-  const { userId, guildId: _gid, ...rest } = data as Leaderboard & { userId: string };
+  await ensureGuildExists(prisma, guildId);
+
+  const normalizedData = normalizeLeaderboardData(data);
+  const { userId, guildId: _gid, ...rest } = normalizedData as Leaderboard & { userId: string };
+
   return await prisma.leaderboard.upsert({
     where: { userId_guildId: { userId, guildId } },
     update: rest,
@@ -224,6 +368,8 @@ export async function createRouletteGame(
   guildId: string,
   data: Partial<RouletteGame>,
 ): Promise<RouletteGame> {
+  await ensureGuildExists(prisma, guildId);
+
   return await prisma.rouletteGame.create({
     data: { ...data, guildId } as any,
   });
@@ -313,8 +459,16 @@ export async function placeRouletteBet(
   gameId: number,
   data: Partial<RouletteBet>,
 ): Promise<RouletteBet> {
+  await ensureGuildExists(prisma, guildId);
+
   return await prisma.rouletteBet.create({
-    data: { ...data, gameId, guildId } as any,
+    data: {
+      ...data,
+      amount: normalizeOptionalPositiveMoneyAmount(data.amount),
+      winAmount: normalizeOptionalNonNegativeMoneyAmount("winAmount", data.winAmount ?? undefined),
+      gameId,
+      guildId,
+    } as any,
   }) as unknown as RouletteBet;
 }
 
@@ -325,7 +479,11 @@ export async function updateRouletteBet(
 ): Promise<RouletteBet> {
   return await prisma.rouletteBet.update({
     where: { id: betId },
-    data: data as any,
+    data: {
+      ...data,
+      amount: normalizeOptionalPositiveIntegerMoneyAmount("amount", data.amount),
+      winAmount: normalizeOptionalNullableNonNegativeIntegerMoneyAmount("winAmount", data.winAmount),
+    } as any,
   }) as unknown as RouletteBet;
 }
 
@@ -341,9 +499,7 @@ export async function atomicTransfer(
   fromUsername: string,
   toUsername: string,
 ): Promise<TransferResult> {
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new ValidationError("amount", "must be positive finite number");
-  }
+  const normalizedAmount = normalizePositiveMoneyAmount(amount);
   const valkey = getValkeyClient();
   const lockKey = transferLockKey(guildId, fromUserId, toUserId);
 
@@ -367,8 +523,8 @@ export async function atomicTransfer(
           throw new NotFoundError("UserEconomy", `${fromUserId} or ${toUserId}`);
         }
 
-        if (fromUser.pocket < amount) {
-          throw new InsufficientFundsError(fromUserId, amount, fromUser.pocket);
+        if (fromUser.pocket < normalizedAmount) {
+          throw new InsufficientFundsError(fromUserId, normalizedAmount, fromUser.pocket);
         }
 
         // Atomic update for both users
@@ -376,21 +532,21 @@ export async function atomicTransfer(
           tx.userEconomy.update({
             where: { userId_guildId: { userId: fromUserId, guildId } },
             data: {
-              pocket: fromUser.pocket - amount,
-              totalLost: fromUser.totalLost + amount,
+              pocket: fromUser.pocket - normalizedAmount,
+              totalLost: fromUser.totalLost + normalizedAmount,
             },
           }),
           tx.userEconomy.update({
             where: { userId_guildId: { userId: toUserId, guildId } },
             data: {
-              pocket: toUser.pocket + amount,
-              totalEarned: toUser.totalEarned + amount,
+              pocket: toUser.pocket + normalizedAmount,
+              totalEarned: toUser.totalEarned + normalizedAmount,
             },
           }),
         ]);
 
         logger.info(
-          `Atomic transfer: ${amount} from ${fromUserId} to ${toUserId} in guild ${guildId}`,
+          `Atomic transfer: ${normalizedAmount} from ${fromUserId} to ${toUserId} in guild ${guildId}`,
         );
 
         return { fromUser: updatedFrom, toUser: updatedTo };
@@ -412,9 +568,7 @@ export async function atomicDeposit(
   username: string,
   amount: number,
 ): Promise<DepositResult> {
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new ValidationError("amount", "must be positive finite number");
-  }
+  const normalizedAmount = normalizePositiveMoneyAmount(amount);
   const valkey = getValkeyClient();
   // Global bank is keyed ONLY by userId, so we need a global lock.
   // We also lock the per-guild user row to avoid races with other pocket operations.
@@ -436,8 +590,8 @@ export async function atomicDeposit(
               where: { userId_guildId: { userId, guildId } },
             });
 
-            if (!user || user.pocket < amount) {
-              throw new InsufficientFundsError(userId, amount, user?.pocket ?? 0);
+            if (!user || user.pocket < normalizedAmount) {
+              throw new InsufficientFundsError(userId, normalizedAmount, user?.pocket ?? 0);
             }
 
             // Get or create global bank
@@ -455,15 +609,15 @@ export async function atomicDeposit(
             const [updatedUser, updatedBank] = await Promise.all([
               tx.userEconomy.update({
                 where: { userId_guildId: { userId, guildId } },
-                data: { pocket: user.pocket - amount },
+                data: { pocket: user.pocket - normalizedAmount },
               }),
               tx.globalBank.update({
                 where: { userId },
-                data: { bank: bank.bank + amount },
+                data: { bank: bank.bank + normalizedAmount },
               }),
             ]);
 
-            logger.info(`Atomic deposit: ${amount} from user ${userId} to global bank`);
+            logger.info(`Atomic deposit: ${normalizedAmount} from user ${userId} to global bank`);
 
             return { user: updatedUser, bank: updatedBank };
           });
@@ -487,9 +641,7 @@ export async function atomicWithdraw(
   username: string,
   amount: number,
 ): Promise<WithdrawResult> {
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new ValidationError("amount", "must be positive finite number");
-  }
+  const normalizedAmount = normalizePositiveMoneyAmount(amount);
   const valkey = getValkeyClient();
   // Global bank is keyed ONLY by userId, so we need a global lock.
   // We also lock the per-guild user row to avoid races with other pocket operations.
@@ -512,8 +664,8 @@ export async function atomicWithdraw(
               where: { userId },
             });
 
-            if (!bank || bank.bank < amount) {
-              throw new InsufficientFundsError(userId, amount, bank?.bank ?? 0);
+            if (!bank || bank.bank < normalizedAmount) {
+              throw new InsufficientFundsError(userId, normalizedAmount, bank?.bank ?? 0);
             }
 
             // Get or create user economy
@@ -522,6 +674,8 @@ export async function atomicWithdraw(
             });
 
             if (!user) {
+              await ensureGuildExists(tx as unknown as GuildWriteClient, guildId);
+
               user = await tx.userEconomy.create({
                 data: {
                   userId,
@@ -539,15 +693,15 @@ export async function atomicWithdraw(
             const [updatedBank, updatedUser] = await Promise.all([
               tx.globalBank.update({
                 where: { userId },
-                data: { bank: bank.bank - amount },
+                data: { bank: bank.bank - normalizedAmount },
               }),
               tx.userEconomy.update({
                 where: { userId_guildId: { userId, guildId } },
-                data: { pocket: user.pocket + amount },
+                data: { pocket: user.pocket + normalizedAmount },
               }),
             ]);
 
-            logger.info(`Atomic withdraw: ${amount} from global bank to user ${userId}`);
+            logger.info(`Atomic withdraw: ${normalizedAmount} from global bank to user ${userId}`);
 
             return { bank: updatedBank, user: updatedUser };
           });
@@ -571,9 +725,7 @@ export async function atomicAddPocket(
   amount: number,
   cooldownType?: "work" | "crime" | "rob",
 ): Promise<IUserEconomy> {
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new ValidationError("amount", "must be positive finite number");
-  }
+  const normalizedAmount = normalizePositiveMoneyAmount(amount);
   const valkey = getValkeyClient();
   const lockKey = economyUserLockKey(guildId, userId);
 
@@ -617,8 +769,8 @@ export async function atomicAddPocket(
 
         // Build update data
         const updateData: any = {
-          pocket: user.pocket + amount,
-          totalEarned: user.totalEarned + amount,
+          pocket: user.pocket + normalizedAmount,
+          totalEarned: user.totalEarned + normalizedAmount,
         };
 
         // Claim cooldown if requested
@@ -646,9 +798,7 @@ export async function atomicSubtractPocket(
   amount: number,
   cooldownType?: "work" | "crime" | "rob",
 ): Promise<IUserEconomy> {
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new ValidationError("amount", "must be positive finite number");
-  }
+  const normalizedAmount = normalizePositiveMoneyAmount(amount);
   const valkey = getValkeyClient();
   const lockKey = economyUserLockKey(guildId, userId);
 
@@ -665,8 +815,8 @@ export async function atomicSubtractPocket(
         if (!user) throw new NotFoundError("UserEconomy", userId);
 
         // Check insufficient funds
-        if (user.pocket < amount) {
-          throw new InsufficientFundsError(userId, amount, user.pocket);
+        if (user.pocket < normalizedAmount) {
+          throw new InsufficientFundsError(userId, normalizedAmount, user.pocket);
         }
 
         // If cooldownType is provided, atomically check and claim the cooldown
@@ -696,8 +846,8 @@ export async function atomicSubtractPocket(
         }
 
         const updateData: any = {
-          pocket: user.pocket - amount,
-          totalLost: user.totalLost + amount,
+          pocket: user.pocket - normalizedAmount,
+          totalLost: user.totalLost + normalizedAmount,
         };
 
         if (cooldownType === "work") updateData.lastWork = new Date();
@@ -781,9 +931,7 @@ export async function atomicPlaceBet(
   betType: "color" | "number",
   betValue: string,
 ): Promise<RouletteBet> {
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new ValidationError("amount", "must be positive finite number");
-  }
+  const normalizedAmount = normalizePositiveMoneyAmount(amount);
   const valkey = getValkeyClient();
   const lockKey = economyUserLockKey(guildId, userId);
 
@@ -798,20 +946,22 @@ export async function atomicPlaceBet(
         });
 
         if (!user) throw new NotFoundError("UserEconomy", userId);
-        if (user.pocket < amount) throw new InsufficientFundsError(userId, amount, user.pocket);
+        if (user.pocket < normalizedAmount) {
+          throw new InsufficientFundsError(userId, normalizedAmount, user.pocket);
+        }
 
         // Deduct money
         await tx.userEconomy.update({
           where: { userId_guildId: { userId, guildId } },
           data: {
-            pocket: user.pocket - amount,
-            totalLost: user.totalLost + amount,
+            pocket: user.pocket - normalizedAmount,
+            totalLost: user.totalLost + normalizedAmount,
           },
         });
 
         // Create bet
         const bet = await tx.rouletteBet.create({
-          data: { gameId, userId, guildId, amount, betType, betValue },
+          data: { gameId, userId, guildId, amount: normalizedAmount, betType, betValue },
         });
 
         return bet;
@@ -875,7 +1025,12 @@ export async function atomicProcessRouletteResults(
           });
 
           if (!game) throw new NotFoundError("RouletteGame", String(gameId));
-          if (game.status !== "waiting") throw new ValidationError("game", "already processed");
+          if (game.status === "finished") {
+            throw new ValidationError("game", "already processed");
+          }
+          if (game.status !== "spinning") {
+            throw new ValidationError("game", `invalid status: ${game.status}`);
+          }
 
           // Process each bet
           const results: any[] = [];
@@ -883,7 +1038,9 @@ export async function atomicProcessRouletteResults(
             const won =
               bet.betType === "color" ? bet.betValue === winningColor : bet.betValue === String(winningNumber);
 
-            const winAmount = won ? (bet.betValue === "green" ? bet.amount * 14 : bet.amount * 2) : 0;
+            const winAmount = won
+              ? toMoneyAmount(bet.betValue === "green" ? bet.amount * 14 : bet.amount * 2)
+              : 0;
 
             await tx.rouletteBet.update({
               where: { id: bet.id },

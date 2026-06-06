@@ -8,6 +8,7 @@ import { loadValkeyConfig } from "@charlybot/shared";
 import { Guild } from "discord.js";
 import logger from "../../../utils/logger.js";
 import * as EconomyRepo from "../../../config/repositories/EconomyRepo";
+import { calculateNetProfitSnapshot } from "./money.js";
 
 class LeaderboardService {
   /**
@@ -35,7 +36,10 @@ class LeaderboardService {
       }
 
       // Calcular ganancia neta (por servidor)
-      const netProfit = userEconomy.totalEarned - userEconomy.totalLost;
+      const netProfit = calculateNetProfitSnapshot(
+        userEconomy.totalEarned,
+        userEconomy.totalLost,
+      );
 
       // 2. Verificar si ya existe el registro
       const existingRecord = await EconomyRepo.getLeaderboardEntry(
@@ -154,7 +158,10 @@ class LeaderboardService {
         return;
       }
 
-      const netProfit = userEconomy.totalEarned - userEconomy.totalLost;
+      const netProfit = calculateNetProfitSnapshot(
+        userEconomy.totalEarned,
+        userEconomy.totalLost,
+      );
       const existingRecord = await EconomyRepo.getLeaderboardEntry(
         guildId,
         userId

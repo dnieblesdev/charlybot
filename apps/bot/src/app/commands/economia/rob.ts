@@ -6,6 +6,10 @@ import { EconomyConfigService } from "../../services/economy/EconomyConfigServic
 import { rateLimitCommand } from "../../../infrastructure/valkey/rate-limit.js";
 import { atomicClaimCooldown } from "../../../config/repositories/EconomyRepo.js";
 import { CooldownError } from "@charlybot/shared";
+import {
+  calculateWholeAmountPercentage,
+  formatEconomyAmount,
+} from "../../services/economy/money.js";
 
 const successMessages = [
   "lograste robarle a",
@@ -129,7 +133,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (success) {
       // ÉXITO: Roba entre 40% y 80% del dinero del bolsillo de la víctima
       const percentage = Math.random() * 0.4 + 0.4; // 0.4 a 0.8
-      const stolenAmount = victim.pocket * percentage;
+      const stolenAmount = calculateWholeAmountPercentage(
+        victim.pocket,
+        percentage,
+      );
 
       // Transferir el dinero
       await EconomyService.transfer(
@@ -158,22 +165,22 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         .setColor(0x9b59b6)
         .setTitle("💰 ¡Robo Exitoso!")
         .setDescription(
-          `🦹 **${interaction.user.username}** ${message} **${targetUser.username}** y robó **$${stolenAmount.toFixed(2)}**!`,
+          `🦹 **${interaction.user.username}** ${message} **${targetUser.username}** y robó **${formatEconomyAmount(stolenAmount)}**!`,
         )
         .addFields(
           {
             name: "💵 Dinero Robado",
-            value: `$${stolenAmount.toFixed(2)} (${(percentage * 100).toFixed(0)}% del bolsillo)`,
+            value: `${formatEconomyAmount(stolenAmount)} (${(percentage * 100).toFixed(0)}% del bolsillo)`,
             inline: false,
           },
           {
             name: `🦹 ${interaction.user.username} (Ladrón)`,
-            value: `👛 Bolsillo: $${robberBalance.pocket.toFixed(2)}\n🏦 Banco: $${robberBalance.bank.toFixed(2)}`,
+            value: `👛 Bolsillo: ${formatEconomyAmount(robberBalance.pocket)}\n🏦 Banco: ${formatEconomyAmount(robberBalance.bank)}`,
             inline: true,
           },
           {
             name: `😢 ${targetUser.username} (Víctima)`,
-            value: `👛 Bolsillo: $${victimBalance.pocket.toFixed(2)}\n🏦 Banco: $${victimBalance.bank.toFixed(2)}`,
+            value: `👛 Bolsillo: ${formatEconomyAmount(victimBalance.pocket)}\n🏦 Banco: ${formatEconomyAmount(victimBalance.bank)}`,
             inline: true,
           },
         )
@@ -194,7 +201,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     } else {
       // FALLO: Debe pagar 20% del total de su dinero (bolsillo + banco) a la víctima
       const robberBalance = await EconomyService.getBalance(userId, guildId);
-      const penalty = (robberBalance.pocket + robberBalance.bank) * 0.2;
+      const penalty = calculateWholeAmountPercentage(
+        robberBalance.pocket + robberBalance.bank,
+        0.2,
+      );
 
       // Obtener tiempo de prisión de la configuración
       const jailTime = config.jailTimeRob;
@@ -217,20 +227,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           .setTitle("🚔 ¡ATRAPADO!")
           .setDescription(
             `${failMessage} **${targetUser.username}**, pero te atraparon!\n\n` +
-              `No tienes suficiente en tu bolsillo para pagar la multa de **$${penalty.toFixed(2)}**.\n` +
-              `¡Vas a prisión! Puedes usar \`/bail\` para pagar la multa con tu banco y salir.`,
-          )
-          .addFields(
-            {
-              name: "⚖️ Multa a Pagar",
-              value: `$${penalty.toFixed(2)}`,
-              inline: true,
-            },
-            {
-              name: "👛 Tu Bolsillo",
-              value: `$${robberBalance.pocket.toFixed(2)}`,
-              inline: true,
-            },
+               `No tienes suficiente en tu bolsillo para pagar la multa de **${formatEconomyAmount(penalty)}**.\n` +
+               `¡Vas a prisión! Puedes usar \`/bail\` para pagar la multa con tu banco y salir.`,
+           )
+           .addFields(
+             {
+               name: "⚖️ Multa a Pagar",
+               value: formatEconomyAmount(penalty),
+               inline: true,
+             },
+             {
+               name: "👛 Tu Bolsillo",
+               value: formatEconomyAmount(robberBalance.pocket),
+               inline: true,
+             },
             {
               name: "⚖️ Condena",
               value: `${jailTime} minutos en prisión`,
@@ -241,11 +251,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               value: `<t:${releaseTimestamp}:R>`,
               inline: true,
             },
-            {
-              name: "💡 Tip",
-              value: `Usa \`/bail\` para pagar con tu banco ($${robberBalance.bank.toFixed(2)}) y salir antes`,
-              inline: false,
-            },
+             {
+               name: "💡 Tip",
+               value: `Usa \`/bail\` para pagar con tu banco (${formatEconomyAmount(robberBalance.bank)}) y salir antes`,
+               inline: false,
+             },
           )
           .setFooter({
             text: "¡La próxima vez asegúrate de tener dinero en el bolsillo!",
@@ -297,20 +307,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           )
           .addFields(
             {
-              name: "⚖️ Penalización Pagada",
-              value: `$${penalty.toFixed(2)}`,
-              inline: false,
-            },
-            {
-              name: `😭 ${interaction.user.username} (Ladrón Fallido)`,
-              value: `👛 Bolsillo: $${robberBalanceAfter.pocket.toFixed(2)}\n🏦 Banco: $${robberBalanceAfter.bank.toFixed(2)}`,
-              inline: true,
-            },
-            {
-              name: `😊 ${targetUser.username} (Compensado)`,
-              value: `👛 Bolsillo: $${victimBalance.pocket.toFixed(2)}\n🏦 Banco: $${victimBalance.bank.toFixed(2)}`,
-              inline: true,
-            },
+               name: "⚖️ Penalización Pagada",
+               value: formatEconomyAmount(penalty),
+               inline: false,
+             },
+             {
+               name: `😭 ${interaction.user.username} (Ladrón Fallido)`,
+               value: `👛 Bolsillo: ${formatEconomyAmount(robberBalanceAfter.pocket)}\n🏦 Banco: ${formatEconomyAmount(robberBalanceAfter.bank)}`,
+               inline: true,
+             },
+             {
+               name: `😊 ${targetUser.username} (Compensado)`,
+               value: `👛 Bolsillo: ${formatEconomyAmount(victimBalance.pocket)}\n🏦 Banco: ${formatEconomyAmount(victimBalance.bank)}`,
+               inline: true,
+             },
           )
           .setFooter({
             text: "¡La próxima vez ten más suerte! Podrás robar de nuevo en 2 horas",
