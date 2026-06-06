@@ -9,6 +9,7 @@
 import { readdir, unlink, stat } from "node:fs/promises";
 import { join } from "node:path";
 
+import { isExecutedAsScript } from "./env.js";
 import { getBackupDirForProvider } from "./provider.js";
 import type { Provider } from "./provider.js";
 
@@ -165,7 +166,7 @@ async function showProviderStatus(
 }
 
 // CLI execution
-if (import.meta.main) {
+if (isExecutedAsScript(import.meta.url)) {
   (async () => {
     const args = process.argv.slice(2);
     const command = args[0];

@@ -10,16 +10,15 @@
  */
 
 import { existsSync, createReadStream } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { createGunzip } from "node:zlib";
 import { pipeline } from "node:stream/promises";
 
-import { getBackupDirForProvider, getPgEnvVars, redactUrl } from "./provider.js";
+import { isExecutedAsScript, loadPrismaEnvironment } from "./env.js";
+import { ensureCommandAvailable, getBackupDirForProvider, getPgConnectionArg, getPgEnvVars, redactUrl, requireDatabaseUrl } from "./provider.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+loadPrismaEnvironment();
 
 export interface RestoreOptions {
   backupFilename: string | "latest";
@@ -27,32 +26,19 @@ export interface RestoreOptions {
 }
 
 /**
- * Check if psql is available
- */
-async function checkPsql(): Promise<boolean> {
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const psql = spawn("psql", ["--version"], { stdio: "pipe" });
-      psql.on("error", () => reject(new Error("not found")));
-      psql.on("close", (code) => (code === 0 ? resolve() : reject(new Error("not found"))));
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Restore PostgreSQL database from SQL backup
  */
 async function restorePostgreSQL(backupPath: string, force: boolean): Promise<boolean> {
-  const databaseUrl = process.env.DATABASE_URL;
-  
-  if (!databaseUrl) {
-    console.error("❌ DATABASE_URL is required for PostgreSQL restore.");
-    console.log("   Set: postgresql://user:password@host:port/dbname");
+  let databaseUrl: string;
+
+  try {
+    databaseUrl = requireDatabaseUrl();
+  } catch (error: any) {
+    console.error(`❌ ${error.message}`);
     return false;
   }
+
+  const connectionArg = getPgConnectionArg(databaseUrl);
 
   if (!force) {
     console.log("\n⚠️  WARNING: This will replace the current database!");
@@ -63,14 +49,10 @@ async function restorePostgreSQL(backupPath: string, force: boolean): Promise<bo
   }
 
   // Check for psql
-  const psqlAvailable = await checkPsql();
-  if (!psqlAvailable) {
-    console.error(
-      "❌ psql not found. Install PostgreSQL client tools:\n" +
-      "  macOS: brew install postgresql\n" +
-      "  Ubuntu/Debian: apt-get install postgresql-client\n" +
-      "  Windows: download from postgresql.org or use chocolatey: choco install postgresql"
-    );
+  try {
+    await ensureCommandAvailable("psql");
+  } catch (error: any) {
+    console.error(error.message);
     return false;
   }
 
@@ -82,7 +64,7 @@ async function restorePostgreSQL(backupPath: string, force: boolean): Promise<bo
       console.log("📦 Decompressing .sql.gz...\n");
       
       const pgEnv = getPgEnvVars(databaseUrl);
-      const psqlArgs = ["-v", "ON_ERROR_STOP=1", "-1"]; // stop on SQL errors, restore in a single transaction
+      const psqlArgs = [connectionArg, "-v", "ON_ERROR_STOP=1", "-1"]; // stop on SQL errors, restore in a single transaction
       const psqlProcess = spawn("psql", psqlArgs, {
         env: { ...process.env, ...pgEnv },
         stdio: ["pipe", "inherit", "pipe"],
@@ -133,7 +115,7 @@ async function restorePostgreSQL(backupPath: string, force: boolean): Promise<bo
     } else {
       // Direct psql restore with file argument
       const pgEnv = getPgEnvVars(databaseUrl);
-      const psqlArgs = ["-v", "ON_ERROR_STOP=1", "-1", "-f", backupPath];
+      const psqlArgs = [connectionArg, "-v", "ON_ERROR_STOP=1", "-1", "-f", backupPath];
       const psqlProcess = spawn("psql", psqlArgs, {
         env: { ...process.env, ...pgEnv },
         stdio: "inherit",
@@ -234,7 +216,7 @@ export async function listRestoreOptions(): Promise<void> {
 }
 
 // CLI execution
-if (import.meta.main) {
+if (isExecutedAsScript(import.meta.url)) {
   const args = process.argv.slice(2);
   
   // Parse flags

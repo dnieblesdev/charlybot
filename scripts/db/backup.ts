@@ -12,7 +12,10 @@ import { spawn } from "node:child_process";
 import { createGzip } from "node:zlib";
 import { pipeline } from "node:stream/promises";
 
-import { getBackupDirForProvider, getPgEnvVars } from "./provider.js";
+import { isExecutedAsScript, loadPrismaEnvironment } from "./env.js";
+import { ensureCommandAvailable, getBackupDirForProvider, getPgConnectionArg, getPgEnvVars, requireDatabaseUrl } from "./provider.js";
+
+loadPrismaEnvironment();
 
 export interface BackupOptions {
   type: "daily" | "migration";
@@ -66,6 +69,7 @@ async function runPgDump(
 ): Promise<void> {
   // Extract credentials into env vars so pg_dump doesn't leak them in argv
   const pgEnv = getPgEnvVars(databaseUrl);
+  const connectionArg = getPgConnectionArg(databaseUrl);
   const pgDumpArgs = [
     "--format=plain",
     // DEV-ONLY default: avoid restore permission errors across local users/roles.
@@ -73,6 +77,7 @@ async function runPgDump(
     ...(preserveAcl ? [] : ["--no-owner", "--no-acl"]),
     "--clean",
     "--if-exists",
+    connectionArg,
   ];
 
   const fileHandle = createWriteStream(outputFile);
@@ -183,14 +188,9 @@ async function createPostgresBackup(
  * Create a backup of the database (auto-detects provider)
  */
 export async function createBackup(options: BackupOptions): Promise<BackupResult> {
-  const dbUrl = process.env.DATABASE_URL;
+  const dbUrl = requireDatabaseUrl();
 
-  if (!dbUrl) {
-    throw new Error(
-      "DATABASE_URL is required for PostgreSQL backups.\n" +
-      "  Set: postgresql://user:password@host:port/dbname"
-    );
-  }
+  await ensureCommandAvailable("pg_dump");
 
   const backupDir = await ensureBackupDir("postgresql");
   const preserveAcl =
@@ -264,7 +264,7 @@ export async function getLatestBackup(type?: "daily" | "migration"): Promise<Bac
 }
 
 // CLI execution
-if (import.meta.main) {
+if (isExecutedAsScript(import.meta.url)) {
   (async () => {
     const args = process.argv.slice(2);
     const command = args[0];

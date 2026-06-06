@@ -9,8 +9,13 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 
+import { isExecutedAsScript, loadPrismaEnvironment } from "./env.js";
+import { requireDatabaseUrl } from "./provider.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+loadPrismaEnvironment();
 
 interface MigrationResult {
   success: boolean;
@@ -21,28 +26,14 @@ interface MigrationResult {
 /**
  * Run pre-migration backup
  */
-async function preMigrationBackup(): Promise<string | null> {
+async function preMigrationBackup(): Promise<string> {
   const { createBackup } = await import("./backup.js");
   
   console.log("\n📦 Creating pre-migration backup...");
-  
-  try {
-    const result = await createBackup({ type: "migration" });
-    console.log(`✅ Pre-migration backup ready: ${result.filepath}\n`);
-    return result.filepath;
-  } catch (error: any) {
-    console.error(`❌ Pre-migration backup failed: ${error.message}`);
-    console.error("⚠️  WARNING: Proceeding with migration WITHOUT backup!");
-    return null;
-  }
-}
 
-/**
- * Check if database exists.
- * For PostgreSQL in this repo, we consider the DB configured if DATABASE_URL is set.
- */
-async function dbExists(): Promise<boolean> {
-  return Boolean(process.env.DATABASE_URL);
+  const result = await createBackup({ type: "migration" });
+  console.log(`✅ Pre-migration backup ready: ${result.filepath}\n`);
+  return result.filepath;
 }
 
 /**
@@ -53,12 +44,14 @@ function spawnAsync(
   args: string[],
   cwd: string
 ): Promise<number> {
-  // Windows: pnpm is typically a .cmd shim, so spawn needs the .cmd suffix
-  const cmd = process.platform === "win32" && command === "pnpm"
-    ? "pnpm.cmd"
-    : command;
+  const useWindowsCommandShim = process.platform === "win32" && command === "pnpm";
+  const cmd = useWindowsCommandShim ? "cmd.exe" : command;
+  const cmdArgs = useWindowsCommandShim
+    ? ["/d", "/s", "/c", ["pnpm", ...args].map(quoteWindowsCmdArg).join(" ")]
+    : args;
+
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, {
+    const child = spawn(cmd, cmdArgs, {
       cwd,
       stdio: "inherit",
     });
@@ -71,6 +64,14 @@ function spawnAsync(
       resolve(code ?? 1);
     });
   });
+}
+
+function quoteWindowsCmdArg(value: string): string {
+  if (!/[\s"&()<>^|]/.test(value)) {
+    return value;
+  }
+
+  return `"${value.replace(/(\\*)"/g, '$1$1\\"')}"`;
 }
 
 /**
@@ -142,34 +143,43 @@ async function runRotation(): Promise<void> {
   }
 }
 
+function normalizeForwardedArgs(args: string[]): string[] {
+  return args[0] === "--" ? args.slice(1) : args;
+}
+
+function ensureMutationPrerequisites(): void {
+  requireDatabaseUrl();
+}
+
 /**
  * Dev migration flow — creates a new migration from schema changes
  */
 export async function migrateDev(args: string[] = []): Promise<MigrationResult> {
-  // Check if database exists FIRST (handles empty DATABASE_URL gracefully)
-  const exists = await dbExists();
-  
-  if (!exists) {
-    console.log(`⚠️  Database doesn't exist. Running migration without backup.`);
-    console.log(`   First time setup — ensure DATABASE_URL is set correctly.\n`);
-    
-    const exitCode = await runPrismaMigrateDev(args);
+  try {
+    ensureMutationPrerequisites();
+  } catch (error: any) {
     return {
-      success: exitCode === 0,
-      error: exitCode !== 0 ? "Migration dev failed" : undefined,
+      success: false,
+      error: error.message,
     };
   }
 
   // Create pre-migration backup
-  const backupFilepath = await preMigrationBackup();
-  
-  if (!backupFilepath) {
-    console.log("\n⚠️  Proceeding with migration despite backup failure!\n");
+  let backupFilepath: string;
+  try {
+    backupFilepath = await preMigrationBackup();
+  } catch (error: any) {
+    console.error(`\n❌ Pre-migration backup failed: ${error.message}`);
+    console.error("🛑 Migration dev aborted before Prisma mutate step.\n");
+    return {
+      success: false,
+      error: `Pre-migration backup failed: ${error.message}`,
+    };
   }
 
   // Run migration dev
   console.log("🚀 Creating migration...\n");
-  const exitCode = await runPrismaMigrateDev(args);
+  const exitCode = await runPrismaMigrateDev(normalizeForwardedArgs(args));
 
   if (exitCode !== 0) {
     console.error(`\n❌ Migration dev failed with exit code ${exitCode}`);
@@ -201,30 +211,31 @@ export async function migrateDev(args: string[] = []): Promise<MigrationResult> 
  * Main migration flow (production deploy)
  */
 export async function migrate(args: string[] = []): Promise<MigrationResult> {
-  // Check if database exists FIRST
-  const exists = await dbExists();
-  
-  if (!exists) {
-    console.log(`⚠️  Database doesn't exist. Running migration without backup.`);
-    console.log(`   First time setup — ensure DATABASE_URL is set correctly.\n`);
-    
-    const exitCode = await runPrismaMigrate(args);
+  try {
+    ensureMutationPrerequisites();
+  } catch (error: any) {
     return {
-      success: exitCode === 0,
-      error: exitCode !== 0 ? "Migration failed" : undefined,
+      success: false,
+      error: error.message,
     };
   }
 
   // Create pre-migration backup
-  const backupFilepath = await preMigrationBackup();
-  
-  if (!backupFilepath) {
-    console.log("\n⚠️  Proceeding with migration despite backup failure!\n");
+  let backupFilepath: string;
+  try {
+    backupFilepath = await preMigrationBackup();
+  } catch (error: any) {
+    console.error(`\n❌ Pre-migration backup failed: ${error.message}`);
+    console.error("🛑 Migration aborted before Prisma mutate step.\n");
+    return {
+      success: false,
+      error: `Pre-migration backup failed: ${error.message}`,
+    };
   }
 
   // Run migration
   console.log("🚀 Running migration...\n");
-  const exitCode = await runPrismaMigrate(args);
+  const exitCode = await runPrismaMigrate(normalizeForwardedArgs(args));
 
   if (exitCode !== 0) {
     console.error(`\n❌ Migration failed with exit code ${exitCode}`);
@@ -256,30 +267,31 @@ export async function migrate(args: string[] = []): Promise<MigrationResult> {
  * db push flow — syncs schema without migration file
  */
 export async function dbPush(args: string[] = []): Promise<MigrationResult> {
-  // Check if database exists FIRST
-  const exists = await dbExists();
-  
-  if (!exists) {
-    console.log(`⚠️  Database doesn't exist. Running db push without backup.`);
-    console.log(`   First time setup — ensure DATABASE_URL is set correctly.\n`);
-    
-    const exitCode = await runPrismaPush(args);
+  try {
+    ensureMutationPrerequisites();
+  } catch (error: any) {
     return {
-      success: exitCode === 0,
-      error: exitCode !== 0 ? "db push failed" : undefined,
+      success: false,
+      error: error.message,
     };
   }
 
   // Create pre-migration backup
-  const backupFilepath = await preMigrationBackup();
-  
-  if (!backupFilepath) {
-    console.log("\n⚠️  Proceeding with db push despite backup failure!\n");
+  let backupFilepath: string;
+  try {
+    backupFilepath = await preMigrationBackup();
+  } catch (error: any) {
+    console.error(`\n❌ Pre-migration backup failed: ${error.message}`);
+    console.error("🛑 db push aborted before Prisma mutate step.\n");
+    return {
+      success: false,
+      error: `Pre-migration backup failed: ${error.message}`,
+    };
   }
 
   // Run db push
   console.log("🚀 Running db push...\n");
-  const exitCode = await runPrismaPush(args);
+  const exitCode = await runPrismaPush(normalizeForwardedArgs(args));
 
   if (exitCode !== 0) {
     console.error(`\n❌ db push failed with exit code ${exitCode}`);
@@ -308,12 +320,25 @@ export async function dbPush(args: string[] = []): Promise<MigrationResult> {
 }
 
 // CLI execution
-if (import.meta.main) {
+if (isExecutedAsScript(import.meta.url)) {
   (async () => {
     const args = process.argv.slice(2);
-    const command = args[0];
+    const command = args[0] ?? "migrate";
 
     switch (command) {
+      case "help":
+      case "--help":
+      case "-h": {
+        console.log("Usage:");
+        console.log("  pnpm db:migrate dev [--name <name>]   → create new migration");
+        console.log("  pnpm db:migrate                       → apply pending migrations");
+        console.log("  pnpm db:migrate deploy                → apply pending migrations");
+        console.log("  pnpm db:migrate:dev -- --name <name>  → create new migration");
+        console.log("  pnpm db:migrate:deploy                → apply pending migrations");
+        console.log("  pnpm db:migrate push                  → sync schema without migration");
+        console.log("\nNote: All mutating commands require DATABASE_URL and a successful pre-migration backup.");
+        process.exit(0);
+      }
       case "migrate":
       case "deploy": {
         const result = await migrate(args.slice(1));
@@ -330,9 +355,12 @@ if (import.meta.main) {
       default:
         console.log("Usage:");
         console.log("  pnpm db:migrate dev [--name <name>]   → create new migration");
-        console.log("  pnpm db:migrate deploy                → apply migrations (production)");
+        console.log("  pnpm db:migrate                       → apply pending migrations");
+        console.log("  pnpm db:migrate deploy                → apply pending migrations");
+        console.log("  pnpm db:migrate:dev -- --name <name>  → create new migration");
+        console.log("  pnpm db:migrate:deploy                → apply pending migrations");
         console.log("  pnpm db:migrate push                  → sync schema without migration");
-        console.log("\nNote: All commands create a backup before running.");
+        console.log("\nNote: All mutating commands require DATABASE_URL and create a backup before running.");
         process.exit(1);
     }
   })();

@@ -17,7 +17,9 @@
     "db:backup:migration": "tsx scripts/db/backup.ts create migration",
     "db:backup:list": "tsx scripts/db/backup.ts list",
     "db:backup:latest": "tsx scripts/db/backup.ts latest",
-    "db:migrate": "tsx scripts/db/migrate.ts migrate",
+    "db:migrate": "tsx scripts/db/migrate.ts",
+    "db:migrate:deploy": "tsx scripts/db/migrate.ts migrate",
+    "db:migrate:dev": "tsx scripts/db/migrate.ts dev",
     "db:push": "tsx scripts/db/migrate.ts push",
     "db:restore": "tsx scripts/db/restore.ts",
     "db:restore:latest": "tsx scripts/db/restore.ts latest",
@@ -27,6 +29,7 @@
   "devDependencies": {
     "@changesets/cli": "2.31.0",
     "concurrently": "9.2.1",
+    "dotenv": "17.2.3",
     "prisma": "7.8.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3"

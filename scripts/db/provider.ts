@@ -7,9 +7,14 @@
 
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawn } from "node:child_process";
+
+import { loadPrismaEnvironment } from "./env.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+loadPrismaEnvironment();
 
 /** Database provider type */
 export type Provider = "postgresql";
@@ -110,13 +115,23 @@ export function getPgEnvVars(databaseUrl: string): Record<string, string> {
   if (!parsed) {
     throw new Error(`Invalid PostgreSQL connection string: ${redactUrl(databaseUrl)}`);
   }
-  // Pass the FULL DATABASE_URL so query params (sslmode, schema, etc.) are preserved.
-  // pg_dump/psql respect DATABASE_URL when no explicit PGHOST/PGPORT/PGUSER/PGDATABASE
-  // vars are set. We only set PGPASSWORD separately to avoid argv credential leak.
-  return {
-    DATABASE_URL: databaseUrl,
-    PGPASSWORD: parsed.password,
-  };
+
+  return parsed.password ? { PGPASSWORD: parsed.password } : {};
+}
+
+/**
+ * Build a PostgreSQL CLI connection URI without embedding the password in argv.
+ */
+export function getPgConnectionArg(databaseUrl: string): string {
+  const parsed = parsePostgresUrl(databaseUrl);
+
+  if (!parsed) {
+    throw new Error(`Invalid PostgreSQL connection string: ${redactUrl(databaseUrl)}`);
+  }
+
+  const url = new URL(databaseUrl);
+  url.password = "";
+  return url.toString();
 }
 
 /**
@@ -153,4 +168,38 @@ export function requireDatabaseUrl(): string {
  */
 export function getDatabaseUrl(): string {
   return requireDatabaseUrl();
+}
+
+/**
+ * Ensure a required PostgreSQL client command is available before use.
+ */
+export async function ensureCommandAvailable(
+  command: "pg_dump" | "psql"
+): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(command, ["--version"], { stdio: "ignore" });
+
+    child.on("error", (error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") {
+        reject(new Error(
+          `❌ ${command} not found. Install PostgreSQL client tools:\n` +
+          "  macOS: brew install postgresql\n" +
+          "  Ubuntu/Debian: apt-get install postgresql-client\n" +
+          "  Windows: download from postgresql.org or use chocolatey: choco install postgresql"
+        ));
+        return;
+      }
+
+      reject(new Error(`❌ Failed to check ${command}: ${error.message}`));
+    });
+
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+        return;
+      }
+
+      reject(new Error(`❌ ${command} is unavailable (exit code ${code ?? 1}).`));
+    });
+  });
 }
