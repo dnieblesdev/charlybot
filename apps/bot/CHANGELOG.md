@@ -1,5 +1,28 @@
 # @charlybot/bot
 
+## 3.2.0
+
+### Minor Changes
+
+- 3f0118a: Add structured JSON logging for bot commands and fatal paths
+
+  - Use shared logger process handlers for unhandled exceptions/rejections
+  - Replace `logError()` in startup catch with `logger.error({ type: "bot_startup_error" })`
+  - Logger helpers (`logCommand`, `logVoice`, `logMusic`) now emit type-tagged JSON
+  - Remove Winston dependency (now uses Pino from `@charlybot/shared`)
+  - Every log line carries `service: "bot"`, `environment`, and `version` from base fields
+
+- 859c660: - Normalize economy money persistence to whole integer amounts while preserving existing field names.
+  - Add shared money validation and formatting helpers for configurable server currencies.
+  - Harden bot economy repositories, services, and commands against decimal and negative amount bugs.
+  - Improve database migration wrappers with blocking backups and consistent environment loading.
+
+### Patch Changes
+
+- Updated dependencies [4b06c9d]
+- Updated dependencies [859c660]
+  - @charlybot/shared@3.1.0
+
 ## 3.1.0
 
 ### Minor Changes

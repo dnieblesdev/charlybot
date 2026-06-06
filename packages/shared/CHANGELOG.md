@@ -1,5 +1,23 @@
 # @charlybot/shared
 
+## 3.1.0
+
+### Minor Changes
+
+- 4b06c9d: Refactor logging: migrate from Winston to Pino with structured JSON output
+
+  - Replace Winston with Pino in `createLogger()` factory
+  - Add `pino-roll` for file rotation, `pino-pretty` for dev output
+  - Every log line now includes `service`, `environment`, `version`, and `type` fields
+  - Child loggers inherit base fields and add `request_id` or `component`
+  - Remove all Winston dependencies from shared package
+  - Register global `uncaughtException`/`unhandledRejection` handlers once per process
+
+- 859c660: - Normalize economy money persistence to whole integer amounts while preserving existing field names.
+  - Add shared money validation and formatting helpers for configurable server currencies.
+  - Harden bot economy repositories, services, and commands against decimal and negative amount bugs.
+  - Improve database migration wrappers with blocking backups and consistent environment loading.
+
 ## 3.0.1
 
 ### Patch Changes
